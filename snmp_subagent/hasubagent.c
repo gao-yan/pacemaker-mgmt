@@ -2,7 +2,7 @@
 #include <config.h>
 #endif
 
-#ifdef HAVE_NET_SNMP_NET_SNMP_CONFIG_H
+#ifdef HAVE_NET_SNMP
 #	define	USE_NET_SNMP
 #else
 #	define	USE_UCD_SNMP
@@ -27,7 +27,17 @@
 #	define	INIT_AGENT()	init_master_agent(161, NULL, NULL)
 #endif
 
+#ifdef HAVE_TCPD_H
+#	include <tcpd.h>
+	int allow_severity       = LOG_INFO;
+	int deny_severity        = LOG_WARNING;
+#endif // HAVE_TCPD_H
+
 #include <signal.h>
+
+#define LINUXHA_SUBAGENT_ENTITY_NAME "linux-ha"
+
+#include "portability.h"
 
 static int keep_running;
 
@@ -66,7 +76,7 @@ main(int argc, char **argv)
 	}
 
 	/* Initialize the agent library */
-	init_agent("hasubagent");
+	init_agent(LINUXHA_SUBAGENT_ENTITY_NAME);
 
 	/* Initialize mib code here */
 
@@ -74,7 +84,7 @@ main(int argc, char **argv)
 	// init_nstAgentSubagentObject();  
 
 	/* hasubagent will be used to read hasubagent.conf files. */
-	init_snmp("hasubagent");
+	init_snmp(LINUXHA_SUBAGENT_ENTITY_NAME);
 
 	/* If we're going to be a snmp master agent, initial the ports */
 	if (!agentx_subagent) {
@@ -95,7 +105,8 @@ main(int argc, char **argv)
 	}
 
 	/* At shutdown time */
-	snmp_shutdown("hasubagent");
+	snmp_shutdown(LINUXHA_SUBAGENT_ENTITY_NAME);
 	return 0;
 }
+
 

@@ -34,7 +34,11 @@ NET_SNMP_CONFIG		= @NET_SNMP_CONFIG@
 # binary programs
 halib_PROGRAMS		= hasubagent
 
-hasubagent_SOURCES	= hasubagent.c
+hasubagent_SOURCES	= hasubagent.c 
 
-hasubagent_LDADD	= $(COMMONLIBS) @HASUBAGENT_LDADD_EXTRA@
-hasubagent_LDFLAGS	= @HASUBAGENT_LDFLAGS@
+HASUBAGENT_LDADD_EXTRA 	= 
+
+hasubagent_LDADD	= $(HASUBAGENT_LDADD_EXTRA)
+hasubagent_LDFLAGS	= @SNMP_LIBS@ 
+
+
