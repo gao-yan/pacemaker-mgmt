@@ -29,13 +29,12 @@ COMMONLIBS              = $(top_builddir)/lib/clplumbing/libplumb.la    \
 
 halibdir		= $(libdir)/@HB_PKG@
 
+NET_SNMP_CONFIG		= @NET_SNMP_CONFIG@
 
 # binary programs
 halib_PROGRAMS		= hasubagent
 
 hasubagent_SOURCES	= hasubagent.c
 
-#hasubagent_CFLAGS	= `net-snmp-config --cflags`
-hasubagent_LDADD	= $(COMMONLIBS) 
-#hasubagent_LDFLAGS	= `net-snmp-config --agent-libs`
-hasubagent_LDFLAGS	= -lucdagent -lucdmibs -lsnmp -lcrypto
+hasubagent_LDADD	= $(COMMONLIBS) @HASUBAGENT_LDADD_EXTRA@
+hasubagent_LDFLAGS	= @HASUBAGENT_LDFLAGS@

@@ -1,3 +1,7 @@
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #ifdef HAVE_NET_SNMP_NET_SNMP_CONFIG_H
 #	define	USE_NET_SNMP
 #else
@@ -13,9 +17,12 @@
 #	include <ucd-snmp/ucd-snmp-config.h>
 #	include <ucd-snmp/ucd-snmp-includes.h>
 #	include <ucd-snmp/ucd-snmp-agent-includes.h>
-#
-#	define NETSNMP_DS_APPLICATION_ID	DS_APPLICATION_ID
-#	define NETSNMP_DS_AGENT_ROLE	DS_AGENT_ROLE
+#       ifndef NETSNMP_DS_APPLICATION_ID
+#		define NETSNMP_DS_APPLICATION_ID	DS_APPLICATION_ID
+#	endif
+#	ifndef NETSNMP_DS_AGENT_ROLE
+#		define NETSNMP_DS_AGENT_ROLE	DS_AGENT_ROLE
+#	endif
 #	define netsnmp_ds_set_boolean	ds_set_boolean
 #	define	INIT_AGENT()	init_master_agent(161, NULL, NULL)
 #endif
