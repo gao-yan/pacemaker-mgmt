@@ -1,6 +1,7 @@
 #include "haclient.h"
 
 #include <sys/types.h>
+#include <string.h>
 #include <unistd.h>
 #include <glib.h>
 
@@ -108,6 +109,31 @@ get_heartbeat_fd(void)
 		cl_log(LOG_ERR, "REASON, %s\n", hb->llc_ops->errmsg(hb));
 	}
 	return fd;
+}
+
+int
+handle_heartbeat_msg(void)
+{
+	struct ha_msg *msg;
+	const char * type;
+
+	if (hb->llc_ops->msgready(hb)) {
+		msg = hb->llc_ops->readmsg(hb, 0);
+		if (msg) {
+			type = ha_msg_value(msg, F_TYPE);
+			if (!type) {
+				// can't read type. log and ignore the msg.
+				cl_log(LOG_DEBUG, "Can't read msg type.\n");
+				return 0;
+			}
+
+			// we only handle the shutdown msg for now.
+			if (strncmp(type, T_SHUTDONE, 20) == 0) {
+				return -1;
+			}
+		}
+	}
+	return 0;
 }
 
 int

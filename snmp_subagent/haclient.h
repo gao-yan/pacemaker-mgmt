@@ -34,6 +34,7 @@ typedef enum ha_attribute {
 
 int init_heartbeat(void);
 int get_heartbeat_fd(void);
+int handle_heartbeat_msg(void);
 
 /* functions specific for snmp request */
 int get_count(ha_group_t group, size_t * count);

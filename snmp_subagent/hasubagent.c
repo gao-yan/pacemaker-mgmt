@@ -42,11 +42,14 @@
 #endif /* SNMP_NEED_TCPWRAPPER */
   
 #include <signal.h>
+#include <sys/select.h>
+
 #include "haclient.h"
 #include "ClusterInfo.h"
 #include "NodeTable.h"
 
 #define LINUXHA_SUBAGENT_ENTITY_NAME "linux-ha"
+#define DEFAULT_TIME_OUT 5 // default timeout value for snmp in sec.
 
 static int keep_running;
 
@@ -71,6 +74,10 @@ stop_server(int a)
 int
 main(int argc, char **argv)
 {
+	fd_set fdset;
+	struct timeval tv, *tvp;
+	int block, numfds, ret, hb_fd;
+
 	/* Change this if you want to be a SNMP master agent */
 	int agentx_subagent=1;
 
@@ -96,7 +103,14 @@ main(int argc, char **argv)
 	init_snmp(LINUXHA_SUBAGENT_ENTITY_NAME);
 
 	(void) _ha_msg_h_Id;
-	init_heartbeat();
+	if ((ret = init_heartbeat()) != HA_OK) {
+                return -1;
+        }
+
+        if ((hb_fd = get_heartbeat_fd()) <=0) {
+                return -1;
+        }
+
 	init_ClusterInfo();
 	init_NodeTable();
 
@@ -115,7 +129,47 @@ main(int argc, char **argv)
 	while(keep_running) {
 		/* If you use select(), see snmp_select_info() in snmp_api(3) */
 		/*     --- OR ---  */
-		agent_check_and_process(1); /* 0 == don't block */
+		// agent_check_and_process(1); /* 0 == don't block */
+
+		FD_ZERO(&fdset);
+                FD_SET(hb_fd, &fdset);
+
+		tv.tv_sec = DEFAULT_TIME_OUT;
+		tv.tv_usec = 0;
+		numfds = hb_fd+1;
+
+		tvp = &tv;
+
+		snmp_select_info(&numfds, &fdset, tvp, &block);
+
+		if (block) {
+			tvp = NULL;
+                }
+
+		ret = select(numfds, &fdset, 0, 0, tvp);
+
+		// the error cases
+                if (ret < 0) {
+			cl_log(LOG_ERR, "select() returned error. Quitting...\n");
+			break;
+                }
+		else if (ret == 0) {
+			snmp_timeout();
+                        continue;
+		}
+
+		// the normal cases
+		if (FD_ISSET(hb_fd, &fdset)) {
+
+			// handle heartbeat msgs
+			if ((ret = handle_heartbeat_msg()) == -1) {
+				cl_log(LOG_ERR, "heartbeat stopped. Quitting...\n");
+				break;
+			}
+		} else {
+			// handle snmp msgs
+			snmp_read(&fdset);
+		}
 	}
 
 	/* At shutdown time */
