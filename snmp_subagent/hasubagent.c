@@ -41,8 +41,6 @@
 #	endif /* HAVE_TCPD_H */
 #endif /* SNMP_NEED_TCPWRAPPER */
   
-  #include <signal.h>
-  
 #include <signal.h>
 
 #define LINUXHA_SUBAGENT_ENTITY_NAME "linux-ha"
