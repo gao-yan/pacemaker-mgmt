@@ -92,6 +92,7 @@ nodeEntry OBJECT-TYPE
 NodeEntry ::= SEQUENCE {
     nodeIndex	    Integer32,
     nodeName	    DisplayString,
+    nodeType	    DisplayString,
     nodeStatus	    DisplayString,
     nodeHAIFCount   Integer32
 }
@@ -112,15 +113,25 @@ nodeName OBJECT-TYPE
 	"A readable name that represents that node."
     ::= { nodeEntry 2 }
 
+nodeType OBJECT-TYPE
+    SYNTAX	DisplayString
+    MAX-ACCESS	read-only
+    STATUS	current
+    DESCRIPTION
+	"There could be many types of nodes in the cluster.  For
+	example, a node could be a normal node, or a ping node depending
+	on the configuration."
+    ::= { nodeEntry 3 }
+
 nodeStatus OBJECT-TYPE
     SYNTAX	DisplayString 
     MAX-ACCESS	read-only
     STATUS	current
     DESCRIPTION
 	"The status of the node. For heartbeat, this would normally be
-	init, up, active, or dead. Since the status can be customrized, 
+	init, up, active, or dead.  Since the status can be customrized, 
 	it is defined as a DisplayString instead of an INTEGER."
-    ::= { nodeEntry 3 }
+    ::= { nodeEntry 4 }
 
 nodeHAIFCount OBJECT-TYPE
     SYNTAX	Integer32 (0..65535)
@@ -128,7 +139,7 @@ nodeHAIFCount OBJECT-TYPE
     STATUS	current
     DESCRIPTION
 	"The number of heartbeat interfaces presents on that node."
-    ::= { nodeEntry 4 }
+    ::= { nodeEntry 5 }
 
 HAIFTable OBJECT-TYPE
     SYNTAX	SEQUENCE OF HAIFEntry

@@ -64,10 +64,12 @@ struct variable2 NodeTable_variables[] = {
 /*  magic number        , variable type , ro/rw , callback fn  , L, oidsuffix */
 #define   NODENAME              4
   { NODENAME            , ASN_OCTET_STR , RONLY , var_NodeTable, 2, { 1,2 } },
+#define   NODETYPE            6
+  { NODETYPE          , ASN_OCTET_STR , RONLY , var_NodeTable, 2, { 1,3 } },
 #define   NODESTATUS            5
-  { NODESTATUS          , ASN_OCTET_STR , RONLY , var_NodeTable, 2, { 1,3 } },
-#define   NODEHAIFCOUNT         6
-  { NODEHAIFCOUNT       , ASN_INTEGER   , RONLY , var_NodeTable, 2, { 1,4 } },
+  { NODESTATUS          , ASN_OCTET_STR , RONLY , var_NodeTable, 2, { 1,4 } },
+#define   NODEHAIFCOUNT         7
+  { NODEHAIFCOUNT       , ASN_INTEGER   , RONLY , var_NodeTable, 2, { 1,5 } },
 
 };
 /*    (L = length of the oidsuffix) */
@@ -107,20 +109,19 @@ var_NodeTable(struct variable *vp,
 	
 	
 	/* variables we may use later */
-	static long long_ret;
+	static int32_t long_ret;
 	static unsigned char string[SPRINT_MAX_LEN];
-	unsigned long count, id;
-	const struct hb_node_t * node = NULL;
+	size_t count, id;
+	const char * str;
+	int ret;
 
-	if (get_node_count(&count) != HA_OK) 
+	if (get_count(NODEINFO, &count) != HA_OK) 
 		return NULL;
 	if (header_simple_table(vp,name,length,exact,var_len,write_method, count) 
 			== MATCH_FAILED)
 		return NULL;
 	
 	id = name[*length - 1] - 1;
-	if (get_node_info(id, &node) != HA_OK)
-		return NULL;
 	
 	/* 
 	 * this is where we do the value assignments for the mib results.
@@ -131,22 +132,40 @@ var_NodeTable(struct variable *vp,
 		case NODENAME:
 		    
 		    *string = 0;
-		    strncpy(string, node->name, SPRINT_MAX_LEN);
+		    ret = get_str_value(NODEINFO, NODE_NAME, id, &str);
+		    if (ret != HA_OK) 
+			    return NULL;
+		    strncpy(string, str, SPRINT_MAX_LEN);
+		    *var_len = strlen(string);
+		    return (unsigned char *) string;
+
+		case NODETYPE:
+		    
+		    *string = 0;
+		    ret = get_str_value(NODEINFO, NODE_TYPE, id, &str);
+		    if (ret != HA_OK) 
+			    return NULL;
+		    strncpy(string, str, SPRINT_MAX_LEN);
 		    *var_len = strlen(string);
 		    return (unsigned char *) string;
 		
 		case NODESTATUS:
 		    
 		    *string = 0;
-		    strncpy(string, node->status, SPRINT_MAX_LEN);
+		    ret = get_str_value(NODEINFO, NODE_STATUS, id, &str);
+		    if (ret != HA_OK) 
+			    return NULL;
+		    strncpy(string, str, SPRINT_MAX_LEN);
 		    *var_len = strlen(string);
 		    return (unsigned char *) string;
 		
 		case NODEHAIFCOUNT:
 		    
 		    long_ret = 0;
+		    ret = get_int32_value(NODEINFO, NODE_IF_COUNT, id, &long_ret);
+		    if (ret != HA_OK)
+			    return 0;
 		    return (unsigned char *) &long_ret;
-		
 		
 		default:
 		  ERROR_MSG("");

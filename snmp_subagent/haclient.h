@@ -4,19 +4,42 @@
 #include <clplumbing/cl_log.h>
 #include "hb_api.h"
 
-struct hb_node_t {
-	char * name;
-	char * status;
-	unsigned long ifcount;
-};
+#include <sys/types.h>
 
-struct hb_if_t {
-	const char * name;
-	const char * status;
-};
+typedef enum ha_group {
+	CLUSTERINFO,
+	NODEINFO,
+	IFINFO,
+	RESOURCEINFO,
+} ha_group_t;
+
+typedef enum ha_attribute {
+	/* heartbeat parameter */
+	NODE_COUNT, 
+
+	/* node parameter */
+	NODE_NAME,
+	NODE_TYPE,
+	NODE_STATUS,
+	NODE_IF_COUNT,
+
+	/* if parameter */
+	IF_NAME,
+	IF_STATUS,
+
+	/* resource parameter */
+
+} ha_attribute_t;
+
 
 int init_heartbeat(void);
-int get_node_count(unsigned long * count);
-int get_node_info(unsigned long index, const struct hb_node_t ** node);
+int get_heartbeat_fd(void);
+
+/* functions specific for snmp request */
+int get_count(ha_group_t group, size_t * count);
+
+int get_int32_value(ha_group_t group, ha_attribute_t attrib, size_t index, int32_t * value);
+
+int get_str_value(ha_group_t group, ha_attribute_t attrib, size_t index, const char * * value);
 
 #endif // __libhasubagent_h__

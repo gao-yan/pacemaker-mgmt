@@ -108,7 +108,7 @@ var_ClusterInfo(struct variable *vp,
 
 
 	/* variables we may use later */
-	static long long_ret;
+	static int32_t long_ret;
 	
 	if (header_generic(vp,name,length,exact,var_len,write_method)
 	                                == MATCH_FAILED )
@@ -122,7 +122,7 @@ var_ClusterInfo(struct variable *vp,
 	
 		case NODECOUNT:
 			long_ret = 0;
-			if (get_node_count(&long_ret) != HA_OK) 
+			if (get_int32_value(CLUSTERINFO, NODE_COUNT, 0, &long_ret) != HA_OK) 
 				return NULL;
 			return (unsigned char *) &long_ret;
 	

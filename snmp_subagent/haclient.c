@@ -4,18 +4,36 @@
 #include <unistd.h>
 #include <glib.h>
 
-unsigned long hbInitialized;
+static unsigned long hbInitialized = 0;
+static ll_cluster_t * hb = NULL;
+static GArray * gNodeTable;
+static GArray * gIFTable;
 
-ll_cluster_t * hb = NULL;
-GArray * gNodeTable;
-GArray * gIFTable;
+struct hb_node_t {
+	char * name;
+	// char * type;
+	// char * status;
+	unsigned long ifcount;
+};
+
+struct hb_if_t {
+	const char * name;
+	const char * node;
+};
+
 
 void NodeStatus(const char * node, const char * status, void * private);
 void LinkStatus(const char * node, const char * lnk, const char * status 
 ,       void * private);
 
-int init_node_table(void);
-int init_if_table(const char * node);
+int init_hb_tables(void);
+int walk_node_table(void);
+int walk_if_table(void);
+int clusterinfo_get_int32_value(unsigned index, ha_attribute_t attrib, int32_t * value);
+int nodeinfo_get_int32_value(size_t index, ha_attribute_t attrib, int32_t * value);
+int nodeinfo_get_str_value(size_t index, ha_attribute_t attrib, const char * * value);
+int ifinfo_get_int32_value(size_t index, ha_attribute_t attrib, int32_t * value);
+int ifinfo_get_str_value(size_t index, ha_attribute_t attrib, const char * * value);
 
 void
 NodeStatus(const char * node, const char * status, void * private)
@@ -64,18 +82,41 @@ init_heartbeat(void)
 	        cl_log(LOG_ERR, "REASON: %s\n", hb->llc_ops->errmsg(hb));
 		return HA_FAIL;
 	}
-	return init_node_table();
+
+	// walk the node table
+	if ( HA_OK != walk_node_table() || HA_OK != walk_if_table() ) {
+		return HA_FAIL;
+	}
+
+	hbInitialized = 1;
+	return HA_OK;
 }
 
 int
-init_node_table(void)
+get_heartbeat_fd(void)
 {
-	const char *nname;
-	const char *nstatus;
+	int ret, fd;
+	if(!hbInitialized) {
+		ret = init_heartbeat();
+		if (ret != HA_OK) {
+			return ret;
+		}
+	}
+
+	if ((fd = hb->llc_ops->inputfd(hb)) < 0) {
+		cl_log(LOG_ERR, "Cannot get inputfd\n");
+		cl_log(LOG_ERR, "REASON, %s\n", hb->llc_ops->errmsg(hb));
+	}
+	return fd;
+}
+
+int
+walk_node_table(void)
+{
+	const char *nname, *ntype;
 	struct hb_node_t node;
 
 	gNodeTable = g_array_new(TRUE, TRUE, sizeof (struct hb_node_t));
-	gIFTable = g_array_new(TRUE, TRUE, sizeof (struct hb_if_t));
 
 	if (hb->llc_ops->init_nodewalk(hb) != HA_OK) {
 		cl_log(LOG_ERR, "Cannot start node walk\n");
@@ -83,15 +124,14 @@ init_node_table(void)
 		return HA_FAIL;
 	}
 	while((nname = hb->llc_ops->nextnode(hb))!= NULL) {
-		nstatus = hb->llc_ops->node_status(hb, nname);
+		ntype = hb->llc_ops->node_type(hb, nname);
 
-		cl_log(LOG_DEBUG, "Cluster node: %s: status: %s\n", nname 
-		,	nstatus);
+		cl_log(LOG_DEBUG, "Cluster node: %s: type: %s\n", nname 
+		,	ntype);
 
 		node.name =  g_strdup(nname);
-		node.status =  g_strdup(nstatus);
+		// node.type =  g_strdup(ntype);
 		g_array_append_val(gNodeTable, node); 
-
 	}
 	if (hb->llc_ops->end_nodewalk(hb) != HA_OK) {
 		cl_log(LOG_ERR, "Cannot end node walk\n");
@@ -102,47 +142,230 @@ init_node_table(void)
 }
 
 int
-init_if_table(const char * node)
+walk_if_table(void)
 {
-	const char * ifname;
-	const char * ifstatus;
+	const char *ifname;
+	struct hb_node_t * node;
 	struct hb_if_t interface;
+	int i, ifcount;
 
-	if (hb->llc_ops->init_ifwalk(hb, node) != HA_OK) {
-		cl_log(LOG_ERR, "Cannot start if walk\n");
-		cl_log(LOG_ERR, "REASON: %s\n", hb->llc_ops->errmsg(hb));
-		return HA_FAIL;
+	gIFTable = g_array_new(TRUE, TRUE, sizeof (struct hb_if_t));
+
+	for (i = 0; i < gNodeTable->len; i++) {
+		node = &g_array_index(gNodeTable, struct hb_node_t, i);
+		ifcount = 0;
+
+		if (hb->llc_ops->init_ifwalk(hb, node->name) != HA_OK) {
+			cl_log(LOG_ERR, "Cannot start if walk\n");
+			cl_log(LOG_ERR, "REASON: %s\n", hb->llc_ops->errmsg(hb));
+			return HA_FAIL;
+		}
+
+		while((ifname = hb->llc_ops->nextif(hb))!=NULL) {
+			/*
+			ifstatus = hb->llc_ops->if_status(hb, node->name, ifname);
+
+			cl_log(LOG_DEBUG, "node interface: %s: status: %s\n", ifname 
+			,	ifstatus);
+			*/
+
+			ifcount++;
+			interface.name = g_strdup(ifname);
+			interface.node = g_strdup(node->name);
+			g_array_append_val(gIFTable, interface);
+		}
+
+		if (hb->llc_ops->end_ifwalk(hb) != HA_OK) {
+			cl_log(LOG_ERR, "Cannot end if walk.\n");
+			cl_log(LOG_ERR, "REASON: %s\n", hb->llc_ops->errmsg(hb));
+			return HA_FAIL;
+		}
+
+		/* assign ifcount to the node */
+		node->ifcount = ifcount;
 	}
+	return HA_OK;
+}
 
-	while((ifname = hb->llc_ops->nextif(hb))!=NULL) {
-		ifstatus = hb->llc_ops->if_status(hb, node, ifname);
+/* 
+ * functions specific for snmp request 
+ */
 
-		cl_log(LOG_DEBUG, "node interface: %s: status: %s\n", ifname 
-		,	ifstatus);
+int
+get_count(ha_group_t group, size_t * count)
+{
+	*count = 0;
 
-		interface.name = g_strdup(ifname);
-		interface.status = g_strdup(ifstatus);
-		g_array_append_val(gIFTable, interface);
+	switch (group) {
+		case NODEINFO:
+			*count = gNodeTable->len;
+			break;
+
+		case IFINFO:
+			*count = gIFTable->len;
+			break;
+
+		case RESOURCEINFO:
+			break;
+
+		default:
+			return HA_FAIL;
 	}
+	return HA_OK;
+}
 
-	if (hb->llc_ops->end_ifwalk(hb) != HA_OK) {
-		cl_log(LOG_ERR, "Cannot end if walk\n");
-		cl_log(LOG_ERR, "REASON: %s\n", hb->llc_ops->errmsg(hb));
+int 
+get_int32_value(ha_group_t group, ha_attribute_t attrib, size_t index, int32_t * value)
+{
+	switch (group) {
+		case CLUSTERINFO: 
+			return clusterinfo_get_int32_value(index, attrib, value);
+
+		case NODEINFO:
+			return nodeinfo_get_int32_value(index, attrib, value);
+
+		case IFINFO:
+			return ifinfo_get_int32_value(index, attrib, value);
+
+		case RESOURCEINFO:
+			return HA_FAIL; // todo
+
+		default:
+			return HA_FAIL;
+	}
+}
+
+int
+get_str_value(ha_group_t group, ha_attribute_t attrib, size_t index, const char * * value)
+{
+	switch (group) {
+		case NODEINFO:
+			return nodeinfo_get_str_value(index, attrib, value);
+
+		case IFINFO:
+			return ifinfo_get_str_value(index, attrib, value);
+
+		case RESOURCEINFO:
+			return HA_FAIL; // todo
+
+		default:
+			return HA_FAIL;
+	}
+}
+
+int
+clusterinfo_get_int32_value(size_t index, ha_attribute_t attrib, int32_t * value)
+{
+	*value = 0;
+
+	switch (attrib) {
+		case NODE_COUNT:
+			*value = gNodeTable->len;
+			break;
+		default:
+			return HA_FAIL;
+	}
+	return HA_OK;
+}
+
+int 
+nodeinfo_get_int32_value(size_t index, ha_attribute_t attrib, int32_t * value)
+{
+	*value = 0;
+
+	if (index > gNodeTable->len) 
 		return HA_FAIL;
+
+	switch (attrib) {
+		case NODE_IF_COUNT:
+			*value = (g_array_index(gNodeTable, struct hb_node_t, index)).ifcount;
+			break;
+		default:
+			return HA_FAIL;
 	}
 	return HA_OK;
 }
 
 int
-get_node_count(unsigned long * count)
+nodeinfo_get_str_value(size_t index, ha_attribute_t attrib, const char * * value)
 {
-	*count = gNodeTable->len;
+	const char * node;
+
+	if (!value)
+		return HA_FAIL;
+
+	*value = NULL;
+	if (index > gNodeTable->len) 
+		return HA_FAIL;
+
+	node = (g_array_index(gNodeTable, struct hb_node_t, index)).name;
+
+	switch (attrib) {
+		case NODE_NAME:
+			*value = node;
+			break;
+
+		case NODE_TYPE:
+			if ((*value = hb->llc_ops->node_type(hb, node)) == NULL) {
+				cl_log(LOG_ERR, "Failed to get node type.\n");
+				cl_log(LOG_ERR, "REASON: %s\n", hb->llc_ops->errmsg(hb));
+				return HA_FAIL;
+			}
+			break;
+
+		case NODE_STATUS:
+			if ((*value = hb->llc_ops->node_status(hb, node)) == NULL) {
+				cl_log(LOG_ERR, "Failed to get node status.\n");
+				cl_log(LOG_ERR, "REASON: %s\n", hb->llc_ops->errmsg(hb));
+				return HA_FAIL;
+			}
+			break;
+
+		default:
+			return HA_FAIL;
+	}
+
 	return HA_OK;
 }
 
 int
-get_node_info(unsigned long index, const struct hb_node_t ** node)
+ifinfo_get_int32_value(size_t index, ha_attribute_t attrib, int32_t * value)
 {
-	*node = &g_array_index(gNodeTable, struct hb_node_t, index);
+	return HA_FAIL;
+}
+
+int
+ifinfo_get_str_value(size_t index, ha_attribute_t attrib, const char * * value)
+{
+	const char * node, * ifname;
+
+	if (!value)
+		return HA_FAIL;
+
+	*value = NULL;
+	if (index > gNodeTable->len) 
+		return HA_FAIL;
+
+	node = (g_array_index(gIFTable, struct hb_if_t, index)).node;
+	ifname = (g_array_index(gIFTable, struct hb_if_t, index)).name;
+
+	switch (attrib) {
+		case IF_NAME:
+			*value = ifname;
+			break;
+
+		case IF_STATUS:
+			if ((*value = hb->llc_ops->if_status(hb, node, ifname)) == NULL) {
+				cl_log(LOG_ERR, "Failed to get if status.\n");
+				cl_log(LOG_ERR, "REASON: %s\n", hb->llc_ops->errmsg(hb));
+				return HA_FAIL;
+			}
+			break;
+
+		default:
+			return HA_FAIL;
+	}
+
 	return HA_OK;
 }
+
