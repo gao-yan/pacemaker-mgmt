@@ -33,12 +33,30 @@ halibdir		= $(libdir)/@HB_PKG@
 
 NET_SNMP_CONFIG		= @NET_SNMP_CONFIG@
 
+# LTLIBRARIES is for shared+static libs
+noinst_LTLIBRARIES = libhaclient.la
+
+libhaclient_la_SOURCES	= haclient.h haclient.c
+
+libhaclient_LIBADD_EXTRA = $(top_builddir)/heartbeat/libhbclient.la
+
+libhaclient_la_LIBADD	= $(COMMONLIBS) $(libhaclient_LIBADD_EXTRA)
+
 # binary programs
 halib_PROGRAMS		= hasubagent
 
-hasubagent_SOURCES	= hasubagent.c 
+hasubagent_SOURCES	= hasubagent.c \
+			  ucd_util_funcs.h \
+			  ClusterInfo.h ClusterInfo.c \
+			  NodeTable.h NodeTable.c
 
-HASUBAGENT_LDADD_EXTRA 	= 
+HASUBAGENT_LDADD_EXTRA 	= $(top_builddir)/snmp_subagent/libhaclient.la
 
 hasubagent_LDADD	= $(HASUBAGENT_LDADD_EXTRA)
 hasubagent_LDFLAGS	= @SNMP_LIBS@ 
+
+# test cases
+noinst_PROGRAMS		= testclient
+testclient_SOURCES	= testclient.c
+testclient_LDADD        = $(HASUBAGENT_LDADD_EXTRA)
+

@@ -42,6 +42,9 @@
 #endif /* SNMP_NEED_TCPWRAPPER */
   
 #include <signal.h>
+#include "haclient.h"
+#include "ClusterInfo.h"
+#include "NodeTable.h"
 
 #define LINUXHA_SUBAGENT_ENTITY_NAME "linux-ha"
 
@@ -91,6 +94,11 @@ main(int argc, char **argv)
 
 	/* hasubagent will be used to read hasubagent.conf files. */
 	init_snmp(LINUXHA_SUBAGENT_ENTITY_NAME);
+
+	(void) _ha_msg_h_Id;
+	init_heartbeat();
+	init_ClusterInfo();
+	init_NodeTable();
 
 	/* If we're going to be a snmp master agent, initial the ports */
 	if (!agentx_subagent) {
