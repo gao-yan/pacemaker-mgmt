@@ -1,3 +1,9 @@
+#include <portability.h>
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <limits.h>
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -27,17 +33,19 @@
 #	define	INIT_AGENT()	init_master_agent(161, NULL, NULL)
 #endif
 
-#ifdef HAVE_TCPD_H
-#	include <tcpd.h>
-	int allow_severity       = LOG_INFO;
-	int deny_severity        = LOG_WARNING;
-#endif // HAVE_TCPD_H
-
+#ifdef SNMP_NEED_TCPWRAPPER
+#	ifdef HAVE_TCPD_H
+#		include <tcpd.h>
+		int allow_severity       = LOG_INFO;
+		int deny_severity        = LOG_WARNING;
+#	endif /* HAVE_TCPD_H */
+#endif /* SNMP_NEED_TCPWRAPPER */
+  
+  #include <signal.h>
+  
 #include <signal.h>
 
 #define LINUXHA_SUBAGENT_ENTITY_NAME "linux-ha"
-
-#include "portability.h"
 
 static int keep_running;
 
