@@ -22,7 +22,8 @@ MAINTAINERCLEANFILES    = Makefile.in
 mibsdir			= @MIBS_DIR@
 mibs_DATA		= LINUX-HA-MIB.mib
 
-INCLUDES		= -I$(top_builddir)/include -I$(top_srcdir)/include
+INCLUDES		= -I$(top_builddir)/include -I$(top_srcdir)/include \
+			  -I$(top_builddir) -I$(top_srcdir)
 
 COMMONLIBS              = $(top_builddir)/lib/clplumbing/libplumb.la    \
 			$(GLIBLIB)
