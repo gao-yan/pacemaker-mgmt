@@ -114,10 +114,11 @@ var_NodeTable(struct variable *vp,
 
 	if (get_node_count(&count) != HA_OK) 
 		return NULL;
-	id = header_simple_table(vp,name,length,exact,var_len,write_method, count);
-	if (id == MATCH_FAILED )
+	if (header_simple_table(vp,name,length,exact,var_len,write_method, count) 
+			== MATCH_FAILED)
 		return NULL;
 	
+	id = name[*length - 1] - 1;
 	if (get_node_info(id, &node) != HA_OK)
 		return NULL;
 	
