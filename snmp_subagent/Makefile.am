@@ -24,8 +24,7 @@ mibs_DATA		= LINUX-HA-MIB.mib
 
 EXTRA_DIST		= $(mibs_DATA)
 
-INCLUDES		= -I$(top_builddir)/include -I$(top_srcdir)/include \
-			  -I$(top_builddir) -I$(top_srcdir)
+INCLUDES		= -I$(top_builddir)/include -I$(top_srcdir)/include
 
 COMMONLIBS              = $(top_builddir)/lib/clplumbing/libplumb.la    \
 			$(GLIBLIB)
