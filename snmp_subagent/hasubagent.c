@@ -47,6 +47,7 @@
 #include "haclient.h"
 #include "ClusterInfo.h"
 #include "NodeTable.h"
+#include "HAIFTable.h"
 
 #define LINUXHA_SUBAGENT_ENTITY_NAME "linux-ha"
 #define DEFAULT_TIME_OUT 5 // default timeout value for snmp in sec.
@@ -113,6 +114,8 @@ main(int argc, char **argv)
 
 	init_ClusterInfo();
 	init_NodeTable();
+	init_HAIFTable();
+
 
 	/* If we're going to be a snmp master agent, initial the ports */
 	if (!agentx_subagent) {

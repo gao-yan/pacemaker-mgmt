@@ -48,7 +48,9 @@ halib_PROGRAMS		= hasubagent
 hasubagent_SOURCES	= hasubagent.c \
 			  ucd_util_funcs.h \
 			  ClusterInfo.h ClusterInfo.c \
-			  NodeTable.h NodeTable.c
+			  NodeTable.h NodeTable.c \
+			  HAIFTable.h HAIFTable.c
+
 
 HASUBAGENT_LDADD_EXTRA 	= $(top_builddir)/snmp_subagent/libhaclient.la
 

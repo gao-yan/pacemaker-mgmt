@@ -20,6 +20,8 @@ struct hb_node_t {
 struct hb_if_t {
 	const char * name;
 	const char * node;
+	int32_t nodeid;
+	int32_t id;
 };
 
 
@@ -195,9 +197,10 @@ walk_if_table(void)
 			,	ifstatus);
 			*/
 
-			ifcount++;
 			interface.name = g_strdup(ifname);
 			interface.node = g_strdup(node->name);
+			interface.nodeid= i;
+			interface.id = ifcount++;
 			g_array_append_val(gIFTable, interface);
 		}
 
@@ -288,6 +291,7 @@ clusterinfo_get_int32_value(size_t index, ha_attribute_t attrib, int32_t * value
 		case NODE_COUNT:
 			*value = gNodeTable->len;
 			break;
+
 		default:
 			return HA_FAIL;
 	}
@@ -357,7 +361,25 @@ nodeinfo_get_str_value(size_t index, ha_attribute_t attrib, const char * * value
 int
 ifinfo_get_int32_value(size_t index, ha_attribute_t attrib, int32_t * value)
 {
-	return HA_FAIL;
+	*value = 0;
+
+	if (index > gIFTable->len) 
+		return HA_FAIL;
+
+	switch (attrib) {
+		case IF_NODE_ID:
+			*value = (g_array_index(gIFTable, struct hb_if_t, index)).nodeid;
+			break;
+
+		case IF_ID:
+			*value = (g_array_index(gIFTable, struct hb_if_t, index)).id;
+			break;
+
+
+		default:
+			return HA_FAIL;
+	}
+	return HA_OK;
 }
 
 int

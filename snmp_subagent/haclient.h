@@ -26,6 +26,8 @@ typedef enum ha_attribute {
 	/* if parameter */
 	IF_NAME,
 	IF_STATUS,
+	IF_NODE_ID,
+	IF_ID,
 
 	/* resource parameter */
 
