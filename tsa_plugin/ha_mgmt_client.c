@@ -157,7 +157,10 @@ start_heartbeat(const char* node)
 	if ( fork() == 0 ) {
 		char cmd[1024];
 		snprintf(cmd, 1024, "%s %s \"%s start\"", ssh_path, node, HB_SCRIPT);
-		system(cmd);
+		if (system(cmd) != 0) {
+			cl_log(LOG_ERROR, "%s: system(%s) returned non-zero"
+			,	__FUNCTION__, cmd);
+		}
 	}
 	cl_free(ssh_path);
 }
@@ -177,7 +180,10 @@ stop_heartbeat(const char* node)
 	if ( fork() == 0 ) {
 		char cmd[1024];
 		snprintf(cmd, 1024, "%s %s \"%s start\"", ssh_path, node, HB_SCRIPT);
-		system(cmd);
+		if (system(cmd) != 0) {
+			cl_log(LOG_ERRROR, "%s: system(%s) failed.", __FUNCTION__
+			,	cmd);
+		}
 	}
 	cl_free(ssh_path);
 }

@@ -815,7 +815,8 @@ cim_get_hb_status ()
 int
 cim_change_hb_state (int state)
 {
-	int status;
+	int	status;
+	int	rc;
 	const char * cmnd = NULL;
 	switch(state) {
 	case START_HB:
@@ -829,7 +830,11 @@ cim_change_hb_state (int state)
 	}
 
 	/* run it */
-	system(cmnd);
+	rc=system(cmnd);
+	if (rc != 0) {
+		cl_log(LOG_ERR, "%s: system(%s) returned %d",
+		__FUNCTION__, cmnd, rc);
+	}
 
 	/* verify the status */
 	status = cim_get_hb_status();
