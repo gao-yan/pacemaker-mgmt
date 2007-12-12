@@ -738,6 +738,12 @@ msgstr "策略引擎最大输入数："
 msgid "Startup Fencing:"
 msgstr "启动屏蔽："
 
+msgid "Start Failure Is Fatal:"
+msgstr "将启动失败视为严重错误："
+
+msgid "Batch Limit:"
+msgstr "转换引擎并行任务数限制："
+
 msgid "Recommended:"
 msgstr "建议："
 
