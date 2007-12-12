@@ -1795,13 +1795,14 @@ class MainWindow :
 		server = glade.get_widget("server").get_text()
 		user = glade.get_widget("username").get_text()
 		password = glade.get_widget("password").get_text()
-		manager.save_login_info(server,user)
 		
 		dialog.destroy()
 
 		if ret == gtk.RESPONSE_OK:
 			if not manager.login(server, user, password):
 				msgbox(manager.failed_reason)
+			else:
+				manager.save_login_info(server,user)
 	
 		self.update_ui()
 
@@ -2160,11 +2161,16 @@ class Manager :
 		save_path = os.environ["HOME"]+"/.haclient"
 		if not os.path.exists(save_path) :
 			return ("127.0.0.1","hacluster")
-		return pickle.load(file(save_path,"r"))
-		
+		try:
+			return pickle.load(file(save_path,"r"))
+		except:
+			return ("127.0.0.1", "hacluster")	
 	def save_login_info(self, server, user) :
 		save_path = os.environ["HOME"]+"/.haclient"
-		pickle.dump((server,user), file(save_path,"w"))
+		try:
+			pickle.dump((server,user), file(save_path,"w"))
+		except:
+			os.remove(save_path)
 		return
 		
 	def login(self, server, username, password) :
