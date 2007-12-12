@@ -1099,7 +1099,7 @@ on_add_rsc(char* argv[], int argc)
 	if (master) {
 		get_meta_attributes_id(argv[7], meta_attrs_id);
 		snprintf(buf, MAX_STRLEN,
-			 "<master_slave id=\"%s\" notify=\"true\" globally_unique=\"false\">" \
+			 "<master_slave id=\"%s\">" \
 			 "<meta_attributes id=\"%s\"><attributes>" \
 			 "<nvpair id=\"%s_metaattr_target_role\" name=\"target_role\" value=\"stopped\"/>" \
 			 "<nvpair id=\"%s_metaattr_clone_max\" name=\"clone_max\" value=\"%s\"/>" \
