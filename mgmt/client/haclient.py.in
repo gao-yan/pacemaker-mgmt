@@ -2593,13 +2593,14 @@ class Manager :
 				continue
 			if child.tagName != tag :
 				continue
+			if len(child.childNodes) == 0:
+				break
 			langtag = string.lower(child.getAttribute("lang"))
 			if langtag == "" :
 				desc_en = child.childNodes[0].data
 			else :
 				langtag = string.split(langtag, ".")
-				if string.find(langtag[0], "en") != -1 \
-						and len(child.childNodes) > 0 :
+				if string.find(langtag[0], "en") != -1 :
 					desc_en = child.childNodes[0].data
 				if len(langtag) == 1 and lang == langtag[0] :
 					desc_match = child.childNodes[0].data
