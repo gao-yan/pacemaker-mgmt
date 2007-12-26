@@ -28,15 +28,19 @@ halibdir	=  $(libdir)/@HB_PKG@
 COMMONLIBS	=  $(top_builddir)/lib/clplumbing/libplumb.la   \
 		   $(GLIBLIB)
 noinst_HEADERS	=  mgmt_internal.h
-EXTRA_DIST	=  mgmtd.pam
+EXTRA_DIST	=  mgmtd.pam mgmtd.pam.common
 		   
 LRM_DIR		= lrm
 
-pamdir 		= /etc/pam.d
+pamdir 		= $(sysconfdir)/pam.d
+if USE_PAM_COMMON
+pam_DATA	= mgmtd.pam.common
+else
 pam_DATA	= mgmtd.pam
+endif
 
 install-data-hook:
-		mv $(DESTDIR)$(pamdir)/mgmtd.pam $(DESTDIR)$(pamdir)/hbmgmtd; \
+		mv $(DESTDIR)$(pamdir)/$(pam_DATA) $(DESTDIR)$(pamdir)/hbmgmtd
 		if [ -f /etc/SuSE-release ]; then \
 		sed -i 's/pam_unix/&2/' $(DESTDIR)$(pamdir)/hbmgmtd; \
 		fi
