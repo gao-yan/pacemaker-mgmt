@@ -17,10 +17,10 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #
 MAINTAINERCLEANFILES = Makefile.in
-                                                                                                                                                         
-includedir=$(base_includedir)/heartbeat/mgmt
 
-include_HEADERS = 		\
+mgmtdir=$(includedir)/heartbeat/mgmt
+
+mgmt_HEADERS = 		\
 		mgmt_client.h	\
 		mgmt_common.h	\
 		mgmt.h		\
