@@ -199,6 +199,34 @@ msgstr "目标："
 msgid "Type:"
 msgstr "类型："
 
+msgid "Action:"
+msgstr "起始操作："
+
+msgid "To Action:"
+msgstr "目标操作："
+
+msgid "Symmetrical:"
+msgstr "对称："
+
+msgid "From Role:"
+msgstr "起始角色："
+
+msgid "To Role:"
+msgstr "目标角色："
+
+msgid "Node Attribute:"
+msgstr "节点属性："
+
+msgid "<b>Required Attributes</b>"
+msgstr "<b>必需属性</b>"
+
+msgid "<b>Optional Attributes</b>"
+msgstr "<b>可选属性</b>"
+
+msgid "<b>Description</b>"
+msgstr "<b>描述</b>"
+
+
 #: haclient.glade.h:32
 msgid "User Name:"
 msgstr "用户名："

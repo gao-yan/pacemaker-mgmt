@@ -48,6 +48,7 @@ void final_crm(void);
 static void on_cib_diff(const char *event, HA_Message *msg);
 
 static char* on_get_cib_version(char* argv[], int argc);
+static char* on_get_crm_dtd(char* argv[], int argc);
 
 static char* on_get_crm_metadata(char* argv[], int argc);
 static char* on_get_crm_config(char* argv[], int argc);
@@ -493,6 +494,7 @@ init_crm(int cache_cib)
 			, on_cib_connection_destroy);
 
 	reg_msg(MSG_CIB_VERSION, on_get_cib_version);
+	reg_msg(MSG_CRM_DTD, on_get_crm_dtd);
 	reg_msg(MSG_CRM_METADATA, on_get_crm_metadata);
 	reg_msg(MSG_CRM_CONFIG, on_get_crm_config);
 	reg_msg(MSG_UP_CRM_CONFIG, on_update_crm_config);
@@ -604,6 +606,39 @@ on_get_cib_version(char* argv[], int argc)
 }
 
 static char*
+on_get_crm_dtd(char* argv[], int argc)
+{
+	const char *dtd_file = HA_NOARCHDATAHBDIR"/crm.dtd";
+	char buf[MAX_STRLEN];	
+	char* ret = cl_strdup(MSG_OK);
+	FILE *fstream = NULL;
+
+	ARGC_CHECK(1);
+
+	if ((fstream = fopen(dtd_file, "r")) == NULL){
+		mgmt_log(LOG_ERR, "error on fopen %s: %s",
+			 dtd_file, strerror(errno));
+		return cl_strdup(MSG_FAIL);
+	}
+
+	while (!feof(fstream)){
+		memset(buf, 0, sizeof(buf));
+		if (fgets(buf, sizeof(buf), fstream) != NULL){
+			ret = mgmt_msg_append(ret, buf);
+			ret[strlen(ret)-1] = '\0';
+		}
+		else{
+			sleep(1);
+		}
+	}
+
+	if (fclose(fstream) == -1)
+		mgmt_log(LOG_WARNING, "failed to fclose stream");
+
+	return ret;
+}
+
+static char*
 on_get_crm_metadata(char* argv[], int argc)
 {
 	char cmd[MAX_STRLEN];
@@ -624,6 +659,7 @@ on_get_crm_metadata(char* argv[], int argc)
 		memset(buf, 0, sizeof(buf));
 		if (fgets(buf, sizeof(buf), fstream) != NULL){
 			ret = mgmt_msg_append(ret, buf);
+			ret[strlen(ret)-1] = '\0';
 		}
 		else{
 			sleep(1);
@@ -2279,7 +2315,7 @@ on_get_constraint(char* argv[], int argc)
 	crm_data_t* cos = NULL;
 	pe_working_set_t* data_set;
 	const char* path[] = {"configuration","constraints"};
-	ARGC_CHECK(3); 
+	int i;
 	
 	data_set = get_data_set();
 	cos = find_xml_node_nested(data_set->input, path, 2);
@@ -2311,17 +2347,11 @@ on_get_constraint(char* argv[], int argc)
 				}
 				g_list_free(expr_list);
 			}
-			else if (STRNCMP_CONST(argv[1],"rsc_order")==0) {
-				ret = mgmt_msg_append(ret, ha_msg_value(constraint, "id"));
-				ret = mgmt_msg_append(ret, ha_msg_value(constraint, "from"));
-				ret = mgmt_msg_append(ret, ha_msg_value(constraint, "type"));
-				ret = mgmt_msg_append(ret, ha_msg_value(constraint, "to"));
-			}
-			else if (STRNCMP_CONST(argv[1],"rsc_colocation")==0) {
-				ret = mgmt_msg_append(ret, ha_msg_value(constraint, "id"));
-				ret = mgmt_msg_append(ret, ha_msg_value(constraint, "from"));
-				ret = mgmt_msg_append(ret, ha_msg_value(constraint, "to"));
-				ret = mgmt_msg_append(ret, ha_msg_value(constraint, "score"));
+			else if (STRNCMP_CONST(argv[1],"rsc_order")==0 ||
+					STRNCMP_CONST(argv[1],"rsc_colocation")==0) {
+				for(i = 3; i < argc; i++){
+					ret = mgmt_msg_append(ret, ha_msg_value(constraint, argv[i]));
+				}
 			}
 			break;
 		}
@@ -2353,6 +2383,7 @@ on_update_constraint(char* argv[], int argc)
 	crm_data_t* output;
 	int i;
 	char xml[MAX_STRLEN];
+	char buf[MAX_STRLEN];
 
 	if (STRNCMP_CONST(argv[1],"rsc_location")==0) {
 		snprintf(xml, MAX_STRLEN,
@@ -2369,15 +2400,14 @@ on_update_constraint(char* argv[], int argc)
 		strncat(xml, "</rule></rsc_location>",
 				sizeof(xml)-strlen(xml)-1);
 	}
-	else if (STRNCMP_CONST(argv[1],"rsc_order")==0) {
-		snprintf(xml, MAX_STRLEN,
-			 "<rsc_order id=\"%s\" from=\"%s\" type=\"%s\" to=\"%s\"/>",
-			 argv[2], argv[3], argv[4], argv[5]);
-	}
-	else if (STRNCMP_CONST(argv[1],"rsc_colocation")==0) {
-		snprintf(xml, MAX_STRLEN,
-			 "<rsc_colocation id=\"%s\" from=\"%s\" to=\"%s\" score=\"%s\"/>",
-			 argv[2], argv[3], argv[4], argv[5]);
+	else if (STRNCMP_CONST(argv[1],"rsc_order")==0 ||
+			STRNCMP_CONST(argv[1],"rsc_colocation")==0) {
+		snprintf(xml, MAX_STRLEN, "<%s", argv[1]);
+		for (i = 2; i < argc-1; i += 2){
+			snprintf(buf, MAX_STRLEN, " %s=\"%s\"", argv[i], argv[i+1]);
+			strncat(xml, buf, sizeof(xml)-strlen(xml)-1);
+		}
+		strncat(xml, " />", sizeof(xml)-strlen(xml)-1);
 	}
 	cib_object = string2xml(xml);
 	if(cib_object == NULL) {

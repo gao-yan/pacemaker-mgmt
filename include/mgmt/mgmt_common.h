@@ -104,6 +104,18 @@ or
 
 /*
 description:
+	return the dtd of crm
+format:
+	MSG_CRM_DTD
+return:
+	MSG_OK LINE1 LINE2 ... LINEn
+or
+	MSG_FAIL
+*/
+#define MSG_CRM_DTD	"crm_dtd"
+
+/*
+description:
 	return the metadata of crm
 format:
 	MSG_CRM_METADATA CRM_CMD
