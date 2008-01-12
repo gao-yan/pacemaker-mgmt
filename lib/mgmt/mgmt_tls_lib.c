@@ -76,18 +76,13 @@ tls_attach_client(int sock)
 ssize_t
 tls_send(void* s, const void *buf, size_t len)
 {
-	int ret, count = 0;
 	gnutls_session* session = (gnutls_session*)s;
-	while (count < len){
-		while (1) {
-			ret = gnutls_record_send(*session, buf + count, len - count);
-			if (ret != GNUTLS_E_INTERRUPTED && ret != GNUTLS_E_AGAIN) {
-				break;
-			}
-		}	
-		count += ret;
+	while (1) {
+		int ret = gnutls_record_send(*session, buf, len);
+		if (ret != GNUTLS_E_INTERRUPTED && ret != GNUTLS_E_AGAIN) {
+			return ret;
+		}
 	}
-	return count;
 }
 ssize_t
 tls_recv(void* s, void* buf, size_t len)

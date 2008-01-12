@@ -163,7 +163,7 @@ mgmt_disconnect(void)
 int 
 mgmt_session_sendmsg(void* session, const char* msg)
 {
-	int len;
+	int len, ret, count = 0;
 	if (session == NULL) {
 		return -1;
 	}
@@ -172,8 +172,14 @@ mgmt_session_sendmsg(void* session, const char* msg)
 	if (len == MAX_MSGLEN + 1) {
 		return -2;
 	}
-	if (len != tls_send(session, msg, len)) {
-		return -1;
+	while (count < len) {
+		ret = tls_send(session, msg + count, len - count) ;
+		if (ret < 0) {
+			return -1;
+		}
+		else {
+			count += ret;
+		}
 	}
 	/* get the bytes sent */
 	return len;
