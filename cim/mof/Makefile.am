@@ -22,7 +22,7 @@ MAINTAINERCLEANFILES    = Makefile.in
 
 mof_DATA    = LinuxHA.mof LinuxHA.reg 
 mof_SCRIPTS = register_providers.sh unregister_providers.sh do_register.sh
-mofdir      = @HA_NOARCHDATAHBDIR@/heartbeat/cim
+mofdir      = @HA_NOARCHDATAHBDIR@/cim
 
 DIST_LIST   = $(mof_DATA) $(mof_SCRIPTS)
 EXTRA_DIST  = $(DIST_LIST)
