@@ -1493,6 +1493,9 @@ class AddNativeDlg :
 					meta = manager.get_rsc_meta(c,t,p)
 					if meta != None :
 						desc = meta.shortdesc
+					else :
+						if c == "ocf" or c == "stonith":
+							continue
 					if c=="heartbeat" :
 						p = "heartbeat"
 					elif c=="stonith" :
@@ -2670,7 +2673,7 @@ class Manager :
 		try :
 			doc_xml = parseString(meta_data).documentElement
 		except xml.parsers.expat.ExpatError:
-			debug("fail to parse the metadata of "+rsc_type)
+			log("fail to parse the metadata of "+rsc_type)
 			return None
 			
 		meta = RAMeta()
