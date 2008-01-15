@@ -54,6 +54,7 @@ mgmt_connect(const char* server, const char* user
 	struct sockaddr_in addr;
 	char* msg;
 	char* ret;
+	int rv;
 	
 	/* if it has already connected, return fail */
 	if (ISCONNECTED()) {
@@ -97,20 +98,26 @@ mgmt_connect(const char* server, const char* user
 	/* login to server */
 	msg = mgmt_new_msg(MSG_LOGIN, user, passwd, MGMT_PROTOCOL_VERSION, NULL);
 	ret = mgmt_sendmsg(msg);
-	if (ret == NULL || STRNCMP_CONST(ret,MSG_OK) != 0) {
-		mgmt_del_msg(msg);
-		mgmt_del_msg(ret);
-		close(sock);
-		tls_close_client();
-		if (ret != NULL && STRNCMP_CONST(ret,MSG_FAIL) != 0) {
-			return -3;
-		}
-		return -2;
+	if (ret == NULL) {
+		rv = -1;
+	}
+	else if (STRNCMP_CONST(ret,MSG_OK) == 0) {
+		rv = 0;
+	}
+	else if (STRNCMP_CONST(ret,MSG_FAIL) == 0){
+		rv = -2;
+	}
+	else {
+		rv = -3;
 	}
 	
 	mgmt_del_msg(msg);
 	mgmt_del_msg(ret);
-	return 0;
+	if (rv != 0) {
+		close(sock);
+		tls_close_client();
+	}
+	return rv;
 }
 
 char* 
