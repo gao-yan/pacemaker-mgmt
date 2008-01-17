@@ -217,11 +217,11 @@ msgstr "目标角色："
 msgid "Node Attribute:"
 msgstr "节点属性："
 
-msgid "<b>Required Attributes</b>"
-msgstr "<b>必需属性</b>"
+msgid "<b>Required</b>"
+msgstr "<b>必填</b>"
 
-msgid "<b>Optional Attributes</b>"
-msgstr "<b>可选属性</b>"
+msgid "<b>Optional</b>"
+msgstr "<b>选填</b>"
 
 msgid "<b>Description</b>"
 msgstr "<b>描述</b>"

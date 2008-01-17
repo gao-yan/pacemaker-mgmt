@@ -3164,15 +3164,15 @@ class CommonObject :
 			if order[attr_name] == None :
 				order[attr_name] = ""
 		desc = []
-		desc.append("*  %s  %s  %s  %s  %s"
+		desc.append("* %s %s %s %s %s"
 				%(order["action"].capitalize(), order["from"], order["type"], order["to_action"], order["to"]))
 
 		if order["score"] == "INFINITY" or order["score"] == "infinity":
 			if order["type"] == "before" :
-				desc.append("*  If  cannot  %s  %s ,  do  not  %s  %s"
+				desc.append("* If cannot %s %s, do not %s %s"
 						%(order["action"], order["from"], order["to_action"], order["to"]))
 			else :
-				desc.append("*  If  cannot  %s  %s ,  do  not  %s  %s"
+				desc.append("* If cannot %s %s, do not %s %s"
 						%(order["to_action"], order["to"], order["action"], order["from"]))
 		else :
 			desc.append("")
@@ -3180,14 +3180,14 @@ class CommonObject :
 		action = self.invert_action(order["action"])
 		to_action = self.invert_action(order["to_action"])
 		if order["symmetrical"] == "true" and action != None and to_action != None :
-			desc.append("*  %s  %s  %s  %s  %s"
+			desc.append("* %s %s %s %s %s"
 					%(to_action.capitalize(), order["to"], order["type"], action, order["from"]))
 			if order["score"] == "INFINITY" or order["score"] == "infinity":
 				if order["type"] == "before" :
-					desc.append("*  If  cannot  %s  %s ,  do  not  %s  %s"
+					desc.append("* If cannot %s %s, do not %s %s"
 							%(to_action, order["to"], action, order["from"]))
 				else :
-					desc.append("*  If  cannot  %s  %s ,  do  not  %s  %s"
+					desc.append("* If cannot %s %s, do not %s %s"
 							%(action, order["from"], to_action, order["to"]))
 			else:
 				desc.append("")
@@ -3251,7 +3251,7 @@ class CommonObject :
 			desc.append("* Prevent %s from be %s on the same node as %s %s  ( %s according to %s )" 
 					%(colocation["from"], colocation["from_role"], colocation["to"], colocation["to_role"],
 					colocation["from"], colocation["to"]))
-			desc.append("*  If %s is %s on every node, then %s won't be %s anywhere"
+			desc.append("* If %s is %s on every node, then %s won't be %s anywhere"
 					%(colocation["to"], colocation["to_role"], colocation["from"], colocation["from_role"]))
 			if colocation["symmetrical"] == "false" :
 				desc.append("* If %s is %s on every node, %s won't be affected"
@@ -3264,7 +3264,7 @@ class CommonObject :
 				desc.append("* If %s is %s on every node, then %s won't be %s anywhere"
 						%(colocation["from"], colocation["from_role"], colocation["to"], colocation["to_role"]))
 		else :
-			desc.append("* Combine this colocation score and the appropriate location scores to decide where to put the resources ")
+			desc.append("* Combine this colocation score and the appropriate location scores to decide where to put the resources")
 			desc.append("")
 			desc.append("")
 			desc.append("")
