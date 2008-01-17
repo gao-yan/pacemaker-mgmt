@@ -2972,12 +2972,26 @@ class CommonObject :
 					object.pop(key)
 		if widgets.has_key("combos") :
 			for key in widgets["combos"].keys() :
-				object[key] = widgets["combos"][key].get_active_text()
+				try:
+					object[key] = widgets["combos"][key].get_active_text()
+				except AttributeError:
+					iter = widgets["combos"][key].get_active_iter()
+					if iter != None :
+						object[key] = widgets["combos"][key].get_model().get_value(iter, 0)
+					else :
+						object[key] = None
 				if object[key] == "" or object[key] == None :
 					object.pop(key)
 		if widgets.has_key("bool_combos") :
 			for key in widgets["bool_combos"].keys() :
-				object[key] = widgets["bool_combos"][key].get_active_text()
+				try:
+					object[key] = widgets["bool_combos"][key].get_active_text()
+				except AttributeError:
+					iter = widgets["bool_combos"][key].get_active_iter()
+					if iter != None :	
+						object[key] = widgets["bool_combos"][key].get_model().get_value(iter, 0)
+					else :
+						object[key] = None
 				if object[key] == "" or object[key] == None :
 					object.pop(key)
 		if widgets.has_key("combo_entries") :
