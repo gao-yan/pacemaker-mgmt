@@ -1643,7 +1643,7 @@ class AddNativeDlg :
 					dialog.destroy()
 					return None
 		
-class AddObjectDlg() :
+class AddObjectDlg :
 	obj_type = None	
 	widgets = None
 	glade = None
