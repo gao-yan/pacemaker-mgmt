@@ -1009,8 +1009,8 @@ class OrderView(View) :
 	def on_changed(self, widget) :
 		widgets = self.widgets
 
-		cmnobj.auto_fill_on_changed(widgets, "rsc_order")
-		desc = cmnobj.gen_order_desc(widgets)	
+		cmnobj.dynamic_fill(widgets, "rsc_order")
+		desc = cmnobj.gen_desc(widgets, "rsc_order")	
 		cmnobj.show_desc(self.glade, widgets, desc)
 		View.on_changed(self, widget)
 
@@ -1051,7 +1051,7 @@ class ColocationView(View) :
 	def on_changed(self, widget) :
 		widgets = self.widgets
 
-		desc = cmnobj.gen_colocation_desc(widgets)
+		desc = cmnobj.gen_desc(widgets, "rsc_colocation")
 		cmnobj.show_desc(self.glade, widgets, desc)
 		View.on_changed(self, widget)
 
@@ -1691,12 +1691,8 @@ class AddObjectDlg :
 		widgets = self.widgets
 		obj_type = self.obj_type
 
-		cmnobj.auto_fill_on_changed(widgets, obj_type)
-		if obj_type == "rsc_order" :
-			desc = cmnobj.gen_order_desc(widgets)
-		elif obj_type == "rsc_colocation":
-			desc = cmnobj.gen_colocation_desc(widgets)
-
+		cmnobj.dynamic_fill(widgets, obj_type)
+		desc = cmnobj.gen_desc(widgets, obj_type)
 		cmnobj.show_desc(self.glade, widgets, desc)
 
 class MainWindow :
@@ -3114,40 +3110,43 @@ class CommonObject :
 					if filled_list.count(score) == 0 :
 						score_store.append([score, ""])
 
-	def auto_fill_on_changed(self, widgets, obj_type) :
-		object = self.get_values(widgets)
+	def dynamic_fill(self, widgets, obj_type) :
 		if obj_type == "rsc_order" :
-			actions_list = ["start", "stop", "reload", "monitor", "status", "migrate_from", "migrate_to", "promote", "demote"]
-			for key_pair in [["from", "action"], ["to", "to_action"]] :
-				if object.has_key(key_pair[0]) :
-					try :
-						(attrs, running_on, metaattrs, params, ops) = manager.get_rsc_info(object[key_pair[0]])
-						meta = manager.get_rsc_meta(attrs["class"], attrs["type"], attrs["provider"])
-						actions = []
-						for f in meta.actions :
-							if not f["name"] in actions : 
-								actions.append(f["name"])
-					except :
-						actions = actions_list
-				else :
-					actions = actions_list
+			self.dynamic_fill_order(widgets)
 
-				if widgets.has_key("combo_entries") and widgets["combo_entries"].has_key(key_pair[1]) :
-					current_store = widgets["combo_entries"][key_pair[1]].get_model()
-					retained_store = []
-					for i in range(len(current_store)) :
-						if current_store[i][1] == "[default]" :
-							retained_store.append([current_store[i][0], current_store[i][1]])
-					
-					action_store = gtk.ListStore(str, str)
-					action_store.insert(0, ["", ""])
-					for retained_action in retained_store :
-						action_store.append(retained_action)
-					retained_list = [k[0] for k in retained_store]
-					for action in actions :
-						if retained_list.count(action) == 0 :
-							action_store.append([action, ""])
-					widgets["combo_entries"][key_pair[1]].set_model(action_store)
+	def dynamic_fill_order(self, widgets) :
+		object = self.get_values(widgets)
+		actions_list = ["start", "stop", "reload", "monitor", "status", "migrate_from", "migrate_to", "promote", "demote"]
+		for key_pair in [["from", "action"], ["to", "to_action"]] :
+			if object.has_key(key_pair[0]) :
+				try :
+					(attrs, running_on, metaattrs, params, ops) = manager.get_rsc_info(object[key_pair[0]])
+					meta = manager.get_rsc_meta(attrs["class"], attrs["type"], attrs["provider"])
+					actions = []
+					for f in meta.actions :
+						if not f["name"] in actions : 
+							actions.append(f["name"])
+				except :
+					actions = actions_list
+			else :
+				actions = actions_list
+
+			if widgets.has_key("combo_entries") and widgets["combo_entries"].has_key(key_pair[1]) :
+				current_store = widgets["combo_entries"][key_pair[1]].get_model()
+				retained_store = []
+				for i in range(len(current_store)) :
+					if current_store[i][1] == "[default]" :
+						retained_store.append([current_store[i][0], current_store[i][1]])
+				
+				action_store = gtk.ListStore(str, str)
+				action_store.insert(0, ["", ""])
+				for retained_action in retained_store :
+					action_store.append(retained_action)
+				retained_list = [k[0] for k in retained_store]
+				for action in actions :
+					if retained_list.count(action) == 0 :
+						action_store.append([action, ""])
+				widgets["combo_entries"][key_pair[1]].set_model(action_store)
 
 	def show_desc(self, glade, widgets, desc) :
 		desc_table = glade.get_widget("desc_table")
@@ -3165,7 +3164,15 @@ class CommonObject :
 				widgets["desc_labels"][row].set_text(desc[row])
 		desc_table.show_all()
 
-	def gen_order_desc(self, widgets) :
+	def gen_desc(self, widgets, obj_type) :
+		if obj_type == "rsc_order" :
+			desc = self.gen_desc_order(widgets)
+		if obj_type == "rsc_colocation" :
+			desc = self.gen_desc_colocation(widgets)
+
+		return desc
+
+	def gen_desc_order(self, widgets) :
 		order = self.get_values(widgets)
 		dtd_elem = manager.get_dtd_elem("rsc_order")
 		for attr_name in dtd_elem.get_attr_list() :
@@ -3231,7 +3238,7 @@ class CommonObject :
 		else :
 			return None
 
-	def gen_colocation_desc(self, widgets) :
+	def gen_desc_colocation(self, widgets) :
 		colocation = self.get_values(widgets)
 		dtd_elem = manager.get_dtd_elem("rsc_colocation")
 		for attr_name in dtd_elem.get_attr_list() :
