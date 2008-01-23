@@ -192,6 +192,8 @@ def kvbox(title, fields, auto_fill = None) :
 				combo.child.set_text(fields[row].default)
 			else :
 				combo.child.set_text(fields[row].options[0])
+			if fields[row].entry_editable == False :
+				combo.child.set_editable(False)
 			widgets.append(combo)
 			table.attach(combo, 1,2, row, row+1)
 			combos[fields[row].key] = combo
@@ -251,8 +253,9 @@ class Field :
 	can_be_empty = True
 	editable = True
 	auto_gen = False
+	entry_editable = True
 	def __init__(self, key, label=None, default=None, options=None,
-			can_be_empty=True, editable=True, auto_gen=False) :
+			can_be_empty=True, editable=True, auto_gen=False, entry_editable = True) :
 		self.key = key
 		self.label = cond(label==None, key, label)
 		self.default = default
@@ -260,6 +263,7 @@ class Field :
 		self.can_be_empty = can_be_empty
 		self.editable = editable
 		self.auto_gen = auto_gen
+		self.entry_editable = entry_editable
 
 class RAMeta :
 	name = ""
@@ -1766,6 +1770,12 @@ class MainWindow :
 			manager.connected
 			and self.cur_type in [_("native")])
 
+		self.set_action_sensitive('migratersc',
+			manager.connected
+			and self.cur_type in [_("native"), _("group"), _("clone"), _("master")])
+
+		self.set_action_sensitive('unmigratersc', manager.connected)
+
 	# functions
 	def update(self) :
 		self.tree.update()
@@ -1982,6 +1992,87 @@ class MainWindow :
 			for rsc in manager.get_rsc_sub_rsc(self.cur_name) :
 				manager.do_cmd("cleanup_rsc\n"+rsc)
 
+	def on_migrate_rsc(self, action) :
+		node_list = manager.get_normal_nodes()
+		node_list.insert(0, "")
+		
+		migrate = kvbox(_("Migrate Resource"),
+				[Field("rsc", _("Resource"), self.cur_name, manager.get_all_rsc(), False, entry_editable = False),
+				Field("to_node", _("To Node"), "", node_list, True, entry_editable = False),
+				Field("force", _("Force"), "", ["", "True", "False"], True, entry_editable = False)])
+
+		if migrate != None :
+			running_on = manager.query("rsc_running_on\n%s"%migrate["rsc"])
+			if running_on == None or running_on == [] :
+				if migrate["to_node"] == "" :
+					msgbox(migrate["rsc"]+_(" not migrated: not-active and no prefered node specified."))
+					return
+
+			if migrate["to_node"] in running_on :
+				msgbox(migrate["rsc"]+_(" is already running on ")+migrate["to_node"])
+				return
+
+			if migrate["to_node"] != None and len(migrate["to_node"]) > 0 :
+				location = {}
+				location["id"] = "cli-prefer-" + migrate["rsc"]
+				location["rsc"] = migrate["rsc"]
+				location["score"] = "INFINITY"
+				location["boolean_op"] = ""
+				location["exprs"] = []
+				expr = {}
+				expr["id"] = uuid() 
+				expr["attribute"] = "#uname"
+				expr["operation"] = "eq"
+				expr["value"] = migrate["to_node"]
+				location["exprs"].append(expr)
+
+				manager.update_constraint("rsc_location", location)
+
+			if running_on != None and len(running_on) > 0 :
+				if migrate["force"] == "True" or migrate["to_node"] == "" :
+					location = {}
+					location["id"] = "cli-standby-" + migrate["rsc"]
+					location["rsc"] = migrate["rsc"]
+					location["score"] = "-INFINITY"
+					location["boolean_op"] = ""
+					location["exprs"] = []
+					expr = {}
+					expr["id"] = uuid() 
+					expr["attribute"] = "#uname"
+					expr["operation"] = "eq"
+					expr["value"] = running_on[0]
+					location["exprs"].append(expr)
+					manager.update_constraint("rsc_location", location)
+
+	def on_unmigrate_rsc(self, action) :
+		location_ids = manager.query("get_cos\nrsc_location")
+		migrate_ids = {}
+		rsc_ids = []
+		for id in location_ids :
+			for prefix in ["cli-prefer-", "cli-standby-"] :
+				if id.startswith(prefix) :
+					split_id = id.split(prefix)
+					if len(split_id) > 1 :
+						rsc_id = split_id[1]
+						if not migrate_ids.has_key(rsc_id) :
+							migrate_ids[rsc_id] = []
+						migrate_ids[rsc_id].append(id)
+
+		all_str = _("all migrated resources")
+		rsc_list = migrate_ids.keys()[:]
+		rsc_list.insert(0, all_str)
+		unmigrate = kvbox(_("Clear Migrate Constraints"),
+				[Field("rsc", _("Resource"), all_str, rsc_list, False, entry_editable = False)])
+
+		if unmigrate != None :
+			if unmigrate["rsc"] == all_str :
+				for rsc_id in migrate_ids.keys() :
+					for id in migrate_ids[rsc_id] :
+						manager.do_cmd("del_co\nrsc_location\n"+id)
+			else :
+				for id in migrate_ids[unmigrate["rsc"]] :
+					manager.do_cmd("del_co\nrsc_location\n"+id)
+
 	def load_icon(self, name, file) :
 		icons = gtk.IconFactory()
 		icons.add(name,gtk.IconSet(gtk.gdk.pixbuf_new_from_file(file)))
@@ -2031,6 +2122,8 @@ class MainWindow :
 					<menuitem action="defaultrsc"/>
 					<menuitem action="uprsc"/>
 					<menuitem action="downrsc"/>
+					<menuitem action="migratersc"/>
+					<menuitem action="unmigratersc"/>
 				</menu>
 				<menu action="node">
 					<menuitem action="standby"/>
@@ -2046,6 +2139,8 @@ class MainWindow :
 				<menuitem action="defaultrsc"/>
 				<menuitem action="uprsc"/>
 				<menuitem action="downrsc"/>
+				<menuitem action="migratersc"/>
+				<menuitem action="unmigratersc"/>
 			</popup>
 			<popup name="connection_popup">
 				<menuitem action="login"/>
@@ -2068,6 +2163,8 @@ class MainWindow :
 				<toolitem action="defaultrsc"/>
 				<toolitem action="uprsc"/>
 				<toolitem action="downrsc"/>
+				<toolitem action="migratersc"/>
+				<toolitem action="unmigratersc"/>
 				<separator/>
 				<toolitem action="standby"/>
 				<toolitem action="active"/>
@@ -2079,19 +2176,24 @@ class MainWindow :
 		actiongroup = gtk.ActionGroup('haclient')
 		actiongroup.add_actions([
 			('connection', None, _('Connection')),
-			('login', "ha-login", _('Login...'), None,_('login to cluster'), self.on_login),
-			('logout', "ha-logout", _('Logout'), None,_('logout from cluster'), self.on_logout),
-			('quit', "ha-exit", _('Quit'), None,_('Quit the Program'), self.on_quit),
+			('login', gtk.STOCK_CONNECT, _('Login...'), None,_('login to cluster'), self.on_login),
+			('logout', gtk.STOCK_DISCONNECT, _('Logout'), None,_('logout from cluster'), self.on_logout),
+			('quit', gtk.STOCK_QUIT, _('Quit'), None,_('Quit the Program'), self.on_quit),
 			('resource', None, _('Resources')),
-			('addrsc', "ha-add-resource", _('Add New Item'), None,_('add new item'), self.on_add_item),
-			('delrsc', "ha-remove-resource", _('Delete'), None,_('delete current item'), self.on_del_item),
-			('cleanuprsc', "ha-cleanup-resource", _('Cleanup resource'), None,_('cleanup resource'), self.on_item_cleanup),
-			('startrsc', "ha-start-resource", _('Start'), None,_('start resource'), self.on_item_action),
-			('stoprsc', "ha-stop-resource", _('Stop'), None,_('stop resource'), self.on_item_action),
-			('defaultrsc', "ha-default-resource", _('Default'), None,_('work as default'), self.on_item_action),
-			('uprsc', "ha-up-resource", _('Move Up'), None,_('move the resource up in the group'), self.on_item_move),
-			('downrsc', "ha-down-resource", _('Move Down'), None,_('move the resource down in the group'),
-				 self.on_item_move),
+			('addrsc', gtk.STOCK_ADD, _('Add New Item'), None,_('add new item'), self.on_add_item),
+			('delrsc', gtk.STOCK_REMOVE, _('Delete'), None,_('delete current item'), self.on_del_item),
+			('cleanuprsc', gtk.STOCK_CLEAR, _('Cleanup Resource'), None,_('cleanup resource'), self.on_item_cleanup),
+			('startrsc', gtk.STOCK_MEDIA_PLAY, _('Start'), None,_('start resource'), self.on_item_action),
+			('stoprsc', gtk.STOCK_MEDIA_STOP, _('Stop'), None,_('stop resource'), self.on_item_action),
+			('defaultrsc', gtk.STOCK_EXECUTE, _('Default'), None,_('work as default'), self.on_item_action),
+			('uprsc', gtk.STOCK_GO_UP, _('Move Up'), None,_('move the resource up in the group'), self.on_item_move),
+			('downrsc', gtk.STOCK_GO_DOWN, _('Move Down'), None,_('move the resource down in the group'),
+				self.on_item_move),
+			('migratersc', gtk.STOCK_REDO,  _('Migrate Resource'), None, _('migrate a resource to specified node'), 
+				self.on_migrate_rsc),
+			('unmigratersc', gtk.STOCK_UNDO,  _('Clear Migrate Constraints'),
+				None, _('clear constraints created by migrate'),
+				self.on_unmigrate_rsc),
 			('node', None, _('Nodes')),
 			('standby', "ha-standby-node", _('Standby'), None,_('make the node standby'), self.on_standby),
 			('active', "ha-active-node", _('Active'), None,_('make the node active'), self.on_active)
@@ -2463,6 +2565,14 @@ class Manager :
 	def get_nodetype(self, node):
 		return self.query("node_type\n%s"%node)
 	
+	def get_normal_nodes(self) :
+		nodes = self.query("all_nodes")
+		normal_nodes = []
+		for node in nodes :
+			if self.get_nodetype(node)[0] == "normal" :
+				normal_nodes.append(node)
+		return normal_nodes
+
 	def get_active_nodes(self):
 		self.active_nodes = self.query("active_nodes")
 		return self.active_nodes
@@ -2562,6 +2672,15 @@ class Manager :
 			for sub_rsc in sub_rscs :
 				self.parent[sub_rsc] = rsc_id
 		return sub_rscs
+
+	def get_all_rsc(self) :
+		all_rsc = []
+		for rsc in  self.query("all_rsc") :
+			all_rsc.append(rsc)
+			if self.get_rsc_type(rsc) in ["group","clone","master"] : 
+				for subrsc in self.get_rsc_sub_rsc(rsc) :
+					all_rsc.append(subrsc)
+		return all_rsc
 
 	def get_rsc_info(self, rsc) :
 		rsc_attr_names = ["id", "description", "class", "provider", 

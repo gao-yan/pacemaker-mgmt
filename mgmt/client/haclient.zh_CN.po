@@ -649,7 +649,7 @@ msgstr "运行(从)"
 msgid "cleanup resource"
 msgstr "清理资源"
 
-msgid "Cleanup resource"
+msgid "Cleanup Resource"
 msgstr "清理资源"
 
 msgid "Default"
@@ -669,6 +669,33 @@ msgstr "在资源组里下移资源"
 
 msgid "move the resource up in the group"
 msgstr "在资源组里上移资源"
+
+msgid "Migrate Resource"
+msgstr "迁移资源"
+
+msgid "To Node"
+msgstr "目标节点"
+
+msgid "Force"
+msgstr "强制"
+
+msgid "migrate a resource to specified node"
+msgstr "迁移资源到指定节点"
+
+msgid " not migrated: not-active and no prefered node specified."
+msgstr " 无法迁移： 资源未运行，并且未指定目标节点"
+
+msgid " is already running on "
+msgstr " 已经运行在 "
+
+msgid "Clear Migrate Constraints"
+msgstr "清除迁移限制"
+
+msgid "clear constraints created by migrate"
+msgstr "清除迁移时所创建的限制条件"
+
+msgid "all migrated resources"
+msgstr "所有被迁移的资源"
 
 msgid "Resource ID:"
 msgstr "资源 ID："
