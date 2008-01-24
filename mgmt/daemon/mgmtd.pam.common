@@ -1,4 +1,4 @@
 #%PAM-1.0
 
-@include common-auth
-@include common-account
+auth include common-auth
+account include common-account

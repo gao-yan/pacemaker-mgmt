@@ -41,9 +41,6 @@ endif
 
 install-data-hook:
 		mv $(DESTDIR)$(pamdir)/$(pam_DATA) $(DESTDIR)$(pamdir)/hbmgmtd
-		if [ -f /etc/SuSE-release ]; then \
-		sed -i 's/pam_unix/&2/' $(DESTDIR)$(pamdir)/hbmgmtd; \
-		fi
 
 
 halib_PROGRAMS 	=  mgmtd
