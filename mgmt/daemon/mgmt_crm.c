@@ -162,10 +162,7 @@ delete_object(const char* type, const char* entry, const char* id, crm_data_t** 
 	rc = cib_conn->cmds->delete(
 			cib_conn, type, cib_object, output, cib_sync_call);
 	free_xml(cib_object);
-	if (rc < 0) {
-		return -1;
-	}
-	return 0;
+	return rc;
 }
 
 pe_working_set_t*
