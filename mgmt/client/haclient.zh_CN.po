@@ -689,10 +689,10 @@ msgid " is already running on "
 msgstr " 已经运行在 "
 
 msgid "Clear Migrate Constraints"
-msgstr "清除迁移限制"
+msgstr "清理迁移限制"
 
 msgid "clear constraints created by migrate"
-msgstr "清除迁移时所创建的限制条件"
+msgstr "清理迁移时所创建的限制条件"
 
 msgid "all migrated resources"
 msgstr "所有被迁移的资源"
