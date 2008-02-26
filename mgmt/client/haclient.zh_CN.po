@@ -191,6 +191,57 @@ msgstr "权重："
 msgid "Server:"
 msgstr "服务器："
 
+msgid "Name:"
+msgstr "名称："
+
+msgid "Value:"
+msgstr "值："
+
+msgid "Description:"
+msgstr "描述："
+
+msgid "Interval:"
+msgstr "间隔："
+
+msgid "Timeout:"
+msgstr "超时："
+
+msgid "Start Delay"
+msgstr "启动延时"
+
+msgid "Start Delay:"
+msgstr "启动延时："
+
+msgid "Disabled"
+msgstr "失效"
+
+msgid "Disabled:"
+msgstr "失效："
+
+msgid "Role"
+msgstr "角色"
+
+msgid "Role:"
+msgstr "角色："
+
+msgid "Prereq"
+msgstr "依赖"
+
+msgid "Prereq:"
+msgstr "依赖："
+
+msgid "On Fail"
+msgstr "失败时"
+
+msgid "On Fail:"
+msgstr "失败时："
+
+msgid "Attribute:"
+msgstr "属性："
+
+msgid "Operation:"
+msgstr "操作："
+
 #: haclient.glade.h:30
 msgid "To:"
 msgstr "目标："

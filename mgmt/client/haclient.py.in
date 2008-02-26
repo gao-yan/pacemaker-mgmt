@@ -419,9 +419,11 @@ class ListWithAddDel :
 	
 		
 	def on_add(self, widget) :
-		new = kvbox(self.title, filter(lambda f:f.editable, self.fields), self.auto_fill)
-		if new != None :
-			self.insert(new)
+		objdlg = AddObjectDlg()
+		object = objdlg.run(self.title, self.obj_type, True, self.meta, self.auto_fill, self.dynamic_fill,
+					self.dynamic_desc, self.static_desc)
+		if object != None :
+			self.insert(object)
 			
 	def create_store(self, n) :
 		if n == 3 :
@@ -432,7 +434,8 @@ class ListWithAddDel :
 			return gtk.ListStore(str, str, str, str, str,str, str, str, str, str)
 		return None
 		
-	def __init__(self, widget, add_btn, del_btn, title, fields, call_back=None, auto_fill=None) :
+	def __init__(self, widget, add_btn, del_btn, title, obj_type = "nvpair", meta = None, fields = None, call_back=None,
+			auto_fill=None, dynamic_fill = None, dynamic_desc = None, static_desc = None) :
 		self.add_btn = add_btn
 		self.del_btn = del_btn
 		self.widget = widget
@@ -442,6 +445,11 @@ class ListWithAddDel :
 		self.add_btn_handler = add_btn.connect("clicked", self.on_add)
 		self.del_btn_handler = del_btn.connect("clicked", self.on_del)
 		self.auto_fill = auto_fill
+		self.obj_type = obj_type
+		self.dynamic_fill = dynamic_fill
+		self.meta = meta
+		self.dynamic_desc = dynamic_desc
+		self.static_desc = static_desc
 		self.store = self.create_store(len(fields))
 		widget.set_model(self.store)
 		for i in range(len(fields)) :
@@ -1013,9 +1021,10 @@ class OrderView(View) :
 	def on_changed(self, widget) :
 		widgets = self.widgets
 
-		cmnobj.dynamic_fill(widgets, "rsc_order")
-		desc = cmnobj.gen_desc(widgets, "rsc_order")	
-		cmnobj.show_desc(self.glade, widgets, desc)
+		cmnobj.dynamic_fill_order(widget, widgets)
+		desc = cmnobj.dynamic_desc_order(widget, widgets)	
+		if desc != None :
+			cmnobj.show_desc(self.glade, widgets, desc)
 		View.on_changed(self, widget)
 
 class ColocationView(View) :
@@ -1055,8 +1064,9 @@ class ColocationView(View) :
 	def on_changed(self, widget) :
 		widgets = self.widgets
 
-		desc = cmnobj.gen_desc(widgets, "rsc_colocation")
-		cmnobj.show_desc(self.glade, widgets, desc)
+		desc = cmnobj.dynamic_desc_colocation(widget, widgets)
+		if desc != None :
+			cmnobj.show_desc(self.glade, widgets, desc)
 		View.on_changed(self, widget)
 
 class LocationView(View) :
@@ -1104,12 +1114,16 @@ class LocationView(View) :
 			glade.get_widget("add_expr"),
 			glade.get_widget("del_expr"),
 			_("Add Expression"),
+			"expression",
+			None,
 			[Field("id", _("ID"), "id_", None, False, auto_gen=True),
 			Field("attribute", _("Attribute"), "#uname", ["#uname","#id", "#is_dc"], False),
 			Field("operation", _("Operation"), "eq",
 				['lt','gt','lte','gte','eq','ne','defined','not_defined'], False),
 			Field("value", _("Value"), "", manager.get_all_nodes(), False)],
-			self.on_changed)
+			self.on_changed,
+			cmnobj.auto_fill_expression,
+			cmnobj.dynamic_fill_expression)
 		self.update()
 		
 class RscView(View) :
@@ -1183,37 +1197,6 @@ class RscView(View) :
 	def on_notebook_event(self, widget, page, page_num) :
 		global last_rsc_view_page_num
 		last_rsc_view_page_num = page_num
-			
-	def autofill_param(self, combo, widgets) :
-		for param in self.meta.parameters :
-			if combo.child.get_text() == param["name"] :
-				widgets[2].set_text(param["content"]["default"])
-
-	def autofill_op(self, combo, widgets, combo_name) :			
-		if combo_name == "name" :
-			for op in self.meta.actions :
-				if combo.child.get_text() == op["name"] :
-					widgets[2].set_text(op.get("description", ""))
-					widgets[3].set_text(op.get("interval", ""))
-					widgets[4].set_text(op.get("timeout", ""))
-					widgets[5].set_text(op.get("start-delay", ""))
-					widgets[6].child.set_text(op.get("disabled", ""))
-					widgets[7].child.set_text(op.get("role", ""))
-					widgets[8].child.set_text(op.get("prereq", ""))
-					widgets[9].child.set_text(op.get("on-fail", ""))
-					break
-		elif combo_name == "role" :
-			for op in self.meta.actions :
-				if widgets[1].child.get_text() == op["name"] and combo.child.get_text() == op.get("role", "") :
-					widgets[2].set_text(op.get("description", ""))
-					widgets[3].set_text(op.get("interval", ""))
-					widgets[4].set_text(op.get("timeout", ""))
-					widgets[5].set_text(op.get("start-delay", ""))
-					widgets[6].child.set_text(op.get("disabled", ""))
-					widgets[8].child.set_text(op.get("prereq", ""))
-					widgets[9].child.set_text(op.get("on-fail", ""))
-					break
-
 
 	def __init__(self, rsc) :
 		View.__init__(self, rsc)
@@ -1231,31 +1214,38 @@ class RscView(View) :
 				if not f["name"] in op_options : op_options.append(f["name"])
 			
 		self.param_list = ListWithAddDel(glade.get_widget("parameters"),
-					    glade.get_widget("addparam"),
-					    glade.get_widget("delparam"),
-					    _("Add Parameter"),
-					    [Field("id", _("ID"), "", None, False, auto_gen=True),
-			  		     Field("name", _("Name"), "", param_options, False),
-					     Field("value", _("Value"), "", None, True)],
-					    self.on_changed,
-						self.autofill_param)
+					glade.get_widget("addparam"),
+					glade.get_widget("delparam"),
+					_("Add Parameter"),
+					"nvpair",
+					meta,
+					[Field("id", _("ID"), "", None, False, auto_gen=True),
+			  		Field("name", _("Name"), "", param_options, False),
+					Field("value", _("Value"), "", None, True)],
+					self.on_changed,
+					cmnobj.auto_fill_primitive_instattr,
+					cmnobj.dynamic_fill_primitive_instattr,
+					cmnobj.dynamic_desc_primitive_instattr)
 				      
 		self.op_list = ListWithAddDel(glade.get_widget("operations"),
-					 glade.get_widget("addop"),
-					 glade.get_widget("delop"),
-					 _("Add Operation"),
-					    [Field("id", _("ID"), "", None, False, auto_gen=True),
-			  		     Field("name", _("Name"), "", op_options, False),
-					     Field("description", _("Description"), "", None, True),
-					     Field("interval", _("Interval"), "", None, True),
-					     Field("timeout", _("Timeout"), "", None, True),
-					     Field("start_delay", _("Start Delay"), "0", None, True),
-					     Field("disabled", _("Disabled"), "false", ["true","false"], True),
-					     Field("role", _("Role"),"Started",["Master","Slave","Started","Stopped"],True),
-					     Field("prereq", _("Prereq"), "", ["nothing","quorum","fencing"], True),
-					     Field("on_fail", _("On Fail"), "",["ignore","block","stop","restart","fence"], True)],
-					 self.on_changed,
-					 self.autofill_op)
+					glade.get_widget("addop"),
+					glade.get_widget("delop"),
+					_("Add Operation"),
+					"op",
+					meta,
+					[Field("id", _("ID"), "", None, False, auto_gen=True),
+			  		 Field("name", _("Name"), "", op_options, False),
+					Field("description", _("Description"), "", None, True),
+					Field("interval", _("Interval"), "", None, True),
+					Field("timeout", _("Timeout"), "", None, True),
+					Field("start_delay", _("Start Delay"), "0", None, True),
+					Field("disabled", _("Disabled"), "false", ["true","false"], True),
+					Field("role", _("Role"),"Started",["Master","Slave","Started","Stopped"],True),
+					Field("prereq", _("Prereq"), "", ["nothing","quorum","fencing"], True),
+					Field("on_fail", _("On Fail"), "",["ignore","block","stop","restart","fence"], True)],
+					self.on_changed,
+					cmnobj.auto_fill_op,
+					cmnobj.dynamic_fill_op)
 		
 		options_dict = {"is_managed":["default","true","false"],
 			"restart_type":["ignore","restart"],
@@ -1331,13 +1321,15 @@ class CompoundRscView(View) :
 		glade = self.glade
 			
 		self.param_list = ListWithAddDel(glade.get_widget("parameters"),
-					    glade.get_widget("addparam"),
-					    glade.get_widget("delparam"),
-					    _("Add Parameter"),
-					    [Field("id", _("ID"), "", None, False, auto_gen=True),
-			  		     Field("name", _("Name"), "", None, False),
-					     Field("value", _("Value"), "", None, True)],
-					    self.on_changed)
+					glade.get_widget("addparam"),
+					glade.get_widget("delparam"),
+					_("Add Parameter"),
+					"nvpair",
+					None,
+					[Field("id", _("ID"), "", None, False, auto_gen=True),
+			  		Field("name", _("Name"), "", None, False),
+					Field("value", _("Value"), "", None, True)],
+					self.on_changed)
 					    
 		options_dict = {"is_managed":["default","true","false"],
 			"restart_type":["ignore","restart"],
@@ -1393,7 +1385,10 @@ class AddNativeDlg :
 		param_list = ListWithAddDel(glade.get_widget("parameters"),
 				       glade.get_widget("addparam"),
 				       glade.get_widget("delparam"),
-				       _("Add Parameter"), fields)
+				       _("Add Parameter"), "nvpair", meta, fields, None,
+					cmnobj.auto_fill_primitive_instattr,
+					cmnobj.dynamic_fill_primitive_instattr,
+					cmnobj.dynamic_desc_primitive_instattr)
 		self.param_list = param_list
 		if meta != None :
 			for param in meta.parameters :
@@ -1652,29 +1647,50 @@ class AddObjectDlg :
 	widgets = None
 	glade = None
 
-	def run(self, title, obj_type) :
+	def run(self, title, obj_type, auto_id = False, meta = None, auto_fill = None, dynamic_fill = None,
+			dynamic_desc = None, static_desc = None) :
 		global top_window
 		self.obj_type = obj_type
+		self.dynamic_fill = dynamic_fill
+		self.dynamic_desc = dynamic_desc
+		self.meta  = meta
 
 		dialog = gtk.Dialog(title, top_window, gtk.DIALOG_MODAL,
 			(gtk.STOCK_OK, gtk.RESPONSE_OK, gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL))
 		self.glade = gtk.glade.XML(UI_FILE, "cmnobj_attrs", "haclient")
 		attrs_vbox = self.glade.get_widget("cmnobj_attrs")
 		self.widgets = cmnobj.render_widgets(self.glade, obj_type, True)
-		cmnobj.auto_fill(self.widgets)
-
-		for widget_type in ("combos", "bool_combos", "combo_entries") :
-			if self.widgets.has_key(widget_type) :
-				for widget in self.widgets[widget_type].values() :
-					widget.connect("changed", self.on_changed)
-
-		if self.widgets.has_key("combo_entries") and self.widgets["combo_entries"].has_key("id") :
-			self.widgets["combo_entries"]["id"].child.set_text(obj_type.split("_")[-1]+"_")
+		if auto_fill != None :
+			auto_fill(self.widgets, meta)
 
 		dialog.vbox.pack_start(attrs_vbox)
 		dialog.vbox.show_all()
 		save_top_window = top_window
 		top_window = dialog
+
+		if dynamic_desc == None and static_desc == None :
+			self.glade.get_widget("desc_label").hide()
+
+		if static_desc != None :
+			cmnobj.show_desc(self.glade, self.widgets, static_desc)
+
+		if dynamic_fill != None or dynamic_desc != None :
+			for widget_type in ("combos", "bool_combos", "combo_entries") :
+				if self.widgets.has_key(widget_type) :
+					for widget in self.widgets[widget_type].values() :
+						widget.connect("changed", self.on_changed)
+
+		if auto_id == True :
+			if self.widgets.has_key("name_labels") and self.widgets["name_labels"].has_key("id") :
+				self.widgets["name_labels"]["id"].hide_all()
+			if self.widgets.has_key("combo_entries") and self.widgets["combo_entries"].has_key("id") :
+				self.widgets["combo_entries"]["id"].child.set_text(uuid())
+				self.widgets["combo_entries"]["id"].hide_all()
+		else :
+			if self.widgets.has_key("combo_entries") and self.widgets["combo_entries"].has_key("id") :
+				self.widgets["combo_entries"]["id"].child.set_text(obj_type.split("_")[-1]+"_")
+
+
 
 		while True :
 			ret = dialog.run()
@@ -1686,18 +1702,22 @@ class AddObjectDlg :
 				passed = cmnobj.verify_values(self.widgets, obj_type)
 				if passed :
 					object = cmnobj.get_values(self.widgets)
-					manager.update_constraint(obj_type, object)
 					top_window = save_top_window
 					dialog.destroy()
-					return None
+					return object
 
 	def on_changed(self, widget) :
 		widgets = self.widgets
 		obj_type = self.obj_type
+		meta = self.meta
+		
 
-		cmnobj.dynamic_fill(widgets, obj_type)
-		desc = cmnobj.gen_desc(widgets, obj_type)
-		cmnobj.show_desc(self.glade, widgets, desc)
+		if self.dynamic_fill != None :
+			self.dynamic_fill(widget, widgets, meta)
+		if self.dynamic_desc != None :
+			desc = self.dynamic_desc(widget, widgets, meta)
+			if desc != None :
+				cmnobj.show_desc(self.glade, widgets, desc)
 
 class MainWindow :
 	'''
@@ -1911,10 +1931,16 @@ class MainWindow :
 				manager.update_constraint("rsc_location", location)
 		elif new_type["type"] == _("order") :
 			objdlg = AddObjectDlg()
-			objdlg.run("Add Order Constraint", "rsc_order")
+			object = objdlg.run("Add Order Constraint", "rsc_order", False, None, cmnobj.auto_fill, cmnobj.dynamic_fill_order,
+						cmnobj.dynamic_desc_order)
+			if object != None :
+				manager.update_constraint("rsc_order", object)
 		elif new_type["type"] == _("colocation") :
 			objdlg = AddObjectDlg()
-			objdlg.run("Add Colocation Constraint", "rsc_colocation")
+			object = objdlg.run("Add Colocation Constraint", "rsc_colocation", False, None, cmnobj.auto_fill,
+						dynamic_desc = cmnobj.dynamic_desc_colocation)
+			if object != None :
+				manager.update_constraint("rsc_colocation", object)
 			
 	def on_del_item(self, action) :
 		if confirmbox(_("Delete") + " "+self.cur_type + " " + self.cur_name + "?") == gtk.RESPONSE_YES:
@@ -3018,7 +3044,7 @@ class CommonObject :
 					
 				for option in options:
 					if attr_default != None and option == attr_default :
-						store.append([option, _("[default]")])
+						store.append([option, "["+_("default")+"]"])
 					else :
 						store.append([option, ""])
 				widget = gtk.ComboBox(store)
@@ -3036,7 +3062,7 @@ class CommonObject :
 				store = gtk.ListStore(str, str)
 				store.append(["", ""])
 				if attr_default != None :
-					store.append([attr_default, _("[default]")])
+					store.append([attr_default, "["+_("default")+"]"])
 				widget = gtk.ComboBoxEntry(store)
 				cell = gtk.CellRendererText()
 				widget.pack_start(cell, True)
@@ -3181,15 +3207,32 @@ class CommonObject :
 					widgets["checkbuttons"][key].set_active("true" == lower_value
 										or "yes" == lower_value
 										or "1" == lower_value)
-	def auto_fill(self, widgets) :
+
+	def combobox_store_append(self, combo, append_options) :
+		current_store = combo.get_model()
+		retained_store = []
+		for i in range(len(current_store)) :
+			if current_store[i][1] == "["+_("default")+"]" :
+				retained_store.append([current_store[i][0], current_store[i][1]])
+			
+		new_store = gtk.ListStore(str, str)
+		new_store.insert(0, ["", ""])
+		for retained in retained_store :
+			new_store.append(retained)
+		retained_list = [k[0] for k in retained_store]
+		for append_option in append_options :
+			if retained_list.count(append_option[0]) == 0 :
+				new_store.append(append_option)
+		combo.set_model(new_store)
+
+	def auto_fill(self, widgets, meta = None) :
 		rsc_store = gtk.ListStore(str, str)
-		rsc_store.append(["", ""])
 		for rsc in manager.get_all_rsc_id() :
 			rsc_store.append([rsc, ""])
 		if widgets.has_key("combo_entries") :
 			for key in ["rsc", "from", "to"] :
 				if widgets["combo_entries"].has_key(key) :
-					widgets["combo_entries"][key].set_model(rsc_store)
+					self.combobox_store_append(widgets["combo_entries"][key], rsc_store)
 
 		try :
 			op_dtd_elem = manager.get_dtd_elem("op")
@@ -3203,69 +3246,144 @@ class CommonObject :
 		else :
 			roles = ["Master", "Slave", "Started", "Stopped"]
 
+		role_store = [[role, ""] for role in roles]
 		if widgets.has_key("combo_entries") :
 			for key in ["role", "from_role", "to_role"] :
 				if widgets["combo_entries"].has_key(key) :
-					role_store = widgets["combo_entries"][key].get_model()
-					filled_list = []
-					for i in range(len(role_store)) :
-						filled_list.append(role_store[i][0])
-					if filled_list.count("") == 0 :
-						role_store.insert(0, ["", ""])
-					for role in roles :
-						if filled_list.count(role) == 0 :
-							role_store.append([role, ""])
+					self.combobox_store_append(widgets["combo_entries"][key], role_store)
 
 		scores = ["INFINITY", "-INFINITY"]
-		if widgets.has_key("combo_entries") :
-			if widgets["combo_entries"].has_key("score") :
-				score_store = widgets["combo_entries"]["score"].get_model()
-				filled_list = []
-				for i in range(len(score_store)) :
-					filled_list.append(score_store[i][0])
-				if filled_list.count("") == 0 :
-					score_store.insert(0, ["", ""])
-				for score in scores :
-					if filled_list.count(score) == 0 :
-						score_store.append([score, ""])
+		score_store = [[score, ""] for score in scores]
+		if widgets.has_key("combo_entries") and widgets["combo_entries"].has_key("score") :
+			self.combobox_store_append(widgets["combo_entries"]["score"], score_store)
 
-	def dynamic_fill(self, widgets, obj_type) :
-		if obj_type == "rsc_order" :
-			self.dynamic_fill_order(widgets)
+	def auto_fill_primitive_instattr(self, widgets, meta = None) :
+		if meta != None :
+			instattr_store = []
+			for param in meta.parameters :
+				param_attr = ""
+				if param["required"] == "1" :
+					param_attr =  param_attr + _("required")
+				if param["unique"] == "1" :
+					if param_attr != "" :
+						param_attr = param_attr + _(", ")
+					param_attr = param_attr + _("unique")
+				if param_attr != "" :
+					param_attr = "[ "+ param_attr + " ]"
+				instattr_store.append([param["name"], param_attr])
+					
+			if widgets.has_key("combo_entries") and widgets["combo_entries"].has_key("name") :
+				self.combobox_store_append(widgets["combo_entries"]["name"], instattr_store)
 
-	def dynamic_fill_order(self, widgets) :
+	def auto_fill_expression(self, widgets, meta = None) :
+		attr_names = ["#uname","#id", "#is_dc"]
+		attr_store = [[attr_name, ""] for attr_name in attr_names]
+		
+		if widgets.has_key("combo_entries") and widgets["combo_entries"].has_key("attribute") :
+			self.combobox_store_append(widgets["combo_entries"]["attribute"], attr_store)
+
+	def auto_fill_op(self, widgets, meta = None) :
+		actions = ["start", "stop", "reload", "monitor", "status", "migrate_from", "migrate_to", "promote", "demote"]
+		op_names = []
+		if meta != None :
+			for action in meta.actions :
+				if action["name"] not in op_names :
+					op_names.append(action["name"])
+		else :
+			op_names = actions
+		op_name_store = [[op_name, ""] for op_name in op_names]
+
+		if widgets.has_key("combo_entries") and widgets["combo_entries"].has_key("name") :
+			self.combobox_store_append(widgets["combo_entries"]["name"], op_name_store)
+
+	def dynamic_fill_order(self, widget, widgets, meta = None) :
+		if widgets.has_key("combo_entries") and widgets["combo_entries"].has_key("from") \
+				and widget == widgets["combo_entries"]["from"] :
+			key_pair = ["from", "action"]
+		elif widgets.has_key("combo_entries") and widgets["combo_entries"].has_key("to") \
+				and widget == widgets["combo_entries"]["to"] :
+			key_pair = ["to", "to_action"]
+		else :
+			return
+
 		object = self.get_values(widgets)
 		actions_list = ["start", "stop", "reload", "monitor", "status", "migrate_from", "migrate_to", "promote", "demote"]
-		for key_pair in [["from", "action"], ["to", "to_action"]] :
-			if object.has_key(key_pair[0]) :
-				try :
-					(attrs, running_on, metaattrs, params, ops) = manager.get_rsc_info(object[key_pair[0]])
-					meta = manager.get_rsc_meta(attrs["class"], attrs["type"], attrs["provider"])
-					actions = []
-					for f in meta.actions :
-						if not f["name"] in actions : 
-							actions.append(f["name"])
-				except :
-					actions = actions_list
-			else :
-				actions = actions_list
 
-			if widgets.has_key("combo_entries") and widgets["combo_entries"].has_key(key_pair[1]) :
-				current_store = widgets["combo_entries"][key_pair[1]].get_model()
-				retained_store = []
-				for i in range(len(current_store)) :
-					if current_store[i][1] == "[default]" :
-						retained_store.append([current_store[i][0], current_store[i][1]])
-				
-				action_store = gtk.ListStore(str, str)
-				action_store.insert(0, ["", ""])
-				for retained_action in retained_store :
-					action_store.append(retained_action)
-				retained_list = [k[0] for k in retained_store]
-				for action in actions :
-					if retained_list.count(action) == 0 :
-						action_store.append([action, ""])
-				widgets["combo_entries"][key_pair[1]].set_model(action_store)
+		if object.has_key(key_pair[0]) :
+			try :
+				(attrs, running_on, metaattrs, params, ops) = manager.get_rsc_info(object[key_pair[0]])
+				meta = manager.get_rsc_meta(attrs["class"], attrs["type"], attrs["provider"])
+				actions = []
+				for f in meta.actions :
+					if not f["name"] in actions : 
+						actions.append(f["name"])
+			except :
+				actions = actions_list
+		else :
+			actions = actions_list
+
+		action_store = [[action, ""] for action in actions]
+
+		if widgets.has_key("combo_entries") and widgets["combo_entries"].has_key(key_pair[1]) :
+			self.combobox_store_append(widgets["combo_entries"][key_pair[1]], action_store)
+
+	def dynamic_fill_primitive_instattr(self, widget, widgets, meta = None) :
+		if widgets.has_key("combo_entries") and widgets["combo_entries"].has_key("name") \
+				and widget == widgets["combo_entries"]["name"] \
+				and meta != None :
+			instattr = self.get_values(widgets)
+			value_store = []
+			if instattr.has_key("name") :
+				for param in meta.parameters :
+					if instattr["name"] == param["name"] :
+						default_value = param["content"]["default"]
+						if default_value != None and default_value != "" :
+							value_store.insert(0, [default_value, "[ "+ _("default") + " ]"])
+						break
+			if widgets.has_key("combo_entries") and widgets["combo_entries"].has_key("value") :
+				self.combobox_store_append(widgets["combo_entries"]["value"], value_store)
+
+	def dynamic_fill_expression(self, widget, widgets, meta = None) :
+		if widgets.has_key("combo_entries") and widgets["combo_entries"].has_key("attribute") \
+				and widget == widgets["combo_entries"]["attribute"] :
+			expr = self.get_values(widgets)
+			value_store = []
+			if expr.has_key("attribute") :
+				if expr["attribute"] == "#uname" :
+					value_store = [[node, ""] for node in manager.get_normal_nodes()]
+				elif expr["attribute"] == "#is_dc" :
+					value_store = [[boolean_val, ""] for boolean_val in ["true", "false"]]
+
+			if widgets.has_key("combo_entries") and widgets["combo_entries"].has_key("value") :
+				self.combobox_store_append(widgets["combo_entries"]["value"], value_store)
+
+	def dynamic_fill_op(self, widget, widgets, meta = None) :
+		if meta == None or not widgets.has_key("combo_entries") \
+				or ( widget != widgets["combo_entries"].get("name") and widget != widgets["combo_entries"].get("role") ):
+			return
+
+		op = self.get_values(widgets)
+		if op.has_key("name") :
+			default_role = manager.get_dtd_elem("op").get_attr("role").get_default()
+
+			for action in meta.actions :
+				if action["name"] == op["name"] :
+					if action.get("role") == op.get("role") \
+							or ( action.get("role") == None and op.get("role") == default_role ) \
+							or ( action.get("role") == default_role and op.get("role") == None) :
+						for attr_name in widgets["combo_entries"].keys() :
+							if attr_name != "id" and attr_name != "name" and attr_name != "role":
+								attr_store = []
+								if action.has_key(attr_name) :
+									attr_store.append([action[attr_name], ""])
+								self.combobox_store_append(widgets["combo_entries"][attr_name], attr_store)
+								widgets["combo_entries"][attr_name].child.set_text(action.get(attr_name, ""))
+						break
+		else :
+			for attr_name in widgets["combo_entries"].keys() :
+				if attr_name != "name" :
+					self.combobox_store_append(widgets["combo_entries"][attr_name], [])
+					widgets["combo_entries"][attr_name].child.set_text("")
 
 	def show_desc(self, glade, widgets, desc) :
 		desc_table = glade.get_widget("desc_table")
@@ -3277,21 +3395,35 @@ class CommonObject :
 				desc_label.set_alignment(0, 0.5)
 				desc_table.attach(desc_label, 0, 1, row, row+1, xpadding = 5)
 				desc_labels.append(desc_label)
-			widgets["desc_labels"] = desc_labels
+			if desc_labels != [] :
+				widgets["desc_labels"] = desc_labels
 		else :
 			for row in range(len(desc)) :
 				widgets["desc_labels"][row].set_text(desc[row])
 		desc_table.show_all()
+	
+	def dynamic_desc_primitive_instattr(self, widget, widgets, meta = None) :
+		if meta == None or not widgets.has_key("combo_entries") \
+				or widget != widgets["combo_entries"].get("name") :
+			return None
 
-	def gen_desc(self, widgets, obj_type) :
-		if obj_type == "rsc_order" :
-			desc = self.gen_desc_order(widgets)
-		if obj_type == "rsc_colocation" :
-			desc = self.gen_desc_colocation(widgets)
-
+		desc = []
+		instattr = self.get_values(widgets)
+		if instattr.has_key("name") :
+			for param in meta.parameters :
+				if instattr["name"] == param["name"] :		
+					longdesc = param["longdesc"]
+					shortdesc = param["shortdesc"]
+					if longdesc != None and longdesc != "" :
+						desc = [longdesc]
+					elif shortdesc != None and shortdesc != "" :
+						desc = [shortdesc]
+					break
+		else :
+			desc = [""]
 		return desc
 
-	def gen_desc_order(self, widgets) :
+	def dynamic_desc_order(self, widget, widgets, meta = None) :
 		order = self.get_values(widgets)
 		dtd_elem = manager.get_dtd_elem("rsc_order")
 		for attr_name in dtd_elem.get_attr_list() :
@@ -3357,7 +3489,7 @@ class CommonObject :
 		else :
 			return None
 
-	def gen_desc_colocation(self, widgets) :
+	def dynamic_desc_colocation(self, widget, widgets, meta = None) :
 		colocation = self.get_values(widgets)
 		dtd_elem = manager.get_dtd_elem("rsc_colocation")
 		for attr_name in dtd_elem.get_attr_list() :
@@ -3388,7 +3520,7 @@ class CommonObject :
 				desc.append("* If %s cannot be %s on any node, then %s won't be %s anywhere"
 						%(colocation["from"], colocation["from_role"], colocation["to"], colocation["to_role"]))
 		elif colocation["score"] == "-INFINITY" or colocation["score"] == "-infinity" :
-			desc.append("* Prevent %s from be %s on the same node as %s %s  ( %s according to %s )" 
+			desc.append("* Prevent %s from being %s on the same node as %s %s  ( %s according to %s )" 
 					%(colocation["from"], colocation["from_role"], colocation["to"], colocation["to_role"],
 					colocation["from"], colocation["to"]))
 			desc.append("* If %s is %s on every node, then %s won't be %s anywhere"
@@ -3398,7 +3530,7 @@ class CommonObject :
 						%(colocation["from"], colocation["from_role"], colocation["to"]))
 				desc.append("")
 			else :
-				desc.append("* Prevent %s from be %s on the same node as %s %s ( %s according to %s)" 
+				desc.append("* Prevent %s from being %s on the same node as %s %s ( %s according to %s)" 
 						%(colocation["to"], colocation["to_role"], colocation["from"], colocation["from_role"],
 						colocation["to"], colocation["from"]))
 				desc.append("* If %s is %s on every node, then %s won't be %s anywhere"
