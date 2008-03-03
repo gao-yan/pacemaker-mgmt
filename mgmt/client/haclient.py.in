@@ -3374,6 +3374,8 @@ class CommonObject :
 						for attr_name in widgets["combo_entries"].keys() :
 							if attr_name != "id" and attr_name != "name" and attr_name != "role":
 								attr_store = []
+								if attr_name == "start_delay" and action.has_key("start-delay") :
+									action["start_delay"] = action["start-delay"]
 								if action.has_key(attr_name) :
 									attr_store.append([action[attr_name], ""])
 								self.combobox_store_append(widgets["combo_entries"][attr_name], attr_store)
