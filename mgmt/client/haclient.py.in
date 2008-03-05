@@ -658,7 +658,7 @@ class Tree :
 			self.add_node(nodes_root, node, node in active_nodes, node in crm_nodes)
 
 		rscs_root = self.store.append(root, [_("Resources"),"", "resources"])
-		rscs = manager.get_all_rsc_id()
+		rscs = manager.get_level_rsc()
 		for rsc in rscs :
 			self.add_rsc(rscs_root, rsc)
 
@@ -704,7 +704,7 @@ class Tree :
 			label = type
 			status = type
 			iter = self.store.append(parent,[rsc, _(status), _(label)])
-			for subrsc in manager.get_rsc_sub_rsc(rsc) :
+			for subrsc in manager.get_sub_rsc(rsc) :
 				self.add_rsc(iter, subrsc)
 					
 	def add_node(self, nodes_root, node, active, started):
@@ -1098,7 +1098,7 @@ class LocationView(View) :
 			for expr in location["exprs"] :
 				self.expr_list.insert(expr)
 			store = gtk.ListStore(str)
-			for rsc in manager.get_all_rsc_id():
+			for rsc in manager.get_all_rsc():
 				store.append([rsc])
 			glade.get_widget("resource").set_model(store)
 			self.save_location = location
@@ -1540,7 +1540,7 @@ class AddNativeDlg :
 		
 		store = gtk.ListStore(str)
 		store.append([""])
-		for rsc in manager.get_all_rsc_id() :
+		for rsc in manager.get_all_rsc() :
 			if manager.get_rsc_type(rsc) == "group" :
 				store.append([rsc])
 		glade.get_widget("group").set_model(store)
@@ -1571,12 +1571,12 @@ class AddNativeDlg :
 					if not check_entry_value(glade, "master_max"): passed = False
 					if not check_entry_value(glade, "master_node_max"): passed = False
 				if manager.rsc_exists(glade.get_widget("id").get_text()) :
-					msgbox(_("the ID already exists"))
+					msgbox(_("The ID already exists"))
 					passed = False
 
 				group_ = glade.get_widget("group").child.get_text()
 				if group_ != "" and manager.rsc_exists(group_) and manager.get_rsc_type(group_) != "group":
-					msgbox(_("the Group Name is exists"))
+					msgbox(_("The specified group name exists, while it's not group type"))
 					passed = False
 
 				if group_ != "" and glade.get_widget("is_clone").get_active():
@@ -1923,7 +1923,7 @@ class MainWindow :
 		elif new_type["type"] == _("location") :
 			location = kvbox(_("Add Location Constraint"),
 				[Field("id",_("ID"),"location_",None, False),
-				 Field("rsc",_("Resource"),None, manager.get_all_rsc_id(),False)])
+				 Field("rsc",_("Resource"),None, manager.get_all_rsc(),False)])
 			if location != None :
 				location["score"] = '0'
 				location["boolean_op"] = ''
@@ -1953,7 +1953,7 @@ class MainWindow :
 					parent = manager.parent[self.cur_name] 
 				except KeyError : # the self.cur_name does not exist in manager.parent
 					parent = self.cur_name
-				if len(manager.get_rsc_sub_rsc(parent)) == 1 :
+				if len(manager.get_sub_rsc(parent)) == 1 :
 					manager.do_cmd("del_rsc\n"+parent)
 				else :
 					manager.do_cmd("del_rsc\n"+self.cur_name)
@@ -1980,7 +1980,7 @@ class MainWindow :
 			if param["name"] == "target_role" and param["value"] == target_role :
 				return
 
-		for subrsc in manager.get_rsc_sub_rsc(self.cur_name) :
+		for subrsc in manager.get_sub_rsc(self.cur_name) :
 			(attrs, running_on, metaattrs, params, ops) = \
 				manager.get_rsc_info(subrsc)
 			for metaattr in metaattrs :
@@ -2015,7 +2015,7 @@ class MainWindow :
 		if self.cur_type == _("native") :
 			manager.do_cmd("cleanup_rsc\n"+self.cur_name)
 		elif self.cur_type in [_("group"),_("clone"),_("master")] :
-			for rsc in manager.get_rsc_sub_rsc(self.cur_name) :
+			for rsc in manager.get_sub_rsc(self.cur_name) :
 				manager.do_cmd("cleanup_rsc\n"+rsc)
 
 	def on_migrate_rsc(self, action) :
@@ -2623,10 +2623,10 @@ class Manager :
 	# resource functions
 	def add_group(self, group) :
 		if len(group["id"]) == 0 :
-			msgbox (_("the ID can't be empty"))
+			msgbox (_("The ID can't be empty"))
 			return
 		if self.rsc_exists(group["id"]):
-			msgbox (_("the ID already exists"))
+			msgbox (_("The ID already exists"))
 			return
 		cmd = "add_grp\n"+group["id"]
 		for param in group["params"] :
@@ -2640,7 +2640,7 @@ class Manager :
 		
 	def add_native(self, rsc) :
 		if self.rsc_exists(rsc["id"]) :
-			msgbox (_("the ID already exists"))
+			msgbox (_("The ID already exists"))
 			return
 			
 		cmd = "add_rsc"
@@ -2680,7 +2680,7 @@ class Manager :
 						[], new_metaattrs, ["id","name","value"]);
 				self.cache_delkey(group_id+"\ncollocated")
 				
-	def get_all_rsc_id(self) :
+	def get_level_rsc(self) :
 		return self.query("all_rsc")
 
 	def get_rsc_type(self, rsc_id) :
@@ -2692,7 +2692,7 @@ class Manager :
 	def get_rsc_running_on(self, rsc_id) :
 		return self.query("rsc_running_on\n"+rsc_id)
 
-	def get_rsc_sub_rsc(self, rsc_id) :
+	def get_sub_rsc(self, rsc_id) :
 		sub_rscs = self.query("sub_rsc\n"+rsc_id)
 		if sub_rscs != None :
 			for sub_rsc in sub_rscs :
@@ -2704,7 +2704,7 @@ class Manager :
 		for rsc in  self.query("all_rsc") :
 			all_rsc.append(rsc)
 			if self.get_rsc_type(rsc) in ["group","clone","master"] : 
-				for subrsc in self.get_rsc_sub_rsc(rsc) :
+				for subrsc in self.get_sub_rsc(rsc) :
 					all_rsc.append(subrsc)
 		return all_rsc
 
@@ -2877,7 +2877,7 @@ class Manager :
 		return provider
 
 	def rsc_exists(self, rsc_id) :
-		return rsc_id in self.get_all_rsc_id()
+		return rsc_id in self.get_all_rsc()
 
 	def update_attrs(self, up_cmd, del_cmd, old_attrs, new_attrs, keys):
 		oldkeys = []
@@ -3227,7 +3227,7 @@ class CommonObject :
 
 	def auto_fill(self, widgets, meta = None) :
 		rsc_store = gtk.ListStore(str, str)
-		for rsc in manager.get_all_rsc_id() :
+		for rsc in manager.get_all_rsc() :
 			rsc_store.append([rsc, ""])
 		if widgets.has_key("combo_entries") :
 			for key in ["rsc", "from", "to"] :

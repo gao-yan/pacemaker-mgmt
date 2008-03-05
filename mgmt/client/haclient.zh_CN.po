@@ -434,8 +434,11 @@ msgid "Description"
 msgstr "描述"
 
 #: haclient.py.in:1057 haclient.py.in:1487 haclient.py.in:1493
-msgid "the ID already exists"
+msgid "The ID already exists"
 msgstr "该标识符已经存在"
+
+msgid "The specified group name exists, while it's not group type"
+msgstr "指定的资源组名存在，并且不属于资源组类型"
 
 #: haclient.py.in:1484
 msgid "the ID can't be empty"
