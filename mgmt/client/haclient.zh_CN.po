@@ -827,7 +827,7 @@ msgid "Stonith Action:"
 msgstr "Stonith 操作："
 
 msgid "Is Managed Default:"
-msgstr "缺省启停资源："
+msgstr "缺省管理资源："
 
 msgid "Stop Orphan Resources:"
 msgstr "停止已删除资源："
