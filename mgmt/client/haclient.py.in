@@ -658,7 +658,7 @@ class Tree :
 			self.add_node(nodes_root, node, node in active_nodes, node in crm_nodes)
 
 		rscs_root = self.store.append(root, [_("Resources"),"", "resources"])
-		rscs = manager.get_level_rsc()
+		rscs = manager.get_top_rsc()
 		for rsc in rscs :
 			self.add_rsc(rscs_root, rsc)
 
@@ -2680,7 +2680,7 @@ class Manager :
 						[], new_metaattrs, ["id","name","value"]);
 				self.cache_delkey(group_id+"\ncollocated")
 				
-	def get_level_rsc(self) :
+	def get_top_rsc(self) :
 		return self.query("all_rsc")
 
 	def get_rsc_type(self, rsc_id) :
@@ -3358,9 +3358,13 @@ class CommonObject :
 				self.combobox_store_append(widgets["combo_entries"]["value"], value_store)
 
 	def dynamic_fill_op(self, widget, widgets, meta = None) :
-		if meta == None or not widgets.has_key("combo_entries") \
-				or ( widget != widgets["combo_entries"].get("name") and widget != widgets["combo_entries"].get("role") ):
+		if meta == None or not widgets.has_key("combo_entries") :
 			return
+		elif widget != widgets["combo_entries"].get("name") :
+			if not widgets.has_key("combos") :
+				return
+			elif widget != widgets["combos"].get("role") :
+				return
 
 		op = self.get_values(widgets)
 		if op.has_key("name") :
