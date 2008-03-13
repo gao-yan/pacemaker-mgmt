@@ -2200,17 +2200,29 @@ class MainWindow :
 		</ui>'''
 		uimanager = gtk.UIManager()
 		actiongroup = gtk.ActionGroup('haclient')
+		
+		if pygtk_2_6_newer() :
+			login_icon = gtk.STOCK_CONNECT
+			logout_icon = gtk.STOCK_DISCONNECT
+			startrsc_icon = gtk.STOCK_MEDIA_PLAY
+			stoprsc_icon = gtk.STOCK_MEDIA_STOP
+		else :
+			login_icon = "ha-login"
+			logout_icon = "ha-logout"
+			startrsc_icon = "ha-start-resource"
+			stoprsc_icon = "ha-stop-resource"
+			
 		actiongroup.add_actions([
 			('connection', None, _('Connection')),
-			('login', gtk.STOCK_CONNECT, _('Login...'), None,_('login to cluster'), self.on_login),
-			('logout', gtk.STOCK_DISCONNECT, _('Logout'), None,_('logout from cluster'), self.on_logout),
+			('login', login_icon, _('Login...'), None,_('login to cluster'), self.on_login),
+			('logout', logout_icon, _('Logout'), None,_('logout from cluster'), self.on_logout),
 			('quit', gtk.STOCK_QUIT, _('Quit'), None,_('Quit the Program'), self.on_quit),
 			('resource', None, _('Resources')),
 			('addrsc', gtk.STOCK_ADD, _('Add New Item'), None,_('add new item'), self.on_add_item),
 			('delrsc', gtk.STOCK_REMOVE, _('Delete'), None,_('delete current item'), self.on_del_item),
 			('cleanuprsc', gtk.STOCK_CLEAR, _('Cleanup Resource'), None,_('cleanup resource'), self.on_item_cleanup),
-			('startrsc', gtk.STOCK_MEDIA_PLAY, _('Start'), None,_('start resource'), self.on_item_action),
-			('stoprsc', gtk.STOCK_MEDIA_STOP, _('Stop'), None,_('stop resource'), self.on_item_action),
+			('startrsc', startrsc_icon, _('Start'), None,_('start resource'), self.on_item_action),
+			('stoprsc', stoprsc_icon, _('Stop'), None,_('stop resource'), self.on_item_action),
 			('defaultrsc', gtk.STOCK_EXECUTE, _('Default'), None,_('work as default'), self.on_item_action),
 			('uprsc', gtk.STOCK_GO_UP, _('Move Up'), None,_('move the resource up in the group'), self.on_item_move),
 			('downrsc', gtk.STOCK_GO_DOWN, _('Move Down'), None,_('move the resource down in the group'),
