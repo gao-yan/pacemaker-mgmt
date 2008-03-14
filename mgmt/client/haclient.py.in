@@ -438,14 +438,13 @@ class ListWithAddDel :
 			return gtk.ListStore(str, str, str, str, str,str, str, str, str, str)
 		return None
 		
-	def __init__(self, widget, add_btn, del_btn, title, obj_type = "nvpair", meta = None, fields = None, call_back=None,
+	def __init__(self, widget, add_btn, del_btn, title, obj_type = "nvpair", meta = None, call_back=None,
 			auto_fill=None, dynamic_fill = None, dynamic_desc = None, static_desc = None) :
 		self.add_btn = add_btn
 		self.del_btn = del_btn
 		self.widget = widget
 		self.call_back = call_back
 		self.title = title
- 		self.fields = fields
 		self.add_btn_handler = add_btn.connect("clicked", self.on_add)
 		self.del_btn_handler = del_btn.connect("clicked", self.on_del)
 		self.auto_fill = auto_fill
@@ -1154,11 +1153,6 @@ class LocationView(View) :
 			_("Add Expression"),
 			"expression",
 			None,
-			[Field("id", _("ID"), "id_", None, False, auto_gen=True),
-			Field("attribute", _("Attribute"), "#uname", ["#uname","#id", "#is_dc"], False),
-			Field("operation", _("Operation"), "eq",
-				['lt','gt','lte','gte','eq','ne','defined','not_defined'], False),
-			Field("value", _("Value"), "", manager.get_all_nodes(), False)],
 			self.on_changed,
 			cmnobj.auto_fill_expression,
 			cmnobj.dynamic_fill_expression)
@@ -1257,9 +1251,6 @@ class RscView(View) :
 					_("Add Parameter"),
 					"nvpair",
 					meta,
-					[Field("id", _("ID"), "", None, False, auto_gen=True),
-			  		Field("name", _("Name"), "", param_options, False),
-					Field("value", _("Value"), "", None, True)],
 					self.on_changed,
 					cmnobj.auto_fill_primitive_instattr,
 					cmnobj.dynamic_fill_primitive_instattr,
@@ -1271,16 +1262,6 @@ class RscView(View) :
 					_("Add Operation"),
 					"op",
 					meta,
-					[Field("id", _("ID"), "", None, False, auto_gen=True),
-			  		 Field("name", _("Name"), "", op_options, False),
-					Field("description", _("Description"), "", None, True),
-					Field("interval", _("Interval"), "", None, True),
-					Field("timeout", _("Timeout"), "", None, True),
-					Field("start_delay", _("Start Delay"), "0", None, True),
-					Field("disabled", _("Disabled"), "false", ["true","false"], True),
-					Field("role", _("Role"),"Started",["Master","Slave","Started","Stopped"],True),
-					Field("prereq", _("Prereq"), "", ["nothing","quorum","fencing"], True),
-					Field("on_fail", _("On Fail"), "",["ignore","block","stop","restart","fence"], True)],
 					self.on_changed,
 					cmnobj.auto_fill_op,
 					cmnobj.dynamic_fill_op)
@@ -1364,9 +1345,6 @@ class CompoundRscView(View) :
 					_("Add Parameter"),
 					"nvpair",
 					None,
-					[Field("id", _("ID"), "", None, False, auto_gen=True),
-			  		Field("name", _("Name"), "", None, False),
-					Field("value", _("Value"), "", None, True)],
 					self.on_changed)
 					    
 		options_dict = {"is_managed":["default","true","false"],
@@ -1412,10 +1390,6 @@ class AddNativeDlg :
 			param_names = [f["name"] for f in meta.parameters]
 			param_descs = [f["shortdesc"] for f in meta.parameters]
 		
-		fields = [Field("id", _("ID"), "id_", None, False, auto_gen = True),
-			  Field("name", _("Name"), "", param_names, False),
-			  Field("value", _("Value"), "", None, True),
-			  Field("shortdesc", _("Description"), "", param_descs, False,False)]
 		glade = self.glade	  
 		glade.get_widget("is_master").set_active(False)
 		glade.get_widget("is_clone").set_active(False)
@@ -1423,7 +1397,7 @@ class AddNativeDlg :
 		param_list = ListWithAddDel(glade.get_widget("parameters"),
 				       glade.get_widget("addparam"),
 				       glade.get_widget("delparam"),
-				       _("Add Parameter"), "nvpair", meta, fields, None,
+				       _("Add Parameter"), "nvpair", meta, None,
 					cmnobj.auto_fill_primitive_instattr,
 					cmnobj.dynamic_fill_primitive_instattr,
 					cmnobj.dynamic_desc_primitive_instattr)
