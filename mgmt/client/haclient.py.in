@@ -985,6 +985,21 @@ class ClusterView(View) :
 			eventbox.add(label)
 			table.attach(eventbox, 0, 1, row, row+1, xpadding = 5)
 			name_labels[parameters[row]["name"]] = label
+
+			longdesc = parameters[row].get("longdesc")
+			shortdesc = parameters[row].get("shortdesc")
+			if len(longdesc) == 0 :
+				tip = shortdesc
+			elif longdesc.find(shortdesc) > -1 :
+				tip = longdesc
+			else :
+				if shortdesc.endswith(_(".")) :
+					tip = shortdesc + "\n" + longdesc
+				else :
+					tip = shortdesc + _(".") + "\n" + longdesc
+			tooltips = gtk.Tooltips()
+			tooltips.set_tip(label, tip)
+
 			if parameters[row]["content"]["type"] == "enum" \
 					and parameters[row]["content"].has_key("values"):
 				combo = gtk.combo_box_new_text()
