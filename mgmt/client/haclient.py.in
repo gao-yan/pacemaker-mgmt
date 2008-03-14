@@ -98,10 +98,10 @@ def pygtk_2_4_newer () :
 	return False
 	
 def add_column(widget, label, value, icon_cell_func = None, editable = False
-		, options=None, call_back=None, visible = True) :
+		, options=None, call_back=None, visible = True, is_enum = False) :
 	tvcolumn = gtk.TreeViewColumn(label)
 	widget.append_column(tvcolumn)
-	if options == None or not pygtk_2_6_newer():
+	if options == None or options == [] or not pygtk_2_6_newer():
 		cell = gtk.CellRendererText()
 	else :
 		cell = gtk.CellRendererCombo()
@@ -114,6 +114,10 @@ def add_column(widget, label, value, icon_cell_func = None, editable = False
 	if editable :
 		cell.set_property('editable', True)
 		cell.connect('edited', edited_cb, (widget.get_model(), value, call_back))
+
+	if is_enum :
+		cell.set_property('has-entry', False)
+
 	if icon_cell_func != None :
 		icon_cell = gtk.CellRendererPixbuf()
 		tvcolumn.pack_start(icon_cell, False)
@@ -428,8 +432,8 @@ class ListWithAddDel :
 	def create_store(self, n) :
 		if n == 3 :
 			return gtk.ListStore(str, str, str)
-		if n == 4 :
-			return gtk.ListStore(str, str, str, str)
+		if n == 5 :
+			return gtk.ListStore(str, str, str, str, str)
 		if n == 10 :
 			return gtk.ListStore(str, str, str, str, str,str, str, str, str, str)
 		return None
@@ -450,11 +454,45 @@ class ListWithAddDel :
 		self.meta = meta
 		self.dynamic_desc = dynamic_desc
 		self.static_desc = static_desc
-		self.store = self.create_store(len(fields))
+		dtd_elem = manager.get_dtd_elem(obj_type)
+		attr_list = dtd_elem.get_attr_list()
+		self.attr_list = attr_list
+		self.store = self.create_store(len(attr_list))
 		widget.set_model(self.store)
-		for i in range(len(fields)) :
-			add_column(widget, fields[i].label, i, None, fields[i].editable,
-				fields[i].options, call_back, not fields[i].auto_gen)
+		name_cap = lambda name: name.replace("-"," ").replace("_"," ").title().replace("Id","ID")
+		for i in range(len(attr_list)) :
+			attr_name = attr_list[i]
+			attr = dtd_elem.get_attr(attr_name)
+			attr_type = attr.get_type()
+			attr_default = attr.get_default()
+			attr_decl = attr.get_decl()
+
+			if attr_name == "id" :
+				visible = False
+			else :
+				visible = True
+
+			if attr_decl == "#REQUIRED" and i == 1 :
+				editable = False
+			else :
+				editable = True
+
+			option_list = []
+			if type(attr_type) == list :
+				is_enum = True
+				if attr_type.count("true") > 0 and attr_type.count("false") > 0 :
+					option_list.extend(["true", "false"])
+				else :
+					option_list.extend(attr_type)
+			else :
+				is_enum = False
+				if attr_default != None :
+					option_list.extend([attr_default])
+			if option_list != [] and attr_decl != "#REQUIRED" :
+				option_list.insert(0, "")
+
+			add_column(widget, _(name_cap(attr_list[i])), i, None, editable,
+				option_list, call_back, visible, is_enum)
 			
 		
 	def clear(self) :
@@ -469,9 +507,9 @@ class ListWithAddDel :
 			
 	def insert(self, item) :
 		values = []
-		for f in self.fields :
-			if item.has_key(f.key) :
-				values.append(item[f.key])
+		for attr in self.attr_list :
+			if item.has_key(attr) :
+				values.append(item[attr])
 			else :
 				values.append("")
 		self.store.append(values)
@@ -483,8 +521,8 @@ class ListWithAddDel :
 		items = []
 		while iter != None :
 			item = {}
-			for i in range(len(self.fields)) :
-				item[self.fields[i].key] = self.store.get_value(iter,i)
+			for i in range(len(self.attr_list)) :
+				item[self.attr_list[i]] = self.store.get_value(iter,i)
 			items.append(item)
 			iter = self.store.iter_next(iter)
 		return items
@@ -3047,7 +3085,8 @@ class CommonObject :
 			elif type(attr_type) == list:
 				is_boolean = False
 				store = gtk.ListStore(str, str)
-				store.append(["", ""])
+				if attr_decl != "#REQUIRED" :
+					store.append(["", ""])
 				if attr_type.count("true") > 0 and attr_type.count("false") > 0 :
 					options = ("true", "false")
 					is_boolean = True
@@ -3072,7 +3111,8 @@ class CommonObject :
 					bool_combos[attr_name] = widget
 			else :
 				store = gtk.ListStore(str, str)
-				store.append(["", ""])
+				if attr_decl != "#REQUIRED" :
+					store.append(["", ""])
 				if attr_default != None :
 					store.append([attr_default, "["+_("default")+"]"])
 				widget = gtk.ComboBoxEntry(store)
@@ -3224,11 +3264,12 @@ class CommonObject :
 		current_store = combo.get_model()
 		retained_store = []
 		for i in range(len(current_store)) :
-			if current_store[i][1] == "["+_("default")+"]" :
-				retained_store.append([current_store[i][0], current_store[i][1]])
+			if current_store[i][0] == "" :
+				retained_store.insert(0, current_store[i])
+			elif current_store[i][1] == "["+_("default")+"]" :
+				retained_store.append(current_store[i])
 			
 		new_store = gtk.ListStore(str, str)
-		new_store.insert(0, ["", ""])
 		for retained in retained_store :
 			new_store.append(retained)
 		retained_list = [k[0] for k in retained_store]
