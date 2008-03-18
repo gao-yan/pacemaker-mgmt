@@ -2039,11 +2039,14 @@ class MainWindow :
 			manager.do_cmd("move_rsc\n%s\ndown"%self.cur_name)
 	
 	def on_item_cleanup(self, action) :
+		node_list = manager.get_normal_nodes()
 		if self.cur_type == _("native") :
-			manager.do_cmd("cleanup_rsc\n"+self.cur_name)
+			for node in node_list :
+				manager.do_cmd("cleanup_rsc\n"+ node + "\n" + self.cur_name)
 		elif self.cur_type in [_("group"),_("clone"),_("master")] :
 			for rsc in manager.get_sub_rsc(self.cur_name) :
-				manager.do_cmd("cleanup_rsc\n"+rsc)
+				for node in node_list :
+					manager.do_cmd("cleanup_rsc\n"+ node + "\n" + rsc)
 
 	def on_migrate_rsc(self, action) :
 		node_list = manager.get_normal_nodes()

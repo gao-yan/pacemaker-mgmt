@@ -1040,8 +1040,10 @@ on_cleanup_rsc(char* argv[], int argc)
 	char our_pid[11];
 	char *now_s = NULL;
 	time_t now = time(NULL);
+	char *dest_node = NULL;
+	int rc;
 	
-	ARGC_CHECK(2);
+	ARGC_CHECK(3);
 	snprintf(our_pid, 10, "%d", getpid());
 	our_pid[10] = '\0';
 	
@@ -1049,11 +1051,20 @@ on_cleanup_rsc(char* argv[], int argc)
 				    NULL, &crmd_channel);
 
 	send_hello_message(crmd_channel, our_pid, client_name, "0", "1");
-	delete_lrm_rsc(crmd_channel, NULL, argv[1]);
+	delete_lrm_rsc(crmd_channel, argv[1], argv[2]);
 	refresh_lrm(crmd_channel, NULL); 
-
+	
+	rc = query_node_uuid(cib_conn, argv[1], &dest_node);
+	if (rc != cib_ok) {
+		mgmt_log(LOG_WARNING, "Could not map uname=%s to a UUID: %s\n",
+				argv[1], cib_error2string(rc));
+	} else {
+		delete_attr(cib_conn, cib_sync_call, XML_CIB_TAG_STATUS, dest_node, NULL,
+				NULL, crm_concat("fail-count", argv[2], '-'), NULL, FALSE);
+		mgmt_log(LOG_INFO, "Delete fail-count for %s from %s", argv[2], argv[1]);
+	}
 	/* force the TE to start a transition */
-	sleep(5); /* wait for the refresh */
+	sleep(2); /* wait for the refresh */
 	now_s = crm_itoa(now);
 	update_attr(cib_conn, cib_sync_call,
 		    XML_CIB_TAG_CRMCONFIG, NULL, NULL, NULL, "last-lrm-refresh", now_s, FALSE);

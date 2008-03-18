@@ -440,7 +440,7 @@ or
 description:
 	clean up a unmanaged resource
 format:
-	MSG_CLEANUP_RSC resource
+	MSG_CLEANUP_RSC node resource
 return:
 	MSG_OK
 or
