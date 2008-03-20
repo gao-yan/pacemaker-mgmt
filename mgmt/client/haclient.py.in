@@ -2741,14 +2741,27 @@ class Manager :
 				self.parent[sub_rsc] = rsc_id
 		return sub_rscs
 
+	def get_all_subrsc(self, rsc_id) :
+		all_subrscs = []
+		sub_rscs = self.get_sub_rsc(rsc_id)
+		if sub_rscs != None :
+			for sub_rsc in sub_rscs :
+				all_subrscs.append(sub_rsc)
+				all_sub_subrscs = self.get_all_subrsc(sub_rsc)
+				if all_sub_subrscs != None :
+					all_subrscs.extend(all_sub_subrscs)
+		return all_subrscs
+
 	def get_all_rsc(self) :
-		all_rsc = []
-		for rsc in  self.query("all_rsc") :
-			all_rsc.append(rsc)
-			if self.get_rsc_type(rsc) in ["group","clone","master"] : 
-				for subrsc in self.get_sub_rsc(rsc) :
-					all_rsc.append(subrsc)
-		return all_rsc
+		all_rscs = []
+		top_rscs = self.query("all_rsc")
+		if top_rscs != None :
+			for top_rsc in top_rscs :
+				all_rscs.append(top_rsc)
+				all_subrscs = self.get_all_subrsc(top_rsc)
+				if all_subrscs != None :
+					all_rscs.extend(all_subrscs)
+		return all_rscs
 
 	def get_rsc_info(self, rsc) :
 		rsc_attr_names = ["id", "description", "class", "provider", 
