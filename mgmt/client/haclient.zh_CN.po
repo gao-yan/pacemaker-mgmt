@@ -706,6 +706,15 @@ msgstr "清理资源"
 msgid "Cleanup Resource"
 msgstr "清理资源"
 
+msgid "Node"
+msgstr "节点"
+
+msgid "all resources"
+msgstr "所有资源"
+
+msgid "all nodes"
+msgstr "所有节点"
+
 msgid "Default"
 msgstr "缺省"
 

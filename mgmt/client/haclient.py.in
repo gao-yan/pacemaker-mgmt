@@ -2039,13 +2039,45 @@ class MainWindow :
 			manager.do_cmd("move_rsc\n%s\ndown"%self.cur_name)
 	
 	def on_item_cleanup(self, action) :
+		rsc_list = manager.get_all_rsc()
+		if rsc_list == None :
+			return
+		rsc_options = rsc_list[:]
+		rsc_options.insert(0, _("all resources"))
+
 		node_list = manager.get_normal_nodes()
-		if self.cur_type == _("native") :
-			for node in node_list :
-				manager.do_cmd("cleanup_rsc\n"+ node + "\n" + self.cur_name)
-		elif self.cur_type in [_("group"),_("clone"),_("master")] :
-			for rsc in manager.get_sub_rsc(self.cur_name) :
-				for node in node_list :
+		if node_list == None :
+			return
+		node_options = node_list[:]
+		node_options.insert(0, _("all nodes"))
+
+		cleanup = kvbox(_("Cleanup Resource"),
+				[Field("rsc", _("Resource"), self.cur_name, rsc_options, False, entry_editable = False),
+				Field("node", _("Node"), _("all nodes"), node_options, False, entry_editable = False)])
+
+		if cleanup != None :
+			cleanup_rscs = []
+			if cleanup["rsc"] == _("all resources") :
+				for rsc in rsc_list :
+					if manager.get_rsc_type(rsc) == "native" :
+						cleanup_rscs.append(rsc)
+			elif manager.get_rsc_type(cleanup["rsc"]) != "native" :
+				all_subrscs = manager.get_all_subrsc(cleanup["rsc"])
+				if all_subrscs == None :
+					return
+				for rsc in all_subrscs :
+					if manager.get_rsc_type(rsc) == "native" :
+						cleanup_rscs.append(rsc)
+			else :
+				cleanup_rscs.append(cleanup["rsc"])
+			
+			if cleanup["node"] == _("all nodes") :
+				cleanup_nodes = node_list
+			else :
+				cleanup_nodes = [cleanup["node"]]
+					
+			for rsc in cleanup_rscs :
+				for node in cleanup_nodes :
 					manager.do_cmd("cleanup_rsc\n"+ node + "\n" + rsc)
 
 	def on_migrate_rsc(self, action) :
