@@ -37,7 +37,7 @@ if TSA_PLUGIN_BUILD
 TSA_PLUGIN_DIR = tsa_plugin
 endif
 
-SUBDIRS	= $(LIBLTDL_DIR) include lib mgmt $(CIM_PROVIDER_DIR) $(TSA_PLUGIN_DIR) snmp_subagent
+SUBDIRS	= $(LIBLTDL_DIR) replace include lib mgmt $(CIM_PROVIDER_DIR) $(TSA_PLUGIN_DIR) snmp_subagent
 
 tgz:
 	rm -f $(TARFILE)
