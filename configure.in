@@ -1886,11 +1886,12 @@ mgmt/Makefile							\
 	mgmt/client/Makefile					\
 		mgmt/client/haclient.py				\
 		mgmt/client/mgmtcmd.py				\
+replace/Makefile						\
+snmp_subagent/Makefile						\
+	snmp_subagent/SNMPAgentSanityCheck			\
 tsa_plugin/Makefile						\
 tsa_plugin/testrun.sh						\
 tsa_plugin/linuxha-adapter					\
-snmp_subagent/Makefile						\
-	snmp_subagent/SNMPAgentSanityCheck			\
 		)
 
 dnl Now process the entire list of files added by previous 
