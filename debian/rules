@@ -1,0 +1,123 @@
+#!/usr/bin/make -f
+# Sample debian/rules that uses debhelper.
+# Copyright 1997 to 1999 by Joey Hess.
+# License: GNU General Public License (GPL)
+
+#Thanks to Paolo Molaro <lupus@debian.org> and heartbeat_0.4.6-2.diff
+
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+
+cfg:=--prefix=/usr --sysconfdir=/etc --localstatedir=/var \
+  --mandir=/usr/share/man \
+  --disable-fatal-warnings --enable-glib-malloc
+
+# These are used for cross-compiling and for saving the configure script
+# from having to guess our platform (since we know it already)
+DEB_HOST_GNU_TYPE   ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
+DEB_BUILD_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
+
+CFLAGS = -Wall -g
+ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
+       CFLAGS += -O0
+else
+       CFLAGS += -O2
+endif
+ifeq (,$(findstring nostrip,$(DEB_BUILD_OPTIONS)))
+       INSTALL_PROGRAM += -s
+endif
+
+DTMP:=`pwd`/debian/tmp
+RELEASE := $(shell dpkg-parsechangelog | awk '/^Version: / { print $$2 }')
+UPSTREAM := $(shell echo "$(RELEASE)" | sed 's/:\?\([0-9\.]\+\)-[0-9].*/\1/')
+
+patch:
+	override_version=$(RELEASE) sh debian/apply
+
+unpatch:
+	override_version=$(RELEASE) sh debian/apply $(UPSTREAM)
+
+
+build: checkbuild build-stamp
+build-stamp:
+	dh_testdir
+	# Allow debian packages to also be built directly from Hg archives
+	# Official debian packages are built from dist tarballs
+	test ! -e ./configure || ./configure $(cfg)
+	test -e ./configure || ./bootstrap $(cfg)
+	$(MAKE)
+	touch build-stamp
+
+clean:
+	dh_testdir
+	dh_testroot
+	# Add here commands to clean up after the build process.
+	-$(MAKE) clean MAKE=make
+	-$(MAKE) distclean MAKE=make
+	rm -f tools/ccdv
+	-find . -name '*.py[co]' | xargs rm -f
+	dh_clean build-stamp install-stamp
+	rm -f debian/init debian/*.debhelper debian/*.substvars config.log
+	rm -r -f debian/heartbeat debian/heartbeat-dev debian/ldirectord \
+		debian/libpils0 debian/libpils-dev \
+		debian/libstonith0 debian/libstonith-dev debian/stonith \
+		debian/tmp
+
+	# Zero autoconf foo
+	rm -f config.status libltdl/config.log libltdl/config.status 
+
+
+install: build install-stamp
+install-stamp:
+	dh_testdir
+	dh_testroot
+	dh_clean -k
+	dh_installdirs
+	$(MAKE) install DESTDIR=$(DTMP) \
+	  MAKE=make \
+	  docdir=/usr/share/doc/heartbeat
+
+	dh_movefiles --source=debian/tmp
+
+binary-indep: build install
+
+binary-arch: build install
+	dh_testdir -a
+	dh_testroot -a
+	dh_installdebconf -a
+	dh_installdocs -a
+	dh_installexamples -a
+#	dh_installmenu -a
+#	dh_installemacsen -a
+#	dh_installpam -a
+	dh_installinit -a -n -u 'defaults 20 32'
+#	dh_installcron -a
+	dh_installman -a
+#	dh_installinfo -a
+#	dh_undocumented -a
+	dh_installchangelogs
+	dh_link -a
+	dh_strip -a
+	dh_compress -a
+	dh_fixperms -a --exclude usr/bin/cl_status
+#	dh_suidregister -a
+	dh_makeshlibs -a -V
+	dh_installdeb -a
+	dh_perl -a
+	dh_pycentral -a
+	dh_python -a `pwd`/usr/lib/heartbeat/cts `pwd`/usr/lib/heartbeat
+	dh_shlibdeps -a
+	dh_gencontrol -a
+	dh_md5sums -a
+	dh_builddeb -a
+
+binary: binary-indep binary-arch
+	@echo "All unpackaged files follow:"
+	-cd $(DTMP) && find . \! -type d | egrep -v \\\.l?a
+
+checkbuild:
+	chmod u+x ./debian/dpkg-checkbuild
+	./debian/dpkg-checkbuild debian/control
+
+.PHONY: build clean binary binary-indep binary-arch install checkbuild \
+	patch unpatch

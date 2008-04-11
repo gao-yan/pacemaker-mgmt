@@ -20,7 +20,7 @@
  *
  */
 
-#include <lha_internal.h>
+#include <pygui_internal.h>
 #ifdef HAVE_STDINT_H
 #include <stdint.h>
 #endif /* HAVE_STDINT_H */

@@ -25,11 +25,9 @@ INCLUDES        = -I$(top_builddir)/include  -I$(top_srcdir)/include     \
 
 halibdir	=  $(libdir)/@HB_PKG@
 
-COMMONLIBS	=  $(top_builddir)/lib/clplumbing/libplumb.la   \
-		   $(GLIBLIB)
+COMMONLIBS	=  -lplumb $(GLIBLIB)
 noinst_HEADERS	=  mgmt_internal.h
 EXTRA_DIST	=  mgmtd.pam mgmtd.pam.common
-		   
 LRM_DIR		= lrm
 
 pamdir 		= $(sysconfdir)/pam.d
@@ -49,7 +47,7 @@ mgmtd_LDFLAGS	= -lpam
 mgmtd_LDADD 	=  $(top_builddir)/lib/mgmt/libhbmgmtclient.la \
 		   $(top_builddir)/lib/mgmt/libhbmgmttls.la \
 		   libhbmgmt.la \
-		   $(top_builddir)/lib/$(LRM_DIR)/liblrm.la \
+		   -llrm \
 		   $(top_builddir)/lib/mgmt/libhbmgmtcommon.la \
 		   $(COMMONLIBS)
 
@@ -57,11 +55,6 @@ lib_LTLIBRARIES = libhbmgmt.la
 libhbmgmt_la_SOURCES = mgmt_lib.c mgmt_crm.c mgmt_lrm.c mgmt_hb.c
 libhbmgmt_la_CFLAGS = $(INCLUDES)
 libhbmgmt_la_LDFLAGS = $(GNUTLSLIBS)
-libhbmgmt_la_LIBADD = $(top_builddir)/lib/mgmt/libhbmgmttls.la 		\
-		  	$(top_builddir)/lib/crm/cib/libcib.la		\
-		   	$(top_builddir)/lib/crm/common/libcrmcommon.la	\
-		   	$(top_builddir)/lib/apphb/libapphb.la		\
-		   	$(top_builddir)/lib/crm/pengine/libpe_status.la	\
-		   	$(top_builddir)/lib/hbclient/libhbclient.la	\
-		   	$(top_builddir)/lib/crm/pengine/libpe_status.la	\
+libhbmgmt_la_LIBADD = $(top_builddir)/lib/mgmt/libhbmgmttls.la 			\
+		  	-lcib -lcrmcommon -lapphb -lpe_status -lhbclient	\
 			$(COMMONLIBS) $(CURSESLIBS)

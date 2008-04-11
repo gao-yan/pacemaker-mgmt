@@ -1,0 +1,18 @@
+Source: pygui
+Section: admin
+Priority: optional
+Maintainer: Simon Horman <horms@debian.org>
+Build-Depends: debhelper (>= 5.0.37.2), libglib2.0-dev, net-tools, python, libnet1-dev, libtool, libcurl4-openssl-dev | libcurl3-openssl-dev, libxml2-dev, bison, flex, uuid-dev, lynx, libbz2-dev, zlib1g-dev, uuid-dev, libltdl3-dev, swig, openssh-client, libgnutls-dev, python-central (>= 0.5), python-dev, libpam0g-dev, libncurses5-dev, pacemaker-dev, heartbeat-dev
+Standards-Version: 3.7.3
+XS-Python-Version: current
+
+Package: pacemaker-pygui
+Section: admin
+Priority: optional
+Architecture: any
+Depends: ${shlibs:Depends}, ${python:Depends}, pacemaker, heartbeat, libxml2-utils, libpam-runtime (>= 0.76-14)
+XB-Python-Version: ${python:Versions}
+Description: Python based Pacemaker GUI
+ pyGUI is a Python based GUI for configuring Pacemaker - an advanced, 
+ scalable High-Availability cluster resource manager for Linux-HA 
+ (Heartbeat) and/or OpenAIS.
