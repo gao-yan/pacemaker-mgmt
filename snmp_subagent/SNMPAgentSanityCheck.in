@@ -106,7 +106,9 @@ fi
 #
 # BasicSanityCheck for SNMP Subagent about CRM resources.
 #
-# NOTE:    Heartbeat service for this test has to run without cib.xml.
+
+# wait to let cib ready to execute variant_op
+sleep 10
 
 # add CRM resource.
 RSC0NAME="prmDummy"
@@ -116,6 +118,9 @@ RSC0STATUS="started(2)"
 RSC0ISMANAGED="managed(1)"
 RSC0FAILCOUNT="0"
 RSC0PARENT=""
+
+# clear resources
+cibadmin --cib_replace -X '<resources/>'
 cibadmin --cib_create -o resources \
   -X '<primitive id="prmDummy" class="ocf" type="Dummy" provider="heartbeat"/>'
 sleep 3
@@ -211,5 +216,7 @@ then
   kill `cat $SNMPPIDFILE`
   rm -f $SNMPPIDFILE
 fi
+# clear resources
+cibadmin --cib_replace -X '<resources/>'
 
 exit $ret
