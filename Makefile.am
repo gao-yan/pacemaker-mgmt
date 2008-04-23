@@ -48,20 +48,28 @@ tgz:
 	hg archive -t tgz $(TARFILE)
 	echo Rebuilt $(TARFILE) on `date`
 
-obs:	tgz
-	scp $(TARFILE) vmhost.beekhof.net:Development/obs/server:ha-clustering/pygui
-
 changes:
+	printf "$(PACKAGE) ($(VERSION)-1) stable; urgency=medium\n"
 	printf "  * Update source tarball to revision: `hg id`\n"
 	printf "  * Statistics:\n"
 	printf "      Changesets: `hg log -M --template "{desc|firstline|strip}\n" -r $(LAST_RELEASE):tip | wc -l`\n"
-	printf "      Diff:         "
+	printf "      Diff:           "
 	hg diff -r $(LAST_RELEASE):tip | diffstat | tail -n 1
 	printf "\n  * Testing Notes:\n"
 	printf "\n  + Test hardware:\n"
+	printf "\n  + All testing was performed with STONITH enabled\n"
 	printf "\n  + Pending bugs encountered during testing:\n"
 	printf "\n  * Changes since $(LAST_RELEASE)\n"
 	hg log -M --template "  + {desc|firstline|strip}\n" -r $(LAST_RELEASE):tip | grep -v Low: | sort -uf 
+	printf "\n -- Andrew Beekhof <abeekhof@suse.de>  `date +"%a, %d %b %Y %T %z"`\n"
+
+obs:	tgz
+	make changes > .changes
+	scp .changes $(TARFILE) vmhost.beekhof.net:Development/obs/server:ha-clustering/pygui/
+
+home:	tgz
+	make changes > .changes
+	scp .changes $(TARFILE) vmhost.beekhof.net:Development/obs/home:beekhof/pygui-test/
 
 install-exec-local:
 	-mkdir -p $(DESTDIR)$(bindir)
