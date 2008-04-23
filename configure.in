@@ -197,6 +197,10 @@ AC_ARG_WITH(initdir,
     [  --with-initdir=DIR      directory for init (rc) scripts [${INITDIR}]],
     [ INITDIR="$withval" ])
 
+AC_ARG_WITH(mibsdir, 
+    [  --with-mibsdir=DIR      directory for mib files. ],
+    [ MIBS_DIR="$withval" ])
+
 dnl ************ OCF (Open Cluster Framework) **********************
 dnl Should be consistent with the OCF standard fixed pathname /usr/lib/ocf
 dnl Changing it from this value violates the OCF standard. 
@@ -1015,14 +1019,6 @@ then
   FatalMissingThing "init directory" "Could not locate init directory"
 fi
 AC_SUBST(INITDIR)
-
-if test "$ac_cv_header_ucd_snmp_snmp_h" = no; then
-	UCDSNMPDEVEL=""
-fi
-AC_SUBST(UCDSNMPDEVEL)
-AC_DEFINE_UNQUOTED(UCDSNMPDEVEL, $UCDSNMPDEVEL, 
-	Name of UCD SNMP development package)
-
 
 CC_WARNINGS=""
 
@@ -1917,7 +1913,6 @@ if test "x${enable_snmp_subagent}" = "xyes"; then
     AC_MSG_RESULT([  SNMP agent libraries     = ${SNMPAGENTLIB}])
 fi
 AC_MSG_RESULT([  SNMP libraries           = ${SNMPLIB}])
-AC_MSG_RESULT([  ucd_snmp_devel name      = ${UCDSNMPDEVEL}])
 
 AC_MSG_RESULT([  With Heartbeat support   = ${SUPPORT_HEARTBEAT}])
 AC_MSG_RESULT([  With AIS support         = ${SUPPORT_AIS}])
