@@ -220,7 +220,7 @@ crm_failed_msg(crm_data_t* output, int rc)
 		return ret;
 	}
 	
-	failed_tag = cl_get_struct(output, XML_FAIL_TAG_CIB);
+	failed_tag = find_entity(output, XML_FAIL_TAG_CIB, NULL);
 	if (failed_tag != NULL) {
 		reason = crm_element_value(failed_tag, XML_FAILCIB_ATTR_REASON);
 		if (reason != NULL) {
@@ -422,7 +422,7 @@ get_attr_id(const char* rsc_id, const char* attr_type, const char* attr, char* i
 		free_data_set(data_set);
 		return;
 	}
-	attrs = cl_get_struct(attrs, "attributes");
+	attrs = find_entity(attrs, "attributes", NULL);
 	if(attrs == NULL) {
 		snprintf(id, MAX_STRLEN,  "%s_%s%s", rsc_id, mid, attr);
 		free_data_set(data_set);
@@ -1592,7 +1592,7 @@ on_get_rsc_metaattrs(char* argv[], int argc)
 		free_data_set(data_set);
 		return ret;
 	}
-	attrs = cl_get_struct(attrs, "attributes");
+	attrs = find_entity(attrs, "attributes", NULL);
 	if(attrs == NULL) {
 		free_data_set(data_set);
 		return ret;
@@ -1625,7 +1625,7 @@ on_get_rsc_params(char* argv[], int argc)
 		free_data_set(data_set);
 		return ret;
 	}
-	attrs = cl_get_struct(attrs, "attributes");
+	attrs = find_entity(attrs, "attributes", NULL);
 	if(attrs == NULL) {
 		free_data_set(data_set);
 		return ret;
