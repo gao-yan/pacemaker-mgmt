@@ -8,9 +8,10 @@
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
-cfg:=--prefix=/usr --sysconfdir=/etc --localstatedir=/var \
-  --mandir=/usr/share/man \
-  --disable-fatal-warnings --enable-glib-malloc
+cfg:=--prefix=/usr --sysconfdir=/etc --localstatedir=/var	\
+  --enable-snmp-subagent --with-mibsdir=/usr/share/snmp/mibs	\
+  --disable-fatal-warnings --enable-glib-malloc			\
+  --mandir=/usr/share/man
 
 # These are used for cross-compiling and for saving the configure script
 # from having to guess our platform (since we know it already)
@@ -105,7 +106,6 @@ binary-arch: build install
 	dh_installdeb -a
 	dh_perl -a
 	dh_pycentral -a
-	dh_python -a `pwd`/usr/lib/heartbeat/cts `pwd`/usr/lib/heartbeat
 	dh_shlibdeps -a
 	dh_gencontrol -a
 	dh_md5sums -a
