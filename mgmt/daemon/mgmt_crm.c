@@ -336,7 +336,7 @@ get_meta_attributes_id(const char* rsc_id, char* id)
 	resource_t* rsc;
 	const char* cur_id;
 	pe_working_set_t* data_set;
-	struct ha_msg* attrs;
+	crm_data_t* attrs;
 	
 	data_set = get_data_set();
 	rsc = pe_find_resource(data_set->resources, rsc_id);	
@@ -345,7 +345,7 @@ get_meta_attributes_id(const char* rsc_id, char* id)
 		free_data_set(data_set);
 		return;
 	}
-	attrs = cl_get_struct((struct ha_msg*)rsc->xml, "meta_attributes");
+	attrs = find_entity(rsc->xml, "meta_attributes", NULL);
 	if (attrs == NULL) {
 		snprintf(id, MAX_STRLEN, "%s_meta_attrs", rsc_id);
 		free_data_set(data_set);
@@ -368,7 +368,7 @@ get_instance_attributes_id(const char* rsc_id, char* id)
 	resource_t* rsc;
 	const char* cur_id;
 	pe_working_set_t* data_set;
-	struct ha_msg* attrs;
+	crm_data_t * attrs;
 	
 	data_set = get_data_set();
 	rsc = pe_find_resource(data_set->resources, rsc_id);	
@@ -377,7 +377,7 @@ get_instance_attributes_id(const char* rsc_id, char* id)
 		free_data_set(data_set);
 		return;
 	}
-	attrs = cl_get_struct((struct ha_msg*)rsc->xml, "instance_attributes");
+	attrs = find_entity(rsc->xml, "instance_attributes", NULL);
 	if (attrs == NULL) {
 		snprintf(id, MAX_STRLEN, "%s_instance_attrs", rsc_id);
 		free_data_set(data_set);
@@ -397,12 +397,10 @@ get_instance_attributes_id(const char* rsc_id, char* id)
 static void
 get_attr_id(const char* rsc_id, const char* attr_type, const char* attr, char* id)
 {
-	int i;
 	resource_t* rsc;
 	const char * name_nvpair;
 	const char * id_nvpair;
-	struct ha_msg* attrs;
-	struct ha_msg* nvpair;
+	crm_data_t * attrs;
 	pe_working_set_t* data_set;
 	const char * mid = "";
 
@@ -419,7 +417,7 @@ get_attr_id(const char* rsc_id, const char* attr_type, const char* attr, char* i
 		return;
 	}
 
-	attrs = cl_get_struct((struct ha_msg*)rsc->xml, attr_type);
+	attrs = find_entity(rsc->xml, attr_type, NULL);
 	if(attrs == NULL) {
 		snprintf(id, MAX_STRLEN,  "%s_%s%s", rsc_id, mid, attr);
 		free_data_set(data_set);
@@ -431,9 +429,8 @@ get_attr_id(const char* rsc_id, const char* attr_type, const char* attr, char* i
 		free_data_set(data_set);
 		return;
 	}
-	for (i = 0; i < attrs->nfields; i++) {
-		if (STRNCMP_CONST(attrs->names[i], "nvpair") == 0) {
-			nvpair = (struct ha_msg*)attrs->values[i];
+
+	xml_child_iter_filter(attrs, nvpair, "nvpair",
 			name_nvpair = crm_element_value(nvpair, "name");
 			if ( strncmp(name_nvpair,attr,MAX_STRLEN) == 0 ) {
 				id_nvpair = crm_element_value(nvpair,"id");
@@ -443,8 +440,8 @@ get_attr_id(const char* rsc_id, const char* attr_type, const char* attr, char* i
 					return;					
 				}
 			}
-		}
-	}
+	    );
+	
 	snprintf(id, MAX_STRLEN,  "%s_%s%s", rsc_id, mid, attr);
 	free_data_set(data_set);
 	return;
@@ -1396,14 +1393,14 @@ on_get_rsc_attrs(char* argv[], int argc)
 	resource_t* rsc;
 	char* ret;
 	const char* value;
-	struct ha_msg* attrs;
+	crm_data_t * attrs;
 	pe_working_set_t* data_set;
 	
 	data_set = get_data_set();
 	GET_RESOURCE()
 
 	ret = cl_strdup(MSG_OK);
-	attrs = (struct ha_msg*)rsc->xml;
+	attrs = rsc->xml;
 	ret = mgmt_msg_append(ret, crm_element_value(attrs, "id"));
 	ret = mgmt_msg_append(ret, crm_element_value(attrs, "description"));
 	if (rsc->variant == pe_native) {
@@ -1582,18 +1579,16 @@ on_get_sub_rsc(char* argv[], int argc)
 char*
 on_get_rsc_metaattrs(char* argv[], int argc)
 {
-	int i;
 	resource_t* rsc;
 	char* ret;
-	struct ha_msg* attrs;
-	struct ha_msg* nvpair;
+	crm_data_t * attrs;
 	pe_working_set_t* data_set;
 	
 	data_set = get_data_set();
 	GET_RESOURCE()
 
 	ret = cl_strdup(MSG_OK);
-	attrs = cl_get_struct((struct ha_msg*)rsc->xml, "meta_attributes");
+	attrs = find_entity(rsc->xml, "meta_attributes", NULL);
 	if(attrs == NULL) {
 		free_data_set(data_set);
 		return ret;
@@ -1603,14 +1598,12 @@ on_get_rsc_metaattrs(char* argv[], int argc)
 		free_data_set(data_set);
 		return ret;
 	}
-	for (i = 0; i < attrs->nfields; i++) {
-		if (STRNCMP_CONST(attrs->names[i], "nvpair") == 0) {
-			nvpair = (struct ha_msg*)attrs->values[i];
+	xml_child_iter_filter(attrs, nvpair, "nvpair",
 			ret = mgmt_msg_append(ret, crm_element_value(nvpair, "id"));
 			ret = mgmt_msg_append(ret, crm_element_value(nvpair, "name"));
 			ret = mgmt_msg_append(ret, crm_element_value(nvpair, "value"));
-		}
-	}
+	    );
+	
 	free_data_set(data_set);
 	return ret;
 }
@@ -1619,18 +1612,16 @@ on_get_rsc_metaattrs(char* argv[], int argc)
 char*
 on_get_rsc_params(char* argv[], int argc)
 {
-	int i;
 	resource_t* rsc;
 	char* ret;
-	struct ha_msg* attrs;
-	struct ha_msg* nvpair;
+	crm_data_t * attrs;
 	pe_working_set_t* data_set;
 	
 	data_set = get_data_set();
 	GET_RESOURCE()
 
 	ret = cl_strdup(MSG_OK);
-	attrs = cl_get_struct((struct ha_msg*)rsc->xml, "instance_attributes");
+	attrs = find_entity(rsc->xml, "instance_attributes", NULL);
 	if(attrs == NULL) {
 		free_data_set(data_set);
 		return ret;
@@ -1640,14 +1631,11 @@ on_get_rsc_params(char* argv[], int argc)
 		free_data_set(data_set);
 		return ret;
 	}
-	for (i = 0; i < attrs->nfields; i++) {
-		if (STRNCMP_CONST(attrs->names[i], "nvpair") == 0) {
-			nvpair = (struct ha_msg*)attrs->values[i];
+	xml_child_iter_filter(attrs, nvpair, "nvpair",
 			ret = mgmt_msg_append(ret, crm_element_value(nvpair, "id"));
 			ret = mgmt_msg_append(ret, crm_element_value(nvpair, "name"));
 			ret = mgmt_msg_append(ret, crm_element_value(nvpair, "value"));
-		}
-	}
+	    );
 	free_data_set(data_set);
 	return ret;
 }
@@ -1914,34 +1902,27 @@ on_set_target_role(char* argv[], int argc)
 char*
 on_get_rsc_ops(char* argv[], int argc)
 {
-	int i;
 	resource_t* rsc;
 	char* ret;
-	struct ha_msg* ops;
-	struct ha_msg* op;
+	crm_data_t * ops;
 	pe_working_set_t* data_set;
 	
 	data_set = get_data_set();
 	GET_RESOURCE()
 
 	ret = cl_strdup(MSG_OK);
-	ops = cl_get_struct((struct ha_msg*)rsc->xml, "operations");
+	ops = find_entity(rsc->xml, "operations", NULL);
 	if (ops == NULL) {
 		free_data_set(data_set);
 		return ret;
 	}
-	for (i = 0; i < ops->nfields; i++) {
-		if (STRNCMP_CONST(ops->names[i], "op") == 0) {
-			if (ops->types[i] != FT_STRUCT) {
-				continue;
-			}
-			op = (struct ha_msg*)ops->values[i];
+	xml_child_iter_filter(ops, op, "op",
 			ret = mgmt_msg_append(ret, crm_element_value(op, "id"));
 			ret = mgmt_msg_append(ret, crm_element_value(op, "name"));
 			ret = mgmt_msg_append(ret, crm_element_value(op, "interval"));
 			ret = mgmt_msg_append(ret, crm_element_value(op, "timeout"));
-		}
-	}
+	    );
+	
 	free_data_set(data_set);
 	return ret;
 }
@@ -1961,11 +1942,10 @@ on_get_rsc_ops(char* argv[], int argc)
 char*
 on_get_rsc_full_ops(char* argv[], int argc)
 {
-	int i;
+	const char *value;
 	resource_t* rsc;
 	char* ret;
-	struct ha_msg* ops;
-	struct ha_msg* op;
+	crm_data_t * ops;
 	pe_working_set_t* data_set;
 	
 	data_set = get_data_set();
@@ -1973,18 +1953,13 @@ on_get_rsc_full_ops(char* argv[], int argc)
 
 	ret = cl_strdup(MSG_OK);
 	ret = mgmt_msg_append(ret, "10");
-	ops = cl_get_struct((struct ha_msg*)rsc->xml, "operations");
+	ops = find_entity(rsc->xml, "operations", NULL);
 	if (ops == NULL) {
 		free_data_set(data_set);
 		return ret;
 	}
-	for (i = 0; i < ops->nfields; i++) {
-		if (STRNCMP_CONST(ops->names[i], "op") == 0) {
-			const char* value = NULL;
-			if (ops->types[i] != FT_STRUCT) {
-				continue;
-			}
-			op = (struct ha_msg*)ops->values[i];
+
+	xml_child_iter_filter(ops, op, "op",
 			ret = mgmt_msg_append(ret, crm_element_value(op, "id"));
 			ret = mgmt_msg_append(ret, crm_element_value(op, "name"));
 			ret = mgmt_msg_append(ret, crm_element_value(op, "description"));
@@ -1998,8 +1973,8 @@ on_get_rsc_full_ops(char* argv[], int argc)
 			ret = mgmt_msg_append(ret, value==NULL?"Started":value);
 			ret = mgmt_msg_append(ret, crm_element_value(op, "prereq"));
 			ret = mgmt_msg_append(ret, crm_element_value(op, "on_fail"));
-		}
-	}
+	    );
+
 	free_data_set(data_set);
 	return ret;
 }
