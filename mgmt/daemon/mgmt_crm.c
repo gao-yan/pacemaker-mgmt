@@ -546,7 +546,7 @@ final_crm(void)
 
 /* event handler */
 void
-on_cib_diff(const char *event, HA_Message *msg)
+on_cib_diff(const char *event, crm_data_t *msg)
 {
 	if (debug_level) {
 		mgmt_debug(LOG_DEBUG,"update cib finished");
