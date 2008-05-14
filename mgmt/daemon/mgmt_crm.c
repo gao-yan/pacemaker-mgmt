@@ -1260,7 +1260,7 @@ cl_msg_swap_offset(crm_data_t* msg, int offset1, int offset2)
 char*
 on_move_rsc(char* argv[], int argc)
 {
-	int i, rc, pos = -1;
+	int i = 0, rc, pos = -1;
 	int first_child = -1;
 	int last_child = -1;
 	const char* child_id;
