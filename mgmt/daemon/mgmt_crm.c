@@ -132,14 +132,8 @@ GList* find_xml_node_list(crm_data_t *root, const char *child_name)
 {
 	int i;
 	GList* list = NULL;
-	if (root == NULL) {
-		return NULL;
-	}
-	for (i = 0; i < root->nfields; i++ ) {
-		if (strncmp(root->names[i], child_name, MAX_STRLEN) == 0) {
-			list = g_list_append(list, root->values[i]);
-		}
-	}
+	xml_child_iter_filter(root, child, child_name,
+			      list = g_list_append(list, root->values[i]));
 	return list;
 }
 
@@ -229,7 +223,7 @@ crm_failed_msg(crm_data_t* output, int rc)
 	
 	failed_tag = cl_get_struct(output, XML_FAIL_TAG_CIB);
 	if (failed_tag != NULL) {
-		reason = ha_msg_value(failed_tag, XML_FAILCIB_ATTR_REASON);
+		reason = crm_element_value(failed_tag, XML_FAILCIB_ATTR_REASON);
 		if (reason != NULL) {
 			ret = mgmt_msg_append(ret, reason);
 		}
@@ -357,7 +351,7 @@ get_meta_attributes_id(const char* rsc_id, char* id)
 		free_data_set(data_set);
 		return;
 	}
-	cur_id = ha_msg_value(attrs, "id");
+	cur_id = crm_element_value(attrs, "id");
 	if (cur_id == NULL) {
 		snprintf(id, MAX_STRLEN, "%s_meta_attrs", rsc_id);
 		free_data_set(data_set);
@@ -389,7 +383,7 @@ get_instance_attributes_id(const char* rsc_id, char* id)
 		free_data_set(data_set);
 		return;
 	}
-	cur_id = ha_msg_value(attrs, "id");
+	cur_id = crm_element_value(attrs, "id");
 	if (cur_id == NULL) {
 		snprintf(id, MAX_STRLEN, "%s_instance_attrs", rsc_id);
 		free_data_set(data_set);
@@ -440,9 +434,9 @@ get_attr_id(const char* rsc_id, const char* attr_type, const char* attr, char* i
 	for (i = 0; i < attrs->nfields; i++) {
 		if (STRNCMP_CONST(attrs->names[i], "nvpair") == 0) {
 			nvpair = (struct ha_msg*)attrs->values[i];
-			name_nvpair = ha_msg_value(nvpair, "name");
+			name_nvpair = crm_element_value(nvpair, "name");
 			if ( strncmp(name_nvpair,attr,MAX_STRLEN) == 0 ) {
-				id_nvpair = ha_msg_value(nvpair,"id");
+				id_nvpair = crm_element_value(nvpair,"id");
 				if (id_nvpair != NULL) {
 					STRNCPY(id,id_nvpair,MAX_STRLEN);
 					free_data_set(data_set);
@@ -590,7 +584,7 @@ on_get_cib_version(char* argv[], int argc)
 	char* ret;
 	
 	data_set = get_data_set();
-	version = ha_msg_value(data_set->input, "num_updates");
+	version = crm_element_value(data_set->input, "num_updates");
 	if (version != NULL) {
 		ret = cl_strdup(MSG_OK);
 		ret = mgmt_msg_append(ret, version);
@@ -724,8 +718,8 @@ on_update_crm_config(char* argv[], int argc)
 		cur = find_xml_node_list(attrs, "nvpair");
 		while (cur != NULL) {
 			attr = (crm_data_t*)cur->data;
-			if(strncmp(ha_msg_value(attr,"name"),argv[1], MAX_STRLEN)==0) {
-				id = ha_msg_value(attr,"id");
+			if(strncmp(crm_element_value(attr,"name"),argv[1], MAX_STRLEN)==0) {
+				id = crm_element_value(attr,"id");
 				break;
 			}
 			cur = g_list_next(cur);
@@ -1274,7 +1268,6 @@ on_move_rsc(char* argv[], int argc)
 	int first_child = -1;
 	int last_child = -1;
 	const char* child_id;
-	struct ha_msg* child;
 	resource_t* rsc;
 	resource_t* parent;
 	pe_working_set_t* data_set;
@@ -1287,21 +1280,23 @@ on_move_rsc(char* argv[], int argc)
 		free_data_set(data_set);
 		return cl_strdup(MSG_FAIL);
 	}
-	for (i=0; i < parent->xml->nfields ; i++){
-		if (STRNCMP_CONST(parent->xml->names[i], "primitive")!=0) {
-			continue;
-		}
-		child = (struct ha_msg*)parent->xml->values[i];
-		if (first_child == -1) {
+	xml_child_iter(
+		parent->xml, child,
+		const char *name = crm_element_name(child);
+		if (STRNCMP_CONST(name, "primitive") == 0) {
+		    if (first_child == -1) {
 			first_child = i;
-		}
-		last_child = i;
-		child_id = ha_msg_value(child,"id");
-		if (strcmp(child_id, argv[1]) == 0) {
-			mgmt_log(LOG_INFO,"find %s !",child_id);
+		    }
+		    last_child = i;
+		    child_id = crm_element_value(child, "id");
+		    if (strcmp(child_id, argv[1]) == 0) {
+			mgmt_log(LOG_INFO,"find %s !", child_id);
 			pos = i;
+		    }
 		}
-	}	
+		i++;
+	    );
+	
 	if (STRNCMP_CONST(argv[2],"up")==0) {
 		if (pos-1<first_child) {
 			free_data_set(data_set);
@@ -1320,7 +1315,7 @@ on_move_rsc(char* argv[], int argc)
 		free_data_set(data_set);
 		return cl_strdup(MSG_FAIL);
 	}
-	mgmt_log(LOG_INFO, "on_move_rsc:%s",dump_xml_formatted(parent->xml));
+	mgmt_log(LOG_INFO, "on_move_rsc:%s", dump_xml_formatted(parent->xml)); /* Memory leak! */
 	free_data_set(data_set);
 	
 	rc = cib_conn->cmds->variant_op(
@@ -1409,40 +1404,40 @@ on_get_rsc_attrs(char* argv[], int argc)
 
 	ret = cl_strdup(MSG_OK);
 	attrs = (struct ha_msg*)rsc->xml;
-	ret = mgmt_msg_append(ret, ha_msg_value(attrs, "id"));
-	ret = mgmt_msg_append(ret, ha_msg_value(attrs, "description"));
+	ret = mgmt_msg_append(ret, crm_element_value(attrs, "id"));
+	ret = mgmt_msg_append(ret, crm_element_value(attrs, "description"));
 	if (rsc->variant == pe_native) {
-		ret = mgmt_msg_append(ret, ha_msg_value(attrs, "class"));
-		ret = mgmt_msg_append(ret, ha_msg_value(attrs, "provider"));
-		ret = mgmt_msg_append(ret, ha_msg_value(attrs, "type"));
+		ret = mgmt_msg_append(ret, crm_element_value(attrs, "class"));
+		ret = mgmt_msg_append(ret, crm_element_value(attrs, "provider"));
+		ret = mgmt_msg_append(ret, crm_element_value(attrs, "type"));
 	}
-	value = ha_msg_value(attrs, "is_managed");
+	value = crm_element_value(attrs, "is_managed");
 	ret = mgmt_msg_append(ret, value?value:"#default");
-	value = ha_msg_value(attrs, "restart_type");
+	value = crm_element_value(attrs, "restart_type");
 	ret = mgmt_msg_append(ret, value?value:"#default");
-	value = ha_msg_value(attrs, "multiple_active");
+	value = crm_element_value(attrs, "multiple_active");
 	ret = mgmt_msg_append(ret, value?value:"#default");
-	value = ha_msg_value(attrs, "resource_stickiness");
+	value = crm_element_value(attrs, "resource_stickiness");
 	ret = mgmt_msg_append(ret, value?value:"#default");
-	value = ha_msg_value(attrs, "resource_failure_stickiness");
+	value = crm_element_value(attrs, "resource_failure_stickiness");
 	ret = mgmt_msg_append(ret, value?value:"#default");
 	
 	switch (rsc->variant) {
 		case pe_group:
-			value = ha_msg_value(attrs, "ordered");
+			value = crm_element_value(attrs, "ordered");
 			ret = mgmt_msg_append(ret, value?value:"#default");
-			value = ha_msg_value(attrs, "collocated");
+			value = crm_element_value(attrs, "collocated");
 			ret = mgmt_msg_append(ret, value?value:"#default");
 			break;
 		case pe_clone:
 		case pe_master:
-			value = ha_msg_value(attrs, "notify");
+			value = crm_element_value(attrs, "notify");
 			ret = mgmt_msg_append(ret, value?value:"#default");
-			value = ha_msg_value(attrs, "globally_unique");
+			value = crm_element_value(attrs, "globally_unique");
 			ret = mgmt_msg_append(ret, value?value:"#default");
-			value = ha_msg_value(attrs, "ordered");
+			value = crm_element_value(attrs, "ordered");
 			ret = mgmt_msg_append(ret, value?value:"#default");
-			value = ha_msg_value(attrs, "interleave");
+			value = crm_element_value(attrs, "interleave");
 			ret = mgmt_msg_append(ret, value?value:"#default");
 			break;
 		default:
@@ -1611,9 +1606,9 @@ on_get_rsc_metaattrs(char* argv[], int argc)
 	for (i = 0; i < attrs->nfields; i++) {
 		if (STRNCMP_CONST(attrs->names[i], "nvpair") == 0) {
 			nvpair = (struct ha_msg*)attrs->values[i];
-			ret = mgmt_msg_append(ret, ha_msg_value(nvpair, "id"));
-			ret = mgmt_msg_append(ret, ha_msg_value(nvpair, "name"));
-			ret = mgmt_msg_append(ret, ha_msg_value(nvpair, "value"));
+			ret = mgmt_msg_append(ret, crm_element_value(nvpair, "id"));
+			ret = mgmt_msg_append(ret, crm_element_value(nvpair, "name"));
+			ret = mgmt_msg_append(ret, crm_element_value(nvpair, "value"));
 		}
 	}
 	free_data_set(data_set);
@@ -1648,9 +1643,9 @@ on_get_rsc_params(char* argv[], int argc)
 	for (i = 0; i < attrs->nfields; i++) {
 		if (STRNCMP_CONST(attrs->names[i], "nvpair") == 0) {
 			nvpair = (struct ha_msg*)attrs->values[i];
-			ret = mgmt_msg_append(ret, ha_msg_value(nvpair, "id"));
-			ret = mgmt_msg_append(ret, ha_msg_value(nvpair, "name"));
-			ret = mgmt_msg_append(ret, ha_msg_value(nvpair, "value"));
+			ret = mgmt_msg_append(ret, crm_element_value(nvpair, "id"));
+			ret = mgmt_msg_append(ret, crm_element_value(nvpair, "name"));
+			ret = mgmt_msg_append(ret, crm_element_value(nvpair, "value"));
 		}
 	}
 	free_data_set(data_set);
@@ -1941,10 +1936,10 @@ on_get_rsc_ops(char* argv[], int argc)
 				continue;
 			}
 			op = (struct ha_msg*)ops->values[i];
-			ret = mgmt_msg_append(ret, ha_msg_value(op, "id"));
-			ret = mgmt_msg_append(ret, ha_msg_value(op, "name"));
-			ret = mgmt_msg_append(ret, ha_msg_value(op, "interval"));
-			ret = mgmt_msg_append(ret, ha_msg_value(op, "timeout"));
+			ret = mgmt_msg_append(ret, crm_element_value(op, "id"));
+			ret = mgmt_msg_append(ret, crm_element_value(op, "name"));
+			ret = mgmt_msg_append(ret, crm_element_value(op, "interval"));
+			ret = mgmt_msg_append(ret, crm_element_value(op, "timeout"));
 		}
 	}
 	free_data_set(data_set);
@@ -1990,19 +1985,19 @@ on_get_rsc_full_ops(char* argv[], int argc)
 				continue;
 			}
 			op = (struct ha_msg*)ops->values[i];
-			ret = mgmt_msg_append(ret, ha_msg_value(op, "id"));
-			ret = mgmt_msg_append(ret, ha_msg_value(op, "name"));
-			ret = mgmt_msg_append(ret, ha_msg_value(op, "description"));
-			ret = mgmt_msg_append(ret, ha_msg_value(op, "interval"));
-			ret = mgmt_msg_append(ret, ha_msg_value(op, "timeout"));
-			value = ha_msg_value(op, "start_delay");
+			ret = mgmt_msg_append(ret, crm_element_value(op, "id"));
+			ret = mgmt_msg_append(ret, crm_element_value(op, "name"));
+			ret = mgmt_msg_append(ret, crm_element_value(op, "description"));
+			ret = mgmt_msg_append(ret, crm_element_value(op, "interval"));
+			ret = mgmt_msg_append(ret, crm_element_value(op, "timeout"));
+			value = crm_element_value(op, "start_delay");
 			ret = mgmt_msg_append(ret, value==NULL?"0":value);
-			value = ha_msg_value(op, "disabled");
+			value = crm_element_value(op, "disabled");
 			ret = mgmt_msg_append(ret, value==NULL?"false":value);
-			value = ha_msg_value(op, "role");
+			value = crm_element_value(op, "role");
 			ret = mgmt_msg_append(ret, value==NULL?"Started":value);
-			ret = mgmt_msg_append(ret, ha_msg_value(op, "prereq"));
-			ret = mgmt_msg_append(ret, ha_msg_value(op, "on_fail"));
+			ret = mgmt_msg_append(ret, crm_element_value(op, "prereq"));
+			ret = mgmt_msg_append(ret, crm_element_value(op, "on_fail"));
 		}
 	}
 	free_data_set(data_set);
@@ -2302,7 +2297,7 @@ on_get_constraints(char* argv[], int argc)
 	cur = list;
 	while (cur != NULL) {
 		crm_data_t* location = (crm_data_t*)cur->data;
-		ret = mgmt_msg_append(ret, ha_msg_value(location, "id"));
+		ret = mgmt_msg_append(ret, crm_element_value(location, "id"));
 		
 		cur = g_list_next(cur);
 	}
@@ -2336,21 +2331,21 @@ on_get_constraint(char* argv[], int argc)
 	cur = list;
 	while (cur != NULL) {
 		crm_data_t* constraint = (crm_data_t*)cur->data;
-		if (strncmp(argv[2],ha_msg_value(constraint, "id"), MAX_STRLEN)==0) {
+		if (strncmp(argv[2],crm_element_value(constraint, "id"), MAX_STRLEN)==0) {
 			if (STRNCMP_CONST(argv[1],"rsc_location")==0) {
-				ret = mgmt_msg_append(ret, ha_msg_value(constraint, "id"));
-				ret = mgmt_msg_append(ret, ha_msg_value(constraint, "rsc"));
+				ret = mgmt_msg_append(ret, crm_element_value(constraint, "id"));
+				ret = mgmt_msg_append(ret, crm_element_value(constraint, "rsc"));
 				rule = find_xml_node(constraint,"rule",TRUE);
-				ret = mgmt_msg_append(ret, ha_msg_value(rule, "score"));
-				ret = mgmt_msg_append(ret, ha_msg_value(rule, "boolean_op"));
+				ret = mgmt_msg_append(ret, crm_element_value(rule, "score"));
+				ret = mgmt_msg_append(ret, crm_element_value(rule, "boolean_op"));
 				expr_list = find_xml_node_list(rule, "expression");
 				expr_cur = expr_list;
 				while(expr_cur) {
 					crm_data_t* expr = (crm_data_t*)expr_cur->data;
-					ret = mgmt_msg_append(ret, ha_msg_value(expr, "id"));
-					ret = mgmt_msg_append(ret, ha_msg_value(expr, "attribute"));
-					ret = mgmt_msg_append(ret, ha_msg_value(expr, "operation"));
-					ret = mgmt_msg_append(ret, ha_msg_value(expr, "value"));
+					ret = mgmt_msg_append(ret, crm_element_value(expr, "id"));
+					ret = mgmt_msg_append(ret, crm_element_value(expr, "attribute"));
+					ret = mgmt_msg_append(ret, crm_element_value(expr, "operation"));
+					ret = mgmt_msg_append(ret, crm_element_value(expr, "value"));
 					expr_cur = g_list_next(expr_cur);
 				}
 				g_list_free(expr_list);
@@ -2358,7 +2353,7 @@ on_get_constraint(char* argv[], int argc)
 			else if (STRNCMP_CONST(argv[1],"rsc_order")==0 ||
 					STRNCMP_CONST(argv[1],"rsc_colocation")==0) {
 				for(i = 3; i < argc; i++){
-					ret = mgmt_msg_append(ret, ha_msg_value(constraint, argv[i]));
+					ret = mgmt_msg_append(ret, crm_element_value(constraint, argv[i]));
 				}
 			}
 			break;
