@@ -67,9 +67,9 @@ obs:	tgz
 	make changes > .changes
 	scp .changes $(TARFILE) vmhost.beekhof.net:Development/obs/server:ha-clustering/pygui/
 
-home:	tgz
+dev:	tgz
 	make changes > .changes
-	scp .changes $(TARFILE) vmhost.beekhof.net:Development/obs/home:beekhof/pygui-test/
+	scp .changes $(TARFILE) vmhost.beekhof.net:Development/obs/server:ha-clustering:UNSTABLE/pygui/
 
 install-exec-local:
 	-mkdir -p $(DESTDIR)$(bindir)
