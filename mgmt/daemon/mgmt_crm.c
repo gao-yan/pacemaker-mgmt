@@ -130,10 +130,9 @@ int cib_cache_enable = FALSE;
 /* internal functions */
 GList* find_xml_node_list(crm_data_t *root, const char *child_name)
 {
-	int i;
 	GList* list = NULL;
 	xml_child_iter_filter(root, child, child_name,
-			      list = g_list_append(list, root->values[i]));
+			      list = g_list_append(list, child));
 	return list;
 }
 
