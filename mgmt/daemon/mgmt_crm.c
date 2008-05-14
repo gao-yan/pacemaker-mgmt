@@ -45,7 +45,7 @@ int in_shutdown = FALSE;
 int init_crm(int cache_cib);
 void final_crm(void);
 
-static void on_cib_diff(const char *event, HA_Message *msg);
+static void on_cib_diff(const char *event, crm_data_t *msg);
 
 static char* on_get_cib_version(char* argv[], int argc);
 static char* on_get_crm_dtd(char* argv[], int argc);
@@ -116,7 +116,7 @@ static const char* uname2id(const char* node);
 static resource_t* get_parent(resource_t* child);
 static int get_fix(const char* rsc_id, char* prefix, char* suffix, char* real_id);
 static const char* get_rsc_tag(resource_t* rsc);
-static int cl_msg_swap_offset(struct ha_msg* msg, int offset1, int offset2);
+static int cl_msg_swap_offset(crm_data_t* msg, int offset1, int offset2);
 
 pe_working_set_t* cib_cached = NULL;
 int cib_cache_enable = FALSE;
@@ -969,7 +969,7 @@ on_del_rsc(char* argv[], int argc)
 static int
 delete_lrm_rsc(IPC_Channel *crmd_channel, const char *host_uname, const char *rsc_id)
 {
-	HA_Message *cmd = NULL;
+	crm_data_t *cmd = NULL;
 	crm_data_t *msg_data = NULL;
 	crm_data_t *rsc = NULL;
 	crm_data_t *params = NULL;
@@ -996,17 +996,17 @@ delete_lrm_rsc(IPC_Channel *crmd_channel, const char *host_uname, const char *rs
 	crm_free(key);
 
 	if(send_ipc_message(crmd_channel, cmd)) {
-		crm_msg_del(cmd);
+		free_xml(cmd);
 		return 0;
 	}
-	crm_msg_del(cmd);
+	free_xml(cmd);
 	return -1;
 }
 
 static int
 refresh_lrm(IPC_Channel *crmd_channel, const char *host_uname)
 {
-	HA_Message *cmd = NULL;
+	crm_data_t *cmd = NULL;
 	char our_pid[11];
 	
 	snprintf(our_pid, 10, "%d", getpid());
@@ -1016,10 +1016,10 @@ refresh_lrm(IPC_Channel *crmd_channel, const char *host_uname)
 			     CRM_SYSTEM_CRMD, client_name, our_pid);
 	
 	if(send_ipc_message(crmd_channel, cmd)) {
-		crm_msg_del(cmd);
+		free_xml(cmd);
 		return 0;
 	}
-	crm_msg_del(cmd);
+	free_xml(cmd);
 	return -1;
 }
 
