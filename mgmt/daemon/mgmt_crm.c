@@ -1312,11 +1312,12 @@ on_move_rsc(char* argv[], int argc)
 		return cl_strdup(MSG_FAIL);
 	}
 	mgmt_log(LOG_INFO, "on_move_rsc:%s", dump_xml_formatted(parent->xml)); /* Memory leak! */
-	free_data_set(data_set);
 	
 	rc = cib_conn->cmds->variant_op(
 			cib_conn, CIB_OP_REPLACE, NULL,"resources",
 			parent->xml, &output, cib_sync_call);
+
+	free_data_set(data_set);
 	
 	if (rc < 0) {
 		return crm_failed_msg(output, rc);
