@@ -110,13 +110,12 @@ def add_column(widget, label, value, icon_cell_func = None, editable = False
 		for option in options :
 			store.append([option])
 		cell.set_property("text-column",0)
+		if is_enum :
+			cell.set_property('has-entry', False)
 	
 	if editable :
 		cell.set_property('editable', True)
 		cell.connect('edited', edited_cb, (widget.get_model(), value, call_back))
-
-	if is_enum :
-		cell.set_property('has-entry', False)
 
 	if icon_cell_func != None :
 		icon_cell = gtk.CellRendererPixbuf()
