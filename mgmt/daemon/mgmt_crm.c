@@ -1228,7 +1228,7 @@ on_add_rsc(char* argv[], int argc)
 }
 
 int
-cl_msg_swap_offset(struct ha_msg* msg, int offset1, int offset2)
+cl_msg_swap_offset(crm_data_t* msg, int offset1, int offset2)
 {
 	char* name;
 	int nlen;
