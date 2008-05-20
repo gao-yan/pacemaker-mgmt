@@ -1137,8 +1137,153 @@ fi
 
 AC_SUBST(CURSESLIBS)
 
-dnl ************ curses **********************
 
+AC_CHECK_LIB(plumb, G_main_add_IPC_Channel)	dnl -lplubm
+AC_CHECK_HEADERS(hb_config.h)
+
+CFLAGS="$CFLAGS -I${prefix}/include/heartbeat -I${prefix}/include/pacemaker"
+
+HA_VARRUNDIR=`extract_heartbeat_define hb_config.h HA_VARRUNDIR`
+AC_SUBST(HA_VARRUNDIR)
+
+HA_VARLIBDIR=`extract_heartbeat_define hb_config.h HA_VARLIBDIR`
+AC_SUBST(HA_VARLIBDIR)
+
+HB_RA_DIR=`extract_heartbeat_define hb_config.h HB_RA_DIR`
+AC_SUBST(HB_RA_DIR)
+
+HA_LIBDIR=`extract_heartbeat_define hb_config.h HA_LIBDIR`
+AC_SUBST(HA_LIBDIR)
+
+OCF_ROOT_DIR=`extract_heartbeat_define hb_config.h OCF_ROOT_DIR`
+AC_SUBST(OCF_ROOT_DIR)
+
+OCF_RA_DIR=`extract_heartbeat_define hb_config.h OCF_RA_DIR`
+AC_SUBST(OCF_RA_DIR)
+
+hb_libdir="${libdir}/${HB_PKG}"
+AC_SUBST(hb_libdir)
+
+HA_DATADIR="${datadir}"
+AC_SUBST(HA_DATADIR)
+AC_DEFINE_UNQUOTED(HA_DATADIR,"$HA_DATADIR", data (arch-independent) directory)
+
+HA_NOARCHDATAHBDIR="$HA_DATADIR/${HB_PKG}"
+AC_SUBST(HA_NOARCHDATAHBDIR)
+AC_DEFINE_UNQUOTED(HA_NOARCHDATAHBDIR,"$HA_NOARCHDATAHBDIR", $HB_PKG noarch data directory)
+
+dnl
+dnl    Cluster stack
+dnl
+
+if test X"$AISPREFIX" = X"prefix"; then
+ AISPREFIX=$prefix
+fi
+
+AISLIB=""
+
+case $SUPPORT_AIS in
+     1) SUPPORT_AIS=1;;
+     yes) SUPPORT_AIS=1;;
+     true) SUPPORT_AIS=1;;
+     *) SUPPORT_AIS=0;;
+esac
+
+case $SUPPORT_HEARTBEAT in
+     1) SUPPORT_HEARTBEAT=1;;
+     yes) SUPPORT_HEARTBEAT=1;;
+     true) SUPPORT_HEARTBEAT=1;;
+     *) SUPPORT_HEARTBEAT=0;;
+esac
+
+AC_MSG_CHECKING(for native AIS)
+
+if  test $SUPPORT_AIS = 0; then
+   AC_MSG_RESULT(no... not requested.)
+
+elif test x$SUPPORT_AIS = x; then
+   SUPPORT_AIS=0
+   AC_MSG_RESULT(no... not found.)
+
+else
+   AC_MSG_RESULT(yes... $AISPREFIX)
+
+   dnl Find it in lib, lib64, or wherever it wants to live...
+   alib=`ls ${AISPREFIX}/*/openais/libaisutil.so | head -n 1`
+   AISLIB=`dirname $alib`
+
+   if test -z "$LCRSODIR"; then
+      LCRSODIR="$libexecdir/lcrso"
+      alib=`ls ${AISPREFIX}/*/lcrso/objdb.lcrso | head -n 1`
+      LCRSODIR=`dirname $alib`
+   fi
+
+   AC_MSG_CHECKING(Testing AIS installation in $AISPREFIX)
+   if test -d ${AISLIB} -a ! -z ${AISLIB}; then
+     LIBS="$LIBS -L${AISLIB} -R${AISLIB}"
+     SUPPORT_AIS=1
+     saveLIBS="$LIBS"
+
+     dnl libs...
+     AC_CHECK_LIB(aisutil, saSendReceiveReply, [], [SUPPORT_AIS=0])
+
+     dnl headers...
+     AC_CHECK_HEADERS(openais/saAis.h)
+     if test "$ac_cv_header_openais_saAis_h" != "yes"; then
+        AC_MSG_WARN(Headers not found: $ac_cv_header_openais_saAis_h) 
+     	SUPPORT_AIS=0
+     fi  
+
+     AC_MSG_CHECKING(Testing AIS lcrso directory $LCRSODIR)
+     if test ! -d ${LCRSODIR}; then
+	AC_MSG_RESULT(Invalid.  Please specify the correct location with --with-lcrso-dir)
+     	SUPPORT_AIS=0
+     else
+	AC_MSG_RESULT(ok)
+     fi
+
+     LIBS="$saveLIBS"
+
+   else
+     AC_MSG_WARN(Couldn't find openais installed under ${AISPREFIX}.)
+     AC_MSG_WARN(Use --with-ais-prefix to specify a valid location)
+     SUPPORT_AIS=0
+   fi
+fi
+
+if test $SUPPORT_HEARTBEAT = 1; then
+   AC_CHECK_LIB(hbclient, ll_cluster_new, 
+   		[SUPPORT_HEARTBEAT=1], [SUPPORT_HEARTBEAT=0])
+fi
+
+AC_DEFINE_UNQUOTED(SUPPORT_AIS, $SUPPORT_AIS, Support the OpenAIS-based stack)
+AC_DEFINE_UNQUOTED(SUPPORT_HEARTBEAT, $SUPPORT_HEARTBEAT, Support the Heartbeat-based stack)
+
+AM_CONDITIONAL(BUILD_AIS_SUPPORT, test $SUPPORT_AIS = 1)
+AM_CONDITIONAL(BUILD_HEARTBEAT_SUPPORT, test $SUPPORT_HEARTBEAT = 1)
+
+CLUSTERLIBS=""
+if test $SUPPORT_HEARTBEAT = 1; then
+   CLUSTERLIBS="$CLUSTERLIBS -lhbclient -lccmclient -lstonithd"
+fi
+
+if test $SUPPORT_AIS = 1; then
+   CLUSTERLIBS="$CLUSTERLIBS -laisutil"
+   LIBS="$LIBS -L${AISLIB} -R${AISLIB}"
+else
+   AISPREFIX=""
+   LCRSODIR=""
+fi
+
+
+if test $SUPPORT_AIS = 0 -a $SUPPORT_HEARTBEAT = 0; then
+   AC_MSG_FAILURE(You must choose at least one cluster stack to support)
+fi
+
+AC_SUBST(CLUSTERLIBS)
+AC_SUBST(AISPREFIX)
+AC_SUBST(LCRSODIR)
+AC_SUBST(AISLIBS)
 
 dnl
 dnl    SNMP checks
@@ -1835,151 +1980,6 @@ then
   ECHO_N="-n"
   ECHO_E="-e"
 fi
-
-AC_CHECK_LIB(plumb, G_main_add_IPC_Channel)	dnl -lplubm
-AC_CHECK_HEADERS(hb_config.h)
-
-CFLAGS="$CFLAGS -I${prefix}/include/heartbeat -I${prefix}/include/pacemaker"
-
-HA_VARRUNDIR=`extract_heartbeat_define hb_config.h HA_VARRUNDIR`
-AC_SUBST(HA_VARRUNDIR)
-
-HA_VARLIBDIR=`extract_heartbeat_define hb_config.h HA_VARLIBDIR`
-AC_SUBST(HA_VARLIBDIR)
-
-HB_RA_DIR=`extract_heartbeat_define hb_config.h HB_RA_DIR`
-AC_SUBST(HB_RA_DIR)
-
-HA_LIBDIR=`extract_heartbeat_define hb_config.h HA_LIBDIR`
-AC_SUBST(HA_LIBDIR)
-
-OCF_ROOT_DIR=`extract_heartbeat_define hb_config.h OCF_ROOT_DIR`
-AC_SUBST(OCF_ROOT_DIR)
-
-OCF_RA_DIR=`extract_heartbeat_define hb_config.h OCF_RA_DIR`
-AC_SUBST(OCF_RA_DIR)
-
-hb_libdir="${libdir}/${HB_PKG}"
-AC_SUBST(hb_libdir)
-
-HA_DATADIR="${datadir}"
-AC_SUBST(HA_DATADIR)
-AC_DEFINE_UNQUOTED(HA_DATADIR,"$HA_DATADIR", data (arch-independent) directory)
-
-HA_NOARCHDATAHBDIR="$HA_DATADIR/${HB_PKG}"
-AC_SUBST(HA_NOARCHDATAHBDIR)
-AC_DEFINE_UNQUOTED(HA_NOARCHDATAHBDIR,"$HA_NOARCHDATAHBDIR", $HB_PKG noarch data directory)
-
-dnl **********************************************
-dnl Cluster stack
-dnl **********************************************
-
-if test X"$AISPREFIX" = X"prefix"; then
- AISPREFIX=$prefix
-fi
-
-AISLIB=""
-
-case $SUPPORT_AIS in
-     1) SUPPORT_AIS=1;;
-     yes) SUPPORT_AIS=1;;
-     true) SUPPORT_AIS=1;;
-     *) SUPPORT_AIS=0;;
-esac
-
-case $SUPPORT_HEARTBEAT in
-     1) SUPPORT_HEARTBEAT=1;;
-     yes) SUPPORT_HEARTBEAT=1;;
-     true) SUPPORT_HEARTBEAT=1;;
-     *) SUPPORT_HEARTBEAT=0;;
-esac
-
-AC_MSG_CHECKING(for native AIS)
-
-if  test $SUPPORT_AIS = 0; then
-   AC_MSG_RESULT(no... not requested.)
-
-elif test x$SUPPORT_AIS = x; then
-   SUPPORT_AIS=0
-   AC_MSG_RESULT(no... not found.)
-
-else
-   AC_MSG_RESULT(yes... $AISPREFIX)
-
-   dnl Find it in lib, lib64, or wherever it wants to live...
-   alib=`ls ${AISPREFIX}/*/openais/libaisutil.so | head -n 1`
-   AISLIB=`dirname $alib`
-
-   if test -z "$LCRSODIR"; then
-      LCRSODIR="$libexecdir/lcrso"
-      alib=`ls ${AISPREFIX}/*/lcrso/objdb.lcrso | head -n 1`
-      LCRSODIR=`dirname $alib`
-   fi
-
-   AC_MSG_CHECKING(Testing AIS installation in $AISPREFIX)
-   if test -d ${AISLIB} -a ! -z ${AISLIB}; then
-     LIBS="$LIBS -L${AISLIB} -R${AISLIB}"
-     SUPPORT_AIS=1
-     saveLIBS="$LIBS"
-
-     dnl libs...
-     AC_CHECK_LIB(aisutil, saSendReceiveReply, [], [SUPPORT_AIS=0])
-
-     dnl headers...
-     AC_CHECK_HEADERS(openais/saAis.h)
-     if test "$ac_cv_header_openais_saAis_h" != "yes"; then
-        AC_MSG_WARN(Headers not found: $ac_cv_header_openais_saAis_h) 
-     	SUPPORT_AIS=0
-     fi  
-
-     AC_MSG_CHECKING(Testing AIS lcrso directory $LCRSODIR)
-     if test ! -d ${LCRSODIR}; then
-     	AC_MSG_WARN(Invalid.  Please specify the correct location with --with-lcrso-dir)
-     	SUPPORT_AIS=0
-     fi
-
-     LIBS="$saveLIBS"
-
-   else
-     AC_MSG_WARN(Couldn't find openais installed under ${AISPREFIX}.)
-     AC_MSG_WARN(Use --with-ais-prefix to specify a valid location)
-     SUPPORT_AIS=0
-   fi
-fi
-
-if test $SUPPORT_HEARTBEAT = 1; then
-   AC_CHECK_LIB(hbclient, ll_cluster_new, 
-   		[SUPPORT_HEARTBEAT=1], [SUPPORT_HEARTBEAT=0])
-fi
-
-AC_DEFINE_UNQUOTED(SUPPORT_AIS, $SUPPORT_AIS, Support the OpenAIS-based stack)
-AC_DEFINE_UNQUOTED(SUPPORT_HEARTBEAT, $SUPPORT_HEARTBEAT, Support the Heartbeat-based stack)
-
-AM_CONDITIONAL(BUILD_AIS_SUPPORT, test $SUPPORT_AIS = 1)
-AM_CONDITIONAL(BUILD_HEARTBEAT_SUPPORT, test $SUPPORT_HEARTBEAT = 1)
-
-CLUSTERLIBS=""
-if test $SUPPORT_HEARTBEAT = 1; then
-   CLUSTERLIBS="$CLUSTERLIBS -lhbclient -lccmclient -lstonithd"
-fi
-
-if test $SUPPORT_AIS = 1; then
-   CLUSTERLIBS="$CLUSTERLIBS -laisutil"
-   LIBS="$LIBS -L${AISLIB} -R${AISLIB}"
-else
-   AISPREFIX=""
-   LCRSODIR=""
-fi
-
-
-if test $SUPPORT_AIS = 0 -a $SUPPORT_HEARTBEAT = 0; then
-   AC_MSG_FAILURE(You must choose at least one cluster stack to support)
-fi
-
-AC_SUBST(CLUSTERLIBS)
-AC_SUBST(AISPREFIX)
-AC_SUBST(LCRSODIR)
-AC_SUBST(AISLIBS)
 
 AC_SUBST(ECHO_N)
 AC_SUBST(ECHO_C)
