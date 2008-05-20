@@ -590,7 +590,7 @@ msgid "Keep Alive:"
 msgstr "心跳间隔："
 
 #: haclient.py.in:616
-msgid "Warning Alive:"
+msgid "Warning Time:"
 msgstr "警报时间："
 
 #: haclient.py.in:617
@@ -600,6 +600,63 @@ msgstr "认定宕机时间："
 #: haclient.py.in:618
 msgid "Initial Dead Time:"
 msgstr "启动时认定宕机时间："
+
+msgid "Quorum Server:"
+msgstr "Quorum 服务器："
+
+msgid "Use Logd:"
+msgstr "使用 Logd："
+
+msgid "Auto Join:"
+msgstr "自动加入节点："
+
+msgid "API Authentication:"
+msgstr "API 认证："
+
+msgid "Auto Failback:"
+msgstr "自动回迁："
+
+msgid "Baud Rate:"
+msgstr "波特率："
+
+msgid "Debug File:"
+msgstr "调试文件："
+
+msgid "Dead Ping:"
+msgstr "认定 Ping 节点宕机时间："
+
+msgid "Heartbeat Version:"
+msgstr "Heartbeat 版本："
+
+msgid "Hop Fudge:"
+msgstr "Hop Fudge："
+
+msgid "Log Facility:"
+msgstr "日志机制："
+
+msgid "Log File:"
+msgstr "日志文件："
+
+msgid "Message Format:"
+msgstr "消息格式："
+
+msgid "Nice Failback:"
+msgstr "回迁："
+
+msgid "Node:"
+msgstr "节点："
+
+msgid "Normal Poll:"
+msgstr "Normal Poll："
+
+msgid "Stonith:"
+msgstr "Stonith："
+
+msgid "Watchdog:"
+msgstr "Watchdog："
+
+msgid "Cluster:"
+msgstr "集群："
 
 #: haclient.py.in:619
 msgid "Default Action Timeout:"

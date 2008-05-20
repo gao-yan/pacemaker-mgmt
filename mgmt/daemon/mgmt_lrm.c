@@ -24,7 +24,7 @@
 #include <unistd.h>
 #include <glib.h>
 
-#include <heartbeat.h>
+#include <hb_config.h>
 #include <clplumbing/cl_log.h>
 #include <clplumbing/cl_syslog.h>
 

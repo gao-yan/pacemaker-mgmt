@@ -90,6 +90,20 @@ or
 */
 #define MSG_REGEVT		"regevt"
 
+
+/*
+description:
+	return the cluster type
+format:
+	MSG_CLUSTER_TYPE
+return:
+	MSG_OK cluster_type
+or
+	MSG_FAIL
+
+*/
+#define MSG_CLUSTER_TYPE	"cluster_type"
+
 /*
 description:
 	return CIB version
@@ -164,10 +178,7 @@ description:
 format:
 	MSG_HB_CONFIG
 return:
-	MSG_OK apiauth auto_failback baud debug debugfile deadping deadtime
-	  hbversion hopfudge initdead keepalive logfacility logfile msgfmt
-	  nice_failback node normalpoll stonith udpport warntime watchdog
-or
+	MSG_OK name1 value1 name2 value2 ... namen valuen
 	MSG_FAIL
 */
 #define MSG_HB_CONFIG		"hb_config"

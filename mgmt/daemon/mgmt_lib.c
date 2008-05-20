@@ -35,7 +35,7 @@
 #include <glib.h>
 
 
-#include <heartbeat.h>
+#include <hb_config.h>
 #include <clplumbing/GSource.h>
 #include <clplumbing/cl_malloc.h>
 #include <clplumbing/cl_log.h>
@@ -48,7 +48,7 @@
 #include <mgmt/mgmt.h>
 #include "mgmt_internal.h"
 
-
+#include <crm/common/util.h>
 
 /* common daemon and debug functions */
 
@@ -57,7 +57,9 @@ extern int init_general(void);
 extern void final_general(void);
 extern int init_crm(int cache_cib);
 extern void final_crm(void);
+#if SUPPORT_HEARTBEAT
 extern int init_heartbeat(void);
+#endif
 extern void final_heartbeat(void);
 extern int init_lrm(void);
 extern void final_lrm(void);
@@ -77,11 +79,15 @@ init_mgmt_lib(const char* client, int enable_components)
 	mgmt_set_mem_funcs(cl_malloc, cl_realloc, cl_free);
 	
 	/* init modules */
-	if (components & ENABLE_HB) {
-		if (init_heartbeat() != 0) {
-			return -1;
+#if SUPPORT_HEARTBEAT
+	if(is_heartbeat_cluster()) {
+		if (components & ENABLE_HB) {
+			if (init_heartbeat() != 0) {
+				return -1;
+			}
 		}
 	}
+#endif
 	if (components & ENABLE_LRM) {
 		if (init_lrm() != 0) {
 			return -1;
@@ -104,9 +110,13 @@ final_mgmt_lib()
 	if (components & ENABLE_LRM) {
 		final_lrm();
 	}
-	if (components & ENABLE_HB) {
-		final_heartbeat();
+#if SUPPORT_HEARTBEAT
+	if(is_heartbeat_cluster()) {
+		if (components & ENABLE_HB) {
+			final_heartbeat();
+		}
 	}
+#endif
 	g_hash_table_destroy(msg_map);
 	g_hash_table_destroy(event_map);
 	return 0;

@@ -47,7 +47,8 @@
 #endif
 #include <glib.h>
 
-#include <heartbeat.h>
+#include <hb_config.h>
+#include <netinet/in.h>
 #include <clplumbing/GSource.h>
 #include <clplumbing/cl_malloc.h>
 #include <clplumbing/cl_log.h>

@@ -47,6 +47,9 @@ static void on_hb_quit(gpointer);
 char* hb_config = NULL;
 
 const char* param_name[] = {
+	"quorum_server",
+	"use_logd",
+	"autojoin",
 	"apiauth",
 	"auto_failback",
 	"baud",
@@ -104,6 +107,7 @@ on_get_hb_config(char* argv[], int argc)
 		hb_config = cl_strdup(MSG_OK);
 		for (i = 0; i < sizeof(param_name)/sizeof(param_name[0]); i++) {
 			value = hb->llc_ops->get_parameter(hb, param_name[i]);
+			hb_config = mgmt_msg_append(hb_config, param_name[i]);
 			hb_config = mgmt_msg_append(hb_config, value!=NULL?value:""); 
 			if (value != NULL) {
 				cl_free(value);

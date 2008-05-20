@@ -52,9 +52,15 @@ mgmtd_LDADD 	=  $(top_builddir)/lib/mgmt/libhbmgmtclient.la \
 		   $(COMMONLIBS)
 
 lib_LTLIBRARIES = libhbmgmt.la
-libhbmgmt_la_SOURCES = mgmt_lib.c mgmt_crm.c mgmt_lrm.c mgmt_hb.c
+libhbmgmt_la_SOURCES = mgmt_lib.c mgmt_crm.c mgmt_lrm.c
+if BUILD_HEARTBEAT_SUPPORT
+libhbmgmt_la_SOURCES += mgmt_hb.c
+endif
 libhbmgmt_la_CFLAGS = $(INCLUDES)
 libhbmgmt_la_LDFLAGS = $(GNUTLSLIBS)
 libhbmgmt_la_LIBADD = $(top_builddir)/lib/mgmt/libhbmgmttls.la 			\
-		  	-lcib -lcrmcommon -lapphb -lpe_status -lhbclient	\
+		  	-lcib -lcrmcommon -lapphb -lpe_status	\
 			$(COMMONLIBS) $(CURSESLIBS)
+if BUILD_HEARTBEAT_SUPPORT
+libhbmgmt_la_LIBADD += -lhbclient
+endif

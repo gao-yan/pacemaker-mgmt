@@ -668,7 +668,6 @@ class Tree :
 		window.select_view(None, None, None)
 		if not manager.connected :
 			return
-				
 		
 		nodes = manager.get_all_nodes()
 		if nodes == None :
@@ -682,14 +681,22 @@ class Tree :
 		if crm_nodes == None :
 			return
 		
-		config = manager.get_cluster_config()
+		config = manager.get_crm_info()
 		if config.has_key("have_quorum") and config["have_quorum"] == "true" :
 			status = _("with quorum")
 		else :
 			status = _("without quorum")
-		root = self.store.append(None, [config["cluster"],status, "cluster"])
+		
+		cluster_type = manager.get_cluster_type().capitalize()
+		if len(cluster_type) > 0 :
+			cluster_type += " & Pacemaker"
+		else :
+			cluster_type += "Pacemkaer"
+
+		root = self.store.append(None, [cluster_type, status, "cluster"])
 		
 		nodes_root = self.store.append(root, [_("Nodes"),"", "nodes"])
+
 		for node in nodes :
 			self.add_node(nodes_root, node, node in active_nodes, node in crm_nodes)
 
@@ -851,6 +858,7 @@ class ClusterView(View) :
 	crmd_metadata = None
 	pengine_widgets = None
 	crmd_widgets = None
+	cluster_info_labels = None
 	
 	def on_apply(self, widget):
 		glade = self.glade
@@ -886,14 +894,29 @@ class ClusterView(View) :
 		glade = self.glade
 		config = manager.get_cluster_config()
 
-		if config != None :
-			glade.get_widget("hbversion").set_text(config["hbversion"])
-			glade.get_widget("debug").set_text(str(config["debug"]))
-			glade.get_widget("udpport").set_text(config["udpport"])
-			glade.get_widget("keepalive").set_text(config["keepalive"])
-			glade.get_widget("warntime").set_text(config["warntime"])
-			glade.get_widget("deadtime").set_text(config["deadtime"])
-			glade.get_widget("initdead").set_text(config["initdead"])
+		if config != None and len(config) > 0:
+			info_table = glade.get_widget("table")
+			row = 0
+			cluster_info_labels= {}
+			for key in config.keys():
+				if config.get(key, "") == "" :
+					continue
+				label = gtk.Label()
+				label.set_alignment(1, 0.5)
+				eventbox = gtk.EventBox()
+				eventbox.add(label)
+				info_table.attach(eventbox, 0, 1, row, row+1, xpadding = 5)
+				cluster_info_labels[key] = label
+
+				label = gtk.Label(config.get(key,""))
+				label.set_alignment(0, 0.5)
+				info_table.attach(label, 1, 2, row, row+1, yoptions = not gtk.EXPAND, xpadding = 5)
+				row += 1
+
+			info_table.show_all()
+			self.cluster_info_labels =  cluster_info_labels
+		else :
+			glade.get_widget("notebook").get_nth_page(0).hide_all()
 
 		for (widgets, metadata) in ((self.pengine_widgets, self.pengine_metadata),
 						(self.crmd_widgets, self.crmd_metadata)):
@@ -905,14 +928,47 @@ class ClusterView(View) :
 		View.update(self)
 	
 	def on_after_show(self) :
-		make_label_active(self.glade.get_widget("l_hbversion"),_("Version:"),"www.linux-ha.org")
-		make_label_active(self.glade.get_widget("l_debug"),_("Debug Level:"),"www.linux-ha.org")
-		make_label_active(self.glade.get_widget("l_udpport"),_("UDP Port:"),"www.linux-ha.org")
-		make_label_active(self.glade.get_widget("l_keepalive"),_("Keep Alive:"),"www.linux-ha.org")
-		make_label_active(self.glade.get_widget("l_warntime"),_("Warning Alive:"),"www.linux-ha.org")
-		make_label_active(self.glade.get_widget("l_deadtime"),_("Dead Time:"),"www.linux-ha.org")
-		make_label_active(self.glade.get_widget("l_initdead"),_("Initial Dead Time:"),"www.linux-ha.org")
+		info_dict =	{
+				"quorum_server":	"Quorum Server",
+				"use_logd":		"Use Logd",
+				"autojoin":		"Auto Join",
+				"apiauth":		"API Authentication",
+				"auto_failback":	"Auto Failback",
+				"baud":			"Baud Rate",
+				"debug":		"Debug Level",
+				"debugfile":		"Debug File",
+				"deadping":		"Dead Ping",
+				"deadtime":		"Dead Time",
+				"hbversion":		"Heartbeat Version",
+				"hopfudge":		"Hop Fudge",
+				"initdead":		"Initial Dead Time",
+				"keepalive":		"Keep Alive",
+				"logfacility":		"Log Facility",
+				"logfile":		"Log File",
+				"msgfmt":		"Message Format",
+				"nice_failback":	"Nice Failback",
+				"node":			"Node",
+				"normalpoll":		"Normal Poll",
+				"stonith":		"Stonith",
+				"udpport":		"UDP Port",
+				"warntime":		"Warning Time",
+				"watchdog":		"Watchdog",
+				"cluster":		"Cluster"
+				}
 
+
+		if self.cluster_info_labels != None :
+			cluster_type = manager.get_cluster_type()
+			if cluster_type == "openais" :
+				target_site = "www.openais.org"
+			elif cluster_type == "heartbeat" :
+				target_site = "www.linux-ha.org"
+			else :
+				target_site = "www.clusterlabs.org"
+
+			for key in self.cluster_info_labels.keys() :
+				make_label_active(self.cluster_info_labels[key],_(info_dict.get(key, key)+":"), target_site)
+			
 		name_cap = lambda name: name.replace("-"," ").replace("_"," ").title().replace("Crmd ","CRMD ").\
 						replace("Pe ", "PE ").replace("Dc ","DC ")
 
@@ -921,7 +977,7 @@ class ClusterView(View) :
 				for key in widgets["name_labels"].keys():
 					make_label_active(widgets["name_labels"][key], 
 								_(name_cap(key)+":"),
-								"www.linux-ha.org")
+								"www.clusterlabs.org")
 							
 	def on_notebook_event(self, widget, page, page_num) :
 		global last_cluster_view_page_num
@@ -2605,23 +2661,37 @@ class Manager :
 			meta.parameters.append(param)
 		return meta
 
+	def get_cluster_type(self) :
+		typelist = manager.query("cluster_type")
+		if typelist != None and len(typelist) > 0 :
+			cluster_type = typelist[0]
+		else :
+			cluster_type = ""
 
-	def get_cluster_config(self) :
-		
-		hb_attr_names = ["apiauth","auto_failback","baud","debug","debugfile",
-				 "deadping","deadtime","hbversion","hopfudge",
-				 "initdead","keepalive","logfacility","logfile",
-				 "msgfmt","nice_failback","node","normalpoll",
-			 	"stonith","udpport","warntime","watchdog", "cluster"]
-				  
+		return cluster_type
+
+	def get_hb_config(self) :
 		values = manager.query("hb_config")
-		if values == None :
-			return None
-		config = dict(zip(hb_attr_names,values))
-				
+		hb_config = {}
+		if values != None:
+			i = 0
+			while i < len(values) :
+				hb_config[values[i]] = values[i+1]
+				i += 2
+		return hb_config
+
+	def get_crm_info(self) :
+		crm_info = {}
 		value = manager.query("crm_config\nhave_quorum")
 		if value != None and value != []:
-			config["have_quorum"] = value[0]
+			crm_info["have_quorum"] = value[0]
+		return crm_info
+
+	def get_cluster_config(self) :
+		config = {}
+		cluster_type = self.get_cluster_type()
+		if cluster_type == "heartbeat" :
+			config = self.get_hb_config()
 
 		return config
 
@@ -2659,6 +2729,8 @@ class Manager :
 
 	def get_all_nodes(self) :
 		self.all_nodes = self.query("all_nodes")
+		if self.all_nodes == None :
+			self.all_nodes = self.query("crm_nodes")
 		return self.all_nodes
 
 	def get_nodetype(self, node):
@@ -2666,6 +2738,9 @@ class Manager :
 	
 	def get_normal_nodes(self) :
 		nodes = self.query("all_nodes")
+		if nodes == None :
+			return self.get_crm_nodes()
+
 		normal_nodes = []
 		for node in nodes :
 			if self.get_nodetype(node)[0] == "normal" :

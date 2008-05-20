@@ -24,7 +24,7 @@
 #include <unistd.h>
 #include <glib.h>
 
-#include <heartbeat.h>
+#include <hb_config.h>
 #include <clplumbing/cl_malloc.h>
 #include <clplumbing/cl_log.h>
 #include <clplumbing/cl_syslog.h>
@@ -47,6 +47,7 @@ void final_crm(void);
 
 static void on_cib_diff(const char *event, crm_data_t *msg);
 
+static char* on_get_cluster_type(char* argv[], int argc);
 static char* on_get_cib_version(char* argv[], int argc);
 static char* on_get_crm_dtd(char* argv[], int argc);
 
@@ -480,6 +481,7 @@ init_crm(int cache_cib)
 	ret = cib_conn->cmds->set_connection_dnotify(cib_conn
 			, on_cib_connection_destroy);
 
+	reg_msg(MSG_CLUSTER_TYPE, on_get_cluster_type);
 	reg_msg(MSG_CIB_VERSION, on_get_cib_version);
 	reg_msg(MSG_CRM_DTD, on_get_crm_dtd);
 	reg_msg(MSG_CRM_METADATA, on_get_crm_metadata);
@@ -572,6 +574,23 @@ on_cib_connection_destroy(gpointer user_data)
 }
 
 /* cluster  functions */
+char* 
+on_get_cluster_type(char* argv[], int argc)
+{
+	char* ret = cl_strdup(MSG_OK);
+
+	if (is_openais_cluster()) {
+		ret = mgmt_msg_append(ret, "openais");
+	}
+	else if (is_heartbeat_cluster()) {
+		ret = mgmt_msg_append(ret, "heartbeat");
+	}
+	else {
+		ret = cl_strdup(MSG_FAIL);
+	}
+	return ret;
+}
+
 char* 
 on_get_cib_version(char* argv[], int argc)
 {
