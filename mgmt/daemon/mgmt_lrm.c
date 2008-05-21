@@ -27,6 +27,7 @@
 #include <hb_config.h>
 #include <clplumbing/cl_log.h>
 #include <clplumbing/cl_syslog.h>
+#include <clplumbing/cl_malloc.h>
 
 #include "mgmt_internal.h"
 #include <lrm/lrm_api.h>
