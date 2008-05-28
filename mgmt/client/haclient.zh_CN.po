@@ -340,6 +340,9 @@ msgstr "节点"
 msgid "Resources"
 msgstr "资源"
 
+msgid "Tools"
+msgstr "工具"
+
 #: haclient.py.in:448
 msgid "Constraints"
 msgstr "限制条件"
@@ -816,6 +819,27 @@ msgstr "清理迁移时所创建的限制条件"
 
 msgid "all migrated resources"
 msgstr "所有被迁移的资源"
+
+msgid "Cluster Report"
+msgstr "集群报告"
+
+msgid "generate a cluster report"
+msgstr "生成集群报告"
+
+msgid "The \"From\" time should before the \"To\" one"
+msgstr "\"起始\"时间应早于\"目标\"时间"
+
+msgid "Save as ..."
+msgstr "保存为..."
+
+msgid "Generating cluster report failed"
+msgstr "生成集群报告失败"
+
+msgid "System error"
+msgstr "系统错误"
+
+msgid "Permission denied: "
+msgstr "权限不够： "
 
 msgid "Resource ID:"
 msgstr "资源 ID："

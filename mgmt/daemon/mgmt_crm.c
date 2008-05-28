@@ -23,6 +23,7 @@
 
 #include <unistd.h>
 #include <glib.h>
+#include <regex.h>
 
 #include <hb_config.h>
 #include <clplumbing/cl_malloc.h>
@@ -102,6 +103,8 @@ static char* on_get_constraint(char* argv[], int argc);
 static char* on_update_constraint(char* argv[], int argc);
 static char* on_delete_constraint(char* argv[], int argc);
 
+static char* on_gen_cluster_report(char* argv[], int argc);
+
 static void get_meta_attributes_id(const char* rsc_id, char* id);
 static void get_instance_attributes_id(const char* rsc_id, char* id);
 static void get_attr_id(const char* rsc_id, const char* attr_type, const char* attr, char* id);
@@ -118,6 +121,7 @@ static resource_t* get_parent(resource_t* child);
 static int get_fix(const char* rsc_id, char* prefix, char* suffix, char* real_id);
 static const char* get_rsc_tag(resource_t* rsc);
 static int cl_msg_swap_offset(crm_data_t* msg, int offset1, int offset2);
+int regex_match(const char *regex, const char *str);
 
 pe_working_set_t* cib_cached = NULL;
 int cib_cache_enable = FALSE;
@@ -533,6 +537,8 @@ init_crm(int cache_cib)
 	reg_msg(MSG_GET_CONSTRAINT, on_get_constraint);
 	reg_msg(MSG_DEL_CONSTRAINT, on_delete_constraint);
 	reg_msg(MSG_UP_CONSTRAINT, on_update_constraint);
+
+	reg_msg(MSG_GEN_CLUSTER_REPORT, on_gen_cluster_report);
 	
 	return 0;
 }	
@@ -2425,3 +2431,96 @@ on_update_constraint(char* argv[], int argc)
 	return cl_strdup(MSG_OK);
 }
 
+static char*
+on_gen_cluster_report(char* argv[], int argc)
+{
+	char cmd[MAX_STRLEN];
+	char buf[MAX_STRLEN];
+	char filename[MAX_STRLEN];
+	char *dest = tempnam("/tmp", "clrp.");
+	char* ret = cl_strdup(MSG_OK);
+	FILE *fstream = NULL;
+	const char* date_regex = \
+		"[0-9]{4}-[0-1][0-9]-[0-3][0-9] [0-2][0-9]:[0-5][0-9]:[0-5][0-9]";
+
+	ARGC_CHECK(3);
+
+	if (regex_match(date_regex, argv[1])) {
+		snprintf(buf, sizeof(buf), "-f \"%s\"", argv[1]);
+	}
+	else {
+		mgmt_log(LOG_ERR, "invalid \"from\" date expression: \"%s\"", argv[1]);
+		free(dest);
+		return cl_strdup(MSG_FAIL);
+	}
+
+	if (strnlen(argv[2], MAX_STRLEN) != 0) {
+		if (regex_match(date_regex, argv[2])) {
+			strncat(buf, " -t \"", sizeof(buf)-strlen(buf)-1);
+			strncat(buf, argv[2], sizeof(buf)-strlen(buf)-1);
+			strncat(buf, "\"", sizeof(buf)-strlen(buf)-1);
+		}
+		else {
+			mgmt_log(LOG_ERR, "invalid \"to\" date expression: \"%s\"", argv[2]);
+			free(dest);
+			return cl_strdup(MSG_FAIL);
+		}
+	}
+
+	snprintf(cmd, sizeof(cmd), "hb_report -DC %s %s", buf, dest);
+	mgmt_log(LOG_INFO, "cluster_report: %s", cmd);
+	if (system(cmd) < 0) {
+		mgmt_log(LOG_ERR, "error on system %s: %s",
+			 cmd, strerror(errno));
+		free(dest);
+		return cl_strdup(MSG_FAIL);
+	}
+
+	snprintf(filename, sizeof(filename), "%s.tar.gz", dest);
+	snprintf(cmd, sizeof(cmd), "base64 %s", filename);
+	if ((fstream = popen(cmd, "r")) == NULL) {
+		mgmt_log(LOG_ERR, "error on popen %s: %s",
+			 cmd, strerror(errno));
+		unlink(filename);
+		free(dest);
+		return cl_strdup(MSG_FAIL);
+	 }
+
+	ret = mgmt_msg_append(ret, filename);
+	while (!feof(fstream)) {
+		memset(buf, 0, sizeof(buf));
+		if (fgets(buf, sizeof(buf), fstream) != NULL) {
+			ret = mgmt_msg_append(ret, buf);
+			ret[strlen(ret)-1] = '\0';
+		}
+		else {
+			sleep(1);
+		}
+	}
+	if (pclose(fstream) == -1)
+		mgmt_log(LOG_WARNING, "failed to close pipe");
+
+	unlink(filename);
+	free(dest);
+	return ret;
+}
+
+int
+regex_match(const char *regex, const char *str)
+{
+	regex_t preg;
+	int ret;
+
+	if (regcomp(&preg, regex, REG_EXTENDED|REG_NOSUB) != 0){
+		mgmt_log(LOG_ERR, "error regcomp regular expression: \"%s\"", regex);
+		return 0;
+	}
+
+	ret = regexec(&preg, str, 0, NULL, 0);
+	if (ret != 0) {
+		mgmt_log(LOG_WARNING, "no match or error regexec: \"%s\" \"%s\"", regex, str);
+	}
+
+	regfree(&preg);
+	return (ret == 0);
+}

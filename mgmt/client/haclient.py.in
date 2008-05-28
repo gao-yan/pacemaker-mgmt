@@ -24,7 +24,7 @@ Copyright (C) 2005 International Business Machines
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 
-import sys, os, string, socket, syslog, webbrowser, pickle, xml, gc
+import sys, os, string, socket, syslog, webbrowser, pickle, xml, gc, time, binascii
 from xml.dom.minidom import parseString
 from xml.parsers.xmlproc.xmldtd import load_dtd_string
 
@@ -1801,6 +1801,221 @@ class AddObjectDlg :
 			if desc != None :
 				cmnobj.show_desc(self.glade, widgets, desc)
 
+class ClusterReportDlg :
+	def set_params(self) :
+		global top_window
+		dialog = gtk.Dialog(_("Cluster Report"), top_window, gtk.DIALOG_MODAL,
+			(gtk.STOCK_OK, gtk.RESPONSE_OK, gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL))
+		self.dialog = dialog
+
+		current_time = time.time()
+		from_time = time.localtime(current_time - 1800)
+		to_time = time.localtime(current_time)
+
+		fdatetime = self.render_time_widgets("<b>"+_("From")+"</b>", from_time, False)
+		tdatetime = self.render_time_widgets("<b>"+_("To")+"</b>", to_time, True)
+
+		save_top_window = top_window
+		top_window = dialog
+		dialog.show_all()
+
+		while True :
+			ret = dialog.run()
+			if ret in [gtk.RESPONSE_CANCEL,gtk.RESPONSE_DELETE_EVENT] :
+				top_window = save_top_window
+				dialog.destroy()
+				return None
+			else :
+				ftime = fdatetime.get_time() 
+				if tdatetime.time_hbox.get_property("sensitive") :
+					ttime = tdatetime.get_time()
+				else :
+					ttime = None
+
+				passed = True
+				if ttime != None and time.mktime(ftime) > time.mktime(ttime) :
+					msgbox(_("The \"From\" time should before the \"To\" one"))
+					passed = False
+
+				if passed :
+					report_params = {}
+					report_params["ftime"] = time.strftime("%F %T", ftime)
+					if ttime != None :
+						report_params["ttime"] = time.strftime("%F %T", ttime)
+
+					top_window = save_top_window
+					dialog.destroy()
+					return report_params
+	def select_file(self, orig_filename = None) :
+		global top_window
+		file_dialog = gtk.FileChooserDialog(_("Save as ..."), None, 
+				gtk.FILE_CHOOSER_ACTION_SAVE,
+				(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
+				gtk.STOCK_SAVE, gtk.RESPONSE_OK))
+		if orig_filename != None :
+			file_dialog.set_current_name(orig_filename)
+
+		save_top_window = top_window
+		top_window = file_dialog
+
+		while True :
+			ret = file_dialog.run()
+			if ret in [gtk.RESPONSE_CANCEL,gtk.RESPONSE_DELETE_EVENT] :
+				top_window = save_top_window
+				file_dialog.destroy()
+				return None
+			else :
+				save_folder = file_dialog.get_current_folder()
+				passed = True
+				try :
+					if not os.access(save_folder, os.R_OK | os.W_OK | os.X_OK) :
+						msgbox(_("Permission denied: ") + save_folder)
+						passed = False
+						continue
+				except OSError, value :
+					msgbox("[" + _("System error") + " %d] %s: '%s'"%(value[0], value[1], save_folder))
+					passed = False
+
+				if passed :
+					top_window = save_top_window
+					save_file = file_dialog.get_filename()
+					file_dialog.destroy()
+					return save_file
+
+	def render_time_widgets(self, label, default_time, sensibility) :
+		time_label = gtk.Label()
+		time_label.set_markup(_(label))
+		time_label.set_alignment(0, 0.5)
+		
+		datetime = DateTime(default_time)
+
+		if sensibility :
+			time_checkbutton = gtk.CheckButton()
+			time_checkbutton.add(time_label)
+			time_checkbutton.connect("toggled", self.on_checkbutton_toggled, datetime.time_hbox)
+			self.dialog.vbox.pack_start(time_checkbutton, False)
+			datetime.time_hbox.set_sensitive(False)
+		else :
+			self.dialog.vbox.pack_start(time_label, False)
+
+		self.dialog.vbox.pack_start(datetime.time_hbox, False)
+
+		return datetime
+
+	def on_checkbutton_toggled(self, widget, hbox) :
+		hbox.set_sensitive(widget.get_active())
+
+class DateTime:
+	def __init__(self, default_time) :
+		time_hbox = gtk.HBox()
+
+		time_date = gtk.Entry()
+		time_date.set_width_chars(10)
+		time_date.set_editable(False)
+		time_hbox.pack_start(time_date, False)
+
+		time_cal_window = gtk.Window(gtk.WINDOW_POPUP)
+		time_cal = gtk.Calendar()
+		time_cal_window.add(time_cal)
+		
+		time_cal_button = gtk.ToggleButton()
+		arrow = gtk.Arrow(gtk.ARROW_DOWN, gtk.SHADOW_OUT)
+		time_cal_button.add(arrow)
+		time_cal_button.connect("toggled", self.on_toggled, time_cal_window)
+		time_hbox.pack_start(time_cal_button, False)
+
+		time_cal_window.connect("button-press-event", self.on_button_press, time_cal_button)
+		time_cal_window.connect("key-press-event", self.on_key_press, time_cal_button)
+
+		time_cal.connect("day-selected", self.on_day_selected, time_date)
+
+		time_cal.select_month(default_time[1]-1, default_time[0])
+		time_cal.select_day(default_time[2])
+
+		space = gtk.Label(" ")
+		time_hbox.pack_start(space, False)
+
+		time_hr_adj = gtk.Adjustment(default_time[3], 00, 23, 1, 4)
+		time_hr = gtk.SpinButton(time_hr_adj, 0, 0)
+		time_hr.set_width_chars(2)
+		time_hr.set_wrap(True)
+		time_hbox.pack_start(time_hr, False)
+
+		time_colon = gtk.Label(":")
+		time_hbox.pack_start(time_colon, False)
+
+		time_min_adj = gtk.Adjustment(default_time[4], 00, 59, 1, 5)
+		time_min = gtk.SpinButton(time_min_adj, 0, 0)
+		time_min.set_width_chars(2)
+		time_min.set_wrap(True)
+		time_hbox.pack_start(time_min, False)
+		
+		time_colon = gtk.Label(":")
+		time_hbox.pack_start(time_colon, False)
+
+		time_sec_adj = gtk.Adjustment(default_time[5], 00, 59, 1, 5)
+		time_sec = gtk.SpinButton(time_sec_adj, 0, 0)
+		time_sec.set_width_chars(2)
+		time_sec.set_wrap(True)
+		time_hbox.pack_start(time_sec, False)
+
+		time_widgets = {}
+		self.time_date = time_date
+		self.time_hr = time_hr
+		self.time_min = time_min
+		self.time_sec = time_sec
+		self.time_hbox = time_hbox
+
+	def on_toggled(self, widget, cal_window) :
+		if widget.get_active() :
+			self.cal_popup(widget, cal_window)
+		else :
+			self.cal_hide(widget, cal_window)
+
+	def cal_popup(self, widget, cal_window) :
+		(x, y) = widget.get_parent_window().get_position()
+		x += widget.allocation.x
+		y += widget.allocation.y + widget.allocation.height
+		cal_window.grab_add()
+		cal_window.move(x, y)
+		cal_window.grab_focus()
+		cal_window.show_all()
+
+		if gtk.gdk.pointer_grab(cal_window.window, True,
+			gtk.gdk.BUTTON_PRESS_MASK | gtk.gdk.BUTTON_RELEASE_MASK | gtk.gdk.POINTER_MOTION_MASK,
+			None, None, 0L) == gtk.gdk.GRAB_SUCCESS :
+			if (gtk.gdk.keyboard_grab (cal_window.window, True, 0L) != 0):
+				gtk.gdk.pointer_ungrab(0L)
+
+	def cal_hide(self, widget, cal_window) :
+		cal_window.hide()
+		cal_window.grab_remove()
+		gtk.gdk.pointer_ungrab(0L)
+		gtk.gdk.keyboard_ungrab(0L)
+
+	def on_button_press(self, cal_window, event, button) :
+		button.set_active(False)
+				
+	def on_key_press(self, cal_window, event, button) :
+		if event.keyval == gtk.keysyms.Escape :
+			button.set_active(False)
+		else :
+			gtk.gdk.keyboard_grab (cal_window.window, True, 0L)
+
+	def on_day_selected(self, cal_window, date_entry) :
+		(year, month, day) = cal_window.get_date()
+		mytime = time.mktime((year, month+1, day, 0, 0, 0, 0, 0, -1))
+		localtime = time.strftime("%Y-%m-%d", time.localtime(mytime))
+		date_entry.set_text(localtime)
+		#date_entry.set_text("%d-%02d-%02d"%(year, month+1, day))
+
+	def get_time(self) :
+		datetime = time.strptime("%s %02d:%02d:%02d"%(self.time_date.get_text(),
+							self.time_hr.get_value(),
+							self.time_min.get_value(),
+							self.time_sec.get_value()), "%Y-%m-%d %H:%M:%S")
+		return datetime
+
 class MainWindow :
 	'''
 	Main UI window to show information to user and get users input
@@ -1877,6 +2092,7 @@ class MainWindow :
 			and self.cur_type in [_("native"), _("group"), _("clone"), _("master")])
 
 		self.set_action_sensitive('unmigratersc', manager.connected)
+		self.set_action_sensitive('report', manager.connected)
 
 	# functions
 	def update(self) :
@@ -2216,6 +2432,36 @@ class MainWindow :
 				for id in migrate_ids[unmigrate["rsc"]] :
 					manager.do_cmd("del_co\nrsc_location\n"+id)
 
+	def on_cluster_report(self, action) :
+		rpdlg = ClusterReportDlg()
+		report_params = rpdlg.set_params()
+		if report_params == None :
+			return
+
+		report_cmd = "gen_cluster_report\n%s\n%s"%(report_params["ftime"], report_params.get("ttime", ""))
+
+		str_list = manager.do_cmd(report_cmd)
+		if manager.failed_reason != "" :
+			msgbox(manager.failed_reason)
+			return
+		elif str_list == None or len(str_list) < 2 :
+			msgbox(_("Generating cluster report failed"))
+			return
+
+		save_file = rpdlg.select_file(str_list[0].split("/")[-1])
+		if save_file == None :
+			return
+
+		try :
+			base64_str = "\n".join(str_list[1:])
+			bin_str = binascii.a2b_base64(base64_str)
+			fd = os.open(save_file, os.O_RDWR|os.O_CREAT|os.O_TRUNC, 0644)
+			os.write(fd, bin_str)
+			os.close(fd)
+		except OSError, value :
+			msgbox("[" + _("System error") + " %d] %s: '%s'"%(value[0], value[1], file_name))
+			return
+
 	def load_icon(self, name, file) :
 		icons = gtk.IconFactory()
 		icons.add(name,gtk.IconSet(gtk.gdk.pixbuf_new_from_file(file)))
@@ -2272,6 +2518,9 @@ class MainWindow :
 					<menuitem action="standby"/>
 					<menuitem action="active"/>
 				</menu>
+				<menu action="tools">
+					<menuitem action="report"/>
+				</menu>
 			</menubar>
 			<popup name="resource_popup">
 				<menuitem action="addrsc"/>
@@ -2294,6 +2543,9 @@ class MainWindow :
 				<menuitem action="standby"/>
 				<menuitem action="active"/>
 			</popup>
+			<popup action="tools_popup">
+				<menuitem action="report"/>
+			</popup>
 			<toolbar name="toolbar">
 				<toolitem action="login"/>
 				<toolitem action="logout"/>
@@ -2311,6 +2563,8 @@ class MainWindow :
 				<separator/>
 				<toolitem action="standby"/>
 				<toolitem action="active"/>
+				<separator/>
+				<toolitem action="report"/>
 				<separator/>
 				<toolitem action="quit"/>
 			</toolbar>
@@ -2351,7 +2605,9 @@ class MainWindow :
 				self.on_unmigrate_rsc),
 			('node', None, _('Nodes')),
 			('standby', "ha-standby-node", _('Standby'), None,_('make the node standby'), self.on_standby),
-			('active', "ha-active-node", _('Active'), None,_('make the node active'), self.on_active)
+			('active', "ha-active-node", _('Active'), None,_('make the node active'), self.on_active),
+			('tools', None, _('Tools')),
+			('report', gtk.STOCK_DND, _('Cluster Report'), None, _('generate a cluster report'), self.on_cluster_report)
 			])
 		uimanager.insert_action_group(actiongroup, 0)
 		uimanager.add_ui_from_string(ui_xml)

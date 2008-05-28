@@ -804,6 +804,17 @@ or
 */
 #define MSG_RSC_METADATA	"rsc_metadata"
 
+/*
+description:
+	generate cluster report and return the list of files
+format:
+	MSG_GEN_CLUSTER_REPORT ftime ttime
+return:
+	MSG_OK filename base64_str1 base64_str2 ... base64_strn
+or
+	MSG_FAIL
+*/
+#define MSG_GEN_CLUSTER_REPORT	"gen_cluster_report"
 
 /*************************EVENTS*********************************************/
 
