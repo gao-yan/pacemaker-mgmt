@@ -2442,6 +2442,14 @@ class MainWindow :
 		if report_params == None :
 			return
 
+		ret = confirmbox(_("Generating the cluster report may take a while,")+"\n"
+				+_("depending on the size of logs."), 
+				(gtk.STOCK_YES, gtk.RESPONSE_YES, 
+				gtk.STOCK_NO, gtk.RESPONSE_NO),_("Continue?"))
+				
+		if ret == gtk.RESPONSE_NO:
+			return
+
 		report_cmd = "gen_cluster_report\n%s\n%s"%(report_params["ftime"], report_params.get("ttime", ""))
 
 		str_list = manager.do_cmd(report_cmd)

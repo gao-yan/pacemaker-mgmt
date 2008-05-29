@@ -829,6 +829,15 @@ msgstr "生成集群报告"
 msgid "The \"From\" time should before the \"To\" one"
 msgstr "\"起始\"时间应早于\"目标\"时间"
 
+msgid "Generating the cluster report may take a while,"
+msgstr "生成集群报告需要一段时间，"
+
+msgid "depending on the size of logs."
+msgstr "取决于日志的大小。"
+
+msgid "Continue?"
+msgstr "继续？"
+
 msgid "Save as ..."
 msgstr "保存为..."
 
