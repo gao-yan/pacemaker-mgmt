@@ -129,15 +129,19 @@ def add_column(widget, label, value, icon_cell_func = None, editable = False
 def msgbox(msg) :
 	global top_window
 	dialog = gtk.Dialog(_("Message"), top_window, gtk.DIALOG_MODAL, (gtk.STOCK_OK, True))
+	im=gtk.Image()
+	im.set_from_stock(gtk.STOCK_DIALOG_INFO, gtk.ICON_SIZE_DIALOG)
+	hb=gtk.HBox()
+	hb.pack_start(im)
 	label = gtk.Label(msg)
-	dialog.vbox.add(label)
-	label.show()
+	hb.pack_start(label)
+	dialog.vbox.pack_start(hb)
+	dialog.show_all()
 	save_top_window = top_window
 	top_window = dialog
 	dialog.run()
 	top_window = save_top_window
 	dialog.destroy()
-
 
 def confirmbox(msg, button=(gtk.STOCK_YES, gtk.RESPONSE_YES, gtk.STOCK_NO, gtk.RESPONSE_NO), title ="") :
 	global top_window
