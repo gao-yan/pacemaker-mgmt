@@ -24,7 +24,7 @@ Copyright (C) 2005 International Business Machines
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 
-import sys, os, string, socket, syslog, webbrowser, pickle, xml, gc, time, binascii
+import sys, os, string, socket, syslog, webbrowser, pickle, xml, gc, time, binascii, thread
 from xml.dom.minidom import parseString
 from xml.parsers.xmlproc.xmldtd import load_dtd_string
 
@@ -1850,6 +1850,31 @@ class ClusterReportDlg :
 					top_window = save_top_window
 					dialog.destroy()
 					return report_params
+
+	def render_time_widgets(self, label, default_time, sensibility) :
+		time_label = gtk.Label()
+		time_label.set_markup(_(label))
+		time_label.set_alignment(0, 0.5)
+		
+		datetime = DateTime(default_time)
+
+		if sensibility :
+			time_checkbutton = gtk.CheckButton()
+			time_checkbutton.add(time_label)
+			time_checkbutton.connect("toggled", self.on_checkbutton_toggled, datetime.time_hbox)
+			self.dialog.vbox.pack_start(time_checkbutton, False)
+			datetime.time_hbox.set_sensitive(False)
+		else :
+			self.dialog.vbox.pack_start(time_label, False)
+
+		self.dialog.vbox.pack_start(datetime.time_hbox, False)
+
+		return datetime
+
+	def on_checkbutton_toggled(self, widget, hbox) :
+		hbox.set_sensitive(widget.get_active())
+
+class SelectFileDlg :
 	def select_file(self, orig_filename = None) :
 		global top_window
 		file_dialog = gtk.FileChooserDialog(_("Save as ..."), None, 
@@ -1886,28 +1911,7 @@ class ClusterReportDlg :
 					file_dialog.destroy()
 					return save_file
 
-	def render_time_widgets(self, label, default_time, sensibility) :
-		time_label = gtk.Label()
-		time_label.set_markup(_(label))
-		time_label.set_alignment(0, 0.5)
-		
-		datetime = DateTime(default_time)
 
-		if sensibility :
-			time_checkbutton = gtk.CheckButton()
-			time_checkbutton.add(time_label)
-			time_checkbutton.connect("toggled", self.on_checkbutton_toggled, datetime.time_hbox)
-			self.dialog.vbox.pack_start(time_checkbutton, False)
-			datetime.time_hbox.set_sensitive(False)
-		else :
-			self.dialog.vbox.pack_start(time_label, False)
-
-		self.dialog.vbox.pack_start(datetime.time_hbox, False)
-
-		return datetime
-
-	def on_checkbutton_toggled(self, widget, hbox) :
-		hbox.set_sensitive(widget.get_active())
 
 class DateTime:
 	def __init__(self, default_time) :
@@ -2019,6 +2023,40 @@ class DateTime:
 							self.time_min.get_value(),
 							self.time_sec.get_value()), "%Y-%m-%d %H:%M:%S")
 		return datetime
+
+class ProgressPulse :
+	def __init__(self, title, msg, button=(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL), destroy_condition = None) :
+		global top_window
+		self.destroy_condition = destroy_condition
+
+		dialog = gtk.Dialog(title, top_window, gtk.DIALOG_MODAL, button)
+		self.pbar = gtk.ProgressBar()
+		self.pbar.set_text(msg)
+		self.timer = gobject.timeout_add(100, self.pulse)
+		dialog.vbox.pack_start(self.pbar)
+		dialog.show_all()
+
+		self.save_top_window = top_window
+		self.dialog = dialog
+
+	def pulse(self) :
+		if self.destroy_condition != None and self.destroy_condition() :
+			self.destroy()
+			return False
+		else :
+			self.pbar.pulse()
+			return True
+
+	def destroy(self) :
+		global top_window
+		top_window = self.save_top_window
+		self.dialog.destroy()
+		gobject.source_remove(self.timer)
+
+	def run(self) :	
+		ret = self.dialog.run()
+		self.destroy()
+		return ret
 
 class MainWindow :
 	'''
@@ -2447,12 +2485,19 @@ class MainWindow :
 				(gtk.STOCK_YES, gtk.RESPONSE_YES, 
 				gtk.STOCK_NO, gtk.RESPONSE_NO),_("Continue?"))
 				
-		if ret == gtk.RESPONSE_NO:
+		if ret == gtk.RESPONSE_NO :
 			return
 
 		report_cmd = "gen_cluster_report\n%s\n%s"%(report_params["ftime"], report_params.get("ttime", ""))
+		manager.async_do_cmd(report_cmd)
 
-		str_list = manager.do_cmd(report_cmd)
+		pbar = ProgressPulse("Cluster Report", "Generating the cluster report", None,
+					lambda : manager.async_ret_list.get(report_cmd) != None)
+		ret = pbar.run()
+		if ret not in [gtk.RESPONSE_CANCEL,gtk.RESPONSE_DELETE_EVENT] :
+			self.save_cluster_report(manager.async_ret_list.pop(report_cmd))
+
+	def save_cluster_report(self, str_list) :
 		if manager.failed_reason != "" :
 			msgbox(manager.failed_reason)
 			return
@@ -2460,7 +2505,8 @@ class MainWindow :
 			msgbox(_("Generating cluster report failed"))
 			return
 
-		save_file = rpdlg.select_file(str_list[0].split("/")[-1])
+		sfdlg = SelectFileDlg()
+		save_file = sfdlg.select_file(str_list[0].split("/")[-1])
 		if save_file == None :
 			return
 
@@ -2672,6 +2718,9 @@ class Manager :
 	all_nodes = []
 	failed_reason = ""
 	dtd_elems = {}
+	session_lock = thread.allocate_lock()
+	async_ret_str = {}
+	async_ret_list = {} 
 		
 	# cache functions
 
@@ -2707,6 +2756,7 @@ class Manager :
 		return attr_list
 		
 	def run(self) :
+		gtk.gdk.threads_init()
 		gtk.main()
 		if self.connected :
 			mgmt_disconnect()
@@ -2786,19 +2836,27 @@ class Manager :
 		
 	def do_cmd(self, command) :
 		self.failed_reason = ""
+		self.session_lock.acquire()
 		ret_str = mgmt_sendmsg(command)
+		self.session_lock.release()
 		if ret_str == None :
 			debug(str(string.split(command, "\n"))+":None")
 			self.failed_reason = "return None"
 			return None
  		while len(ret_str)>=4 and ret_str[:4] == "evt:" :
 			gobject.idle_add(self.on_event, None, None, ret_str)
+			self.session_lock.acquire()
  			ret_str = mgmt_recvmsg()
+			self.session_lock.release()
 			if ret_str == None :
 				debug(str(string.split(command, "\n"))+":None")
 				self.failed_reason = "return None"
 				return None
 
+		return self.ret_str2list(ret_str, command)
+
+	def ret_str2list(self, ret_str, command) :
+		self.failed_reason = ""
 		ret_list = string.split(ret_str, "\n")
 		if ret_list[0] != "ok" :
 			debug(str(string.split(command, "\n"))+":"+ str(ret_list))
@@ -2807,7 +2865,27 @@ class Manager :
 			return None
 		debug(str(string.split(command, "\n"))+":"+ str(ret_list))
 		return ret_list[1:]
+
+	def async_sendmsg(self, command) :
+		self.session_lock.acquire()
+		self.async_ret_str[command] = mgmt_thread_sendmsg(command)
+		self.session_lock.release()
 		
+	def async_do_cmd(self, command) :
+		self.session_lock.acquire()
+		self.async_ret_str = {}
+		self.async_ret_list = {}
+		self.session_lock.release()
+		thread.start_new(self.async_sendmsg, (command, ))
+
+	def process_async_ret(self, command) :
+		self.failed_reason = ""
+		if self.async_ret_str.get(command) == None :
+			debug(str(string.split(command, "\n"))+":None")
+			self.failed_reason == "return None"
+			return None
+
+		self.async_ret_list[command] = self.ret_str2list(self.async_ret_str.pop(command), command)
 		
 	def logout(self) :
 		mgmt_disconnect()
@@ -2844,8 +2922,18 @@ class Manager :
 				gobject.timeout_add(1000, self.on_reconnect)
 	
 	def on_event(self, source, condition, event_str) :
+		self.session_lock.acquire()
+		if len(self.async_ret_str) > 0 :
+			for command in self.async_ret_str.keys() :
+				self.process_async_ret(command)
+			self.session_lock.release()
+			return True
+		self.session_lock.release()
+
 		if event_str == None : 	# called by gtk
+			self.session_lock.acquire()
 			event = mgmt_recvmsg()
+			self.session_lock.release()
 			log("on_event:"+str(event))
 			self.process_event(event)
 			return True
