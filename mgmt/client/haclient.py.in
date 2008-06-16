@@ -3345,7 +3345,9 @@ class Manager :
 		try :
 			doc_xml = parseString(meta_data).documentElement
 		except xml.parsers.expat.ExpatError:
-			log("fail to parse the metadata of "+rsc_type)
+			err_msg = "Failed parsing the metadata of resource agent: "
+			log(err_msg + rsc_type)
+			msgbox(_(err_msg) + rsc_type)
 			return None
 			
 		meta = RAMeta()
