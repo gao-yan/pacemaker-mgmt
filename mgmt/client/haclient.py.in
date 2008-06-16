@@ -227,7 +227,7 @@ def kvbox(title, fields, auto_fill = None) :
 
 	while True :
 		ret = dialog.run()
-		if ret in [gtk.RESPONSE_CANCEL,gtk.RESPONSE_DELETE_EVENT] :
+		if ret in [gtk.RESPONSE_CANCEL, gtk.RESPONSE_DELETE_EVENT] :
 			top_window = save_top_window
 			dialog.destroy()
 			return None
@@ -314,7 +314,7 @@ def NVBox(option_dict) :
 
 	while True :
 		ret = dialog.run()
-		if ret in [gtk.RESPONSE_CANCEL,gtk.RESPONSE_DELETE_EVENT] :
+		if ret in [gtk.RESPONSE_CANCEL, gtk.RESPONSE_DELETE_EVENT] :
 			top_window = save_top_window
 			dialog.destroy()
 			return (None,None)
@@ -992,7 +992,7 @@ class ClusterView(View) :
 					gtk.STOCK_NO, gtk.RESPONSE_NO))
 			if ret == gtk.RESPONSE_YES :
 				self.on_apply(widget)
-			if ret == gtk.RESPONSE_NO :
+			else :
 				self.update()
 
 		if page_num == 0:
@@ -1712,7 +1712,7 @@ class AddNativeDlg :
 							gtk.STOCK_YES, gtk.RESPONSE_YES,
 							gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL),
 							_("Are you sure you want to set \"target_role\"?"))
-						if retval == gtk.RESPONSE_CANCEL:
+						if retval in [gtk.RESPONSE_CANCEL, gtk.RESPONSE_DELETE_EVENT] :
 							continue
 						if retval == gtk.RESPONSE_NO:
 							rsc["params"].remove(target_role_set)
@@ -1780,7 +1780,7 @@ class AddObjectDlg :
 
 		while True :
 			ret = dialog.run()
-			if ret in [gtk.RESPONSE_CANCEL,gtk.RESPONSE_DELETE_EVENT] :
+			if ret in [gtk.RESPONSE_CANCEL, gtk.RESPONSE_DELETE_EVENT] :
 				top_window = save_top_window
 				dialog.destroy()
 				return None
@@ -1825,7 +1825,7 @@ class ClusterReportDlg :
 
 		while True :
 			ret = dialog.run()
-			if ret in [gtk.RESPONSE_CANCEL,gtk.RESPONSE_DELETE_EVENT] :
+			if ret in [gtk.RESPONSE_CANCEL, gtk.RESPONSE_DELETE_EVENT] :
 				top_window = save_top_window
 				dialog.destroy()
 				return None
@@ -1889,7 +1889,7 @@ class SelectFileDlg :
 
 		while True :
 			ret = file_dialog.run()
-			if ret in [gtk.RESPONSE_CANCEL,gtk.RESPONSE_DELETE_EVENT] :
+			if ret in [gtk.RESPONSE_CANCEL, gtk.RESPONSE_DELETE_EVENT] :
 				top_window = save_top_window
 				file_dialog.destroy()
 				return None
@@ -2336,7 +2336,7 @@ class MainWindow :
 								gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL),
 								_("Do you want to retain the \"target_role\" set for sub-resource \"")
 								+subrsc+_("\"?"))
-					if retval == gtk.RESPONSE_CANCEL:
+					if retval in [gtk.RESPONSE_CANCEL, gtk.RESPONSE_DELETE_EVENT] :
 						return	
 					if retval == gtk.RESPONSE_NO:
 						new_metaattrs = metaattrs[:]
@@ -2485,7 +2485,7 @@ class MainWindow :
 				(gtk.STOCK_YES, gtk.RESPONSE_YES, 
 				gtk.STOCK_NO, gtk.RESPONSE_NO),_("Continue?"))
 				
-		if ret == gtk.RESPONSE_NO :
+		if ret in [gtk.RESPONSE_NO, gtk.RESPONSE_DELETE_EVENT] :
 			return
 
 		report_cmd = "gen_cluster_report\n%s\n%s"%(report_params["ftime"], report_params.get("ttime", ""))
@@ -2494,7 +2494,7 @@ class MainWindow :
 		pbar = ProgressPulse("Cluster Report", "Generating the cluster report", None,
 					lambda : manager.async_ret_list.get(report_cmd) != None)
 		ret = pbar.run()
-		if ret not in [gtk.RESPONSE_CANCEL,gtk.RESPONSE_DELETE_EVENT] :
+		if ret not in [gtk.RESPONSE_CANCEL, gtk.RESPONSE_DELETE_EVENT] :
 			self.save_cluster_report(manager.async_ret_list.pop(report_cmd))
 
 	def save_cluster_report(self, str_list) :
