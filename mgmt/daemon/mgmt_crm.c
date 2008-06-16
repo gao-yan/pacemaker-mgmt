@@ -660,6 +660,11 @@ on_get_crm_metadata(char* argv[], int argc)
 
 	ARGC_CHECK(2);
 
+	if (STRNCMP_CONST(argv[1], "pengine") != 0 &&
+			STRNCMP_CONST(argv[1], "crmd") != 0) {
+		return cl_strdup(MSG_FAIL);
+	}
+
 	snprintf(cmd, sizeof(cmd), BIN_DIR"/%s metadata", argv[1]);
 	if ((fstream = popen(cmd, "r")) == NULL){
 		mgmt_log(LOG_ERR, "error on popen %s: %s",
