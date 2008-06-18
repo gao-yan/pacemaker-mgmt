@@ -856,6 +856,15 @@ msgstr "系统错误"
 msgid "Permission denied: "
 msgstr "权限不够： "
 
+msgid "A file with the same name already exists: "
+msgstr "同名文件已经存在： "
+
+msgid "Do you want to overwrite it?"
+msgstr "您想要覆盖该文件吗？"
+
+msgid "Replace it?"
+msgstr "替换？"
+
 msgid "Description of Cluster Report"
 msgstr "集群报告描述"
 
