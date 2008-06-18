@@ -436,7 +436,7 @@ msgstr "值"
 msgid "Description"
 msgstr "描述"
 
-msgid "Failed parsing the metadata of resource agent: "
+msgid "Failed to parse the metadata of resource agent: "
 msgstr "解析资源代理的元数据失败： "
 
 #: haclient.py.in:1057 haclient.py.in:1487 haclient.py.in:1493
@@ -841,10 +841,13 @@ msgstr "取决于日志的大小。"
 msgid "Continue?"
 msgstr "继续？"
 
+msgid "Generating the cluster report"
+msgstr "正在生成集群报告"
+
 msgid "Save as ..."
 msgstr "保存为..."
 
-msgid "Generating cluster report failed"
+msgid "Failed to generate the cluster report"
 msgstr "生成集群报告失败"
 
 msgid "System error"
@@ -852,6 +855,21 @@ msgstr "系统错误"
 
 msgid "Permission denied: "
 msgstr "权限不够： "
+
+msgid "Description of Cluster Report"
+msgstr "集群报告描述"
+
+msgid "Failed to read the cluster report"
+msgstr "读取集群报告失败"
+
+msgid "Failed to read the original description"
+msgstr "读取原始描述失败"
+
+msgid "Failed to write the description"
+msgstr "写描述失败"
+
+msgid "Failed to process the cluster report"
+msgstr "处理集群报告失败"
 
 msgid "Resource ID:"
 msgstr "资源 ID："

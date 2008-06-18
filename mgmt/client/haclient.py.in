@@ -24,7 +24,7 @@ Copyright (C) 2005 International Business Machines
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 
-import sys, os, string, socket, syslog, webbrowser, pickle, xml, gc, time, binascii, thread
+import sys, os, string, socket, syslog, webbrowser, pickle, xml, gc, time, binascii, thread, tarfile
 from xml.dom.minidom import parseString
 from xml.parsers.xmlproc.xmldtd import load_dtd_string
 
@@ -2033,7 +2033,7 @@ class ProgressPulse :
 		self.pbar = gtk.ProgressBar()
 		self.pbar.set_text(msg)
 		self.timer = gobject.timeout_add(100, self.pulse)
-		dialog.vbox.pack_start(self.pbar)
+		dialog.vbox.pack_start(self.pbar, False)
 		dialog.show_all()
 
 		self.save_top_window = top_window
@@ -2057,6 +2057,106 @@ class ProgressPulse :
 		ret = self.dialog.run()
 		self.destroy()
 		return ret
+
+class DesReportDlg:
+	def __init__(self, des_file_lines) :
+		global top_window
+		self.des_file_lines = des_file_lines
+
+		dialog = gtk.Dialog(_("Description of Cluster Report"), top_window, gtk.DIALOG_MODAL,
+				(gtk.STOCK_OK, gtk.RESPONSE_OK, gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL))
+
+		entries = {}
+		combo_entries = {}
+
+		for line in des_file_lines :
+			if line.startswith("Severity: [choose one] ") :
+				options =  line.replace("Severity: [choose one] ", "").split()
+				hbox = gtk.HBox()
+				label = gtk.Label(_("Severity:"))
+				label.set_alignment(0, 0.5)
+				hbox.pack_start(label, False)
+				
+				combo_entry = gtk.combo_box_entry_new_text()
+				combo_entry.append_text("")
+				for option in options :
+					combo_entry.append_text(option)
+				hbox.pack_start(combo_entry)
+				dialog.vbox.pack_start(hbox, False)
+				combo_entries["severity"] = combo_entry 
+			elif line.startswith("Component: [choose one] ") :
+				options = line.replace("Component: [choose one] ", "").split()
+				hbox = gtk.HBox()
+				label = gtk.Label(_("Component:"))
+				label.set_alignment(0, 0.5)
+				hbox.pack_start(label, False)
+				
+				combo_entry = gtk.combo_box_entry_new_text()
+				combo_entry.append_text("")
+				for option in options :
+					combo_entry.append_text(option)
+				hbox.pack_start(combo_entry)
+				dialog.vbox.pack_start(hbox, False)
+				combo_entries["component"] = combo_entry
+			elif line.startswith("Subject:") :
+				hbox = gtk.HBox()
+				label = gtk.Label(_("Subject:"))
+				label.set_alignment(0, 0.5)
+				hbox.pack_start(label, False)
+				entry = gtk.Entry()
+				hbox.pack_start(entry)
+				dialog.vbox.pack_start(hbox, False)
+				entries["subject"] = entry
+			elif line.startswith("Detailed description:") :
+				label = gtk.Label(_("Detailed description:"))
+				label.set_alignment(0, 0.5)
+				dialog.vbox.pack_start(label, False)
+
+				sw = gtk.ScrolledWindow()
+				sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+				des_text = gtk.TextView()
+				des_text.set_wrap_mode(gtk.WRAP_WORD)
+				self.des_textbuffer = des_text.get_buffer()
+				sw.add(des_text)
+				dialog.vbox.pack_start(sw)
+			elif not line.startswith("[...]") and not line.startswith("---") :
+				label = gtk.Label(line.replace("\n", ""))
+				label.set_alignment(0, 0.5)
+				label.set_selectable(True)
+				dialog.vbox.pack_start(label, False)
+
+		self.widgets = {}
+		self.widgets["entries"] = entries
+		self.widgets["combo_entries"] = combo_entries
+
+		dialog.show_all()
+		self.dialog = dialog
+		self.save_top_window = top_window
+
+	def run(self) :
+		global top_window
+		des_file_lines  = self.des_file_lines
+		ret = self.dialog.run()
+		if ret in [gtk.RESPONSE_CANCEL, gtk.RESPONSE_DELETE_EVENT] :
+			top_window = self.save_top_window
+			self.dialog.destroy()
+			return None
+		else :
+			fields = cmnobj.get_values(self.widgets)
+			detailed_des = self.des_textbuffer.get_text(*self.des_textbuffer.get_bounds())
+			new_file_lines = []
+			for i in range(len(des_file_lines)) :
+				if des_file_lines[i].startswith("Severity: [choose one] ") :
+					des_file_lines[i] = "Severity: %s\n"%fields.get("severity", "")
+				elif des_file_lines[i].startswith("Component: [choose one] ") :
+					des_file_lines[i] = "Component: %s\n"%fields.get("component", "")
+				elif des_file_lines[i].startswith("Subject:") :
+					des_file_lines[i] = "Subject: %s\n"%fields.get("subject", "")
+				elif des_file_lines[i-2].startswith("Detailed description:") :
+					des_file_lines[i] = detailed_des + "\n"
+			top_window = self.save_top_window
+			self.dialog.destroy()
+			return des_file_lines 
 
 class MainWindow :
 	'''
@@ -2491,7 +2591,7 @@ class MainWindow :
 		report_cmd = "gen_cluster_report\n%s\n%s"%(report_params["ftime"], report_params.get("ttime", ""))
 		manager.async_do_cmd(report_cmd)
 
-		pbar = ProgressPulse("Cluster Report", "Generating the cluster report", None,
+		pbar = ProgressPulse(_("Cluster Report"), _("Generating the cluster report"), None,
 					lambda : manager.async_ret_list.get(report_cmd) != None)
 		ret = pbar.run()
 		if ret not in [gtk.RESPONSE_CANCEL, gtk.RESPONSE_DELETE_EVENT] :
@@ -2502,7 +2602,7 @@ class MainWindow :
 			msgbox(manager.failed_reason)
 			return
 		elif str_list == None or len(str_list) < 2 :
-			msgbox(_("Generating cluster report failed"))
+			msgbox(_("Failed to generate the cluster report"))
 			return
 
 		sfdlg = SelectFileDlg()
@@ -2517,8 +2617,64 @@ class MainWindow :
 			os.write(fd, bin_str)
 			os.close(fd)
 		except OSError, value :
-			msgbox("[" + _("System error") + " %d] %s: '%s'"%(value[0], value[1], file_name))
+			msgbox("[" + _("System error") + " %d] %s: '%s'"%(value[0], value[1], save_file))
 			return
+
+		self.des_cluster_report(save_file)
+
+	def des_cluster_report(self, save_file) :
+		save_dir = os.path.dirname(save_file)
+
+		try :
+			current_tarfile = tarfile.open(save_file, "r:gz")
+			current_tarfile.extractall(save_dir)
+			current_arcname = os.path.commonprefix(current_tarfile.getnames()).split(os.sep)[0]
+			current_tarfile.close()
+		except :
+			msgbox(_("Failed to read the cluster report"))
+			return
+		
+		folder = os.path.join(save_dir, current_arcname)
+		des_filename = os.path.join(folder, "description.txt")
+
+		try :
+			des_f = open(des_filename, "r+")
+			file_lines = des_f.readlines()
+		except :
+			msgbox(_("Failed to read the original description"))
+			return
+
+		des_report = DesReportDlg(file_lines)
+		new_file_lines = des_report.run()
+
+		if new_file_lines == None :
+			new_file_lines = file_lines
+
+		try :
+			des_f.seek(0)
+			des_f.truncate()
+			des_f.writelines(new_file_lines)
+			des_f.close()
+		except :
+
+			msgbox(_("Failed to write the description"))
+			return
+
+		if save_file.endswith(".tar.gz") :
+			new_arcname = os.path.basename(save_file).split(".tar.gz")[0]
+		elif save_file.endswith(".tgz") :
+			new_arcname = os.path.basename(save_file).split(".tgz")[0]
+		else :
+			new_arcname = os.path.basename(save_file)
+
+		try:
+			new_tarfile = tarfile.open(save_file, "w:gz")
+			new_tarfile.add(folder, new_arcname)
+			new_tarfile.close()
+		except :
+			msgbox(_("Failed to process the cluster report"))
+			return
+		
 
 	def load_icon(self, name, file) :
 		icons = gtk.IconFactory()
@@ -3345,7 +3501,7 @@ class Manager :
 		try :
 			doc_xml = parseString(meta_data).documentElement
 		except xml.parsers.expat.ExpatError:
-			err_msg = "Failed parsing the metadata of resource agent: "
+			err_msg = "Failed to parse the metadata of resource agent: "
 			log(err_msg + rsc_type)
 			msgbox(_(err_msg) + rsc_type)
 			return None
