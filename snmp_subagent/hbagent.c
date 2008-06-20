@@ -429,6 +429,7 @@ NodeStatus(const char * node, const char * status, void * private)
         cl_log(LOG_NOTICE, "Status update: Node %s now has status %s"
         ,       node, status);
 	walk_nodetable();
+	walk_iftable();
 
 	nodestatus_trap(node, status);
 }
