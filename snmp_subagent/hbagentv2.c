@@ -397,10 +397,11 @@ hbagentv2_update_diff(const char *event, HA_Message *msg)
             int action_id = -1;
             int status = -1;
             int rc = -1;
+            int target_rc = -1;
             char *uuid = NULL;
 
             if (!decode_transition_magic(
-                    t_magic, &uuid, &transition_num, &action_id, &status, &rc)) {
+                    t_magic, &uuid, &transition_num, &action_id, &status, &rc, &target_rc)) {
                 cl_log(LOG_ERR, "decode_transition_magic() is failed.");
                 free_xml(diff);
                 return;
