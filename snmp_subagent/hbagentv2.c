@@ -393,20 +393,22 @@ hbagentv2_update_diff(const char *event, HA_Message *msg)
     /* get rc_code from transition magic number */
     if (!rc_code) {
         if (t_magic != NULL) {
-            int transition_num = -1;
+            int transition_id = -1;
             int action_id = -1;
             int status = -1;
-            int rc = -1;
+            int op_rc = -1;
+            int target_rc = -1;
             char *uuid = NULL;
 
             if (!decode_transition_magic(
-                    t_magic, &uuid, &transition_num, &action_id, &status, &rc)) {
+                    t_magic, &uuid, &transition_id, &action_id,
+                    &status, &op_rc, &target_rc)) {
                 cl_log(LOG_ERR, "decode_transition_magic() is failed.");
                 free_xml(diff);
                 return;
             }
             crm_free(uuid);
-            sprintf(tmp_rc_str, "%d\n", rc);
+            sprintf(tmp_rc_str, "%d\n", op_rc);
             rc_code = tmp_rc_str;
         }
     }
