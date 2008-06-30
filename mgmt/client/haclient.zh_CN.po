@@ -868,17 +868,17 @@ msgstr "替换？"
 msgid "Description of Cluster Report"
 msgstr "集群报告描述"
 
-msgid "Failed to read the cluster report"
-msgstr "读取集群报告失败"
+msgid "I/O error: "
+msgstr "输入输出错误： "
 
-msgid "Failed to read the original description"
-msgstr "读取原始描述失败"
+msgid "Tar error: "
+msgstr "归档错误： "
 
-msgid "Failed to write the description"
-msgstr "写描述失败"
+msgid "System error: "
+msgstr "系统错误： "
 
-msgid "Failed to process the cluster report"
-msgstr "处理集群报告失败"
+msgid "Do not delete the root directory"
+msgstr "请不要删除根目录"
 
 msgid "Resource ID:"
 msgstr "资源 ID："

@@ -25,6 +25,7 @@ Copyright (C) 2005 International Business Machines
 
 
 import sys, os, string, socket, syslog, webbrowser, pickle, xml, gc, time, binascii, thread, tarfile
+from stat import *
 from xml.dom.minidom import parseString
 from xml.parsers.xmlproc.xmldtd import load_dtd_string
 
@@ -2638,54 +2639,164 @@ class MainWindow :
 
 		try :
 			current_tarfile = tarfile.open(save_file, "r:gz")
+		except IOError, msg :
+			msgbox(_("I/O error: ") + str(msg))
+			return
+		except tarfile.TarError, msg :
+			msgbox(_("Tar error: ") + "%s: '%s'"%(str(msg), save_file))
+			return
+			
+		try :
+			file_list = current_tarfile.getnames()
 			current_tarfile.extractall(save_dir)
-			current_arcname = os.path.commonprefix(current_tarfile.getnames()).split(os.sep)[0]
+		except tarfile.TarError, msg :
+			msgbox(_("Tar error: ") + "%s: '%s'"%(str(msg), save_file))
+			return
+		finally :
 			current_tarfile.close()
-		except :
-			msgbox(_("Failed to read the cluster report"))
-			return
-		
-		folder = os.path.join(save_dir, current_arcname)
-		des_filename = os.path.join(folder, "description.txt")
 
-		try :
-			des_f = open(des_filename, "r+")
-			file_lines = des_f.readlines()
-		except :
-			msgbox(_("Failed to read the original description"))
-			return
+		des_filename = None
+		for filename in file_list :
+			if filename.endswith("description.txt") :
+				des_filename = filename
+				break
 
-		des_report = DesReportDlg(file_lines)
-		new_file_lines = des_report.run()
+		if des_filename != None :
+			des_filepath = os.path.join(save_dir, des_filename)
 
-		if new_file_lines == None :
-			new_file_lines = file_lines
+			try :
+				des_f = open(des_filepath, "r+")
+			except IOError, msg :
+				msgbox(_("I/O error: ") + str(msg))
+				self.delete_files(save_dir, file_list)
+				return
 
-		try :
-			des_f.seek(0)
-			des_f.truncate()
-			des_f.writelines(new_file_lines)
+			try :
+				file_lines = des_f.readlines()
+			except IOError, msg :
+				msgbox(_("I/O error: ") + str(msg))
+				des_f.close()
+				self.delete_files(save_dir, file_list)
+				return
+
+			des_report = DesReportDlg(file_lines)
+			new_file_lines = des_report.run()
+
+			if new_file_lines == None :
+				new_file_lines = file_lines
+
+			try :
+				des_f.seek(0)
+				des_f.truncate()
+				des_f.writelines(new_file_lines)
+			except IOError, msg :
+				msgbox(_("I/O error: ") + str(msg))
+				des_f.close()
+				self.delete_files(save_dir, file_list)
+				return
+
 			des_f.close()
-		except :
 
-			msgbox(_("Failed to write the description"))
-			return
-
-		if save_file.endswith(".tar.gz") :
-			new_arcname = os.path.basename(save_file).split(".tar.gz")[0]
-		elif save_file.endswith(".tgz") :
-			new_arcname = os.path.basename(save_file).split(".tgz")[0]
-		else :
-			new_arcname = os.path.basename(save_file)
-
-		try:
+		try :
 			new_tarfile = tarfile.open(save_file, "w:gz")
-			new_tarfile.add(folder, new_arcname)
-			new_tarfile.close()
-		except :
-			msgbox(_("Failed to process the cluster report"))
+		except IOError, msg :
+			msgbox(_("I/O error: ") + str(msg))
+			self.delete_files(save_dir, file_list)
 			return
+		except tarfile.TarError, msg :
+			msgbox(_("Tar error: ") + "%s: '%s'"%(str(msg), save_file))
+			self.delete_files(save_dir, file_list)
+			return
+
+		current_arcname = os.path.commonprefix(file_list).split(os.sep)[0]
+		if current_arcname != '' :
+			file_basename = os.path.basename(save_file)
+			if save_file.endswith(".tar.gz") :
+				new_arcname = file_basename[:file_basename.rfind(".tar.gz")]
+			elif save_file.endswith(".tgz") :
+				new_arcname = file_basename[:file_basename.rfind(".tgz")]
+			elif save_file.endswith(".gz") :
+				new_arcname = file_basename[:file_basename.rfind(".gz")]
+			else :
+				new_arcname = file_basename
+
+			folder = os.path.join(save_dir, current_arcname)
+			try :
+				new_tarfile.add(folder, new_arcname)
+			except IOError, msg :
+				msgbox(_("I/O error: ") + str(msg))
+				return
+			except tarfile.TarError, msg :
+				msgbox(_("Tar error: ") + "%s: '%s'"%(str(msg), save_file))
+				return
+			finally :
+				new_tarfile.close()
+				self.delete_files(save_dir, file_list)
+
+		else :
+			for filename in file_list :
+				file_path = os.path.join(save_dir, filename)
+				try :
+					new_tarfile.add(file_path, recursive=False)
+				except IOError, msg :
+					msgbox(_("I/O error: ") + str(msg))
+					new_tarfile.close()
+					self.delete_files(save_dir, file_list)
+					return
+				except tarfile.TarError, msg :
+					msgbox(_("Tar error: ") + "%s: '%s'"%(str(msg), save_file))
+					new_tarfile.close()
+					self.delete_files(save_dir, file_list)
+					return
+			new_tarfile.close()
+			self.delete_files(save_dir, file_list)
+
+	def delete_files(self, save_dir, file_list) :
+		dir_list = []
+		for filename in file_list :
+			file_path = os.path.join(save_dir, filename)
+			try :
+				mode = os.lstat(file_path)[ST_MODE]
+			except OSError, msg :
+				msgbox(_("System error: ") + str(msg))
+				continue
+
+			if S_ISDIR(mode) :
+				dir_list.append(file_path)
+			else :
+				try :
+					os.unlink(file_path)
+				except OSError, msg :
+					msgbox(_("System error: ") + str(msg))
+					continue
+
+		for dir_path in dir_list :
+			if os.access(dir_path, os.F_OK) :
+				self.delete_dir(dir_path)
 		
+	def delete_dir(self, dir_path) :
+		real_path = os.path.realpath(dir_path)
+		if real_path.count(os.sep) == len(real_path) :
+			msgbox(_("Do not delete the root directory"))
+			return
+
+		for root, dirs, files in os.walk(dir_path, False) :
+    			for name in files :
+				try :
+					os.unlink(os.path.join(root, name))
+				except OSError, msg :
+					msgbox(_("System error: ") + str(msg))
+					continue
+			for name in dirs :
+				try :
+					os.rmdir(os.path.join(root, name))
+				except OSError, msg :
+					msgbox(_("System error: ") + str(msg))
+					continue
+		try :
+			os.rmdir(dir_path)
+		except OSError, msg :
+			msgbox(_("System error: ") + str(msg))
 
 	def load_icon(self, name, file) :
 		icons = gtk.IconFactory()
