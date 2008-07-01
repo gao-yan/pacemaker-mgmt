@@ -2039,13 +2039,17 @@ class DateTime:
 		return datetime
 
 class ProgressPulse :
-	def __init__(self, title, msg, button=(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL), destroy_condition = None) :
+	def __init__(self, title, msg, pulse_msg, button=(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL), destroy_condition = None) :
 		global top_window
 		self.destroy_condition = destroy_condition
 
 		dialog = gtk.Dialog(title, top_window, gtk.DIALOG_MODAL, button)
+		if msg != None :
+			label = gtk.Label(msg)
+			dialog.vbox.pack_start(label, False)
 		self.pbar = gtk.ProgressBar()
-		self.pbar.set_text(msg)
+		if pulse_msg != None :
+			self.pbar.set_text(pulse_msg)
 		self.timer = gobject.timeout_add(100, self.pulse)
 		dialog.vbox.pack_start(self.pbar, False)
 		dialog.show_all()
@@ -2594,18 +2598,13 @@ class MainWindow :
 		if report_params == None :
 			return
 
-		ret = confirmbox(_("Generating the cluster report may take a while,")+"\n"
-				+_("depending on the size of logs."), 
-				(gtk.STOCK_YES, gtk.RESPONSE_YES, 
-				gtk.STOCK_NO, gtk.RESPONSE_NO),_("Continue?"))
-				
-		if ret in [gtk.RESPONSE_NO, gtk.RESPONSE_DELETE_EVENT] :
-			return
-
 		report_cmd = "gen_cluster_report\n%s\n%s"%(report_params["ftime"], report_params.get("ttime", ""))
 		manager.async_do_cmd(report_cmd)
 
-		pbar = ProgressPulse(_("Cluster Report"), _("Generating the cluster report"), None,
+		pbar = ProgressPulse(_("Cluster Report"), 
+					_("Generating the cluster report may take a while,")+"\n"
+					+_("depending on the size of logs..."), 
+					None, None,
 					lambda : manager.async_ret_list.get(report_cmd) != None)
 		ret = pbar.run()
 		if ret not in [gtk.RESPONSE_CANCEL, gtk.RESPONSE_DELETE_EVENT] :
