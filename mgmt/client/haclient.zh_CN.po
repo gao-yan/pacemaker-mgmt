@@ -850,6 +850,9 @@ msgstr "保存为..."
 msgid "Failed to generate the cluster report"
 msgstr "生成集群报告失败"
 
+msgid "Incomplete data: "
+msgstr "不完整的数据： "
+
 msgid "System error"
 msgstr "系统错误"
 
