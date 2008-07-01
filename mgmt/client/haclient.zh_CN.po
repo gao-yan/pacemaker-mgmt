@@ -436,6 +436,9 @@ msgstr "值"
 msgid "Description"
 msgstr "描述"
 
+msgid "Failed to parse the metadata of CRM: "
+msgstr "解析集群资源管理服务的元数据失败： "
+
 msgid "Failed to parse the metadata of resource agent: "
 msgstr "解析资源代理的元数据失败： "
 

@@ -3078,7 +3078,7 @@ class Manager :
 			server,port = string.split(server,":")
 		try :
 			ip = socket.gethostbyname(server)
-		except :
+		except socket.error :
 			self.failed_reason = _("Can't resolve address of server ")+server
 			return False
 
@@ -3270,7 +3270,7 @@ class Manager :
 		try :
 			doc_xml = parseString(meta_data).documentElement
 		except xml.parsers.expat.ExpatError:
-			debug("fail to parse the metadata of "+rsc_type)
+			log("Failed to parse the metadata of CRM: "+ crm_cmd)
 			return None
 			
 		meta = RAMeta()
@@ -3542,7 +3542,8 @@ class Manager :
 		params = self.split_attr_list(raw_params, param_attr_names)
 		
 		raw_ops = self.query("rsc_full_ops\n%s"%rsc)
-		raw_ops = raw_ops[1:]
+		if raw_ops != None :
+			raw_ops = raw_ops[1:]
 		ops = self.split_attr_list(raw_ops, op_attr_names)
 
 		return (attrs, running_on, metaattrs, params, ops)
@@ -3925,9 +3926,9 @@ class CommonObject :
 					object.pop(key)
 		if widgets.has_key("combos") :
 			for key in widgets["combos"].keys() :
-				try:
+				if pygtk_2_6_newer() :
 					object[key] = widgets["combos"][key].get_active_text()
-				except AttributeError:
+				else :
 					iter = widgets["combos"][key].get_active_iter()
 					if iter != None :
 						object[key] = widgets["combos"][key].get_model().get_value(iter, 0)
@@ -3937,9 +3938,9 @@ class CommonObject :
 					object.pop(key)
 		if widgets.has_key("bool_combos") :
 			for key in widgets["bool_combos"].keys() :
-				try:
+				if pygtk_2_6_newer() :
 					object[key] = widgets["bool_combos"][key].get_active_text()
-				except AttributeError:
+				else :
 					iter = widgets["bool_combos"][key].get_active_iter()
 					if iter != None :	
 						object[key] = widgets["bool_combos"][key].get_model().get_value(iter, 0)
@@ -4051,7 +4052,7 @@ class CommonObject :
 			op_dtd_elem = manager.get_dtd_elem("op")
 			role_attr = op_dtd_elem.get_attr("role")
 			role_attr_type = role_attr.get_type()
-		except :
+		except KeyError :
 			role_attr_type = None
 
 		if role_attr_type != None and type(role_attr_type) == list :
@@ -4123,14 +4124,14 @@ class CommonObject :
 		actions_list = ["start", "stop", "reload", "monitor", "status", "migrate_from", "migrate_to", "promote", "demote"]
 
 		if object.has_key(key_pair[0]) :
-			try :
-				(attrs, running_on, metaattrs, params, ops) = manager.get_rsc_info(object[key_pair[0]])
-				meta = manager.get_rsc_meta(attrs["class"], attrs["type"], attrs["provider"])
+			(attrs, running_on, metaattrs, params, ops) = manager.get_rsc_info(object[key_pair[0]])
+			meta = manager.get_rsc_meta(attrs.get("class"), attrs.get("type"), attrs.get("provider"))
+			if meta != None :
 				actions = []
 				for f in meta.actions :
 					if not f["name"] in actions : 
 						actions.append(f["name"])
-			except :
+			else :
 				actions = actions_list
 		else :
 			actions = actions_list
