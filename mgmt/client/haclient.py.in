@@ -859,8 +859,8 @@ class ClusterView(View) :
 	name = "clusterview"
 	pengine_metadata = None
 	crmd_metadata = None
-	pengine_widgets = None
-	crmd_widgets = None
+	pengine_widgetgroup = None
+	crmd_widgetgroup = None
 	cluster_info_labels = None
 	
 	def on_apply(self, widget):
@@ -868,11 +868,11 @@ class ClusterView(View) :
 		
 		current_page = glade.get_widget("notebook").get_current_page()
 		if current_page == 1:
-			(widgets, metadata) = (self.pengine_widgets, self.pengine_metadata)
+			(widgetgroup, metadata) = (self.pengine_widgetgroup, self.pengine_metadata)
 		elif current_page == 2:
-			(widgets, metadata) = (self.crmd_widgets, self.crmd_metadata)
+			(widgetgroup, metadata) = (self.crmd_widgetgroup, self.crmd_metadata)
 
-		new_crm_config = cmnobj.get_values(widgets)
+		new_crm_config = widgetgroup.get_values()
 		manager.update_crm_config(metadata, new_crm_config)
 
 		View.on_apply(self, widget)
@@ -880,16 +880,16 @@ class ClusterView(View) :
 	def on_default(self, widget):
 		current_page = self.glade.get_widget("notebook").get_current_page()
 		if current_page == 1:
-			(widgets, metadata) = (self.pengine_widgets, self.pengine_metadata)
+			(widgetgroup, metadata) = (self.pengine_widgetgroup, self.pengine_metadata)
 		elif current_page == 2:
-			(widgets, metadata) = (self.crmd_widgets, self.crmd_metadata)
+			(widgetgroup, metadata) = (self.crmd_widgetgroup, self.crmd_metadata)
 
 		default_crm_config = {}
 		for parameter in metadata.parameters:
 			default_crm_config[parameter["name"]] = str(parameter["content"]["default"])
 
 		if default_crm_config != {}:
-			cmnobj.show_values(widgets, default_crm_config)
+			widgetgroup.show_values(default_crm_config)
 
 		View.on_default(self, widget)
 	
@@ -921,12 +921,12 @@ class ClusterView(View) :
 		else :
 			glade.get_widget("notebook").get_nth_page(0).hide_all()
 
-		for (widgets, metadata) in ((self.pengine_widgets, self.pengine_metadata),
-						(self.crmd_widgets, self.crmd_metadata)):
-			if metadata != None and widgets != None:
+		for (widgetgroup, metadata) in ((self.pengine_widgetgroup, self.pengine_metadata),
+						(self.crmd_widgetgroup, self.crmd_metadata)):
+			if metadata != None and widgetgroup != None:
 				crm_config = manager.get_crm_config(metadata)
 				if crm_config != {}:
-					cmnobj.show_values(widgets, crm_config)
+					widgetgroup.show_values(crm_config)
 
 		View.update(self)
 	
@@ -975,7 +975,7 @@ class ClusterView(View) :
 		name_cap = lambda name: name.replace("-"," ").replace("_"," ").title().replace("Crmd ","CRMD ").\
 						replace("Pe ", "PE ").replace("Dc ","DC ")
 
-		for widgets in (self.pengine_widgets, self.crmd_widgets):
+		for widgets in (self.pengine_widgetgroup.widgets, self.crmd_widgetgroup.widgets):
 			if widgets != None:
 				for key in widgets["name_labels"].keys():
 					make_label_active(widgets["name_labels"][key], 
@@ -1009,9 +1009,11 @@ class ClusterView(View) :
 		self.crmd_metadata = manager.get_crm_metadata("crmd")
 
 		if self.pengine_metadata != None:
-			self.pengine_widgets = self.render_crmconf_widgets(self.pengine_metadata)
+			pengine_widgets = self.render_crmconf_widgets(self.pengine_metadata)
+			self.pengine_widgetgroup = WidgetGroup(pengine_widgets)
 		if self.crmd_metadata != None:
-			self.crmd_widgets = self.render_crmconf_widgets(self.crmd_metadata)
+			crmd_widgets = self.render_crmconf_widgets(self.crmd_metadata)
+			self.crmd_widgetgroup = WidgetGroup(crmd_widgets)
 
 		notebook = glade.get_widget("notebook")
 		notebook.connect("switch-page", self.on_notebook_event)
