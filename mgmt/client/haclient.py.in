@@ -1097,88 +1097,63 @@ class ClusterView(View) :
 class OrderView(View) :
 	name = "cmnobj_view"
 	save_order = None
-	widgets = None
-	dtd_elem = None
+	obj_attrs = None
 	def on_apply(self, widget):
-		widgets = self.widgets
-
-		passed = cmnobj.verify_values(widgets, "rsc_order")
+		passed = self.obj_attrs.verify_values()
 		if passed :
-			order = cmnobj.get_values(widgets)
+			order = self.obj_attrs.get_values()
 			manager.update_constraint("rsc_order", order)
 			View.on_apply(self, widget)
 	
 	def update(self) :
-		glade = self.glade
-		widgets = self.widgets
 		order = manager.get_constraint("rsc_order", self.param)
 		
-		if widgets != {} and order != None :
-			cmnobj.show_values(widgets, order)
+		if self.obj_attrs != None and order != None :
+			self.obj_attrs.show_values(order)
 			self.save_order = order
 		View.update(self)
 
 	def __init__(self, order_id) :
 		View.__init__(self,order_id)
 
-		self.widgets = cmnobj.render_widgets(self.glade, "rsc_order")
-		cmnobj.auto_fill(self.widgets)
+		self.obj_attrs = RscOrder(False)
+		widgets = self.obj_attrs.widgets
+		self.glade.get_widget("cmnobj_attrs").pack_start(self.obj_attrs.attrs_vbox)
 		for widget_type in ("combos", "bool_combos", "combo_entries") :
-			for widget in self.widgets[widget_type].values() :
+			for widget in widgets[widget_type].values() :
 				widget.connect("changed", self.on_changed)
 		self.update()
-
-	def on_changed(self, widget) :
-		widgets = self.widgets
-
-		cmnobj.dynamic_fill_order(widget, widgets)
-		desc = cmnobj.dynamic_desc_order(widget, widgets)	
-		if desc != None :
-			cmnobj.show_desc(self.glade, widgets, desc)
-		View.on_changed(self, widget)
 
 class ColocationView(View) :
 	name = "cmnobj_view"
 	save_colocation = None
-	widgets = None
-	dtd_elem = None
+	obj_attrs = None
 	def on_apply(self, widget):
-		widgets = self.widgets
-
-		passed = cmnobj.verify_values(widgets, "rsc_colocation")
+		passed = self.obj_attrs.verify_values()
 		if passed :
-			colocation = cmnobj.get_values(widgets)
+			colocation = self.obj_attrs.get_values()
 			manager.update_constraint("rsc_colocation", colocation)
 			View.on_apply(self, widget)
 		
 	def update(self) :
-		glade = self.glade
-		widgets = self.widgets
 		colocation = manager.get_constraint("rsc_colocation", self.param)
 
-		if widgets != {} and colocation != None :
-			cmnobj.show_values(widgets, colocation)
+		if self.obj_attrs != None and colocation != None :
+			self.obj_attrs.show_values(colocation)
 			self.save_colocation = colocation
 		View.update(self)
 
 	def __init__(self, colo_id) :
 		View.__init__(self, colo_id)
 
-		self.widgets = cmnobj.render_widgets(self.glade, "rsc_colocation")
-		cmnobj.auto_fill(self.widgets)
+		self.obj_attrs = RscColocation(False)
+		widgets = self.obj_attrs.widgets
+		self.glade.get_widget("cmnobj_attrs").pack_start(self.obj_attrs.attrs_vbox)
 		for widget_type in ("combos", "bool_combos", "combo_entries") :
-			for widget in self.widgets[widget_type].values() :
+			for widget in widgets[widget_type].values() :
 				widget.connect("changed", self.on_changed)
 		self.update()		
 			
-	def on_changed(self, widget) :
-		widgets = self.widgets
-
-		desc = cmnobj.dynamic_desc_colocation(widget, widgets)
-		if desc != None :
-			cmnobj.show_desc(self.glade, widgets, desc)
-		View.on_changed(self, widget)
-
 class LocationView(View) :
 	name = "locationview"
 	expr_list = None
