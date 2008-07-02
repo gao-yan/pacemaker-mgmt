@@ -268,15 +268,11 @@ msgstr "目标角色："
 msgid "Node Attribute:"
 msgstr "节点属性："
 
-msgid "<b>Required</b>"
-msgstr "<b>必填</b>"
+msgid "Required"
+msgstr "必填"
 
-msgid "<b>Optional</b>"
-msgstr "<b>选填</b>"
-
-msgid "<b>Description</b>"
-msgstr "<b>描述</b>"
-
+msgid "Optional"
+msgstr "选填"
 
 #: haclient.glade.h:32
 msgid "User Name:"
