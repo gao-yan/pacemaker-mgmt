@@ -130,6 +130,7 @@ def add_column(widget, label, value, icon_cell_func = None, editable = False
 def msgbox(msg) :
 	global top_window
 	dialog = gtk.Dialog(_("Message"), top_window, gtk.DIALOG_MODAL, (gtk.STOCK_OK, True))
+	dialog.set_border_width(5)
 	im=gtk.Image()
 	im.set_from_stock(gtk.STOCK_DIALOG_INFO, gtk.ICON_SIZE_DIALOG)
 	hb=gtk.HBox()
@@ -148,6 +149,7 @@ def msgbox(msg) :
 def confirmbox(msg, button=(gtk.STOCK_YES, gtk.RESPONSE_YES, gtk.STOCK_NO, gtk.RESPONSE_NO), title ="") :
 	global top_window
 	dialog = gtk.Dialog(_("Confirm"),  top_window, gtk.DIALOG_MODAL,button)
+	dialog.set_border_width(5)
 	im=gtk.Image()
 	im.set_from_stock(gtk.STOCK_DIALOG_QUESTION, gtk.ICON_SIZE_DIALOG)
 	frame = gtk.Frame()
@@ -186,6 +188,7 @@ def kvbox(title, fields, auto_fill = None) :
 	global top_window
 	dialog = gtk.Dialog(title, top_window, gtk.DIALOG_MODAL,
 		(gtk.STOCK_OK, gtk.RESPONSE_OK, gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL))
+	dialog.set_border_width(5)
 	table = gtk.Table(2, 1, False)
 	widgets = []
 	combos = {}
@@ -193,7 +196,9 @@ def kvbox(title, fields, auto_fill = None) :
 		if fields[row].auto_gen :
 			widgets.append(None)
 			continue
-		table.attach(gtk.Label(fields[row].label+":"), 0, 1, row, row+1)
+		label = gtk.Label(fields[row].label+":")
+		label.set_alignment(0, 0.5)
+		table.attach(label, 0, 1, row, row+1, xpadding=5, ypadding=2)
 		if fields[row].options != None and fields[row].options!=[]:
 			combo = gtk.combo_box_entry_new_text()
 			for option in fields[row].options:
@@ -205,14 +210,14 @@ def kvbox(title, fields, auto_fill = None) :
 			if fields[row].entry_editable == False :
 				combo.child.set_editable(False)
 			widgets.append(combo)
-			table.attach(combo, 1,2, row, row+1)
+			table.attach(combo, 1,2, row, row+1, xpadding=5, ypadding=2)
 			combos[fields[row].key] = combo
 		else :
 			entry = gtk.Entry()
 			if fields[row].default != None :
 				entry.set_text(fields[row].default)
 			widgets.append(entry)
-			table.attach(entry, 1,2, row, row+1)
+			table.attach(entry, 1,2, row, row+1, xpadding=5, ypadding=2)
 
 	if auto_fill != None :
 		if title == _("Add Parameter") and combos.has_key("name"):
@@ -223,7 +228,7 @@ def kvbox(title, fields, auto_fill = None) :
 			if combos.has_key("role"):
 				combos["role"].connect("changed", auto_fill, widgets, "role")
 	
-	dialog.vbox.pack_start(table)
+	dialog.vbox.pack_start(table, padding=2)
 	dialog.vbox.show_all()
 	save_top_window = top_window
 	top_window = dialog
@@ -296,17 +301,22 @@ def NVBox(option_dict) :
 	global top_window
 	dialog = gtk.Dialog(_("Add Name/Value Pair"), top_window, gtk.DIALOG_MODAL,
 		(gtk.STOCK_OK, gtk.RESPONSE_OK, gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL))
+	dialog.set_border_width(5)
 	table = gtk.Table(2, 1, False)
 	
-	table.attach(gtk.Label(_("Value")+":"), 0, 1, 1, 2)
+	label = gtk.Label(_("Value")+":")
+	label.set_alignment(0, 0.5)
+	table.attach(label, 0, 1, 1, 2, xpadding=5, ypadding=2)
 	value_combo = gtk.combo_box_entry_new_text()
-	table.attach(value_combo, 1, 2, 1, 2)
+	table.attach(value_combo, 1, 2, 1, 2, xpadding=5, ypadding=2)
 	
-	table.attach(gtk.Label(_("Name")+":"), 0, 1, 0, 1)
+	label = gtk.Label(_("Name")+":")
+	label.set_alignment(0, 0.5)
+	table.attach(label, 0, 1, 0, 1, xpadding=5, ypadding=2)
 	name_combo = gtk.combo_box_entry_new_text()
 	for name in option_dict.keys() :
 		name_combo.append_text(name)
-	table.attach(name_combo, 1, 2, 0, 1)
+	table.attach(name_combo, 1, 2, 0, 1, xpadding=5, ypadding=2)
 	name_combo.connect("changed", on_name_change, value_combo, option_dict)
 	name_combo.child.set_text(option_dict.keys()[0])
 	
@@ -905,15 +915,15 @@ class ClusterView(View) :
 				if config.get(key, "") == "" :
 					continue
 				label = gtk.Label()
-				label.set_alignment(1, 0.5)
+				label.set_alignment(0, 0.5)
 				eventbox = gtk.EventBox()
 				eventbox.add(label)
-				info_table.attach(eventbox, 0, 1, row, row+1, xpadding = 5)
+				info_table.attach(eventbox, 0, 1, row, row+1, xpadding=5)
 				cluster_info_labels[key] = label
 
 				label = gtk.Label(config.get(key,""))
 				label.set_alignment(0, 0.5)
-				info_table.attach(label, 1, 2, row, row+1, yoptions = not gtk.EXPAND, xpadding = 5)
+				info_table.attach(label, 1, 2, row, row+1)
 				row += 1
 
 			info_table.show_all()
@@ -1040,10 +1050,10 @@ class ClusterView(View) :
 
 		for row in range(len(parameters)):
 			label = gtk.Label(parameters[row]["name"]+":")
-			label.set_alignment(1, 0.5)
+			label.set_alignment(0, 0.5)
 			eventbox = gtk.EventBox()
 			eventbox.add(label)
-			table.attach(eventbox, 0, 1, row, row+1, xpadding = 5)
+			table.attach(eventbox, 0, 1, row, row+1, xpadding=5)
 			name_labels[parameters[row]["name"]] = label
 
 			longdesc = parameters[row].get("longdesc")
@@ -1066,24 +1076,24 @@ class ClusterView(View) :
 				for option in parameters[row]["content"]["values"]:
 					combo.append_text(option)
 				combo.connect("changed", self.on_changed)
-				table.attach(combo, 1, 2, row, row+1, yoptions = not gtk.EXPAND, xpadding = 5)
+				table.attach(combo, 1, 2, row, row+1, yoptions = not gtk.EXPAND, xpadding=3)
 				combos[parameters[row]["name"]] = combo
 			elif parameters[row]["content"].has_key("values"):
 				combo_entry = gtk.combo_box_entry_new_text()
 				for option in parameters[row]["content"]["values"]:
 					combo_entry.append_text(option)
 				combo_entry.connect("changed", self.on_changed)
-				table.attach(combo_entry, 1, 2, row, row+1, yoptions = not gtk.EXPAND, xpadding = 5)
+				table.attach(combo_entry, 1, 2, row, row+1, yoptions = not gtk.EXPAND, xpadding=3)
 				combo_entries[parameters[row]["name"]] = combo_entry
 			elif parameters[row]["content"]["type"] == "boolean":
 				checkbutton = gtk.CheckButton()
 				checkbutton.connect("toggled", self.on_changed)
-				table.attach(checkbutton, 1, 2, row, row+1, xpadding = 2)
+				table.attach(checkbutton, 1, 2, row, row+1)
 				checkbuttons[parameters[row]["name"]] = checkbutton
 			else:
 				entry = gtk.Entry()
 				entry.connect("changed", self.on_changed)
-				table.attach(entry, 1,2, row, row+1, xpadding = 5)
+				table.attach(entry, 1,2, row, row+1, xpadding=3)
 				entries[parameters[row]["name"]] = entry 
 	
 		table.show_all()
@@ -1571,6 +1581,7 @@ class AddNativeDlg :
 		global top_window
 		dialog = gtk.Dialog(_("Add Native Resource"), window.win_widget, gtk.DIALOG_MODAL,
 			(gtk.STOCK_ADD, gtk.RESPONSE_OK, gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL))
+		dialog.set_border_width(5)
 		glade = gtk.glade.XML(UI_FILE, "addnativedlg", "haclient")
 		layout = glade.get_widget("addnativedlg")
 		dialog.vbox.add(layout)
@@ -1704,6 +1715,7 @@ class AddObjectDlg :
 
 		dialog = gtk.Dialog(title, top_window, gtk.DIALOG_MODAL,
 			(gtk.STOCK_OK, gtk.RESPONSE_OK, gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL))
+		dialog.set_border_width(5)
 		if obj_type == "rsc_order" :
 			obj_attrs = RscOrder(True, meta, static_desc)
 		elif obj_type == "rsc_colocation" :
@@ -1742,6 +1754,7 @@ class ClusterReportDlg :
 		global top_window
 		dialog = gtk.Dialog(_("Cluster Report"), top_window, gtk.DIALOG_MODAL,
 			(gtk.STOCK_OK, gtk.RESPONSE_OK, gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL))
+		dialog.set_border_width(5)
 		self.dialog = dialog
 
 		current_time = time.time()
@@ -1794,12 +1807,12 @@ class ClusterReportDlg :
 			time_checkbutton = gtk.CheckButton()
 			time_checkbutton.add(time_label)
 			time_checkbutton.connect("toggled", self.on_checkbutton_toggled, datetime.time_hbox)
-			self.dialog.vbox.pack_start(time_checkbutton, False)
+			self.dialog.vbox.pack_start(time_checkbutton, False, padding=2)
 			datetime.time_hbox.set_sensitive(False)
 		else :
-			self.dialog.vbox.pack_start(time_label, False)
+			self.dialog.vbox.pack_start(time_label, False, padding=2)
 
-		self.dialog.vbox.pack_start(datetime.time_hbox, False)
+		self.dialog.vbox.pack_start(datetime.time_hbox, False, padding=2)
 
 		return datetime
 
@@ -1973,14 +1986,15 @@ class ProgressPulse :
 		self.destroy_condition = destroy_condition
 
 		dialog = gtk.Dialog(title, top_window, gtk.DIALOG_MODAL, button)
+		dialog.set_border_width(5)
 		if msg != None :
 			label = gtk.Label(msg)
-			dialog.vbox.pack_start(label, False)
+			dialog.vbox.pack_start(label, False, padding=2)
 		self.pbar = gtk.ProgressBar()
 		if pulse_msg != None :
 			self.pbar.set_text(pulse_msg)
 		self.timer = gobject.timeout_add(100, self.pulse)
-		dialog.vbox.pack_start(self.pbar, False)
+		dialog.vbox.pack_start(self.pbar, False, padding=2)
 		dialog.show_all()
 
 		self.save_top_window = top_window
@@ -2012,9 +2026,11 @@ class DesReportDlg:
 
 		dialog = gtk.Dialog(_("Description of Cluster Report"), top_window, gtk.DIALOG_MODAL,
 				(gtk.STOCK_OK, gtk.RESPONSE_OK, gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL))
+		dialog.set_border_width(5)
 
 		entries = {}
 		combo_entries = {}
+		name_labels = []
 
 		for line in des_file_lines :
 			if line.startswith("Severity: [choose one] ") :
@@ -2023,13 +2039,14 @@ class DesReportDlg:
 				label = gtk.Label(_("Severity:"))
 				label.set_alignment(0, 0.5)
 				hbox.pack_start(label, False)
+				name_labels.append(label)
 				
 				combo_entry = gtk.combo_box_entry_new_text()
 				combo_entry.append_text("")
 				for option in options :
 					combo_entry.append_text(option)
 				hbox.pack_start(combo_entry)
-				dialog.vbox.pack_start(hbox, False)
+				dialog.vbox.pack_start(hbox, False, padding=1)
 				combo_entries["severity"] = combo_entry 
 			elif line.startswith("Component: [choose one] ") :
 				options = line.replace("Component: [choose one] ", "").split()
@@ -2037,40 +2054,51 @@ class DesReportDlg:
 				label = gtk.Label(_("Component:"))
 				label.set_alignment(0, 0.5)
 				hbox.pack_start(label, False)
+				name_labels.append(label)
 				
 				combo_entry = gtk.combo_box_entry_new_text()
 				combo_entry.append_text("")
 				for option in options :
 					combo_entry.append_text(option)
 				hbox.pack_start(combo_entry)
-				dialog.vbox.pack_start(hbox, False)
+				dialog.vbox.pack_start(hbox, False, padding=1)
 				combo_entries["component"] = combo_entry
 			elif line.startswith("Subject:") :
 				hbox = gtk.HBox()
 				label = gtk.Label(_("Subject:"))
 				label.set_alignment(0, 0.5)
+				name_labels.append(label)
 				hbox.pack_start(label, False)
 				entry = gtk.Entry()
 				hbox.pack_start(entry)
-				dialog.vbox.pack_start(hbox, False)
+				dialog.vbox.pack_start(hbox, False, padding=1)
 				entries["subject"] = entry
 			elif line.startswith("Detailed description:") :
 				label = gtk.Label(_("Detailed description:"))
 				label.set_alignment(0, 0.5)
-				dialog.vbox.pack_start(label, False)
+				dialog.vbox.pack_start(label, False, padding=1)
 
 				sw = gtk.ScrolledWindow()
+				sw.set_border_width(5)
 				sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
 				des_text = gtk.TextView()
 				des_text.set_wrap_mode(gtk.WRAP_WORD)
 				self.des_textbuffer = des_text.get_buffer()
 				sw.add(des_text)
-				dialog.vbox.pack_start(sw)
+				dialog.vbox.pack_start(sw, padding=1)
 			elif not line.startswith("[...]") and not line.startswith("---") :
 				label = gtk.Label(line.replace("\n", ""))
 				label.set_alignment(0, 0.5)
 				label.set_selectable(True)
-				dialog.vbox.pack_start(label, False)
+				dialog.vbox.pack_start(label, False, padding=1)
+
+		name_label_max_len = 0
+		for name_label in name_labels :
+			name_label_len = len(name_label.get_label())
+			if name_label_len >  name_label_max_len :
+				name_label_max_len = name_label_len
+		for name_label in name_labels :
+			name_label.set_width_chars(name_label_max_len)
 
 		widgets = {}
 		widgets["entries"] = entries
@@ -2236,6 +2264,7 @@ class MainWindow :
 	def on_login(self, action) :
 		dialog = gtk.Dialog(_("Login"),self.win_widget, gtk.DIALOG_MODAL,
 			(gtk.STOCK_OK, gtk.RESPONSE_OK, gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL))
+		dialog.set_border_width(5)
 		
 		glade = gtk.glade.XML(UI_FILE, "logindlg_main", "haclient")
 		main = glade.get_widget("logindlg_main")
@@ -3905,7 +3934,6 @@ class ObjectAttrs(WidgetGroup) :
 			vbox_label = gtk.Label()
 			vbox_label.set_markup('<b>' + _(label_text) + '</b>')
 			vbox_label.set_alignment(0, 1)
-			vbox_label.set_padding(5, 0)
 			vbox.pack_start(vbox_label, False, padding=2)
 
 		attrs_vbox = gtk.VBox()
@@ -3938,12 +3966,12 @@ class ObjectAttrs(WidgetGroup) :
 
 		name_cap = lambda name: name.replace("-"," ").replace("_"," ").title().replace("Id","ID")
 		for attr_name in dtd_elem.get_attr_list() :
-			if len(attr_name) >  name_label_max_len :
-				name_label_max_len = len(attr_name)
 			attr = dtd_elem.get_attr(attr_name)
 			label = gtk.Label(_(name_cap(attr_name)+":"))
 			label.set_alignment(0, 0.5)
-			label.set_padding(10, 0)
+			label_len = len(attr_name)
+			if label_len > name_label_max_len :
+				name_label_max_len = label_len
 			eventbox = gtk.EventBox()
 			eventbox.add(label)
 			name_labels[attr_name] = label
@@ -3997,8 +4025,8 @@ class ObjectAttrs(WidgetGroup) :
 
 			
 			hbox = gtk.HBox()
-			hbox.pack_start(eventbox, False)
-			hbox.pack_start(widget, padding=10)
+			hbox.pack_start(eventbox, False, padding=5)
+			hbox.pack_start(widget, padding=5)
 
 			if attr_decl == "#REQUIRED":
 				required_vbox.pack_start(hbox, False, padding=2)
@@ -4104,7 +4132,7 @@ class ObjectAttrs(WidgetGroup) :
 			for row in range(len(desc)) :
 				desc_label = gtk.Label(desc[row])
 				desc_label.set_alignment(0, 0.5)
-				desc_label.set_padding(10, 0)
+				desc_label.set_padding(5, 0)
 				desc_vbox.pack_start(desc_label, padding=2)
 				desc_labels.append(desc_label)
 			if desc_labels != [] :
