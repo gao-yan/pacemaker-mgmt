@@ -541,7 +541,7 @@ class ListWithAddDel :
 			
 class Tree :
 	store = None
-	widget = None
+	tree = None
 	last_iter = None
 	def on_right_click(self, widget, event) :
 		if event.type == gtk.gdk.BUTTON_PRESS and event.button == 3 :
@@ -554,38 +554,42 @@ class Tree :
 				menu = window.uimanager.get_widget("/resource_popup")
 			menu.popup(None, None, None, event.button, event.time)
 
-	def __init__(self, widget) :
-		self.store = gtk.TreeStore(str, str, str)
-		widget.set_model(self.store)
-		add_column(widget, _("Name"), 0, self.render_icon)
-		add_column(widget, _("Status"), 1)
-		widget.set_size_request(300, 100)
-		widget.connect("cursor-changed", self.on_cursor_changed, widget.get_selection())
-		widget.connect("event-after", self.on_right_click)
-		self.widget = widget
-	
-	def on_cursor_changed(self, treeview, selection) :
-		(model, iter) = selection.get_selected()
-		if not window.can_change_view() :
-			if self.last_iter != None :
-				selection.select_iter(self.last_iter)
-				return
-		if iter == None :
-			window.select_view(None, None, None)
-			return
-		type = model.get_value(iter, 2)
-		name = model.get_value(iter, 0)
-		status = model.get_value(iter, 1)
-		window.select_view(type, name, status)
-		self.last_iter = iter
+	def __init__(self, obj_type) :
+		name_cap = lambda name: name.replace("-"," ").replace("_"," ").title().replace("Crmd ","CRMD ").\
+						replace("Pe ", "PE ").replace("Dc ","DC ")
+		validate_type = "dtd"
 		
+		treeiter = {}
+		if validate_type == "dtd" :
+			self.dtd_elem = manager.get_dtd_elem(obj_type)
+			self.store = gtk.TreeStore(str, str)
+			for (name, mod) in self.dtd_elem.get_content_model()[1] :
+				if mod == '' :
+					treeiter[name] = self.store.append(None, [_(name_cap(name)), name])
+					
+			#for elem_name in dtd_elem.get_attr_list() :
+
+			#(u',', [(u'configuration', ''), (u'status', '')], '')
+
+		tree = gtk.TreeView(self.store)
+		tree.set_headers_visible(False)
+		#widget.set_model(self.store)
+		#add_column(widget, _("Name"), 0, self.render_icon)
+		#add_column(widget, _("Status"), 1)
+		add_column(tree, _(obj_type), 0, self.render_icon)
+		tree.set_size_request(150, 100)
+		tree.connect("cursor-changed", self.on_cursor_changed, tree.get_selection())
+		tree.connect("event-after", self.on_right_click)
+		self.tree = tree
+
 	def select_row(self, model, path, iter, user_data):
 		name, type = user_data
 		selection = self.widget.get_selection()
 		if (name, type) == (model.get_value(iter,0), model.get_value(iter,2)) :
 			selection.select_path(path)
 			return True
-		
+
+	
 	def render_icon(self, tvcolumn, cell, model, iter):
  		icons = {-2:gtk.STOCK_DIALOG_INFO,
 			 -1:gtk.STOCK_PREFERENCES,
@@ -598,7 +602,7 @@ class Tree :
 			gtk.ICON_SIZE_BUTTON, None)
        		cell.set_property('pixbuf', pb)
 		return
-	
+
 	def iter_status(self, model, iter) :
 		# -1:config 0: ok, 1: stopped, 2: umanaged, 3:failed, 4:stop failed
 		type = model.get_value(iter, 2)
@@ -634,7 +638,7 @@ class Tree :
 				if child_status > iter_status :
 					iter_status = child_status
 		
-		return iter_status				
+		return iter_status
 
 	def save_iter_status(self, model, path, iter, expand_status):
 		name = model.get_value(iter, 0)
@@ -658,7 +662,7 @@ class Tree :
 			self.widget.expand_row(path, False)
 			
 	def save_tree_status(self) :
-		(model, iter) = self.widget.get_selection().get_selected()
+		(model, iter) = self.tree.get_selection().get_selected()
 		if iter != None :
 			select_name = model.get_value(iter, 0)
 			select_type = model.get_value(iter, 2)
@@ -791,6 +795,125 @@ class Tree :
 	 		running_rsc = manager.get_running_rsc(node)
  			for rsc in running_rsc :
  				self.add_rsc(node_iter, rsc)
+
+
+
+class MainTree(Tree) :
+	def __init__(self) :
+		obj_type = "cib"
+		validate_type = "dtd"
+		name_cap = lambda name: name.replace("-"," ").replace("_"," ").title().replace("Crmd ","CRMD ").\
+						replace("Crm ","CRM ").replace("Pe ", "PE ").replace("Dc ","DC ")
+		
+		treeiter = {}
+		if validate_type == "dtd" :
+			self.dtd_elem = manager.get_dtd_elem(obj_type)
+			self.store = gtk.TreeStore(str, str)
+			for (name, mod) in self.dtd_elem.get_content_model()[1] :
+				if mod == '' :
+					treeiter[name] = self.store.append(None, [_(name_cap(name)), name])
+					sub_dtd_elem = manager.get_dtd_elem(name)
+					for (sub_name, sub_mod) in sub_dtd_elem.get_content_model()[1] :
+						if sub_mod == '' :
+							treeiter[sub_name] =  \
+								self.store.append(treeiter[name], [_(name_cap(sub_name)), sub_name])
+					
+
+			#(u',', [(u'configuration', ''), (u'status', '')], '')
+
+		tree = gtk.TreeView(self.store)
+		tree.set_headers_visible(False)
+		add_column(tree, _(obj_type), 0, self.render_icon)
+		tree.expand_all()
+		tree.set_size_request(150, 100)
+		tree.connect("cursor-changed", self.on_cursor_changed, tree.get_selection())
+		tree.connect("event-after", self.on_right_click)
+		self.tree = tree
+
+
+	def on_cursor_changed(self, treeview, selection) :
+		(model, iter) = selection.get_selected()
+		#if not window.can_change_view() :
+		#	if self.last_iter != None :
+		#		selection.select_iter(self.last_iter)
+		#		return
+		if iter == None :
+			window.select_view(None, None, None)
+			return
+		#type = model.get_value(iter, 2)
+		name = model.get_value(iter, 0)
+		type = model.get_value(iter, 1)
+		#status = model.get_value(iter, 1)
+		window.select_view(type, name)
+		self.last_iter = iter
+		
+
+
+	def render_icon(self, tvcolumn, cell, model, iter):
+		name = model.get_value(iter, 1)
+		stocks = {
+				"configuration": gtk.STOCK_PROPERTIES,
+				"status": gtk.STOCK_DIALOG_INFO,
+				"crm_config": gtk.STOCK_PREFERENCES,
+				"nodes": gtk.STOCK_NETWORK,
+				"resources": gtk.STOCK_DIRECTORY,
+				"constraints": gtk.STOCK_DIALOG_AUTHENTICATION 
+			}
+ 		icons = {-2:gtk.STOCK_DIALOG_INFO,
+			 -1:gtk.STOCK_PREFERENCES,
+			  0:gtk.STOCK_YES,
+			  1:gtk.STOCK_DIALOG_INFO,
+			  2:gtk.STOCK_DIALOG_WARNING,
+			  3:gtk.STOCK_DIALOG_ERROR}
+		status = self.iter_status(model,iter)
+		pb = self.tree.render_icon(stocks[name],
+			gtk.ICON_SIZE_BUTTON, None)
+       		cell.set_property('pixbuf', pb)
+		return
+
+	def iter_status(self, model, iter) :
+		return 0
+		# -1:config 0: ok, 1: stopped, 2: umanaged, 3:failed, 4:stop failed
+		type = model.get_value(iter, 2)
+		status = model.get_value(iter, 1)
+		iter_status = 0
+		if type == _("native") :
+			if string.find(status, _("not running")) != -1 :
+				iter_status = 1
+			elif string.find(status, _("running")) != -1 :
+				iter_status = 0
+			elif string.find(status, _("fail")) != -1 :
+				iter_status = 3
+			else :
+				iter_status = 2
+		
+		elif type == "node" :
+			if status == _("ping node") :
+				iter_status = -1				
+			elif string.find(status, _("running")) != -1 :
+				iter_status = 0
+			else :
+				iter_status = 1
+		elif type in [_("group"),_("resources"),_("clone"),_("master")]:
+			iter_status = 0
+		elif type in [_("orders"),_("locations"), _("colocations")] :
+			iter_status = -1
+		else :
+			iter_status = -2
+		if model.iter_has_child(iter) :
+			for i in range(0, model.iter_n_children(iter)) :
+				child = model.iter_nth_child(iter,i)
+				child_status = self.iter_status(model, child)
+				if child_status > iter_status :
+					iter_status = child_status
+		
+		return iter_status
+		
+	def update(self) :
+		pass
+	
+				
+
 
 class View :
 	glade = None
@@ -2214,7 +2337,7 @@ class MainWindow :
 
 	# functions
 	def update(self) :
-		self.tree.update()
+		self.maintree.update()
 		self.statusbar.pop(2)
 		return False
 	
@@ -2232,7 +2355,7 @@ class MainWindow :
 			return True
 		return False
 	
-	def select_view(self, type, name, status) :
+	def select_view(self, type, name, status = None) :
 		for child in self.view_widget.get_children() :
 			self.view_widget.remove(child)
 
@@ -2253,7 +2376,8 @@ class MainWindow :
 		elif type in [ _("clone"), _("group"), _("master")] :
 			self.cur_view = CompoundRscView((name,type))
 		else :
-			self.cur_view = View()
+			return
+			#self.cur_view = View()
 		self.view_widget.add(self.cur_view.widget)
 		self.cur_view.on_after_show()
 			
@@ -2291,6 +2415,9 @@ class MainWindow :
 				manager.save_login_info(server,user)
 	
 		self.update_ui()
+		self.maintree = MainTree()
+		self.maintree_sw.add(self.maintree.tree)
+		self.maintree_sw.show_all()
 
 	def on_logout(self, action) :
 		manager.logout()
@@ -2784,17 +2911,10 @@ class MainWindow :
 		# add the icons to gtk stock
 		self.load_icon("ha-login","@HA_DATADIR@/heartbeat-gui/login.png")
 		self.load_icon("ha-logout","@HA_DATADIR@/heartbeat-gui/logout.png")
-		self.load_icon("ha-exit","@HA_DATADIR@/heartbeat-gui/exit.png")
 		self.load_icon("ha-standby-node","@HA_DATADIR@/heartbeat-gui/standby-node.png")
 		self.load_icon("ha-active-node","@HA_DATADIR@/heartbeat-gui/active-node.png")
-		self.load_icon("ha-add-resource","@HA_DATADIR@/heartbeat-gui/add-resource.png")
-		self.load_icon("ha-remove-resource","@HA_DATADIR@/heartbeat-gui/remove-resource.png")
 		self.load_icon("ha-start-resource","@HA_DATADIR@/heartbeat-gui/start-resource.png")
 		self.load_icon("ha-stop-resource","@HA_DATADIR@/heartbeat-gui/stop-resource.png")
-		self.load_icon("ha-cleanup-resource","@HA_DATADIR@/heartbeat-gui/cleanup-resource.png")
-		self.load_icon("ha-default-resource","@HA_DATADIR@/heartbeat-gui/default-resource.png")
-		self.load_icon("ha-up-resource","@HA_DATADIR@/heartbeat-gui/up-resource.png")
-		self.load_icon("ha-down-resource","@HA_DATADIR@/heartbeat-gui/down-resource.png")
 		self.load_icon("ha-master-resource","@HA_DATADIR@/heartbeat-gui/master-resource.png")
 		self.load_icon("ha-slave-resource","@HA_DATADIR@/heartbeat-gui/slave-resource.png")
 
@@ -2806,22 +2926,6 @@ class MainWindow :
 					<menuitem action="login"/>
 					<menuitem action="logout"/>
 					<menuitem action="quit"/>
-				</menu>
-				<menu action="resource">
-					<menuitem action="addrsc"/>
-					<menuitem action="delrsc"/>
-					<menuitem action="cleanuprsc"/>
-					<menuitem action="startrsc"/>
-					<menuitem action="stoprsc"/>
-					<menuitem action="defaultrsc"/>
-					<menuitem action="uprsc"/>
-					<menuitem action="downrsc"/>
-					<menuitem action="migratersc"/>
-					<menuitem action="unmigratersc"/>
-				</menu>
-				<menu action="node">
-					<menuitem action="standby"/>
-					<menuitem action="active"/>
 				</menu>
 				<menu action="tools">
 					<menuitem action="report"/>
@@ -2855,6 +2959,11 @@ class MainWindow :
 				<toolitem action="login"/>
 				<toolitem action="logout"/>
 				<separator/>
+				<toolitem action="report"/>
+				<separator/>
+				<toolitem action="quit"/>
+			</toolbar>
+			<toolbar name="resource_toolbar">
 				<toolitem action="addrsc"/>
 				<toolitem action="delrsc"/>
 				<toolitem action="cleanuprsc"/>
@@ -2865,13 +2974,10 @@ class MainWindow :
 				<toolitem action="downrsc"/>
 				<toolitem action="migratersc"/>
 				<toolitem action="unmigratersc"/>
-				<separator/>
+			</toolbar>
+			<toolbar name="node_toolbar">
 				<toolitem action="standby"/>
 				<toolitem action="active"/>
-				<separator/>
-				<toolitem action="report"/>
-				<separator/>
-				<toolitem action="quit"/>
 			</toolbar>
 		</ui>'''
 		uimanager = gtk.UIManager()
@@ -2928,10 +3034,29 @@ class MainWindow :
 		toolbar.set_style(gtk.TOOLBAR_ICONS)
 		vbox.pack_start(toolbar, False)
 		
-		glade = gtk.glade.XML(UI_FILE, "mainwin_main", "haclient")
-		main = glade.get_widget("mainwin_main")
-		vbox.pack_start(main, True)
+		hpaned = gtk.HPaned()
+		vbox.pack_start(hpaned)
+
 		
+		#maintree = MainTree("cib")
+		maintree_sw = gtk.ScrolledWindow()
+		maintree_sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+		#maintree_sw.add(maintree)
+
+		maintree_frame = gtk.Frame()
+		maintree_frame.add(maintree_sw)
+		hpaned.add1(maintree_frame)
+
+		mainview_sw = gtk.ScrolledWindow()
+		mainview_sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+
+		mainview_frame = gtk.Frame()
+		mainview_frame.add(mainview_sw)
+		hpaned.add2(mainview_frame)
+		#glade = gtk.glade.XML(UI_FILE, "mainwin_main", "haclient")
+		#main = glade.get_widget("mainwin_main")
+		#vbox.pack_start(main, True)
+			
 		self.statusbar = gtk.Statusbar()
 		vbox.pack_end(self.statusbar, False)
 		
@@ -2941,8 +3066,11 @@ class MainWindow :
 		self.win_widget = win_widget
 		self.actiongroup = actiongroup
 		self.uimanager = uimanager
-		self.tree = Tree(glade.get_widget("mainwin_tree"))
-		self.view_widget = glade.get_widget("mainwin_view")
+		#self.tree = Tree(glade.get_widget("mainwin_tree"))
+		#self.view_widget = glade.get_widget("mainwin_view")
+		#self.tree = Tree(maintree)
+		self.maintree_sw = maintree_sw
+		self.view_widget = mainview_sw
 		self.update_ui()
 		self.statusbar.push(0,_("Not Connected"))
 
@@ -3888,9 +4016,9 @@ class ObjectAttrs(WidgetGroup) :
 		self.is_newobj = is_newobj
 		self.meta = meta
 
-		self.dtd_elem = manager.get_dtd_elem(obj_type)
 		self.render_attrs_vbox()
 		if validate_type == "dtd" :
+			self.dtd_elem = manager.get_dtd_elem(obj_type)
 			self.render_widgets_dtd()
 			self.verify_values = self.verify_values_dtd
 			if self.dtd_elem.get_content_model()[1] == [] :
