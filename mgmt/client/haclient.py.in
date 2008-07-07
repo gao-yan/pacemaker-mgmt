@@ -987,8 +987,93 @@ class NodeView(View) :
 		make_label_active(self.glade.get_widget("l_unclean"),_("Unclean:"),"www.linux-ha.org")
 		make_label_active(self.glade.get_widget("l_expected_up"),_("Expected up:"),"www.linux-ha.org")
 	
-		
+
 class ClusterView(View) :
+	cluster_info_labels = None
+	
+	def update(self) :
+		vbox = self.vbox
+		vbox.set_border_width(5)
+		config = manager.get_cluster_config()
+
+		if config != None and len(config) > 0:
+			cluster_info_labels= {}
+			for key in config.keys():
+				hbox = gtk.HBox()
+				if config.get(key, "") == "" :
+					continue
+				label = gtk.Label()
+				label.set_alignment(0, 0.5)
+				eventbox = gtk.EventBox()
+				eventbox.add(label)
+				cluster_info_labels[key] = label
+
+				label = gtk.Label(config.get(key,""))
+				label.set_alignment(0, 0.5)
+
+				hbox.pack_start(eventbox, False, padding=5)
+				hbox.pack_start(label, False, padding=5)
+				vbox.pack_start(hbox, False, padding=2)
+			vbox.show_all()
+			self.cluster_info_labels =  cluster_info_labels
+
+	def on_after_show(self) :
+		info_dict =	{
+				"quorum_server":	"Quorum Server",
+				"use_logd":		"Use Logd",
+				"autojoin":		"Auto Join",
+				"apiauth":		"API Authentication",
+				"auto_failback":	"Auto Failback",
+				"baud":			"Baud Rate",
+				"debug":		"Debug Level",
+				"debugfile":		"Debug File",
+				"deadping":		"Dead Ping",
+				"deadtime":		"Dead Time",
+				"hbversion":		"Heartbeat Version",
+				"hopfudge":		"Hop Fudge",
+				"initdead":		"Initial Dead Time",
+				"keepalive":		"Keep Alive",
+				"logfacility":		"Log Facility",
+				"logfile":		"Log File",
+				"msgfmt":		"Message Format",
+				"nice_failback":	"Nice Failback",
+				"node":			"Node",
+				"normalpoll":		"Normal Poll",
+				"stonith":		"Stonith",
+				"udpport":		"UDP Port",
+				"warntime":		"Warning Time",
+				"watchdog":		"Watchdog",
+				"cluster":		"Cluster"
+				}
+
+
+		if self.cluster_info_labels != None :
+			cluster_type = manager.get_cluster_type()
+			if cluster_type == "openais" :
+				target_site = "www.openais.org"
+			elif cluster_type == "heartbeat" :
+				target_site = "www.linux-ha.org"
+			else :
+				target_site = "www.clusterlabs.org"
+
+			name_label_max_len = 0
+			for key in self.cluster_info_labels.keys() :
+				make_label_active(self.cluster_info_labels[key],_(info_dict.get(key, key)+":"), target_site)
+				name_label_len = len(self.cluster_info_labels[key].get_text())
+				if name_label_len >  name_label_max_len :
+					name_label_max_len = name_label_len
+
+			for name_label in self.cluster_info_labels.values() :
+				name_label.set_width_chars(name_label_max_len)
+			
+	def __init__(self) :
+		vbox = gtk.VBox()
+		self.vbox = vbox
+		self.widget = vbox
+
+		self.update()
+		
+class CRMConfigView(View) :
 	name = "clusterview"
 	pengine_metadata = None
 	crmd_metadata = None
@@ -2268,7 +2353,7 @@ class MainWindow :
 	cur_status = None
 	cur_name = None
 	cur_view = None
-	view_widget = None
+	main_view = None
 	statusbar = None
 	tree = None
 	
@@ -2356,12 +2441,12 @@ class MainWindow :
 		return False
 	
 	def select_view(self, type, name, status = None) :
-		for child in self.view_widget.get_children() :
-			self.view_widget.remove(child)
+		for child in self.mainview_sw.get_children() :
+			self.mainview_sw.remove(child)
 
 		self.cur_type, self.cur_name, self.cur_status = type, name, status
 		self.update_ui()
-		if type == "cluster" :
+		if type == "configuration" :
 			self.cur_view = ClusterView()
 		elif type == "node" and status not in [_("never started"),_("ping node"),_("unknown type")]:
 			self.cur_view = NodeView(name)
@@ -2378,7 +2463,7 @@ class MainWindow :
 		else :
 			return
 			#self.cur_view = View()
-		self.view_widget.add(self.cur_view.widget)
+		self.mainview_sw.add_with_viewport(self.cur_view.widget)
 		self.cur_view.on_after_show()
 			
 	# ui event handler	
@@ -3070,7 +3155,7 @@ class MainWindow :
 		#self.view_widget = glade.get_widget("mainwin_view")
 		#self.tree = Tree(maintree)
 		self.maintree_sw = maintree_sw
-		self.view_widget = mainview_sw
+		self.mainview_sw = mainview_sw
 		self.update_ui()
 		self.statusbar.push(0,_("Not Connected"))
 
