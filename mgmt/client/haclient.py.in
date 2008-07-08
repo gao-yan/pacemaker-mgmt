@@ -42,6 +42,11 @@ import gtk, gtk.glade, gobject
 
 UI_FILE = "@HA_DATADIR@/heartbeat-gui/haclient.glade"
 
+validate_type = "dtd"
+name_cap = lambda name: name.replace("-"," ").replace("_"," ").title().replace("Crmd ","CRMD ").\
+				replace("Crm ","CRM ").replace("Pe ", "PE ").replace("Dc ","DC ").\
+				replace("Id", "ID")
+
 window = None
 manager = None
 debug_level = 0
@@ -470,7 +475,6 @@ class ListWithAddDel :
 		self.attr_list = attr_list
 		self.store = self.create_store(len(attr_list))
 		widget.set_model(self.store)
-		name_cap = lambda name: name.replace("-"," ").replace("_"," ").title().replace("Id","ID")
 		for i in range(len(attr_list)) :
 			attr_name = attr_list[i]
 			attr = dtd_elem.get_attr(attr_name)
@@ -555,10 +559,6 @@ class Tree :
 			menu.popup(None, None, None, event.button, event.time)
 
 	def __init__(self, obj_type) :
-		name_cap = lambda name: name.replace("-"," ").replace("_"," ").title().replace("Crmd ","CRMD ").\
-						replace("Pe ", "PE ").replace("Dc ","DC ")
-		validate_type = "dtd"
-		
 		treeiter = {}
 		if validate_type == "dtd" :
 			self.dtd_elem = manager.get_dtd_elem(obj_type)
@@ -801,10 +801,6 @@ class Tree :
 class MainTree(Tree) :
 	def __init__(self) :
 		obj_type = "cib"
-		validate_type = "dtd"
-		name_cap = lambda name: name.replace("-"," ").replace("_"," ").title().replace("Crmd ","CRMD ").\
-						replace("Crm ","CRM ").replace("Pe ", "PE ").replace("Dc ","DC ")
-		
 		treeiter = {}
 		if validate_type == "dtd" :
 			self.dtd_elem = manager.get_dtd_elem(obj_type)
@@ -1086,10 +1082,6 @@ class ObjectView :
 
 class ElementList :
 	def __init__(self, obj_type) :
-		validate_type = "dtd"
-		name_cap = lambda name: name.replace("-"," ").replace("_"," ").title().replace("Crmd ","CRMD ").\
-						replace("Crm ","CRM ").replace("Pe ", "PE ").replace("Dc ","DC ").\
-						replace("Id", "ID")
 		notebook =  gtk.Notebook()
 		if validate_type == "dtd" :
 			self.dtd_elem = manager.get_dtd_elem(obj_type)
@@ -1252,8 +1244,6 @@ class CRMConfigView(View) :
 			for key in self.cluster_info_labels.keys() :
 				make_label_active(self.cluster_info_labels[key],_(info_dict.get(key, key)+":"), target_site)
 			
-		name_cap = lambda name: name.replace("-"," ").replace("_"," ").title().replace("Crmd ","CRMD ").\
-						replace("Pe ", "PE ").replace("Dc ","DC ")
 
 		for widgets in (self.pengine_widgetgroup.widgets, self.crmd_widgetgroup.widgets):
 			if widgets != None:
@@ -4165,7 +4155,6 @@ class ObjectAttrs(WidgetGroup) :
 	dynamic_desc = None
 
 	def __init__(self, obj_type, is_newobj = False, meta = None, static_desc = None) :
-		validate_type = "dtd"
 		self.obj_type = obj_type
 		self.is_newobj = is_newobj
 		self.meta = meta
@@ -4246,7 +4235,6 @@ class ObjectAttrs(WidgetGroup) :
 		optional_row = 0
 		name_label_max_len = 0
 
-		name_cap = lambda name: name.replace("-"," ").replace("_"," ").title().replace("Id","ID")
 		for attr_name in dtd_elem.get_attr_list() :
 			attr = dtd_elem.get_attr(attr_name)
 			label = gtk.Label(_(name_cap(attr_name)+":"))
@@ -4335,7 +4323,6 @@ class ObjectAttrs(WidgetGroup) :
 		dtd_elem = self.dtd_elem
 		object = self.get_values()
 
-		name_cap = lambda name: name.replace("-"," ").replace("_"," ").title().replace("Id","ID")
 		for attr_name in dtd_elem.get_attr_list() :
 			attr = dtd_elem.get_attr(attr_name)
 			attr_decl = attr.get_decl()
