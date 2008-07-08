@@ -548,10 +548,10 @@ class Tree :
 			menu = None
 			if window.cur_type in ["node"] :
 				menu = window.uimanager.get_widget("/node_popup")
-			elif window.cur_type in ["cluster"] or window.cur_type == None:
-				menu = window.uimanager.get_widget("/connection_popup")
-			else :
+			elif window.cur_type in ["primitive", "group", "clone", "master_slave"] :
 				menu = window.uimanager.get_widget("/resource_popup")
+			else :
+				menu = window.uimanager.get_widget("/tools_popup")
 			menu.popup(None, None, None, event.button, event.time)
 
 	def __init__(self, obj_type) :
@@ -1072,6 +1072,68 @@ class ClusterView(View) :
 		self.widget = vbox
 
 		self.update()
+
+class ObjectView :
+	def __init__(self, obj_type) :
+		vbox = gtk.VBox()
+		self.vbox = vbox
+		self.widget = vbox
+		elemlist= ElementList(obj_type)
+		vbox.pack_start(elemlist.widget)
+		vbox.show_all()
+	def on_after_show(self) :
+		pass
+
+class ElementList :
+	def __init__(self, obj_type) :
+		validate_type = "dtd"
+		name_cap = lambda name: name.replace("-"," ").replace("_"," ").title().replace("Crmd ","CRMD ").\
+						replace("Crm ","CRM ").replace("Pe ", "PE ").replace("Dc ","DC ").\
+						replace("Id", "ID")
+		notebook =  gtk.Notebook()
+		if validate_type == "dtd" :
+			self.dtd_elem = manager.get_dtd_elem(obj_type)
+			for (name, mod) in self.dtd_elem.get_content_model()[1] :
+				tab_label = gtk.Label(_(name_cap(name)))
+				vbox = gtk.VBox()
+				notebook.append_page(vbox, tab_label)
+
+				store = gtk.ListStore(str, str, str, str, str, str, str, str, str, str)
+				tree = gtk.TreeView(store)
+				sw = gtk.ScrolledWindow()
+				sw.set_shadow_type(gtk.SHADOW_IN)
+				sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+				sw.add(tree)
+				hbox = gtk.HBox()
+				hbox.pack_start(sw)
+
+				bbox = gtk.VButtonBox()
+				bbox.set_layout(gtk.BUTTONBOX_SPREAD)
+				bbox.set_spacing(5)
+				upbttn = gtk.Button(stock=gtk.STOCK_GO_UP)
+				bbox.add(upbttn)
+				downbttn = gtk.Button(stock=gtk.STOCK_GO_DOWN)
+				bbox.add(downbttn)
+				hbox.pack_start(bbox, False, padding=2)
+
+				vbox.pack_start(hbox)
+				sub_dtd_elem = manager.get_dtd_elem(name)
+				sub_attr_list = sub_dtd_elem.get_attr_list()
+				for i in range(len(sub_attr_list)) :
+					add_column(tree, _(name_cap(sub_attr_list[i])), i)
+				
+				bbox = gtk.HButtonBox()
+				bbox.set_layout(gtk.BUTTONBOX_START)
+				bbox.set_spacing(5)
+				addbttn = gtk.Button(stock=gtk.STOCK_ADD)
+				bbox.add(addbttn)
+				editbttn = gtk.Button(stock=gtk.STOCK_EDIT)
+				bbox.add(editbttn)
+				delbttn = gtk.Button(stock=gtk.STOCK_REMOVE)
+				bbox.add(delbttn)
+				vbox.pack_start(bbox, False, padding=2)
+		notebook.show_all()
+		self.widget = notebook
 		
 class CRMConfigView(View) :
 	name = "clusterview"
@@ -2287,6 +2349,7 @@ class DesReportDlg:
 				dialog.vbox.pack_start(label, False, padding=1)
 
 				sw = gtk.ScrolledWindow()
+				sw.set_shadow_type(gtk.SHADOW_IN)
 				sw.set_border_width(5)
 				sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
 				des_text = gtk.TextView()
@@ -2448,6 +2511,8 @@ class MainWindow :
 		self.update_ui()
 		if type == "configuration" :
 			self.cur_view = ClusterView()
+		elif type in ["crm_config", "nodes", "resources", "constraints", "status"] :
+			self.cur_view = ObjectView(type)
 		elif type == "node" and status not in [_("never started"),_("ping node"),_("unknown type")]:
 			self.cur_view = NodeView(name)
 		elif type in [_("native")] :
@@ -3125,19 +3190,23 @@ class MainWindow :
 		
 		#maintree = MainTree("cib")
 		maintree_sw = gtk.ScrolledWindow()
+		maintree_sw.set_shadow_type(gtk.SHADOW_IN)
+				
+		
 		maintree_sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
 		#maintree_sw.add(maintree)
 
-		maintree_frame = gtk.Frame()
-		maintree_frame.add(maintree_sw)
-		hpaned.add1(maintree_frame)
+		#maintree_frame = gtk.Frame()
+		#maintree_frame.add(maintree_sw)
+		hpaned.add1(maintree_sw)
 
 		mainview_sw = gtk.ScrolledWindow()
+		mainview_sw.set_shadow_type(gtk.SHADOW_IN)
 		mainview_sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
 
-		mainview_frame = gtk.Frame()
-		mainview_frame.add(mainview_sw)
-		hpaned.add2(mainview_frame)
+		#mainview_frame = gtk.Frame()
+		#mainview_frame.add(mainview_sw)
+		hpaned.add2(mainview_sw)
 		#glade = gtk.glade.XML(UI_FILE, "mainwin_main", "haclient")
 		#main = glade.get_widget("mainwin_main")
 		#vbox.pack_start(main, True)
