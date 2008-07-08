@@ -4040,6 +4040,50 @@ class Manager :
 		if self.failed_reason != "" :
 			msgbox(self.failed_reason)
 
+
+	def cib_do_cmd(self, command):
+		self.failed_reason = ""
+		ret_str = mgmt_sendmsg(command)
+		if ret_str == None:
+			debug(command + ":None")
+			self.failed_reason = "return None"
+			return None
+		ret_list = string.split(ret_str, "\n")
+		if ret_list[0] != "ok":
+			debug(str(string.split(command, "\n"))+":"+str(ret_list))
+			if len(ret_list) > 1:
+				self.failed_reason = string.join(ret_list[1:], ",")
+			return None
+		return string.join(ret_list[1:], "\n")
+
+	def update(self) :
+		xml_status = self.cib_do_cmd("cib_query\nstatus")
+		xml_rscs = self.cib_do_cmd("cib_query\nresources")
+		xml_nodes = self.cib_do_cmd("cib_query\nnodes")
+		xml_constraints = self.cib_do_cmd("cib_query\nconstraints")
+		xml_crm_config = self.cib_do_cmd("cib_query\ncrm_config")
+
+		try:
+			self.status_xml = parseString(xml_status)
+			self.rscs_xml = parseString(xml_rscs)
+			self.nodes_xml = parseString(xml_nodes)
+			self.cns_xml = parseString(xml_constraints)
+			self.crm_xml = parseString(xml_crm_config)
+		except xml.parsers.expat.ExpatError:
+			self.status_xml = None
+			self.rscs_xml = None
+			self.nodes_xml = None
+			self.crm_xml = None
+			self.cns_xml = None
+			debug("fail to parse xml info")
+			return None
+
+		self.cache_clear()
+		self.parent = {}
+		window.update()
+		gc.collect()
+		self.update_timer = -1
+
 class WidgetGroup :
 	def __init__(self, widgets) :
 		self.widgets = widgets
