@@ -43,8 +43,9 @@ import gtk, gtk.glade, gobject
 UI_FILE = "@HA_DATADIR@/heartbeat-gui/haclient.glade"
 
 validate_type = "dtd"
-name_cap = lambda name: name.replace("-"," ").replace("_"," ").title().replace("Crmd ","CRMD ").\
-				replace("Crm ","CRM ").replace("Pe ", "PE ").replace("Dc ","DC ").\
+name_cap = lambda name: name.replace("-"," ").replace("_"," ").title().replace("Crmd","CRMD").\
+				replace("Crm","CRM").replace("Pe ", "PE ").replace("Dc ","DC ").\
+				replace("Cib", "CIB").replace("Ccm", "CCM").replace("Ha", "HA").\
 				replace("Id", "ID")
 
 window = None
@@ -801,10 +802,10 @@ class Tree :
 class MainTree(Tree) :
 	def __init__(self) :
 		obj_type = "cib"
+		self.store = gtk.TreeStore(str, str)
 		treeiter = {}
 		if validate_type == "dtd" :
 			self.dtd_elem = manager.get_dtd_elem(obj_type)
-			self.store = gtk.TreeStore(str, str)
 			for (name, mod) in self.dtd_elem.get_content_model()[1] :
 				if mod == '' :
 					treeiter[name] = self.store.append(None, [_(name_cap(name)), name])
@@ -848,6 +849,7 @@ class MainTree(Tree) :
 	def render_icon(self, tvcolumn, cell, model, iter):
 		name = model.get_value(iter, 1)
 		stocks = {
+				"cib":  gtk.STOCK_HARDDISK,
 				"configuration": gtk.STOCK_PROPERTIES,
 				"status": gtk.STOCK_DIALOG_INFO,
 				"crm_config": gtk.STOCK_PREFERENCES,
@@ -862,7 +864,7 @@ class MainTree(Tree) :
 			  2:gtk.STOCK_DIALOG_WARNING,
 			  3:gtk.STOCK_DIALOG_ERROR}
 		status = self.iter_status(model,iter)
-		pb = self.tree.render_icon(stocks[name],
+		pb = self.tree.render_icon(stocks.get(name, gtk.STOCK_DIALOG_INFO),
 			gtk.ICON_SIZE_BUTTON, None)
        		cell.set_property('pixbuf', pb)
 		return
