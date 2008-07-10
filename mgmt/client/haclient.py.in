@@ -46,7 +46,8 @@ validate_type = "dtd"
 name_cap = lambda name: name.replace("-"," ").replace("_"," ").title().replace("Crmd","CRMD").\
 				replace("Crm","CRM").replace("Pe ", "PE ").replace("Dc ","DC ").\
 				replace("Cib", "CIB").replace("Ccm", "CCM").replace("Ha", "HA").\
-				replace("Id", "ID")
+				replace("Id", "ID").replace("Dtd", "DTD").replace("Uuid", "UUID").\
+				replace("HAve", "Have").replace("Rsc ", "")
 
 window = None
 manager = None
@@ -990,30 +991,48 @@ class ClusterView(View) :
 	cluster_info_labels = None
 	
 	def update(self) :
-		vbox = self.vbox
-		vbox.set_border_width(5)
-		config = manager.get_cluster_config()
+		for line in self.cluster_info_vbox.get_children() :
+			self.cluster_info_vbox.remove(line)
+		for line in self.cib_attrs_vbox.get_children() :
+			self.cib_attrs_vbox.remove(line)
 
+		config = manager.get_cluster_config()
 		if config != None and len(config) > 0:
 			cluster_info_labels= {}
 			for key in config.keys():
-				hbox = gtk.HBox()
 				if config.get(key, "") == "" :
 					continue
-				label = gtk.Label()
-				label.set_alignment(0, 0.5)
-				eventbox = gtk.EventBox()
-				eventbox.add(label)
-				cluster_info_labels[key] = label
+				cluster_info_labels[key] = self.add_line(self.cluster_info_vbox, config.get(key,""))
+			self.cluster_info_labels = cluster_info_labels
 
-				label = gtk.Label(config.get(key,""))
-				label.set_alignment(0, 0.5)
+		if validate_type == "dtd" :
+			dtd_elem = manager.get_dtd_elem("cib")
+			cib_attrs_labels = {}
+			for attr_name in dtd_elem.get_attr_list() :
+				attr_value = manager.cib_xml.getAttribute(attr_name)
+				if attr_value == "" :
+					continue
+				cib_attrs_labels[attr_name] = self.add_line(self.cib_attrs_vbox, attr_value)
+			self.cib_attrs_labels = cib_attrs_labels
 
-				hbox.pack_start(eventbox, False, padding=5)
-				hbox.pack_start(label, False, padding=5)
-				vbox.pack_start(hbox, False, padding=2)
-			vbox.show_all()
-			self.cluster_info_labels =  cluster_info_labels
+		self.widget.show_all()
+		self.on_after_show()
+
+	def add_line(self, vbox, value) :
+		hbox = gtk.HBox()
+		name_label = gtk.Label()
+		name_label.set_alignment(0, 0.5)
+		eventbox = gtk.EventBox()
+		eventbox.add(name_label)
+
+		value_label = gtk.Label(value)
+		value_label.set_alignment(0, 0.5)
+
+		hbox.pack_start(eventbox, False, padding=5)
+		hbox.pack_start(value_label, False, padding=5)
+		vbox.pack_start(hbox, False, padding=2)
+
+		return name_label
 
 	def on_after_show(self) :
 		info_dict =	{
@@ -1056,18 +1075,42 @@ class ClusterView(View) :
 
 			name_label_max_len = 0
 			for key in self.cluster_info_labels.keys() :
-				make_label_active(self.cluster_info_labels[key],_(info_dict.get(key, key)+":"), target_site)
+				make_label_active(self.cluster_info_labels[key], _(info_dict.get(key, key)+":"), target_site)
 				name_label_len = len(self.cluster_info_labels[key].get_text())
 				if name_label_len >  name_label_max_len :
 					name_label_max_len = name_label_len
 
 			for name_label in self.cluster_info_labels.values() :
 				name_label.set_width_chars(name_label_max_len)
+
+		if self.cib_attrs_labels != None :
+			target_site = "www.clusterlabs.org"
+			name_label_max_len = 0
+			for key in self.cib_attrs_labels.keys() :
+				make_label_active(self.cib_attrs_labels[key], _(name_cap(key)+":"), target_site)
+				name_label_len = len(self.cib_attrs_labels[key].get_text())
+				if name_label_len >  name_label_max_len :
+					name_label_max_len = name_label_len
+
+			for name_label in self.cib_attrs_labels.values() :
+				name_label.set_width_chars(name_label_max_len)
 			
 	def __init__(self) :
-		vbox = gtk.VBox()
-		self.vbox = vbox
-		self.widget = vbox
+		obj_type = "cib"
+		notebook =  gtk.Notebook()
+		self.widget = notebook
+
+		cluster_info_vbox = gtk.VBox()
+		cluster_info_vbox.set_border_width(5)
+		tab_label = gtk.Label(_("Cluster"))
+		notebook.append_page(cluster_info_vbox, tab_label)
+		self.cluster_info_vbox = cluster_info_vbox
+
+		cib_attrs_vbox = gtk.VBox()
+		cib_attrs_vbox.set_border_width(5)
+		tab_label = gtk.Label(_("CIB"))
+		notebook.append_page(cib_attrs_vbox, tab_label)
+		self.cib_attrs_vbox = cib_attrs_vbox
 
 		self.update()
 
@@ -2478,6 +2521,8 @@ class MainWindow :
 	# functions
 	def update(self) :
 		self.maintree.update()
+		if self.cur_view != None :
+			self.cur_view.update()
 		self.statusbar.pop(2)
 		return False
 	
@@ -2521,7 +2566,7 @@ class MainWindow :
 			return
 			#self.cur_view = View()
 		self.mainview_sw.add_with_viewport(self.cur_view.widget)
-		self.cur_view.on_after_show()
+		#self.cur_view.on_after_show()
 			
 	# ui event handler	
 	def on_quit(self, action) :
@@ -3464,10 +3509,48 @@ class Manager :
 			self.process_event(event)
 			return False
 
+	def cib_do_cmd(self, command):
+		self.failed_reason = ""
+		ret_str = mgmt_sendmsg(command)
+		if ret_str == None:
+			debug(command + ":None")
+			self.failed_reason = "return None"
+			return None
+		ret_list = string.split(ret_str, "\n")
+		if ret_list[0] != "ok":
+			debug(str(string.split(command, "\n"))+":"+str(ret_list))
+			if len(ret_list) > 1:
+				self.failed_reason = string.join(ret_list[1:], ",")
+			return None
+		return string.join(ret_list[1:], "\n")
+
 	def update(self) :
+		xml_cib = self.cib_do_cmd("cib_query\ncib")
+		xml_status = self.cib_do_cmd("cib_query\nstatus")
+		xml_rscs = self.cib_do_cmd("cib_query\nresources")
+		xml_nodes = self.cib_do_cmd("cib_query\nnodes")
+		xml_constraints = self.cib_do_cmd("cib_query\nconstraints")
+		xml_crm_config = self.cib_do_cmd("cib_query\ncrm_config")
+
+		try:
+			self.cib_xml = parseString(xml_cib).documentElement
+			self.status_xml = parseString(xml_status)
+			self.rscs_xml = parseString(xml_rscs)
+			self.nodes_xml = parseString(xml_nodes)
+			self.cns_xml = parseString(xml_constraints)
+			self.crm_xml = parseString(xml_crm_config)
+		except xml.parsers.expat.ExpatError:
+			self.status_xml = None
+			self.rscs_xml = None
+			self.nodes_xml = None
+			self.crm_xml = None
+			self.cns_xml = None
+			debug("fail to parse xml info")
+			return None
+
 		self.cache_clear()
 		self.parent = {}
-		window.update()	
+		window.update()
 		gc.collect()
 		self.update_timer = -1
 
@@ -4041,50 +4124,6 @@ class Manager :
 		self.do_cmd(cmd)
 		if self.failed_reason != "" :
 			msgbox(self.failed_reason)
-
-
-	def cib_do_cmd(self, command):
-		self.failed_reason = ""
-		ret_str = mgmt_sendmsg(command)
-		if ret_str == None:
-			debug(command + ":None")
-			self.failed_reason = "return None"
-			return None
-		ret_list = string.split(ret_str, "\n")
-		if ret_list[0] != "ok":
-			debug(str(string.split(command, "\n"))+":"+str(ret_list))
-			if len(ret_list) > 1:
-				self.failed_reason = string.join(ret_list[1:], ",")
-			return None
-		return string.join(ret_list[1:], "\n")
-
-	def update(self) :
-		xml_status = self.cib_do_cmd("cib_query\nstatus")
-		xml_rscs = self.cib_do_cmd("cib_query\nresources")
-		xml_nodes = self.cib_do_cmd("cib_query\nnodes")
-		xml_constraints = self.cib_do_cmd("cib_query\nconstraints")
-		xml_crm_config = self.cib_do_cmd("cib_query\ncrm_config")
-
-		try:
-			self.status_xml = parseString(xml_status)
-			self.rscs_xml = parseString(xml_rscs)
-			self.nodes_xml = parseString(xml_nodes)
-			self.cns_xml = parseString(xml_constraints)
-			self.crm_xml = parseString(xml_crm_config)
-		except xml.parsers.expat.ExpatError:
-			self.status_xml = None
-			self.rscs_xml = None
-			self.nodes_xml = None
-			self.crm_xml = None
-			self.cns_xml = None
-			debug("fail to parse xml info")
-			return None
-
-		self.cache_clear()
-		self.parent = {}
-		window.update()
-		gc.collect()
-		self.update_timer = -1
 
 class WidgetGroup :
 	def __init__(self, widgets) :
