@@ -988,34 +988,44 @@ class NodeView(View) :
 	
 
 class ClusterView(View) :
-	cluster_info_labels = None
-	
-	def update(self) :
+	def update(self, xml_node = None) :
+		self.cluster_info_labels = None
+		self.cib_attrs_labels = None
 		for line in self.cluster_info_vbox.get_children() :
 			self.cluster_info_vbox.remove(line)
 		for line in self.cib_attrs_vbox.get_children() :
 			self.cib_attrs_vbox.remove(line)
 
+		self.widget.show_all()
+
 		config = manager.get_cluster_config()
-		if config != None and len(config) > 0:
+		if config == None and len(config) == 0 :
+			self.widget.get_nth_page(0).hide_all()
+		else :	
 			cluster_info_labels= {}
 			for key in config.keys():
 				if config.get(key, "") == "" :
 					continue
 				cluster_info_labels[key] = self.add_line(self.cluster_info_vbox, config.get(key,""))
 			self.cluster_info_labels = cluster_info_labels
+			self.widget.get_nth_page(0).show_all()
 
-		if validate_type == "dtd" :
-			dtd_elem = manager.get_dtd_elem("cib")
-			cib_attrs_labels = {}
-			for attr_name in dtd_elem.get_attr_list() :
-				attr_value = manager.cib_xml.getAttribute(attr_name)
-				if attr_value == "" :
-					continue
-				cib_attrs_labels[attr_name] = self.add_line(self.cib_attrs_vbox, attr_value)
-			self.cib_attrs_labels = cib_attrs_labels
+		xml_node = manager.xml_nodes.get("cib")
+		if xml_node == None :
+			self.widget.get_nth_page(1).hide_all()
+		else :
+			obj_type = xml_node.tagName
+			if validate_type == "dtd" :
+				dtd_elem = manager.get_dtd_elem(obj_type)
+				cib_attrs_labels = {}
+				for attr_name in dtd_elem.get_attr_list() :
+					attr_value = xml_node.getAttribute(attr_name)
+					if attr_value == "" :
+						continue
+					cib_attrs_labels[attr_name] = self.add_line(self.cib_attrs_vbox, attr_value)
+				self.cib_attrs_labels = cib_attrs_labels
+				self.widget.get_nth_page(1).show_all()
 
-		self.widget.show_all()
 		self.on_after_show()
 
 	def add_line(self, vbox, value) :
@@ -1096,7 +1106,6 @@ class ClusterView(View) :
 				name_label.set_width_chars(name_label_max_len)
 			
 	def __init__(self) :
-		obj_type = "cib"
 		notebook =  gtk.Notebook()
 		self.widget = notebook
 
@@ -1115,18 +1124,27 @@ class ClusterView(View) :
 		self.update()
 
 class ObjectView :
-	def __init__(self, obj_type) :
+	def __init__(self, xml_node) :
+		self.init_xml_node = xml_node
 		vbox = gtk.VBox()
 		self.vbox = vbox
 		self.widget = vbox
-		elemlist= ElementList(obj_type)
-		vbox.pack_start(elemlist.widget)
+		self.elemlist= ElementList(xml_node)
+		vbox.pack_start(self.elemlist.widget)
 		vbox.show_all()
+
+		self.update(xml_node)
+
+	def update(self, xml_node) :
+		self.current_xml_node = xml_node
+		self.elemlist.update(xml_node)
+		
 	def on_after_show(self) :
 		pass
 
 class ElementList :
-	def __init__(self, obj_type) :
+	def __init__(self, xml_node) :
+		obj_type = xml_node.tagName
 		notebook =  gtk.Notebook()
 		if validate_type == "dtd" :
 			self.dtd_elem = manager.get_dtd_elem(obj_type)
@@ -1171,6 +1189,9 @@ class ElementList :
 				vbox.pack_start(bbox, False, padding=2)
 		notebook.show_all()
 		self.widget = notebook
+
+	def update(self, xml_node) :
+		pass
 		
 class CRMConfigView(View) :
 	name = "clusterview"
@@ -2522,7 +2543,7 @@ class MainWindow :
 	def update(self) :
 		self.maintree.update()
 		if self.cur_view != None :
-			self.cur_view.update()
+			self.cur_view.update(manager.xml_nodes.get(self.cur_type))
 		self.statusbar.pop(2)
 		return False
 	
@@ -2549,7 +2570,7 @@ class MainWindow :
 		if type == "configuration" :
 			self.cur_view = ClusterView()
 		elif type in ["crm_config", "nodes", "resources", "constraints", "status"] :
-			self.cur_view = ObjectView(type)
+			self.cur_view = ObjectView(manager.xml_nodes.get(type))
 		elif type == "node" and status not in [_("never started"),_("ping node"),_("unknown type")]:
 			self.cur_view = NodeView(name)
 		elif type in [_("native")] :
@@ -3525,13 +3546,50 @@ class Manager :
 		return string.join(ret_list[1:], "\n")
 
 	def update(self) :
-		xml_cib = self.cib_do_cmd("cib_query\ncib")
-		xml_status = self.cib_do_cmd("cib_query\nstatus")
+		cib_xml = self.cib_do_cmd("cib_query\ncib")
+		if self.failed_reason != "" :
+			msgbox(self.failed_reason)
+			return None
+
+		xml_nodes = {}
+		try :
+			xml_nodes["cib"] = parseString(cib_xml).documentElement
+		except xml.parsers.expat.ExpatError:
+			msgbox("Failed to parse cib xml")
+			return None
+			
+		"""xml_status = self.cib_do_cmd("cib_query\nstatus")
 		xml_rscs = self.cib_do_cmd("cib_query\nresources")
 		xml_nodes = self.cib_do_cmd("cib_query\nnodes")
 		xml_constraints = self.cib_do_cmd("cib_query\nconstraints")
-		xml_crm_config = self.cib_do_cmd("cib_query\ncrm_config")
+		xml_crm_config = self.cib_do_cmd("cib_query\ncrm_config")"""
 
+		if xml_nodes.get("cib") == None :
+			return None
+
+		if validate_type == "dtd" :
+			dtd_elem = self.get_dtd_elem("cib")
+			for (name, mod) in dtd_elem.get_content_model()[1] :
+				if mod != '' :
+					continue
+				
+				xml_nodes[name] = xml_nodes["cib"].getElementsByTagName(name)[0]
+				if xml_nodes.get(name) == None :
+					continue
+				sub_dtd_elem = manager.get_dtd_elem(name)
+				for (sub_name, sub_mod) in sub_dtd_elem.get_content_model()[1] :
+					if sub_mod != '' :
+						continue
+					xml_nodes[sub_name] = xml_nodes[name].getElementsByTagName(sub_name)[0]
+		self.xml_nodes = xml_nodes
+
+		"""config_xml = self.cib_xml.getElementsByTagName("configuration")
+		self.crm_xml = config_xml.getElementsByTagName("crm_config")
+		self.nodes_xml = config_xml.getElementsByTagName("nodes")
+		self.rscs_xml = config_xml.getElementsByTagName("resources")
+		self.cns_xml = config_xml.getElementsByTagName("constraints")
+		self.status_xml =  self.cib_xml.getElementsByTagName("status")
+	
 		try:
 			self.cib_xml = parseString(xml_cib).documentElement
 			self.status_xml = parseString(xml_status)
@@ -3546,7 +3604,7 @@ class Manager :
 			self.crm_xml = None
 			self.cns_xml = None
 			debug("fail to parse xml info")
-			return None
+			return None"""
 
 		self.cache_clear()
 		self.parent = {}
