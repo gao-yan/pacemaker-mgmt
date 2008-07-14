@@ -543,8 +543,47 @@ class ListWithAddDel :
 			items.append(item)
 			iter = self.store.iter_next(iter)
 		return items
-	
-			
+
+class ElementList:
+	store = None
+	widget = None
+
+	def __init__(self, obj_type) :
+		treeiter = {}
+		if validate_type == "dtd" :
+			self.dtd_elem = manager.get_dtd_elem(obj_type)
+			attr_list = self.dtd_elem.get_attr_list()
+			self.store = gtk.ListStore(*(tuple(str for i in range(len(attr_list)))))
+			widget = gtk.TreeView(self.store)
+			for i in range(len(attr_list)) :
+				if i == 0 :
+					icon_func = self.render_icon
+				else :
+					icon_func = None
+				add_column(widget, _(name_cap(attr_list[i])), i, icon_func)
+
+		self.widget = widget
+		self.obj_type = obj_type
+		self.attr_list = attr_list
+
+	def render_icon(self, tvcolumn, cell, model, iter):
+		icons = {
+				"cluster_property_set": gtk.STOCK_PREFERENCES,
+				"rsc_order": gtk.STOCK_PROPERTIES,
+				"rsc_location": gtk.STOCK_PROPERTIES,
+				"rsc_colocation": gtk.STOCK_PROPERTIES
+			}
+		pb = self.widget.render_icon(icons.get(self.obj_type, gtk.STOCK_DIALOG_INFO),
+			gtk.ICON_SIZE_BUTTON, None)
+       		cell.set_property('pixbuf', pb)
+		return
+
+	def update(self, elem_list) :
+		self.store.clear()
+		for elem_node in elem_list :
+			values = [elem_node.getAttribute(attr_name) for attr_name in self.attr_list]
+			self.store.append(values)
+
 class Tree :
 	store = None
 	tree = None
@@ -798,8 +837,6 @@ class Tree :
  			for rsc in running_rsc :
  				self.add_rsc(node_iter, rsc)
 
-
-
 class MainTree(Tree) :
 	def __init__(self) :
 		obj_type = "cib"
@@ -819,14 +856,14 @@ class MainTree(Tree) :
 
 			#(u',', [(u'configuration', ''), (u'status', '')], '')
 
-		tree = gtk.TreeView(self.store)
-		tree.set_headers_visible(False)
-		add_column(tree, _(obj_type), 0, self.render_icon)
-		tree.expand_all()
-		tree.set_size_request(150, 100)
-		tree.connect("cursor-changed", self.on_cursor_changed, tree.get_selection())
-		tree.connect("event-after", self.on_right_click)
-		self.tree = tree
+		widget = gtk.TreeView(self.store)
+		widget.set_headers_visible(False)
+		add_column(widget, _(obj_type), 0, self.render_icon)
+		widget.expand_all()
+		widget.set_size_request(150, 100)
+		widget.connect("cursor-changed", self.on_cursor_changed, widget.get_selection())
+		widget.connect("event-after", self.on_right_click)
+		self.widget = widget
 
 
 	def on_cursor_changed(self, treeview, selection) :
@@ -851,12 +888,12 @@ class MainTree(Tree) :
 		name = model.get_value(iter, 1)
 		stocks = {
 				"cib":  gtk.STOCK_HARDDISK,
-				"configuration": gtk.STOCK_PROPERTIES,
-				"status": gtk.STOCK_DIALOG_INFO,
+				"configuration": gtk.STOCK_HARDDISK,
+				"status": gtk.STOCK_DIALOG_AUTHENTICATION,
 				"crm_config": gtk.STOCK_PREFERENCES,
 				"nodes": gtk.STOCK_NETWORK,
 				"resources": gtk.STOCK_DIRECTORY,
-				"constraints": gtk.STOCK_DIALOG_AUTHENTICATION 
+				"constraints": gtk.STOCK_PROPERTIES
 			}
  		icons = {-2:gtk.STOCK_DIALOG_INFO,
 			 -1:gtk.STOCK_PREFERENCES,
@@ -865,7 +902,7 @@ class MainTree(Tree) :
 			  2:gtk.STOCK_DIALOG_WARNING,
 			  3:gtk.STOCK_DIALOG_ERROR}
 		status = self.iter_status(model,iter)
-		pb = self.tree.render_icon(stocks.get(name, gtk.STOCK_DIALOG_INFO),
+		pb = self.widget.render_icon(stocks.get(name, gtk.STOCK_DIALOG_INFO),
 			gtk.ICON_SIZE_BUTTON, None)
        		cell.set_property('pixbuf', pb)
 		return
@@ -1129,36 +1166,37 @@ class ObjectView :
 		vbox = gtk.VBox()
 		self.vbox = vbox
 		self.widget = vbox
-		self.elemlist= ElementList(xml_node)
-		vbox.pack_start(self.elemlist.widget)
+		self.elem_notebook= ElementNotebook(xml_node)
+		vbox.pack_start(self.elem_notebook.widget)
 		vbox.show_all()
 
 		self.update(xml_node)
 
 	def update(self, xml_node) :
 		self.current_xml_node = xml_node
-		self.elemlist.update(xml_node)
+		self.elem_notebook.update(xml_node)
 		
 	def on_after_show(self) :
 		pass
 
-class ElementList :
+class ElementNotebook :
 	def __init__(self, xml_node) :
+		self.init_xml_node = xml_node
 		obj_type = xml_node.tagName
 		notebook =  gtk.Notebook()
+		self.elem_lists = {}
 		if validate_type == "dtd" :
 			self.dtd_elem = manager.get_dtd_elem(obj_type)
 			for (name, mod) in self.dtd_elem.get_content_model()[1] :
 				tab_label = gtk.Label(_(name_cap(name)))
 				vbox = gtk.VBox()
 				notebook.append_page(vbox, tab_label)
+				self.elem_lists[name] = ElementList(name)
 
-				store = gtk.ListStore(str, str, str, str, str, str, str, str, str, str)
-				tree = gtk.TreeView(store)
 				sw = gtk.ScrolledWindow()
 				sw.set_shadow_type(gtk.SHADOW_IN)
 				sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-				sw.add(tree)
+				sw.add(self.elem_lists[name].widget)
 				hbox = gtk.HBox()
 				hbox.pack_start(sw)
 
@@ -1172,10 +1210,6 @@ class ElementList :
 				hbox.pack_start(bbox, False, padding=2)
 
 				vbox.pack_start(hbox)
-				sub_dtd_elem = manager.get_dtd_elem(name)
-				sub_attr_list = sub_dtd_elem.get_attr_list()
-				for i in range(len(sub_attr_list)) :
-					add_column(tree, _(name_cap(sub_attr_list[i])), i)
 				
 				bbox = gtk.HButtonBox()
 				bbox.set_layout(gtk.BUTTONBOX_START)
@@ -1187,11 +1221,15 @@ class ElementList :
 				delbttn = gtk.Button(stock=gtk.STOCK_REMOVE)
 				bbox.add(delbttn)
 				vbox.pack_start(bbox, False, padding=2)
+
 		notebook.show_all()
 		self.widget = notebook
 
 	def update(self, xml_node) :
-		pass
+		for elem_type in self.elem_lists.keys() :
+			elem_node_list = xml_node.getElementsByTagName(elem_type)
+			self.elem_lists[elem_type].update(elem_node_list)
+		
 		
 class CRMConfigView(View) :
 	name = "clusterview"
@@ -2624,7 +2662,7 @@ class MainWindow :
 	
 		self.update_ui()
 		self.maintree = MainTree()
-		self.maintree_sw.add(self.maintree.tree)
+		self.maintree_sw.add(self.maintree.widget)
 		self.maintree_sw.show_all()
 
 	def on_logout(self, action) :
