@@ -2597,9 +2597,9 @@ class MainWindow :
 			os.write(fd, bin_str)
 		except OSError, msg :
 			msgbox(_("System error: ") + str(msg))
-			return
-		finally :
 			os.close(fd)
+			return
+		os.close(fd)
 
 		self.des_cluster_report(save_file)
 
@@ -2620,9 +2620,9 @@ class MainWindow :
 			current_tarfile.extractall(save_dir)
 		except tarfile.TarError, msg :
 			msgbox(_("Tar error: ") + "%s: '%s'"%(str(msg), save_file))
-			return
-		finally :
 			current_tarfile.close()
+			return
+		current_tarfile.close()
 
 		des_filename = None
 		for filename in file_list :
@@ -2697,10 +2697,11 @@ class MainWindow :
 				return
 			except tarfile.TarError, msg :
 				msgbox(_("Tar error: ") + "%s: '%s'"%(str(msg), save_file))
-				return
-			finally :
 				new_tarfile.close()
 				self.delete_files(save_dir, file_list)
+				return
+			new_tarfile.close()
+			self.delete_files(save_dir, file_list)
 
 		else :
 			for filename in file_list :
