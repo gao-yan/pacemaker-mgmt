@@ -549,21 +549,56 @@ class ElementList:
 	widget = None
 
 	def __init__(self, obj_type) :
+		self.obj_type = obj_type
 		treeiter = {}
 		if validate_type == "dtd" :
 			self.dtd_elem = manager.get_dtd_elem(obj_type)
 			attr_list = self.dtd_elem.get_attr_list()
-			self.store = gtk.ListStore(*(tuple(str for i in range(len(attr_list)))))
-			widget = gtk.TreeView(self.store)
-			for i in range(len(attr_list)) :
-				if i == 0 :
-					icon_func = self.render_icon
-				else :
-					icon_func = None
-				add_column(widget, _(name_cap(attr_list[i])), i, icon_func)
+			if len(attr_list) > 0 :
+				self.store = gtk.ListStore(*(tuple(str for i in range(len(attr_list)))))
+				tree = gtk.TreeView(self.store)
+				for i in range(len(attr_list)) :
+					if i == 0 :
+						icon_func = self.render_icon
+					else :
+						icon_func = None
+					add_column(tree, _(name_cap(attr_list[i])), i, icon_func)
 
-		self.widget = widget
-		self.obj_type = obj_type
+		vbox = gtk.VBox()
+		sw = gtk.ScrolledWindow()
+		sw.set_shadow_type(gtk.SHADOW_IN)
+		sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+		sw.add(tree)
+		hbox = gtk.HBox()
+		hbox.pack_start(sw)
+
+		bbox = gtk.VButtonBox()
+		bbox.set_layout(gtk.BUTTONBOX_SPREAD)
+		bbox.set_spacing(5)
+		upbttn = gtk.Button(stock=gtk.STOCK_GO_UP)
+		bbox.add(upbttn)
+		downbttn = gtk.Button(stock=gtk.STOCK_GO_DOWN)
+		bbox.add(downbttn)
+		hbox.pack_start(bbox, False, padding=2)
+
+		vbox.pack_start(hbox)
+				
+		bbox = gtk.HButtonBox()
+		bbox.set_layout(gtk.BUTTONBOX_START)
+		bbox.set_spacing(5)
+		add_btn = gtk.Button(stock=gtk.STOCK_ADD)
+		bbox.add(add_btn)
+		edit_btn = gtk.Button(stock=gtk.STOCK_EDIT)
+		bbox.add(edit_btn)
+		del_btn = gtk.Button(stock=gtk.STOCK_REMOVE)
+		bbox.add(del_btn)
+		vbox.pack_start(bbox, False, padding=2)
+
+		self.add_btn_handler = add_btn.connect("clicked", self.on_add)
+		self.edit_btn_handler = edit_btn.connect("clicked", self.on_edit)
+
+		self.widget = vbox
+		self.tree = tree
 		self.attr_list = attr_list
 
 	def render_icon(self, tvcolumn, cell, model, iter):
@@ -573,16 +608,36 @@ class ElementList:
 				"rsc_location": gtk.STOCK_PROPERTIES,
 				"rsc_colocation": gtk.STOCK_PROPERTIES
 			}
-		pb = self.widget.render_icon(icons.get(self.obj_type, gtk.STOCK_DIALOG_INFO),
+		pb = self.tree.render_icon(icons.get(self.obj_type, gtk.STOCK_DIALOG_INFO),
 			gtk.ICON_SIZE_BUTTON, None)
        		cell.set_property('pixbuf', pb)
 		return
 
 	def update(self, elem_list) :
 		self.store.clear()
+		self.nodes = {}
 		for elem_node in elem_list :
 			values = [elem_node.getAttribute(attr_name) for attr_name in self.attr_list]
-			self.store.append(values)
+			iter = self.store.append(values)
+			self.nodes[elem_node.getAttribute("id")] = elem_node
+
+	def get_selected_node(self) :
+		(model, iter) = self.tree.get_selection().get_selected()
+		if iter != None :
+			return self.nodes[model.get_value(iter, 0)]
+		else :
+			return None
+
+	def on_add(self, widget) :
+		objdlg = ObjectViewDlg()
+		object = objdlg.run(True, _(name_cap(self.obj_type)), self.obj_type)
+
+	def on_edit(self, widget) :
+		selected_node = self.get_selected_node()
+		if selected_node == None :
+			return
+		objdlg = ObjectViewDlg(selected_node)
+		object = objdlg.run(False)
 
 class Tree :
 	store = None
@@ -1161,13 +1216,43 @@ class ClusterView(View) :
 		self.update()
 
 class ObjectView :
-	def __init__(self, xml_node) :
+	def __init__(self, xml_node, meta = None, static_desc = None) :
 		self.init_xml_node = xml_node
 		vbox = gtk.VBox()
 		self.vbox = vbox
 		self.widget = vbox
-		self.elem_notebook= ElementNotebook(xml_node)
-		vbox.pack_start(self.elem_notebook.widget)
+		obj_type = xml_node.tagName
+		if validate_type == "dtd" :
+			self.dtd_elem = manager.get_dtd_elem(obj_type)
+			if len(self.dtd_elem.get_attr_list()) > 0 :
+				has_attr = True
+			else :
+				has_attr = False
+			if len(self.dtd_elem.get_content_model()[1])  > 0 :
+				has_elem = True
+			else :
+				has_elem = False
+		if has_attr :
+			if obj_type == "rsc_order" :
+				obj_attrs = RscOrder(True, meta, static_desc)
+			elif obj_type == "rsc_colocation" :
+				obj_attrs = RscColocation(True, meta, static_desc)
+			elif obj_type == "nvpair" :
+				obj_attrs = InstAttrsNV(True, meta, static_desc)
+			elif obj_type == "expression" :
+				obj_attrs = Expression(True, meta, static_desc)
+			elif obj_type == "op" :
+				obj_attrs = OP(True, meta, static_desc)
+			else :
+				obj_attrs = ObjectAttrs(obj_type, True, meta, static_desc)
+
+			vbox.pack_start(obj_attrs.attrs_vbox)
+			self.obj_attrs = obj_attrs
+			
+		if has_elem :
+			self.elem_notebook= ElementNotebook(xml_node)
+			vbox.pack_start(self.elem_notebook.widget)
+
 		vbox.show_all()
 
 		self.update(xml_node)
@@ -1188,39 +1273,10 @@ class ElementNotebook :
 		if validate_type == "dtd" :
 			self.dtd_elem = manager.get_dtd_elem(obj_type)
 			for (name, mod) in self.dtd_elem.get_content_model()[1] :
-				tab_label = gtk.Label(_(name_cap(name)))
-				vbox = gtk.VBox()
-				notebook.append_page(vbox, tab_label)
 				self.elem_lists[name] = ElementList(name)
+				tab_label = gtk.Label(_(name_cap(name)))
+				notebook.append_page(self.elem_lists[name].widget, tab_label)
 
-				sw = gtk.ScrolledWindow()
-				sw.set_shadow_type(gtk.SHADOW_IN)
-				sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-				sw.add(self.elem_lists[name].widget)
-				hbox = gtk.HBox()
-				hbox.pack_start(sw)
-
-				bbox = gtk.VButtonBox()
-				bbox.set_layout(gtk.BUTTONBOX_SPREAD)
-				bbox.set_spacing(5)
-				upbttn = gtk.Button(stock=gtk.STOCK_GO_UP)
-				bbox.add(upbttn)
-				downbttn = gtk.Button(stock=gtk.STOCK_GO_DOWN)
-				bbox.add(downbttn)
-				hbox.pack_start(bbox, False, padding=2)
-
-				vbox.pack_start(hbox)
-				
-				bbox = gtk.HButtonBox()
-				bbox.set_layout(gtk.BUTTONBOX_START)
-				bbox.set_spacing(5)
-				addbttn = gtk.Button(stock=gtk.STOCK_ADD)
-				bbox.add(addbttn)
-				editbttn = gtk.Button(stock=gtk.STOCK_EDIT)
-				bbox.add(editbttn)
-				delbttn = gtk.Button(stock=gtk.STOCK_REMOVE)
-				bbox.add(delbttn)
-				vbox.pack_start(bbox, False, padding=2)
 
 		notebook.show_all()
 		self.widget = notebook
@@ -2069,31 +2125,30 @@ class AddNativeDlg :
 					dialog.destroy()
 					return None
 		
-class AddObjectDlg :
+
+class ObjectViewDlg :
 	obj_type = None	
 	widgets = None
 	glade = None
+	def __init__(self, xml_node) :
+		self.xml_node = xml_node
 
-	def run(self, title, obj_type, meta = None, static_desc = None) :
+	def run(self, is_add , meta = None, static_desc = None) :
 		global top_window
+		xml_node = self.xml_node
 
+		if is_add :
+			title_prefix = "Add"
+		else :
+			title_prefix = "Edit"
+
+		title = _(title_prefix) + " " + _(name_cap(xml_node.tagName))
 		dialog = gtk.Dialog(title, top_window, gtk.DIALOG_MODAL,
 			(gtk.STOCK_OK, gtk.RESPONSE_OK, gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL))
 		dialog.set_border_width(5)
-		if obj_type == "rsc_order" :
-			obj_attrs = RscOrder(True, meta, static_desc)
-		elif obj_type == "rsc_colocation" :
-			obj_attrs = RscColocation(True, meta, static_desc)
-		elif obj_type == "nvpair" :
-			obj_attrs = InstAttrsNV(True, meta, static_desc)
-		elif obj_type == "expression" :
-			obj_attrs = Expression(True, meta, static_desc)
-		elif obj_type == "op" :
-			obj_attrs = OP(True, meta, static_desc)
-		else :
-			obj_attrs = ObjectAttrs(obj_type, True, meta, static_desc)
 
-		dialog.vbox.pack_start(obj_attrs.attrs_vbox)
+		obj_view = ObjectView(xml_node)
+		dialog.vbox.pack_start(obj_view.widget)
 		dialog.vbox.show()
 		save_top_window = top_window
 		top_window = dialog
@@ -2657,6 +2712,7 @@ class MainWindow :
 		if ret == gtk.RESPONSE_OK:
 			if not manager.login(server, user, password):
 				msgbox(manager.failed_reason)
+				return
 			else:
 				manager.save_login_info(server,user)
 	
@@ -3583,7 +3639,7 @@ class Manager :
 			return None
 		return string.join(ret_list[1:], "\n")
 
-	def update(self) :
+	def update_cib_xml(self) :
 		cib_xml = self.cib_do_cmd("cib_query\ncib")
 		if self.failed_reason != "" :
 			msgbox(self.failed_reason)
@@ -3644,7 +3700,9 @@ class Manager :
 			debug("fail to parse xml info")
 			return None"""
 
+	def update(self) :
 		self.cache_clear()
+		self.update_cib_xml()
 		self.parent = {}
 		window.update()
 		gc.collect()
