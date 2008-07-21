@@ -564,7 +564,6 @@ class ElementList:
 						icon_func = None
 					add_column(tree, _(name_cap(attr_list[i])), i, icon_func)
 
-		vbox = gtk.VBox()
 		sw = gtk.ScrolledWindow()
 		sw.set_shadow_type(gtk.SHADOW_IN)
 		sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
@@ -581,23 +580,7 @@ class ElementList:
 		bbox.add(downbttn)
 		hbox.pack_start(bbox, False, padding=2)
 
-		vbox.pack_start(hbox)
-				
-		bbox = gtk.HButtonBox()
-		bbox.set_layout(gtk.BUTTONBOX_START)
-		bbox.set_spacing(5)
-		add_btn = gtk.Button(stock=gtk.STOCK_ADD)
-		bbox.add(add_btn)
-		edit_btn = gtk.Button(stock=gtk.STOCK_EDIT)
-		bbox.add(edit_btn)
-		del_btn = gtk.Button(stock=gtk.STOCK_REMOVE)
-		bbox.add(del_btn)
-		vbox.pack_start(bbox, False, padding=2)
-
-		self.add_btn_handler = add_btn.connect("clicked", self.on_add)
-		self.edit_btn_handler = edit_btn.connect("clicked", self.on_edit)
-
-		self.widget = vbox
+		self.widget = hbox
 		self.tree = tree
 		self.attr_list = attr_list
 
@@ -627,17 +610,6 @@ class ElementList:
 			return self.nodes[model.get_value(iter, 0)]
 		else :
 			return None
-
-	def on_add(self, widget) :
-		objdlg = ObjectViewDlg()
-		object = objdlg.run(True, _(name_cap(self.obj_type)), self.obj_type)
-
-	def on_edit(self, widget) :
-		selected_node = self.get_selected_node()
-		if selected_node == None :
-			return
-		objdlg = ObjectViewDlg(selected_node)
-		object = objdlg.run(False)
 
 class Tree :
 	store = None
@@ -1234,17 +1206,17 @@ class ObjectView :
 				has_elem = False
 		if has_attr :
 			if obj_type == "rsc_order" :
-				obj_attrs = RscOrder(True, meta, static_desc)
+				obj_attrs = RscOrder(xml_node, True, meta, static_desc)
 			elif obj_type == "rsc_colocation" :
-				obj_attrs = RscColocation(True, meta, static_desc)
+				obj_attrs = RscColocation(xml_node, True, meta, static_desc)
 			elif obj_type == "nvpair" :
-				obj_attrs = InstAttrsNV(True, meta, static_desc)
+				obj_attrs = InstAttrsNV(xml_node, True, meta, static_desc)
 			elif obj_type == "expression" :
-				obj_attrs = Expression(True, meta, static_desc)
+				obj_attrs = Expression(xml_node, True, meta, static_desc)
 			elif obj_type == "op" :
-				obj_attrs = OP(True, meta, static_desc)
+				obj_attrs = OP(xml_node, True, meta, static_desc)
 			else :
-				obj_attrs = ObjectAttrs(obj_type, True, meta, static_desc)
+				obj_attrs = ObjectAttrs(xml_node, True, meta, static_desc)
 
 			vbox.pack_start(obj_attrs.attrs_vbox)
 			self.obj_attrs = obj_attrs
@@ -1268,25 +1240,61 @@ class ElementNotebook :
 	def __init__(self, xml_node) :
 		self.init_xml_node = xml_node
 		obj_type = xml_node.tagName
-		notebook =  gtk.Notebook()
-		self.elem_lists = {}
+		vbox = gtk.VBox()
+		self.widget = vbox
+
+		self.notebook =  gtk.Notebook()
+		vbox.pack_start(self.notebook, True, padding=2)
+
+		bbox = gtk.HButtonBox()
+		bbox.set_layout(gtk.BUTTONBOX_START)
+		bbox.set_spacing(5)
+		add_btn = gtk.Button(stock=gtk.STOCK_ADD)
+		bbox.add(add_btn)
+		edit_btn = gtk.Button(stock=gtk.STOCK_EDIT)
+		bbox.add(edit_btn)
+		del_btn = gtk.Button(stock=gtk.STOCK_REMOVE)
+		bbox.add(del_btn)
+		vbox.pack_start(bbox, False, padding=2)
+
+		#self.add_btn_handler = add_btn.connect("clicked", self.on_add)
+		self.edit_btn_handler = edit_btn.connect("clicked", self.on_edit)
+
+	def update(self, xml_node) :
+		self.elem_lists = []
+		obj_type = xml_node.tagName
+
 		if validate_type == "dtd" :
 			self.dtd_elem = manager.get_dtd_elem(obj_type)
 			for (name, mod) in self.dtd_elem.get_content_model()[1] :
-				self.elem_lists[name] = ElementList(name)
-				tab_label = gtk.Label(_(name_cap(name)))
-				notebook.append_page(self.elem_lists[name].widget, tab_label)
+				elem_node_list = xml_node.getElementsByTagName(name)
+				if len(elem_node_list) > 0 :
+					tab_label = gtk.Label(_(name_cap(name)))
+					sub_dtd_elem = manager.get_dtd_elem(name)
+					if len(sub_dtd_elem.get_attr_list()) == 0 :
+						(name, mod) =  sub_dtd_elem.get_content_model()[1][0]
+						sub_elem_node_list = []
+						for elem_node in elem_node_list :
+							sub_elem_nodes = elem_node.getElementsByTagName(name)
+							sub_elem_node_list.extend(sub_elem_nodes)
+						elem_node_list = sub_elem_node_list
+					elem_list = ElementList(name)
+					self.notebook.append_page(elem_list.widget, tab_label)
+					self.elem_lists.append(elem_list)
+					elem_list.update(elem_node_list)
+		self.notebook.show_all()
 
+	def on_add(self, widget) :
+		objdlg = ObjectViewDlg()
+		object = objdlg.run(True, _(name_cap(self.obj_type)), self.obj_type)
 
-		notebook.show_all()
-		self.widget = notebook
+	def on_edit(self, widget) :
+		selected_node = self.elem_lists[self.notebook.get_current_page()].get_selected_node()
+		if selected_node == None :
+			return
+		objdlg = ObjectViewDlg(selected_node)
+		object = objdlg.run(False)
 
-	def update(self, xml_node) :
-		for elem_type in self.elem_lists.keys() :
-			elem_node_list = xml_node.getElementsByTagName(elem_type)
-			self.elem_lists[elem_type].update(elem_node_list)
-		
-		
 class CRMConfigView(View) :
 	name = "clusterview"
 	pengine_metadata = None
@@ -4393,14 +4401,14 @@ class ObjectAttrs(WidgetGroup) :
 	dynamic_fill = None
 	dynamic_desc = None
 
-	def __init__(self, obj_type, is_newobj = False, meta = None, static_desc = None) :
-		self.obj_type = obj_type
+	def __init__(self, xml_node, is_newobj = False, meta = None, static_desc = None) :
+		self.obj_type = xml_node.tagName
 		self.is_newobj = is_newobj
 		self.meta = meta
 
 		self.render_attrs_vbox()
 		if validate_type == "dtd" :
-			self.dtd_elem = manager.get_dtd_elem(obj_type)
+			self.dtd_elem = manager.get_dtd_elem(self.obj_type)
 			self.render_widgets_dtd()
 			self.verify_values = self.verify_values_dtd
 			if self.dtd_elem.get_content_model()[1] == [] :
@@ -4416,7 +4424,7 @@ class ObjectAttrs(WidgetGroup) :
 				self.widgets["combo_entries"]["id"].hide_all()
 		else :
 			if self.widgets.has_key("combo_entries") and self.widgets["combo_entries"].has_key("id") :
-				self.widgets["combo_entries"]["id"].child.set_text(obj_type.split("_")[-1]+"_")
+				self.widgets["combo_entries"]["id"].child.set_text(self.obj_type.split("_")[-1]+"_")
 
 		self.auto_fill()
 
