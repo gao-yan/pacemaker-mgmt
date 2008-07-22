@@ -47,7 +47,8 @@ name_cap = lambda name: name.replace("-"," ").replace("_"," ").title().replace("
 				replace("Crm","CRM").replace("Pe ", "PE ").replace("Dc ","DC ").\
 				replace("Cib", "CIB").replace("Ccm", "CCM").replace("Ha", "HA").\
 				replace("Id", "ID").replace("Dtd", "DTD").replace("Uuid", "UUID").\
-				replace("HAve", "Have").replace("Rsc ", "")
+				replace("HAve", "Have").replace("Rsc ", "").replace("Rsc", "Resource").\
+				replace("Lrm", "LRM")
 
 window = None
 manager = None
@@ -1188,6 +1189,9 @@ class ClusterView(View) :
 		self.update()
 
 class ObjectView :
+	elem_notebook = None
+	obj_attrs = None
+
 	def __init__(self, xml_node, meta = None, static_desc = None) :
 		self.init_xml_node = xml_node
 		vbox = gtk.VBox()
@@ -1218,7 +1222,7 @@ class ObjectView :
 			else :
 				obj_attrs = ObjectAttrs(xml_node, True, meta, static_desc)
 
-			vbox.pack_start(obj_attrs.attrs_vbox)
+			vbox.pack_start(obj_attrs.attrs_vbox, False)
 			self.obj_attrs = obj_attrs
 			
 		if has_elem :
@@ -1231,7 +1235,11 @@ class ObjectView :
 
 	def update(self, xml_node) :
 		self.current_xml_node = xml_node
-		self.elem_notebook.update(xml_node)
+		if self.elem_notebook != None :
+			self.elem_notebook.update(xml_node)
+		if self.obj_attrs != None :
+			self.obj_attrs.update(xml_node)
+			
 		
 	def on_after_show(self) :
 		pass
@@ -4658,10 +4666,25 @@ class ObjectAttrs(WidgetGroup) :
 				widgets["desc_labels"][row].set_text(desc[row])
 		desc_vbox.show_all()
 
+	def update(self, xml_node) :
+		object_attrs = {}
+		for attr_name in self.dtd_elem.get_attr_list() :
+			attr_value = xml_node.getAttribute(attr_name)
+			if attr_value != None :
+				object_attrs[attr_name] = attr_value
+		self.show_values(object_attrs)
+
 
 class InstAttrsNV(ObjectAttrs) :
-	def __init__(self, is_newobj = False, meta = None, static_desc = None) :
-		ObjectAttrs.__init__(self, "nvpair", is_newobj, meta, static_desc)
+	meta = None
+	def __init__(self, xml_node, is_newobj = False, meta = None, static_desc = None) :
+		primitive_node = xml_node.parentNode.parentNode.parentNode
+		primitive_class = str(primitive_node.getAttribute("class"))
+		primitive_type = str(primitive_node.getAttribute("type"))
+		primitive_provider = str(primitive_node.getAttribute("provider"))
+		meta = manager.get_rsc_meta(primitive_class, primitive_type, primitive_provider)
+		self.meta = meta
+		ObjectAttrs.__init__(self, xml_node, is_newobj, meta, static_desc)
 
 	def auto_fill(self) :
 		widgets = self.widgets
@@ -4725,8 +4748,8 @@ class InstAttrsNV(ObjectAttrs) :
 		return desc
 
 class Expression(ObjectAttrs) :
-	def __init__(self, is_newobj = False, meta = None, static_desc = None) :
-		ObjectAttrs.__init__(self, "expression", is_newobj, meta, static_desc)
+	def __init__(self, xml_node, is_newobj = False, meta = None, static_desc = None) :
+		ObjectAttrs.__init__(self, xml_node, is_newobj, meta, static_desc)
 
 	def auto_fill(self) :
 		widgets = self.widgets
@@ -4752,8 +4775,14 @@ class Expression(ObjectAttrs) :
 				self.combobox_store_append(widgets["combo_entries"]["value"], value_store)
 
 class OP(ObjectAttrs) :
-	def __init__(self, is_newobj = False, meta = None, static_desc = None) :
-		ObjectAttrs.__init__(self, "op", is_newobj, meta, static_desc)
+	def __init__(self, xml_node, is_newobj = False, meta = None, static_desc = None) :
+		primitive_node = xml_node.parentNode.parentNode
+		primitive_class = str(primitive_node.getAttribute("class"))
+		primitive_type = str(primitive_node.getAttribute("type"))
+		primitive_provider = str(primitive_node.getAttribute("provider"))
+		meta = manager.get_rsc_meta(primitive_class, primitive_type, primitive_provider)
+		self.meta = meta
+		ObjectAttrs.__init__(self, xml_node, is_newobj, meta, static_desc)
 
 	def auto_fill(self) :
 		widgets = self.widgets
@@ -4808,8 +4837,8 @@ class OP(ObjectAttrs) :
 					widgets["combo_entries"][attr_name].child.set_text("")
 
 class RscOrder(ObjectAttrs) :
-	def __init__(self, is_newobj = False, meta = None, static_desc = None) :
-		ObjectAttrs.__init__(self, "rsc_order", is_newobj, meta, static_desc)
+	def __init__(self, xml_node, is_newobj = False, meta = None, static_desc = None) :
+		ObjectAttrs.__init__(self, xml_node, is_newobj, meta, static_desc)
 
 	def dynamic_fill(self, widget) :
 		widgets = self.widgets
@@ -4910,8 +4939,8 @@ class RscOrder(ObjectAttrs) :
 			return None
 
 class RscColocation(ObjectAttrs) :
-	def __init__(self, is_newobj = False, meta = None, static_desc = None) :
-		ObjectAttrs.__init__(self, "rsc_colocation", is_newobj, meta, static_desc)
+	def __init__(self, xml_node, is_newobj = False, meta = None, static_desc = None) :
+		ObjectAttrs.__init__(self, xml_node, is_newobj, meta, static_desc)
 
 	def dynamic_desc(self, widget) :
 		dtd_elem = self.dtd_elem
