@@ -549,7 +549,7 @@ class ElementList:
 	store = None
 	widget = None
 
-	def __init__(self, obj_type) :
+	def __init__(self, obj_type, elem_list) :
 		self.obj_type = obj_type
 		treeiter = {}
 		if validate_type == "dtd" :
@@ -584,6 +584,8 @@ class ElementList:
 		self.widget = hbox
 		self.tree = tree
 		self.attr_list = attr_list
+
+		self.update(elem_list)
 
 	def render_icon(self, tvcolumn, cell, model, iter):
 		icons = {
@@ -1189,15 +1191,23 @@ class ClusterView(View) :
 		self.update()
 
 class ObjectView :
-	elem_notebook = None
-	obj_attrs = None
-
-	def __init__(self, xml_node, meta = None, static_desc = None) :
-		self.init_xml_node = xml_node
+	def __init__(self, xml_node) :
 		vbox = gtk.VBox()
 		self.vbox = vbox
 		self.widget = vbox
-		obj_type = xml_node.tagName
+
+		self.update(xml_node)
+
+	def update(self, xml_node = None) :
+		if xml_node != None :
+			self.init_xml_node = xml_node
+			self.new_xml_node = xml_node.cloneNode(True)
+			self.new_xml_node.adopterNode = xml_node.parentNode
+
+		for child in self.vbox.get_children() :
+			self.vbox.remove(child)
+
+		obj_type = self.new_xml_node.tagName
 		if validate_type == "dtd" :
 			self.dtd_elem = manager.get_dtd_elem(obj_type)
 			if len(self.dtd_elem.get_attr_list()) > 0 :
@@ -1210,43 +1220,44 @@ class ObjectView :
 				has_elem = False
 		if has_attr :
 			if obj_type == "rsc_order" :
-				obj_attrs = RscOrder(xml_node, True, meta, static_desc)
+				obj_attrs = RscOrder(self.new_xml_node, True)
 			elif obj_type == "rsc_colocation" :
-				obj_attrs = RscColocation(xml_node, True, meta, static_desc)
-			elif obj_type == "nvpair" :
-				obj_attrs = InstAttrsNV(xml_node, True, meta, static_desc)
+				obj_attrs = RscColocation(self.new_xml_node, True)
+			elif obj_type == "nvpair" and \
+					self.new_xml_node.adopterNode.parentNode.tagName == "instance_attributes" and \
+					self.new_xml_node.adopterNode.parentNode.adopterNode.tagName == "primitive" :
+				obj_attrs = PrimInstAttrsNV(self.new_xml_node, True)
 			elif obj_type == "expression" :
-				obj_attrs = Expression(xml_node, True, meta, static_desc)
+				obj_attrs = Expression(self.new_xml_node, True)
 			elif obj_type == "op" :
-				obj_attrs = OP(xml_node, True, meta, static_desc)
+				obj_attrs = OP(self.new_xml_node, True)
 			else :
-				obj_attrs = ObjectAttrs(xml_node, True, meta, static_desc)
+				obj_attrs = ObjectAttrs(self.new_xml_node, True)
 
-			vbox.pack_start(obj_attrs.attrs_vbox, False)
+			self.vbox.pack_start(obj_attrs.attrs_vbox, False)
 			self.obj_attrs = obj_attrs
 			
 		if has_elem :
-			self.elem_notebook= ElementNotebook(xml_node)
-			vbox.pack_start(self.elem_notebook.widget)
+			self.elem_notebook= ElementNotebook(self.new_xml_node)
+			self.vbox.pack_start(self.elem_notebook.widget)
 
-		vbox.show_all()
+		self.vbox.show_all()
 
-		self.update(xml_node)
-
-	def update(self, xml_node) :
-		self.current_xml_node = xml_node
-		if self.elem_notebook != None :
-			self.elem_notebook.update(xml_node)
-		if self.obj_attrs != None :
-			self.obj_attrs.update(xml_node)
-			
-		
 	def on_after_show(self) :
 		pass
 
+	def validate(self) :
+		passed = self.obj_attrs.verify_values()
+		return passed
+
+	def reset(self) :
+		self.new_xml_node = self.init_xml_node.cloneNode(True)
+		self.new_xml_node.adopterNode = self.init_xml_node.parentNode
+		self.update()
+
 class ElementNotebook :
-	def __init__(self, xml_node) :
-		self.init_xml_node = xml_node
+	def __init__(self, xml_node, is_topview = False) :
+		self.is_topview = is_topview
 		obj_type = xml_node.tagName
 		vbox = gtk.VBox()
 		self.widget = vbox
@@ -1268,14 +1279,20 @@ class ElementNotebook :
 		#self.add_btn_handler = add_btn.connect("clicked", self.on_add)
 		self.edit_btn_handler = edit_btn.connect("clicked", self.on_edit)
 
-	def update(self, xml_node) :
+		self.update(xml_node)
+
+	def update(self, xml_node = None) :
+		if xml_node != None :
+			self.xml_node = xml_node
 		self.elem_lists = []
-		obj_type = xml_node.tagName
+		obj_type = self.xml_node.tagName
+		for child in self.notebook.get_children() :
+			self.notebook.remove(child)
 
 		if validate_type == "dtd" :
 			self.dtd_elem = manager.get_dtd_elem(obj_type)
 			for (name, mod) in self.dtd_elem.get_content_model()[1] :
-				elem_node_list = xml_node.getElementsByTagName(name)
+				elem_node_list = self.xml_node.getElementsByTagName(name)
 				if len(elem_node_list) > 0 :
 					tab_label = gtk.Label(_(name_cap(name)))
 					sub_dtd_elem = manager.get_dtd_elem(name)
@@ -1286,10 +1303,9 @@ class ElementNotebook :
 							sub_elem_nodes = elem_node.getElementsByTagName(name)
 							sub_elem_node_list.extend(sub_elem_nodes)
 						elem_node_list = sub_elem_node_list
-					elem_list = ElementList(name)
+					elem_list = ElementList(name, elem_node_list)
 					self.notebook.append_page(elem_list.widget, tab_label)
 					self.elem_lists.append(elem_list)
-					elem_list.update(elem_node_list)
 		self.notebook.show_all()
 
 	def on_add(self, widget) :
@@ -1300,8 +1316,21 @@ class ElementNotebook :
 		selected_node = self.elem_lists[self.notebook.get_current_page()].get_selected_node()
 		if selected_node == None :
 			return
-		objdlg = ObjectViewDlg(selected_node)
-		object = objdlg.run(False)
+		objdlg = ObjectViewDlg(selected_node, False)
+		while True :
+			new_xml_node = objdlg.run()
+			if new_xml_node == None :
+				return
+			if not self.is_topview :
+				try :
+					selected_node.parentNode.replaceChild(new_xml_node, selected_node)
+				except xml.dom.NotFoundErr :
+					msgbox(_("The original object doesn't exist"))
+					objdlg.destroy()
+					return
+				objdlg.destroy()
+				self.update()
+				return
 
 class CRMConfigView(View) :
 	name = "clusterview"
@@ -2146,12 +2175,10 @@ class ObjectViewDlg :
 	obj_type = None	
 	widgets = None
 	glade = None
-	def __init__(self, xml_node) :
+	def __init__(self, xml_node, is_add, meta = None, static_desc = None) :
 		self.xml_node = xml_node
 
-	def run(self, is_add , meta = None, static_desc = None) :
 		global top_window
-		xml_node = self.xml_node
 
 		if is_add :
 			title_prefix = "Add"
@@ -2160,29 +2187,35 @@ class ObjectViewDlg :
 
 		title = _(title_prefix) + " " + _(name_cap(xml_node.tagName))
 		dialog = gtk.Dialog(title, top_window, gtk.DIALOG_MODAL,
-			(gtk.STOCK_OK, gtk.RESPONSE_OK, gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL))
+			(gtk.STOCK_OK, gtk.RESPONSE_OK, str(_("Reset")), gtk.RESPONSE_APPLY, gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL))
 		dialog.set_border_width(5)
 
-		obj_view = ObjectView(xml_node)
+		obj_view = ObjectView(self.xml_node)
 		dialog.vbox.pack_start(obj_view.widget)
 		dialog.vbox.show()
-		save_top_window = top_window
+		self.save_top_window = top_window
 		top_window = dialog
 
+		self.dialog =  dialog
+		self.obj_view = obj_view
+	
+	def run(self) :
 		while True :
-			ret = dialog.run()
+			ret = self.dialog.run()
 			if ret in [gtk.RESPONSE_CANCEL, gtk.RESPONSE_DELETE_EVENT] :
-				top_window = save_top_window
-				dialog.destroy()
+				self.destroy()
 				return None
+			elif ret == gtk.RESPONSE_APPLY :
+				self.obj_view.reset()
 			else :
-				passed = obj_attrs.verify_values()
+				passed = self.obj_view.validate()
 				if passed :
-					object = obj_attrs.get_values()
-					top_window = save_top_window
-					dialog.destroy()
-					return object
+					return self.obj_view.new_xml_node
 
+	def destroy(self) :
+		global top_window
+		self.dialog.destroy()
+		top_window = self.save_top_window
 
 class ClusterReportDlg :
 	def set_params(self) :
@@ -4447,7 +4480,7 @@ class ObjectAttrs(WidgetGroup) :
 				if self.widgets.has_key(widget_type) :
 					for widget in self.widgets[widget_type].values() :
 						widget.connect("changed", self.on_changed)
-
+		self.update(xml_node)
 
 	def render_attrs_vbox(self) :
 		required_vbox = gtk.VBox()
@@ -4666,19 +4699,21 @@ class ObjectAttrs(WidgetGroup) :
 				widgets["desc_labels"][row].set_text(desc[row])
 		desc_vbox.show_all()
 
-	def update(self, xml_node) :
+	def update(self, xml_node = None) :
+		if xml_node != None :
+			self.xml_node = xml_node
 		object_attrs = {}
 		for attr_name in self.dtd_elem.get_attr_list() :
-			attr_value = xml_node.getAttribute(attr_name)
+			attr_value = self.xml_node.getAttribute(attr_name)
 			if attr_value != None :
 				object_attrs[attr_name] = attr_value
 		self.show_values(object_attrs)
 
 
-class InstAttrsNV(ObjectAttrs) :
+class PrimInstAttrsNV(ObjectAttrs) :
 	meta = None
 	def __init__(self, xml_node, is_newobj = False, meta = None, static_desc = None) :
-		primitive_node = xml_node.parentNode.parentNode.parentNode
+		primitive_node = xml_node.adopterNode.parentNode.adopterNode
 		primitive_class = str(primitive_node.getAttribute("class"))
 		primitive_type = str(primitive_node.getAttribute("type"))
 		primitive_provider = str(primitive_node.getAttribute("provider"))
@@ -4776,7 +4811,7 @@ class Expression(ObjectAttrs) :
 
 class OP(ObjectAttrs) :
 	def __init__(self, xml_node, is_newobj = False, meta = None, static_desc = None) :
-		primitive_node = xml_node.parentNode.parentNode
+		primitive_node = xml_node.adopterNode.parentNode
 		primitive_class = str(primitive_node.getAttribute("class"))
 		primitive_type = str(primitive_node.getAttribute("type"))
 		primitive_provider = str(primitive_node.getAttribute("provider"))
