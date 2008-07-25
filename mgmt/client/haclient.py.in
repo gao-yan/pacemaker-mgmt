@@ -563,7 +563,11 @@ class ElementList:
 						icon_func = self.render_icon
 					else :
 						icon_func = None
-					add_column(tree, _(name_cap(attr_list[i])), i, icon_func)
+					if attr_list[i] == "id" and self.dtd_elem.get_content_model()[1] == [] :
+						visible = False
+					else :
+						visible = True
+					add_column(tree, _(name_cap(attr_list[i])), i, icon_func, visible=visible)
 
 		sw = gtk.ScrolledWindow()
 		sw.set_shadow_type(gtk.SHADOW_IN)
