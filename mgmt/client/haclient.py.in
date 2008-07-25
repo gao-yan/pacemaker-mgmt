@@ -1191,6 +1191,9 @@ class ClusterView(View) :
 		self.update()
 
 class ObjectView :
+	obj_attrs = None
+	element_notebook = None
+	
 	def __init__(self, xml_node, is_newobj = False) :
 		self.is_newobj = is_newobj
 		vbox = gtk.VBox()
@@ -1244,9 +1247,11 @@ class ObjectView :
 			self.vbox.pack_start(self.elem_notebook.widget)
 
 		self.vbox.show_all()
+		self.on_after_show()
 
 	def on_after_show(self) :
-		pass
+		if self.obj_attrs != None :
+			self.obj_attrs.on_after_show()
 
 	def validate(self) :
 		passed = self.obj_attrs.verify_values()
@@ -2177,7 +2182,7 @@ class ObjectViewDlg :
 	obj_type = None	
 	widgets = None
 	glade = None
-	def __init__(self, xml_node, is_newobj, meta = None, static_desc = None) :
+	def __init__(self, xml_node, is_newobj = False) :
 		self.xml_node = xml_node
 
 		global top_window
@@ -4443,25 +4448,29 @@ class WidgetGroup :
 class ObjectAttrs(WidgetGroup) :
 	dynamic_fill = None
 	dynamic_desc = None
+	static_desc = None
 
-	def __init__(self, xml_node, is_newobj = False, meta = None, static_desc = None) :
+	def __init__(self, xml_node, is_newobj = False) :
 		self.obj_type = xml_node.tagName
 		self.is_newobj = is_newobj
-		self.meta = meta
-
 		self.render_attrs_vbox()
+
 		if validate_type == "dtd" :
 			self.dtd_elem = manager.get_dtd_elem(self.obj_type)
 			self.render_widgets_dtd()
 			self.verify_values = self.verify_values_dtd
 			if self.dtd_elem.get_content_model()[1] == [] :
-				auto_id = True
+				self.auto_id = True
 			else :
-				auto_id = False
+				self.auto_id = False
 
-		if auto_id == True :
+		self.update(xml_node)
+
+	def on_after_show(self) :
+		if self.auto_id == True :
 			if self.widgets.has_key("name_labels") and self.widgets["name_labels"].has_key("id") :
 				self.widgets["name_labels"]["id"].hide_all()
+				self.widgets["value_labels"]["id"].hide_all()
 			if self.widgets.has_key("combo_entries") and self.widgets["combo_entries"].has_key("id") :
 				self.widgets["combo_entries"]["id"].child.set_text(uuid())
 				self.widgets["combo_entries"]["id"].hide_all()
@@ -4471,17 +4480,17 @@ class ObjectAttrs(WidgetGroup) :
 
 		self.auto_fill()
 
-		if self.dynamic_desc == None and static_desc == None :
+		if self.dynamic_desc == None and self.static_desc == None :
+			self.vbox_labels["Description"].hide()
 			self.desc_vbox.hide()
 
-		if static_desc != None :
-			self.show_desc(static_desc)
+		if self.static_desc != None :
+			self.show_desc(self.static_desc)
 
 		for widget_type in ("combos", "bool_combos", "combo_entries") :
 			if self.widgets.has_key(widget_type) :
 				for widget in self.widgets[widget_type].values() :
 					widget.connect("changed", self.on_changed)
-		self.update(xml_node)
 
 	def render_attrs_vbox(self) :
 		required_vbox = gtk.VBox()
@@ -4490,11 +4499,13 @@ class ObjectAttrs(WidgetGroup) :
 		vbox_list = [(required_vbox, "Required"), 
 				(optional_vbox, "Optional"),
 				(desc_vbox, "Description")]
+		self.vbox_labels = {}
 		for (vbox, label_text) in vbox_list : 
 			vbox_label = gtk.Label()
 			vbox_label.set_markup('<b>' + _(label_text) + '</b>')
 			vbox_label.set_alignment(0, 1)
 			vbox.pack_start(vbox_label, False, padding=2)
+			self.vbox_labels[label_text] = vbox_label
 
 		attrs_vbox = gtk.VBox()
 		for (vbox, label_text) in vbox_list :
@@ -4524,7 +4535,8 @@ class ObjectAttrs(WidgetGroup) :
 		optional_row = 0
 		name_label_max_len = 0
 
-		for attr_name in dtd_elem.get_attr_list() :
+		self.attr_list = dtd_elem.get_attr_list()
+		for attr_name in self.attr_list :
 			attr = dtd_elem.get_attr(attr_name)
 			label = gtk.Label(_(name_cap(attr_name)+":"))
 			label.set_alignment(0, 0.5)
@@ -4612,7 +4624,7 @@ class ObjectAttrs(WidgetGroup) :
 		dtd_elem = self.dtd_elem
 		object = self.get_values()
 
-		for attr_name in dtd_elem.get_attr_list() :
+		for attr_name in self.attr_list :
 			attr = dtd_elem.get_attr(attr_name)
 			attr_decl = attr.get_decl()
 			
@@ -4705,7 +4717,7 @@ class ObjectAttrs(WidgetGroup) :
 		if xml_node != None :
 			self.xml_node = xml_node
 		object_attrs = {}
-		for attr_name in self.dtd_elem.get_attr_list() :
+		for attr_name in self.attr_list :
 			attr_value = self.xml_node.getAttribute(attr_name)
 			if attr_value != None :
 				object_attrs[attr_name] = attr_value
@@ -4713,7 +4725,7 @@ class ObjectAttrs(WidgetGroup) :
 
 	def save(self) :
 		object_attrs = self.get_values()
-		for attr_name in self.dtd_elem.get_attr_list() :
+		for attr_name in self.attr_list :
 			if object_attrs.has_key(attr_name) :
 				self.xml_node.setAttribute(attr_name, object_attrs.get(attr_name , ""))
 			elif self.xml_node.hasAttribute(attr_name) :
@@ -4721,14 +4733,13 @@ class ObjectAttrs(WidgetGroup) :
 
 class PrimInstAttrsNV(ObjectAttrs) :
 	meta = None
-	def __init__(self, xml_node, is_newobj = False, meta = None, static_desc = None) :
+	def __init__(self, xml_node, is_newobj = False) :
 		primitive_node = xml_node.adopterNode.parentNode.adopterNode
 		primitive_class = str(primitive_node.getAttribute("class"))
 		primitive_type = str(primitive_node.getAttribute("type"))
 		primitive_provider = str(primitive_node.getAttribute("provider"))
-		meta = manager.get_rsc_meta(primitive_class, primitive_type, primitive_provider)
-		self.meta = meta
-		ObjectAttrs.__init__(self, xml_node, is_newobj, meta, static_desc)
+		self.meta = manager.get_rsc_meta(primitive_class, primitive_type, primitive_provider)
+		ObjectAttrs.__init__(self, xml_node, is_newobj)
 
 	def auto_fill(self) :
 		widgets = self.widgets
@@ -4792,8 +4803,8 @@ class PrimInstAttrsNV(ObjectAttrs) :
 		return desc
 
 class Expression(ObjectAttrs) :
-	def __init__(self, xml_node, is_newobj = False, meta = None, static_desc = None) :
-		ObjectAttrs.__init__(self, xml_node, is_newobj, meta, static_desc)
+	def __init__(self, xml_node, is_newobj = False) :
+		ObjectAttrs.__init__(self, xml_node, is_newobj)
 
 	def auto_fill(self) :
 		widgets = self.widgets
@@ -4819,14 +4830,14 @@ class Expression(ObjectAttrs) :
 				self.combobox_store_append(widgets["combo_entries"]["value"], value_store)
 
 class OP(ObjectAttrs) :
-	def __init__(self, xml_node, is_newobj = False, meta = None, static_desc = None) :
+	def __init__(self, xml_node, is_newobj = False) :
 		primitive_node = xml_node.adopterNode.parentNode
 		primitive_class = str(primitive_node.getAttribute("class"))
 		primitive_type = str(primitive_node.getAttribute("type"))
 		primitive_provider = str(primitive_node.getAttribute("provider"))
 		meta = manager.get_rsc_meta(primitive_class, primitive_type, primitive_provider)
 		self.meta = meta
-		ObjectAttrs.__init__(self, xml_node, is_newobj, meta, static_desc)
+		ObjectAttrs.__init__(self, xml_node, is_newobj)
 
 	def auto_fill(self) :
 		widgets = self.widgets
@@ -4872,21 +4883,17 @@ class OP(ObjectAttrs) :
 								if action.has_key(attr_name) :
 									attr_store.append([action[attr_name], ""])
 								self.combobox_store_append(widgets["combo_entries"][attr_name], attr_store)
-								if self.is_newobj :
-									widgets["combo_entries"][attr_name].child.set_text(action.get(attr_name, ""))
+								widgets["combo_entries"][attr_name].child.set_text(action.get(attr_name, ""))
 						break
 		else :
 			for attr_name in widgets["combo_entries"].keys() :
 				if attr_name != "name" :
 					self.combobox_store_append(widgets["combo_entries"][attr_name], [])
-					if self.is_newobj :
-						widgets["combo_entries"][attr_name].child.set_text("")
-					
-
+					widgets["combo_entries"][attr_name].child.set_text("")
 
 class RscOrder(ObjectAttrs) :
-	def __init__(self, xml_node, is_newobj = False, meta = None, static_desc = None) :
-		ObjectAttrs.__init__(self, xml_node, is_newobj, meta, static_desc)
+	def __init__(self, xml_node, is_newobj = False) :
+		ObjectAttrs.__init__(self, xml_node, is_newobj)
 
 	def dynamic_fill(self, widget) :
 		widgets = self.widgets
@@ -4987,8 +4994,8 @@ class RscOrder(ObjectAttrs) :
 			return None
 
 class RscColocation(ObjectAttrs) :
-	def __init__(self, xml_node, is_newobj = False, meta = None, static_desc = None) :
-		ObjectAttrs.__init__(self, xml_node, is_newobj, meta, static_desc)
+	def __init__(self, xml_node, is_newobj = False) :
+		ObjectAttrs.__init__(self, xml_node, is_newobj)
 
 	def dynamic_desc(self, widget) :
 		dtd_elem = self.dtd_elem
