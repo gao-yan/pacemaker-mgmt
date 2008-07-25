@@ -1191,7 +1191,8 @@ class ClusterView(View) :
 		self.update()
 
 class ObjectView :
-	def __init__(self, xml_node) :
+	def __init__(self, xml_node, is_newobj = False) :
+		self.is_newobj = is_newobj
 		vbox = gtk.VBox()
 		self.vbox = vbox
 		self.widget = vbox
@@ -1199,6 +1200,7 @@ class ObjectView :
 		self.update(xml_node)
 
 	def update(self, xml_node = None) :
+		is_newobj = self.is_newobj
 		if xml_node != None :
 			self.init_xml_node = xml_node
 			self.new_xml_node = xml_node.cloneNode(True)
@@ -1220,19 +1222,19 @@ class ObjectView :
 				has_elem = False
 		if has_attr :
 			if obj_type == "rsc_order" :
-				obj_attrs = RscOrder(self.new_xml_node, True)
+				obj_attrs = RscOrder(self.new_xml_node, is_newobj)
 			elif obj_type == "rsc_colocation" :
-				obj_attrs = RscColocation(self.new_xml_node, True)
+				obj_attrs = RscColocation(self.new_xml_node, is_newobj)
 			elif obj_type == "nvpair" and \
 					self.new_xml_node.adopterNode.parentNode.tagName == "instance_attributes" and \
 					self.new_xml_node.adopterNode.parentNode.adopterNode.tagName == "primitive" :
-				obj_attrs = PrimInstAttrsNV(self.new_xml_node, True)
+				obj_attrs = PrimInstAttrsNV(self.new_xml_node, is_newobj)
 			elif obj_type == "expression" :
-				obj_attrs = Expression(self.new_xml_node, True)
+				obj_attrs = Expression(self.new_xml_node, is_newobj)
 			elif obj_type == "op" :
-				obj_attrs = OP(self.new_xml_node, True)
+				obj_attrs = OP(self.new_xml_node, is_newobj)
 			else :
-				obj_attrs = ObjectAttrs(self.new_xml_node, True)
+				obj_attrs = ObjectAttrs(self.new_xml_node, is_newobj)
 
 			self.vbox.pack_start(obj_attrs.attrs_vbox, False)
 			self.obj_attrs = obj_attrs
@@ -2175,12 +2177,12 @@ class ObjectViewDlg :
 	obj_type = None	
 	widgets = None
 	glade = None
-	def __init__(self, xml_node, is_add, meta = None, static_desc = None) :
+	def __init__(self, xml_node, is_newobj, meta = None, static_desc = None) :
 		self.xml_node = xml_node
 
 		global top_window
 
-		if is_add :
+		if is_newobj :
 			title_prefix = "Add"
 		else :
 			title_prefix = "Edit"
@@ -2190,7 +2192,7 @@ class ObjectViewDlg :
 			(gtk.STOCK_OK, gtk.RESPONSE_OK, str(_("Reset")), gtk.RESPONSE_APPLY, gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL))
 		dialog.set_border_width(5)
 
-		obj_view = ObjectView(self.xml_node)
+		obj_view = ObjectView(self.xml_node, is_newobj)
 		dialog.vbox.pack_start(obj_view.widget)
 		dialog.vbox.show()
 		self.save_top_window = top_window
@@ -4475,11 +4477,10 @@ class ObjectAttrs(WidgetGroup) :
 		if static_desc != None :
 			self.show_desc(static_desc)
 
-		if self.dynamic_fill != None or self.dynamic_desc != None :
-			for widget_type in ("combos", "bool_combos", "combo_entries") :
-				if self.widgets.has_key(widget_type) :
-					for widget in self.widgets[widget_type].values() :
-						widget.connect("changed", self.on_changed)
+		for widget_type in ("combos", "bool_combos", "combo_entries") :
+			if self.widgets.has_key(widget_type) :
+				for widget in self.widgets[widget_type].values() :
+					widget.connect("changed", self.on_changed)
 		self.update(xml_node)
 
 	def render_attrs_vbox(self) :
@@ -4673,6 +4674,7 @@ class ObjectAttrs(WidgetGroup) :
 
 
 	def on_changed(self, widget) :
+		self.save()
 		if self.dynamic_fill != None :
 			self.dynamic_fill(widget)
 		if self.dynamic_desc != None :
@@ -4709,6 +4711,13 @@ class ObjectAttrs(WidgetGroup) :
 				object_attrs[attr_name] = attr_value
 		self.show_values(object_attrs)
 
+	def save(self) :
+		object_attrs = self.get_values()
+		for attr_name in self.dtd_elem.get_attr_list() :
+			if object_attrs.has_key(attr_name) :
+				self.xml_node.setAttribute(attr_name, object_attrs.get(attr_name , ""))
+			elif self.xml_node.hasAttribute(attr_name) :
+				self.xml_node.removeAttribute(attr_name)
 
 class PrimInstAttrsNV(ObjectAttrs) :
 	meta = None
@@ -4863,13 +4872,17 @@ class OP(ObjectAttrs) :
 								if action.has_key(attr_name) :
 									attr_store.append([action[attr_name], ""])
 								self.combobox_store_append(widgets["combo_entries"][attr_name], attr_store)
-								widgets["combo_entries"][attr_name].child.set_text(action.get(attr_name, ""))
+								if self.is_newobj :
+									widgets["combo_entries"][attr_name].child.set_text(action.get(attr_name, ""))
 						break
 		else :
 			for attr_name in widgets["combo_entries"].keys() :
 				if attr_name != "name" :
 					self.combobox_store_append(widgets["combo_entries"][attr_name], [])
-					widgets["combo_entries"][attr_name].child.set_text("")
+					if self.is_newobj :
+						widgets["combo_entries"][attr_name].child.set_text("")
+					
+
 
 class RscOrder(ObjectAttrs) :
 	def __init__(self, xml_node, is_newobj = False, meta = None, static_desc = None) :
