@@ -1303,7 +1303,10 @@ class ElementNotebook :
 		if validate_type == "dtd" :
 			self.dtd_elem = manager.get_dtd_elem(obj_type)
 			for (name, mod) in self.dtd_elem.get_content_model()[1] :
-				elem_node_list = self.xml_node.getElementsByTagName(name)
+				elem_node_list = []
+				for elem_node in self.xml_node.getElementsByTagName(name) :
+					if elem_node in self.xml_node.childNodes :
+						elem_node_list.append(elem_node)
 				if len(elem_node_list) > 0 :
 					tab_label = gtk.Label(_(name_cap(name)))
 					sub_dtd_elem = manager.get_dtd_elem(name)
@@ -1311,8 +1314,9 @@ class ElementNotebook :
 						(name, mod) =  sub_dtd_elem.get_content_model()[1][0]
 						sub_elem_node_list = []
 						for elem_node in elem_node_list :
-							sub_elem_nodes = elem_node.getElementsByTagName(name)
-							sub_elem_node_list.extend(sub_elem_nodes)
+							for sub_elem_node in elem_node.getElementsByTagName(name) :
+								if sub_elem_node in elem_node.childNodes :
+									sub_elem_node_list.append(sub_elem_node)
 						elem_node_list = sub_elem_node_list
 					elem_list = ElementList(name, elem_node_list)
 					self.notebook.append_page(elem_list.widget, tab_label)
