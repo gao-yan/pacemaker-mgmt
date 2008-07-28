@@ -1287,8 +1287,18 @@ class ElementNotebook :
 		bbox.add(del_btn)
 		vbox.pack_start(bbox, False, padding=2)
 
+
+
 		#self.add_btn_handler = add_btn.connect("clicked", self.on_add)
 		self.edit_btn_handler = edit_btn.connect("clicked", self.on_edit)
+
+		add_btn.set_sensitive(True)
+		edit_btn.set_sensitive(False)
+		del_btn.set_sensitive(False)
+
+		self.add_btn = add_btn
+		self.edit_btn = edit_btn
+		self.del_btn = del_btn
 
 		self.update(xml_node)
 
@@ -1321,7 +1331,14 @@ class ElementNotebook :
 					elem_list = ElementList(name, elem_node_list)
 					self.notebook.append_page(elem_list.widget, tab_label)
 					self.elem_lists.append(elem_list)
+					elem_list.tree.connect("cursor-changed", self.on_cursor_changed, elem_list)
 		self.notebook.show_all()
+
+	def on_cursor_changed(self, treeview, elem_list) :
+		if elem_list.get_selected_node != None :
+			self.edit_btn.set_sensitive(True)
+			self.del_btn.set_sensitive(True)
+			
 
 	def on_add(self, widget) :
 		objdlg = ObjectViewDlg()
