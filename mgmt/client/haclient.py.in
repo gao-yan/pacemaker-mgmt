@@ -549,7 +549,7 @@ class ElementList:
 	store = None
 	widget = None
 
-	def __init__(self, obj_type, elem_list) :
+	def __init__(self, obj_type, elem_node_list) :
 		self.obj_type = obj_type
 		treeiter = {}
 		if validate_type == "dtd" :
@@ -573,23 +573,11 @@ class ElementList:
 		sw.set_shadow_type(gtk.SHADOW_IN)
 		sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
 		sw.add(tree)
-		hbox = gtk.HBox()
-		hbox.pack_start(sw)
-
-		bbox = gtk.VButtonBox()
-		bbox.set_layout(gtk.BUTTONBOX_SPREAD)
-		bbox.set_spacing(5)
-		upbttn = gtk.Button(stock=gtk.STOCK_GO_UP)
-		bbox.add(upbttn)
-		downbttn = gtk.Button(stock=gtk.STOCK_GO_DOWN)
-		bbox.add(downbttn)
-		hbox.pack_start(bbox, False, padding=2)
-
-		self.widget = hbox
+		self.widget = sw
 		self.tree = tree
 		self.attr_list = attr_list
 
-		self.update(elem_list)
+		self.update(elem_node_list)
 
 	def render_icon(self, tvcolumn, cell, model, iter):
 		icons = {
@@ -603,10 +591,11 @@ class ElementList:
        		cell.set_property('pixbuf', pb)
 		return
 
-	def update(self, elem_list) :
+	def update(self, elem_node_list) :
+		self.elem_node_list = elem_node_list
 		self.store.clear()
 		self.nodes = {}
-		for elem_node in elem_list :
+		for elem_node in elem_node_list :
 			values = [elem_node.getAttribute(attr_name) for attr_name in self.attr_list]
 			iter = self.store.append(values)
 			self.nodes[elem_node.getAttribute("id")] = elem_node
@@ -1273,8 +1262,9 @@ class ElementNotebook :
 		vbox = gtk.VBox()
 		self.widget = vbox
 
-		self.notebook =  gtk.Notebook()
-		vbox.pack_start(self.notebook, True, padding=2)
+		hbox = gtk.HBox()
+		vbox.pack_start(hbox)
+
 
 		bbox = gtk.HButtonBox()
 		bbox.set_layout(gtk.BUTTONBOX_START)
@@ -1287,19 +1277,14 @@ class ElementNotebook :
 		bbox.add(del_btn)
 		vbox.pack_start(bbox, False, padding=2)
 
-
+		self.hbox = hbox
 
 		#self.add_btn_handler = add_btn.connect("clicked", self.on_add)
 		self.edit_btn_handler = edit_btn.connect("clicked", self.on_edit)
 
-		add_btn.set_sensitive(True)
-		edit_btn.set_sensitive(False)
-		del_btn.set_sensitive(False)
-
 		self.add_btn = add_btn
 		self.edit_btn = edit_btn
 		self.del_btn = del_btn
-
 		self.update(xml_node)
 
 	def update(self, xml_node = None) :
@@ -1307,8 +1292,11 @@ class ElementNotebook :
 			self.xml_node = xml_node
 		self.elem_lists = []
 		obj_type = self.xml_node.tagName
-		for child in self.notebook.get_children() :
-			self.notebook.remove(child)
+		for child in self.hbox.get_children() :
+			self.hbox.remove(child)
+
+		self.notebook =  gtk.Notebook()
+		self.hbox.pack_start(self.notebook, True, padding=2)
 
 		if validate_type == "dtd" :
 			self.dtd_elem = manager.get_dtd_elem(obj_type)
@@ -1331,21 +1319,69 @@ class ElementNotebook :
 					elem_list = ElementList(name, elem_node_list)
 					self.notebook.append_page(elem_list.widget, tab_label)
 					self.elem_lists.append(elem_list)
-					elem_list.tree.connect("cursor-changed", self.on_cursor_changed, elem_list)
-		self.notebook.show_all()
+					elem_list.tree.connect("cursor-changed", self.on_cursor_changed)
+		if self.notebook.get_n_pages() > 0 :
+			bbox = gtk.VButtonBox()
+			bbox.set_layout(gtk.BUTTONBOX_SPREAD)
+			bbox.set_spacing(5)
+			up_btn = gtk.Button(stock=gtk.STOCK_GO_UP)
+			bbox.add(up_btn)
+			down_btn = gtk.Button(stock=gtk.STOCK_GO_DOWN)
+			bbox.add(down_btn)
+			self.hbox.pack_start(bbox, False, padding=2)
 
-	def on_cursor_changed(self, treeview, elem_list) :
-		if elem_list.get_selected_node != None :
-			self.edit_btn.set_sensitive(True)
-			self.del_btn.set_sensitive(True)
-			
+			self.up_btn = up_btn
+			self.down_btn = down_btn
+			self.notebook.connect("switch-page", self.on_switch_page)
+			self.notebook.show_all()
+		self.update_ui()
+
+	def update_ui(self, page_num = None) :
+		selected_node = self.get_selected_node(page_num)
+
+		self.edit_btn.set_sensitive(selected_node != None)
+		self.del_btn.set_sensitive(selected_node != None)
+
+		elem_list = self.get_elem_list(page_num)
+		if elem_list == None :
+			return
+
+		elem_node_list = elem_list.elem_node_list
+		self.up_btn.set_sensitive(selected_node != None and len(elem_node_list) > 1 and
+						selected_node != elem_node_list[0])
+		self.down_btn.set_sensitive(selected_node != None and len(elem_node_list) > 1 and
+						selected_node != elem_node_list[-1])
+
+	def on_cursor_changed(self, treeview) : 
+		self.update_ui()
+
+	def on_switch_page(self, notebook, page, page_num) :
+		self.update_ui(page_num)
+
+	def get_selected_node(self, page_num = None) :
+		if page_num == None :
+			page_num = self.notebook.get_current_page()
+		if page_num >= 0 :
+			selected_node = self.elem_lists[page_num].get_selected_node()
+		else :
+			selected_node = None
+		return selected_node
+
+	def get_elem_list(self, page_num = None) :
+		if page_num == None :
+			page_num = self.notebook.get_current_page()
+		if page_num >= 0 :
+			elem_list = self.elem_lists[page_num]
+		else :
+			elem_list = None
+		return elem_list
 
 	def on_add(self, widget) :
 		objdlg = ObjectViewDlg()
 		object = objdlg.run(True, _(name_cap(self.obj_type)), self.obj_type)
 
 	def on_edit(self, widget) :
-		selected_node = self.elem_lists[self.notebook.get_current_page()].get_selected_node()
+		selected_node = self.get_selected_node()
 		if selected_node == None :
 			return
 		objdlg = ObjectViewDlg(selected_node, False)
