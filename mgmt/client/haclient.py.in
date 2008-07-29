@@ -2287,8 +2287,7 @@ class ObjectViewDlg :
 				self.destroy()
 				return None
 			elif ret == gtk.RESPONSE_APPLY :
-				self.obj_view.reset()
-				self.dialog.set_response_sensitive(gtk.RESPONSE_APPLY, False)
+				self.on_reset()
 			else :
 				passed = self.obj_view.validate()
 				if passed :
@@ -2301,6 +2300,14 @@ class ObjectViewDlg :
 
 	def on_changed(self) :
 		self.dialog.set_response_sensitive(gtk.RESPONSE_APPLY, True)
+
+	def on_reset(self) :
+		ret = confirmbox(_("This will reset element attributes and sub-elements to the initial configurations."),
+				(gtk.STOCK_YES, gtk.RESPONSE_YES, gtk.STOCK_NO, gtk.RESPONSE_NO),
+				_("Reset the configurations?"))
+		if ret == gtk.RESPONSE_YES :
+			self.obj_view.reset()
+			self.dialog.set_response_sensitive(gtk.RESPONSE_APPLY, False)
 
 class ClusterReportDlg :
 	def set_params(self) :

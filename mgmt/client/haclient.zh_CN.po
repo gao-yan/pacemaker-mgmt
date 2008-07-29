@@ -1040,3 +1040,9 @@ msgstr "您想应用修改吗？"
 
 msgid "The data of current view have been changed."
 msgstr "当前视图中的数据已修改。"
+
+msgid "This will reset element attributes and sub-elements to the initial configurations."
+msgstr "这会重置元素属性以及子元素为初始设置。"
+
+msgid "Reset the configurations?"
+msgstr "重置设置？"
