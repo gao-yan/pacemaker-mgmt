@@ -1187,8 +1187,9 @@ class ObjectView :
 	obj_attrs = None
 	element_notebook = None
 	
-	def __init__(self, xml_node, is_newobj = False) :
+	def __init__(self, xml_node, is_newobj = False, change_call_back = None) :
 		self.is_newobj = is_newobj
+		self.change_call_back = change_call_back
 		vbox = gtk.VBox()
 		self.vbox = vbox
 		self.widget = vbox
@@ -1218,25 +1219,25 @@ class ObjectView :
 				has_elem = False
 		if has_attr :
 			if obj_type == "rsc_order" :
-				obj_attrs = RscOrder(self.new_xml_node, is_newobj)
+				obj_attrs = RscOrder(self.new_xml_node, is_newobj, self.change_call_back)
 			elif obj_type == "rsc_colocation" :
-				obj_attrs = RscColocation(self.new_xml_node, is_newobj)
+				obj_attrs = RscColocation(self.new_xml_node, is_newobj, self.change_call_back)
 			elif obj_type == "nvpair" and \
 					self.new_xml_node.adopterNode.parentNode.tagName == "instance_attributes" and \
 					self.new_xml_node.adopterNode.parentNode.adopterNode.tagName == "primitive" :
-				obj_attrs = PrimInstAttrsNV(self.new_xml_node, is_newobj)
+				obj_attrs = PrimInstAttrsNV(self.new_xml_node, is_newobj, self.change_call_back)
 			elif obj_type == "expression" :
-				obj_attrs = Expression(self.new_xml_node, is_newobj)
+				obj_attrs = Expression(self.new_xml_node, is_newobj, self.change_call_back)
 			elif obj_type == "op" :
-				obj_attrs = OP(self.new_xml_node, is_newobj)
+				obj_attrs = OP(self.new_xml_node, is_newobj, self.change_call_back)
 			else :
-				obj_attrs = ObjectAttrs(self.new_xml_node, is_newobj)
+				obj_attrs = ObjectAttrs(self.new_xml_node, is_newobj, self.change_call_back)
 
 			self.vbox.pack_start(obj_attrs.attrs_vbox, False)
 			self.obj_attrs = obj_attrs
 			
 		if has_elem :
-			self.elem_notebook= ElementNotebook(self.new_xml_node)
+			self.elem_notebook= ElementNotebook(self.new_xml_node, is_newobj, self.change_call_back)
 			self.vbox.pack_start(self.elem_notebook.widget)
 
 		self.vbox.show_all()
@@ -1256,8 +1257,9 @@ class ObjectView :
 		self.update()
 
 class ElementNotebook :
-	def __init__(self, xml_node, is_topview = False) :
+	def __init__(self, xml_node, is_topview = False, change_call_back = None) :
 		self.is_topview = is_topview
+		self.change_call_back = change_call_back
 		obj_type = xml_node.tagName
 		vbox = gtk.VBox()
 		self.widget = vbox
@@ -1333,7 +1335,7 @@ class ElementNotebook :
 			self.up_btn = up_btn
 			self.down_btn = down_btn
 			self.notebook.connect("switch-page", self.on_switch_page)
-			self.notebook.show_all()
+			self.hbox.show_all()
 		self.update_ui()
 
 	def update_ui(self, page_num = None) :
@@ -1397,8 +1399,13 @@ class ElementNotebook :
 					objdlg.destroy()
 					return
 				objdlg.destroy()
-				self.update()
+				self.on_changed()
 				return
+
+	def on_changed(self) :
+		self.update()
+		if self.change_call_back != None :
+			self.change_call_back()
 
 class CRMConfigView(View) :
 	name = "clusterview"
@@ -2257,8 +2264,9 @@ class ObjectViewDlg :
 		dialog = gtk.Dialog(title, top_window, gtk.DIALOG_MODAL,
 			(gtk.STOCK_OK, gtk.RESPONSE_OK, str(_("Reset")), gtk.RESPONSE_APPLY, gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL))
 		dialog.set_border_width(5)
+		dialog.set_response_sensitive(gtk.RESPONSE_APPLY, False)
 
-		obj_view = ObjectView(self.xml_node, is_newobj)
+		obj_view = ObjectView(self.xml_node, is_newobj, self.on_changed)
 		dialog.vbox.pack_start(obj_view.widget)
 		dialog.vbox.show()
 		self.save_top_window = top_window
@@ -2275,6 +2283,7 @@ class ObjectViewDlg :
 				return None
 			elif ret == gtk.RESPONSE_APPLY :
 				self.obj_view.reset()
+				self.dialog.set_response_sensitive(gtk.RESPONSE_APPLY, False)
 			else :
 				passed = self.obj_view.validate()
 				if passed :
@@ -2284,6 +2293,9 @@ class ObjectViewDlg :
 		global top_window
 		self.dialog.destroy()
 		top_window = self.save_top_window
+
+	def on_changed(self) :
+		self.dialog.set_response_sensitive(gtk.RESPONSE_APPLY, True)
 
 class ClusterReportDlg :
 	def set_params(self) :
@@ -4511,9 +4523,10 @@ class ObjectAttrs(WidgetGroup) :
 	dynamic_desc = None
 	static_desc = None
 
-	def __init__(self, xml_node, is_newobj = False) :
+	def __init__(self, xml_node, is_newobj = False, change_call_back = None) :
 		self.obj_type = xml_node.tagName
 		self.is_newobj = is_newobj
+		self.change_call_back = change_call_back
 		self.render_attrs_vbox()
 
 		if validate_type == "dtd" :
@@ -4754,6 +4767,8 @@ class ObjectAttrs(WidgetGroup) :
 			desc = self.dynamic_desc(widget)
 			if desc != None :
 				self.show_desc(desc)
+		if self.change_call_back != None :
+			self.change_call_back()
 
 	def show_desc(self, desc) :
 		widgets = self.widgets
@@ -4794,13 +4809,13 @@ class ObjectAttrs(WidgetGroup) :
 
 class PrimInstAttrsNV(ObjectAttrs) :
 	meta = None
-	def __init__(self, xml_node, is_newobj = False) :
+	def __init__(self, xml_node, is_newobj = False, change_call_back = None) :
 		primitive_node = xml_node.adopterNode.parentNode.adopterNode
 		primitive_class = str(primitive_node.getAttribute("class"))
 		primitive_type = str(primitive_node.getAttribute("type"))
 		primitive_provider = str(primitive_node.getAttribute("provider"))
 		self.meta = manager.get_rsc_meta(primitive_class, primitive_type, primitive_provider)
-		ObjectAttrs.__init__(self, xml_node, is_newobj)
+		ObjectAttrs.__init__(self, xml_node, is_newobj, change_call_back)
 
 	def auto_fill(self) :
 		widgets = self.widgets
@@ -4864,8 +4879,8 @@ class PrimInstAttrsNV(ObjectAttrs) :
 		return desc
 
 class Expression(ObjectAttrs) :
-	def __init__(self, xml_node, is_newobj = False) :
-		ObjectAttrs.__init__(self, xml_node, is_newobj)
+	def __init__(self, xml_node, is_newobj = False, change_call_back = None) :
+		ObjectAttrs.__init__(self, xml_node, is_newobj, change_call_back)
 
 	def auto_fill(self) :
 		widgets = self.widgets
@@ -4891,14 +4906,14 @@ class Expression(ObjectAttrs) :
 				self.combobox_store_append(widgets["combo_entries"]["value"], value_store)
 
 class OP(ObjectAttrs) :
-	def __init__(self, xml_node, is_newobj = False) :
+	def __init__(self, xml_node, is_newobj = False, change_call_back = None) :
 		primitive_node = xml_node.adopterNode.parentNode
 		primitive_class = str(primitive_node.getAttribute("class"))
 		primitive_type = str(primitive_node.getAttribute("type"))
 		primitive_provider = str(primitive_node.getAttribute("provider"))
 		meta = manager.get_rsc_meta(primitive_class, primitive_type, primitive_provider)
 		self.meta = meta
-		ObjectAttrs.__init__(self, xml_node, is_newobj)
+		ObjectAttrs.__init__(self, xml_node, is_newobj, change_call_back)
 
 	def auto_fill(self) :
 		widgets = self.widgets
@@ -4953,8 +4968,8 @@ class OP(ObjectAttrs) :
 					widgets["combo_entries"][attr_name].child.set_text("")
 
 class RscOrder(ObjectAttrs) :
-	def __init__(self, xml_node, is_newobj = False) :
-		ObjectAttrs.__init__(self, xml_node, is_newobj)
+	def __init__(self, xml_node, is_newobj = False, change_call_back = None) :
+		ObjectAttrs.__init__(self, xml_node, is_newobj, change_call_back)
 
 	def dynamic_fill(self, widget) :
 		widgets = self.widgets
@@ -5055,8 +5070,8 @@ class RscOrder(ObjectAttrs) :
 			return None
 
 class RscColocation(ObjectAttrs) :
-	def __init__(self, xml_node, is_newobj = False) :
-		ObjectAttrs.__init__(self, xml_node, is_newobj)
+	def __init__(self, xml_node, is_newobj = False, change_call_back = None) :
+		ObjectAttrs.__init__(self, xml_node, is_newobj, change_call_back)
 
 	def dynamic_desc(self, widget) :
 		dtd_elem = self.dtd_elem
