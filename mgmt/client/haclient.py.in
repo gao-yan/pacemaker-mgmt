@@ -2269,16 +2269,16 @@ class ObjectViewDlg :
 		dialog = gtk.Dialog(title, top_window, gtk.DIALOG_MODAL,
 			(gtk.STOCK_OK, gtk.RESPONSE_OK, str(_("Reset")), gtk.RESPONSE_APPLY, gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL))
 		dialog.set_border_width(5)
-		dialog.set_response_sensitive(gtk.RESPONSE_APPLY, False)
+		self.dialog =  dialog
 
 		obj_view = ObjectView(self.xml_node, is_newobj, self.on_changed)
+		self.obj_view = obj_view
 		dialog.vbox.pack_start(obj_view.widget)
 		dialog.vbox.show()
+		dialog.set_response_sensitive(gtk.RESPONSE_APPLY, False)
+
 		self.save_top_window = top_window
 		top_window = dialog
-
-		self.dialog =  dialog
-		self.obj_view = obj_view
 	
 	def run(self) :
 		while True :
@@ -4550,6 +4550,11 @@ class ObjectAttrs(WidgetGroup) :
 			else :
 				self.auto_id = False
 
+		for widget_type in ("combos", "bool_combos", "combo_entries") :
+			if self.widgets.has_key(widget_type) :
+				for widget in self.widgets[widget_type].values() :
+					widget.connect("changed", self.on_changed)
+
 		self.update(xml_node)
 
 	def on_after_show(self) :
@@ -4573,10 +4578,6 @@ class ObjectAttrs(WidgetGroup) :
 		if self.static_desc != None :
 			self.show_desc(self.static_desc)
 
-		for widget_type in ("combos", "bool_combos", "combo_entries") :
-			if self.widgets.has_key(widget_type) :
-				for widget in self.widgets[widget_type].values() :
-					widget.connect("changed", self.on_changed)
 
 	def render_attrs_vbox(self) :
 		required_vbox = gtk.VBox()
