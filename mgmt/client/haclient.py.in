@@ -584,7 +584,16 @@ class ElementList:
 				"cluster_property_set": gtk.STOCK_PREFERENCES,
 				"rsc_order": gtk.STOCK_PROPERTIES,
 				"rsc_location": gtk.STOCK_PROPERTIES,
-				"rsc_colocation": gtk.STOCK_PROPERTIES
+				"rsc_colocation": gtk.STOCK_PROPERTIES,
+				"op": gtk.STOCK_DIALOG_AUTHENTICATION,
+				"instance_attributes": gtk.STOCK_PREFERENCES,
+				"meta_attributes": gtk.STOCK_PREFERENCES,
+				"life_time": gtk.STOCK_ORIENTATION_PORTRAIT,
+				"rule" : gtk.STOCK_PREFERENCES,
+				"date_expression": gtk.STOCK_DND,
+				"transient_attributes": gtk.STOCK_PREFERENCES,
+				"note_state": gtk.STOCK_FIND,
+				"lrm": gtk.STOCK_FIND
 			}
 		pb = self.tree.render_icon(icons.get(self.obj_type, gtk.STOCK_DIALOG_INFO),
 			gtk.ICON_SIZE_BUTTON, None)
@@ -912,7 +921,7 @@ class MainTree(Tree) :
 		stocks = {
 				"cib":  gtk.STOCK_HARDDISK,
 				"configuration": gtk.STOCK_HARDDISK,
-				"status": gtk.STOCK_DIALOG_AUTHENTICATION,
+				"status": gtk.STOCK_FIND,
 				"crm_config": gtk.STOCK_PREFERENCES,
 				"nodes": gtk.STOCK_NETWORK,
 				"resources": gtk.STOCK_DIRECTORY,
