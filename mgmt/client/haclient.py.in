@@ -1242,12 +1242,12 @@ class ObjectView :
 			else :
 				obj_attrs = ObjectAttrs(self.new_xml_node, is_newobj, self.change_call_back)
 
-			self.vbox.pack_start(obj_attrs.attrs_vbox, False)
+			self.vbox.pack_start(obj_attrs.attrs_vbox, False, padding = 5)
 			self.obj_attrs = obj_attrs
 			
 		if has_elem :
 			self.elem_notebook= ElementNotebook(self.new_xml_node, is_newobj, self.change_call_back)
-			self.vbox.pack_start(self.elem_notebook.widget)
+			self.vbox.pack_start(self.elem_notebook.widget, True, padding = 5)
 
 		self.vbox.show_all()
 		self.on_after_show()
@@ -4574,11 +4574,18 @@ class ObjectAttrs(WidgetGroup) :
 			if self.widgets.has_key("combo_entries") and self.widgets["combo_entries"].has_key("id") :
 				self.widgets["combo_entries"]["id"].child.set_text(uuid())
 				self.widgets["combo_entries"]["id"].hide_all()
+			self.optional_expander.set_expanded(True)
 		else :
 			if self.widgets.has_key("combo_entries") and self.widgets["combo_entries"].has_key("id") :
 				self.widgets["combo_entries"]["id"].child.set_text(self.obj_type.split("_")[-1]+"_")
 
 		self.auto_fill()
+
+		if len(self.required_vbox.get_children()) < 2 :
+			self.required_vbox.hide()
+
+		if len(self.optional_vbox.get_children()) < 1 :
+			self.optional_expander.hide()
 
 		if self.dynamic_desc == None and self.static_desc == None :
 			self.vbox_labels["Description"].hide()
@@ -4591,25 +4598,32 @@ class ObjectAttrs(WidgetGroup) :
 	def render_attrs_vbox(self) :
 		required_vbox = gtk.VBox()
 		optional_vbox = gtk.VBox()
+		optional_expander = gtk.Expander()
+		optional_expander.add(optional_vbox)
+
 		desc_vbox = gtk.VBox()
-		vbox_list = [(required_vbox, "Required"), 
-				(optional_vbox, "Optional"),
+		widget_list = [(required_vbox, "Required"), 
+				(optional_expander, "Optional"),
 				(desc_vbox, "Description")]
 		self.vbox_labels = {}
-		for (vbox, label_text) in vbox_list : 
+		for (widget, label_text) in widget_list : 
 			vbox_label = gtk.Label()
 			vbox_label.set_markup('<b>' + _(label_text) + '</b>')
 			vbox_label.set_alignment(0, 1)
-			vbox.pack_start(vbox_label, False, padding=2)
+			if label_text == "Optional" :
+				widget.set_label_widget(vbox_label)
+			else :
+				widget.pack_start(vbox_label, False, padding=2)
 			self.vbox_labels[label_text] = vbox_label
 
 		attrs_vbox = gtk.VBox()
-		for (vbox, label_text) in vbox_list :
-			attrs_vbox.pack_start(vbox, False)
+		for (widget, label_text) in widget_list :
+			attrs_vbox.pack_start(widget, False)
 
 		self.attrs_vbox = attrs_vbox
 		self.required_vbox = required_vbox
 		self.optional_vbox = optional_vbox
+		self.optional_expander = optional_expander
 		self.desc_vbox = desc_vbox
 
 	def render_widgets_dtd(self):
@@ -4634,7 +4648,8 @@ class ObjectAttrs(WidgetGroup) :
 		self.attr_list = dtd_elem.get_attr_list()
 		for attr_name in self.attr_list :
 			attr = dtd_elem.get_attr(attr_name)
-			label = gtk.Label(_(name_cap(attr_name)+":"))
+			label_text = _(name_cap(attr_name)+":")
+			label = gtk.Label(label_text)
 			label.set_alignment(0, 0.5)
 			label_len = len(attr_name)
 			if label_len > name_label_max_len :
