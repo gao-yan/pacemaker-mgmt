@@ -1346,6 +1346,7 @@ class ElementNotebook :
 			self.down_btn = down_btn
 
 			self.hbox.show_all()
+			self.notebook.set_size_request(320, 180)
 			self.notebook.connect("switch-page", self.on_switch_page)
 			if self.last_page_num != None :
 				self.notebook.set_current_page(self.last_page_num)
