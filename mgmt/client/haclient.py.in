@@ -1231,10 +1231,14 @@ class ObjectView :
 				obj_attrs = RscOrder(self.new_xml_node, is_newobj, self.change_call_back)
 			elif obj_type == "rsc_colocation" :
 				obj_attrs = RscColocation(self.new_xml_node, is_newobj, self.change_call_back)
-			elif obj_type == "nvpair" and \
-					self.new_xml_node.adopterNode.parentNode.tagName == "instance_attributes" and \
-					self.new_xml_node.adopterNode.parentNode.adopterNode.tagName == "primitive" :
-				obj_attrs = PrimInstAttrsNV(self.new_xml_node, is_newobj, self.change_call_back)
+			elif obj_type == "nvpair" :
+				if self.new_xml_node.adopterNode.parentNode.tagName == "instance_attributes" and \
+						self.new_xml_node.adopterNode.parentNode.adopterNode.tagName == "primitive" :
+					obj_attrs = PrimInstAttrsNV(self.new_xml_node, is_newobj, self.change_call_back)
+				elif self.new_xml_node.adopterNode.parentNode.tagName == "meta_attributes" :
+					obj_attrs = MetaAttrsNV(self.new_xml_node, is_newobj, self.change_call_back)
+				else :
+					obj_attrs = ObjectAttrs(self.new_xml_node, is_newobj, self.change_call_back)
 			elif obj_type == "expression" :
 				obj_attrs = Expression(self.new_xml_node, is_newobj, self.change_call_back)
 			elif obj_type == "op" :
@@ -1242,7 +1246,7 @@ class ObjectView :
 			else :
 				obj_attrs = ObjectAttrs(self.new_xml_node, is_newobj, self.change_call_back)
 
-			self.vbox.pack_start(obj_attrs.attrs_vbox, False, padding = 5)
+			self.vbox.pack_start(obj_attrs.attrs_vbox, False)
 			self.obj_attrs = obj_attrs
 			
 		if has_elem :
@@ -4619,7 +4623,7 @@ class ObjectAttrs(WidgetGroup) :
 
 		attrs_vbox = gtk.VBox()
 		for (widget, label_text) in widget_list :
-			attrs_vbox.pack_start(widget, False)
+			attrs_vbox.pack_start(widget, False, padding = 2)
 
 		self.attrs_vbox = attrs_vbox
 		self.required_vbox = required_vbox
@@ -4844,6 +4848,74 @@ class ObjectAttrs(WidgetGroup) :
 				self.xml_node.setAttribute(attr_name, object_attrs.get(attr_name , ""))
 			elif self.xml_node.hasAttribute(attr_name) :
 				self.xml_node.removeAttribute(attr_name)
+
+class MetaAttrsNV(ObjectAttrs) :
+	def __init__(self, xml_node, is_newobj = False, change_call_back = None) :
+		self.target_node = xml_node.adopterNode.parentNode.adopterNode
+		if validate_type == "dtd" :
+			self.target_type = self.target_node.tagName
+			self.target_dtd_elem = manager.get_dtd_elem(self.target_type)
+			self.target_attrlist = self.target_dtd_elem.get_attr_list()
+			self.auto_fill = self.auto_fill_dtd
+			self.dynamic_fill = self.dynamic_fill_dtd
+		ObjectAttrs.__init__(self, xml_node, is_newobj, change_call_back)
+
+	def auto_fill_dtd(self) :
+		widgets = self.widgets
+		attr_store = []
+
+		if self.target_type in ["primitive", "group", "clone", "master_slave"] :
+			attr_store.append(["target_role", ""])
+
+		for attr_name in self.target_attrlist :
+			attr = self.target_dtd_elem.get_attr(attr_name)
+			if attr.get_decl() !=  "#REQUIRED" :
+				attr_store.append([attr_name, ""])
+
+		if self.target_type in ["clone", "master_slave"] :
+			attr_store.extend([attr_name, ""] for attr_name in ["clone_max", "clone_node_max"])
+
+		if self.target_type == "master_slave" :
+			attr_store.extend([attr_name, ""] for attr_name in ["master_max", "master_node_max"])
+
+
+		if widgets.has_key("combo_entries") and widgets["combo_entries"].has_key("name") :
+			self.combobox_store_append(widgets["combo_entries"]["name"], attr_store)
+
+	def dynamic_fill_dtd(self, widget) :
+		widgets = self.widgets
+		options_dict = {"target_role": ["started", "stopped", "default"]}
+
+		if widgets.has_key("combo_entries") and widgets["combo_entries"].has_key("name") \
+				and widget == widgets["combo_entries"]["name"] :
+			metaattr = self.get_values()
+			attr_name = metaattr.get("name", None)
+			if attr_name == None :
+				return
+			value_store = []
+			if attr_name in self.target_attrlist :
+				attr = self.target_dtd_elem.get_attr(attr_name)
+				attr_type = attr.get_type()
+				attr_default = attr.get_default()
+				if  type(attr_type) == list :
+					if attr_type.count("true") > 0 and attr_type.count("false") > 0 :
+						options = ("true", "false")
+					else :
+						options = attr_type
+					for option in options :
+						if attr_default != None and option == attr_default :
+							value_store.append([attr_default, "[ " + _("default") + " ]"])
+						else :
+							value_store.append([option, ""])
+				elif attr_default != None :
+					value_store.append([attr_default, "["+_("default")+"]"])
+			elif attr_name in options_dict.keys() :
+				value_store.extend([attr_value, ""] for attr_value in options_dict[attr_name])
+				if self.target_node.adopterNode.tagName == "clone" :
+					value_store.extend([attr_value, ""] for attr_value in ["master", "slave"])
+
+			if widgets.has_key("combo_entries") and widgets["combo_entries"].has_key("value") :
+				self.combobox_store_append(widgets["combo_entries"]["value"], value_store)
 
 class PrimInstAttrsNV(ObjectAttrs) :
 	meta = None
