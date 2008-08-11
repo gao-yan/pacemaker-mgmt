@@ -5074,6 +5074,7 @@ class OP(ObjectAttrs) :
 		meta = manager.get_rsc_meta(primitive_class, primitive_type, primitive_provider)
 		self.meta = meta
 		ObjectAttrs.__init__(self, xml_node, is_newobj, change_call_back)
+		self.dynamic_fill = self.dynamic_fill_later
 
 	def auto_fill(self) :
 		widgets = self.widgets
@@ -5091,7 +5092,7 @@ class OP(ObjectAttrs) :
 		if widgets.has_key("combo_entries") and widgets["combo_entries"].has_key("name") :
 			self.combobox_store_append(widgets["combo_entries"]["name"], op_name_store)
 
-	def dynamic_fill(self, widget) :
+	def dynamic_fill_later(self, widget) :
 		widgets = self.widgets
 		meta = self.meta
 		if meta == None or not widgets.has_key("combo_entries") :
