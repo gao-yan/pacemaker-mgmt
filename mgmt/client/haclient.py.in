@@ -1338,6 +1338,8 @@ class ElementNotebook :
 					self.notebook.append_page(elem_list.widget, tab_label)
 					self.elem_lists.append(elem_list)
 					elem_list.tree.connect("cursor-changed", self.on_cursor_changed)
+					elem_list.tree.connect("event-after", self.on_click)
+
 		if self.notebook.get_n_pages() > 0 :
 			bbox = gtk.VButtonBox()
 			bbox.set_layout(gtk.BUTTONBOX_SPREAD)
@@ -1376,6 +1378,10 @@ class ElementNotebook :
 
 	def on_cursor_changed(self, treeview) : 
 		self.update_ui()
+
+	def on_click(self, widget, event) :
+		if event.type == gtk.gdk._2BUTTON_PRESS :
+			self.on_edit(widget)
 
 	def on_switch_page(self, notebook, page, page_num) :
 		self.update_ui(page_num)
