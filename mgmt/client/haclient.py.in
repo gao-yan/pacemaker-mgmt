@@ -4585,16 +4585,20 @@ class ObjectAttrs(WidgetGroup) :
 
 	def on_after_show(self) :
 		if self.auto_id == True :
-			if self.widgets.has_key("name_labels") and self.widgets["name_labels"].has_key("id") :
-				self.widgets["name_labels"]["id"].hide_all()
-				self.widgets["value_labels"]["id"].hide_all()
-			if self.widgets.has_key("combo_entries") and self.widgets["combo_entries"].has_key("id") :
-				self.widgets["combo_entries"]["id"].child.set_text(uuid())
-				self.widgets["combo_entries"]["id"].hide_all()
+			if self.is_newobj :
+				if self.widgets.has_key("combo_entries") and self.widgets["combo_entries"].has_key("id") :
+					self.widgets["combo_entries"]["id"].child.set_text(uuid())
+					self.widgets["combo_entries"]["id"].hide_all()
+			else :
+				if self.widgets.has_key("name_labels") and self.widgets["name_labels"].has_key("id") :
+					self.widgets["name_labels"]["id"].hide_all()
+					self.widgets["value_labels"]["id"].hide_all()
+
 			self.optional_expander.set_expanded(True)
 		else :
-			if self.widgets.has_key("combo_entries") and self.widgets["combo_entries"].has_key("id") :
-				self.widgets["combo_entries"]["id"].child.set_text(self.obj_type.split("_")[-1]+"_")
+			if self.is_newobj :
+				if self.widgets.has_key("combo_entries") and self.widgets["combo_entries"].has_key("id") :
+					self.widgets["combo_entries"]["id"].child.set_text(self.obj_type.split("_")[-1]+"_")
 
 		self.auto_fill()
 
