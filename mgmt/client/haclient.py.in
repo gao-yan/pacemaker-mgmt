@@ -1353,6 +1353,9 @@ class ElementNotebook :
 			self.up_btn = up_btn
 			self.down_btn = down_btn
 
+			up_btn.connect("clicked", self.on_up)
+			down_btn.connect("clicked", self.on_down)
+
 			self.hbox.show_all()
 			self.notebook.set_size_request(320, 180)
 			self.notebook.connect("switch-page", self.on_switch_page)
@@ -1438,6 +1441,46 @@ class ElementNotebook :
 					else :
 						objdlg.destroy()
 						return
+	def on_up(self, widget) :
+		elem_node_list = self.get_elem_list().elem_node_list
+		selected_node = self.get_selected_node()
+		try :
+			selected_index = elem_node_list.index(selected_node)
+		except ValueError :
+			return
+
+		if selected_index < 1 :
+			return
+		try :
+			selected_node.parentNode.insertBefore(selected_node.cloneNode(True), elem_node_list[selected_index-1])
+		except :
+			return
+
+		selected_node.parentNode.removeChild(selected_node)
+		self.on_changed()
+
+	def on_down(self, widget) :
+		elem_node_list = self.get_elem_list().elem_node_list
+		selected_node = self.get_selected_node()
+		try :
+			selected_index = elem_node_list.index(selected_node)
+		except ValueError :
+			return
+
+		if selected_index == len(elem_node_list)-1 :
+			return
+		elif selected_index == len(elem_node_list)-2 :
+			try :
+				selected_node.parentNode.appendChild(selected_node.cloneNode(True))
+			except :
+				return
+		else :
+			try :
+				selected_node.parentNode.insertBefore(selected_node.cloneNode(True), elem_node_list[selected_index+2])
+			except :
+				return
+		selected_node.parentNode.removeChild(selected_node)
+		self.on_changed()
 
 	def on_changed(self) :
 		self.update()
