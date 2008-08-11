@@ -1237,6 +1237,8 @@ class ObjectView :
 					obj_attrs = PrimInstAttrsNV(self.new_xml_node, is_newobj, self.change_call_back)
 				elif self.new_xml_node.adopterNode.parentNode.tagName == "meta_attributes" :
 					obj_attrs = MetaAttrsNV(self.new_xml_node, is_newobj, self.change_call_back)
+				elif self.new_xml_node.adopterNode.parentNode.tagName == "cluster_property_set" :
+					obj_attrs = CRMConfNV(self.new_xml_node, is_newobj, self.change_call_back)
 				else :
 					obj_attrs = ObjectAttrs(self.new_xml_node, is_newobj, self.change_call_back)
 			elif obj_type == "expression" :
@@ -4917,16 +4919,8 @@ class MetaAttrsNV(ObjectAttrs) :
 			if widgets.has_key("combo_entries") and widgets["combo_entries"].has_key("value") :
 				self.combobox_store_append(widgets["combo_entries"]["value"], value_store)
 
-class PrimInstAttrsNV(ObjectAttrs) :
+class MetaNV(ObjectAttrs) :
 	meta = None
-	def __init__(self, xml_node, is_newobj = False, change_call_back = None) :
-		primitive_node = xml_node.adopterNode.parentNode.adopterNode
-		primitive_class = str(primitive_node.getAttribute("class"))
-		primitive_type = str(primitive_node.getAttribute("type"))
-		primitive_provider = str(primitive_node.getAttribute("provider"))
-		self.meta = manager.get_rsc_meta(primitive_class, primitive_type, primitive_provider)
-		ObjectAttrs.__init__(self, xml_node, is_newobj, change_call_back)
-
 	def auto_fill(self) :
 		widgets = self.widgets
 		meta = self.meta
@@ -4934,9 +4928,9 @@ class PrimInstAttrsNV(ObjectAttrs) :
 			instattr_store = []
 			for param in meta.parameters :
 				param_attr = ""
-				if param["required"] == "1" :
+				if param.get("required", None) == "1" :
 					param_attr =  param_attr + _("required")
-				if param["unique"] == "1" :
+				if param.get("unique", None) == "1" :
 					if param_attr != "" :
 						param_attr = param_attr + _(", ")
 					param_attr = param_attr + _("unique")
@@ -4958,9 +4952,21 @@ class PrimInstAttrsNV(ObjectAttrs) :
 			if instattr.has_key("name") :
 				for param in meta.parameters :
 					if instattr["name"] == param["name"] :
+						param_type = param["content"].get("type")
+						options = []
 						default_value = param["content"]["default"]
-						if default_value != None and default_value != "" :
-							value_store.insert(0, [default_value, "[ "+ _("default") + " ]"])
+						if param_type == "boolean" :
+							options = ["true", "false"]
+						elif param_type == "enum" and param["content"].has_key("values"):
+							options =  param["content"]["values"]
+						elif default_value != None :
+							options = [default_value]
+
+						for option in options :
+							if default_value != None and option == default_value :
+								value_store.insert(0, [option, "[ "+ _("default") + " ]"])
+							else :
+								value_store.append([option, ""])
 						break
 			if widgets.has_key("combo_entries") and widgets["combo_entries"].has_key("value") :
 				self.combobox_store_append(widgets["combo_entries"]["value"], value_store)
@@ -4977,16 +4983,46 @@ class PrimInstAttrsNV(ObjectAttrs) :
 		if instattr.has_key("name") :
 			for param in meta.parameters :
 				if instattr["name"] == param["name"] :		
-					longdesc = param["longdesc"]
-					shortdesc = param["shortdesc"]
-					if longdesc != None and longdesc != "" :
-						desc = [longdesc]
-					elif shortdesc != None and shortdesc != "" :
+					longdesc = param.get("longdesc", "").replace(_(".  "), _(".\n"))
+					shortdesc = param.get("shortdesc", "")
+
+					if len(longdesc) == 0 :
 						desc = [shortdesc]
+					elif longdesc.find(shortdesc) > -1 :
+						desc = [longdesc]
+					else :
+						if shortdesc.endswith(_(".")) :
+							desc = [shortdesc + "\n" + longdesc]
+						else :
+							desc = [shortdesc + _(".") + "\n" + longdesc]
 					break
 		else :
 			desc = [""]
 		return desc
+
+class CRMConfNV(MetaNV) :
+	meta = None
+	def __init__(self, xml_node, is_newobj = False, change_call_back = None) :
+		self.meta = manager.get_crm_metadata("pengine")
+		crmd_meta = manager.get_crm_metadata("crmd")
+		if self.meta != None :
+			if crmd_meta != None:
+				self.meta.parameters.extend(crmd_meta.parameters)
+		else :
+			self.meta = crmd_meta
+		MetaNV.__init__(self, xml_node, is_newobj, change_call_back)
+
+
+
+class PrimInstAttrsNV(MetaNV) :
+	meta = None
+	def __init__(self, xml_node, is_newobj = False, change_call_back = None) :
+		primitive_node = xml_node.adopterNode.parentNode.adopterNode
+		primitive_class = str(primitive_node.getAttribute("class"))
+		primitive_type = str(primitive_node.getAttribute("type"))
+		primitive_provider = str(primitive_node.getAttribute("provider"))
+		self.meta = manager.get_rsc_meta(primitive_class, primitive_type, primitive_provider)
+		MetaNV.__init__(self, xml_node, is_newobj, change_call_back)
 
 class Expression(ObjectAttrs) :
 	def __init__(self, xml_node, is_newobj = False, change_call_back = None) :
