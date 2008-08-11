@@ -1196,8 +1196,9 @@ class ObjectView :
 	obj_attrs = None
 	element_notebook = None
 	
-	def __init__(self, xml_node, is_newobj = False, change_call_back = None) :
+	def __init__(self, xml_node, is_newobj = False, change_call_back = None, is_topview = False) :
 		self.is_newobj = is_newobj
+		self.is_topview = is_topview
 		self.change_call_back = change_call_back
 		vbox = gtk.VBox()
 		self.vbox = vbox
@@ -1252,7 +1253,7 @@ class ObjectView :
 			self.obj_attrs = obj_attrs
 			
 		if has_elem :
-			self.elem_notebook= ElementNotebook(self.new_xml_node, is_newobj, self.change_call_back)
+			self.elem_notebook= ElementNotebook(self.new_xml_node, self.is_topview, self.change_call_back)
 			self.vbox.pack_start(self.elem_notebook.widget, True, padding = 5)
 
 		self.vbox.show_all()
@@ -1276,7 +1277,6 @@ class ElementNotebook :
 	def __init__(self, xml_node, is_topview = False, change_call_back = None) :
 		self.is_topview = is_topview
 		self.change_call_back = change_call_back
-		obj_type = xml_node.tagName
 		vbox = gtk.VBox()
 		self.widget = vbox
 
@@ -1309,7 +1309,7 @@ class ElementNotebook :
 		if xml_node != None :
 			self.xml_node = xml_node
 		self.elem_lists = []
-		obj_type = self.xml_node.tagName
+		self.obj_type = self.xml_node.tagName
 		for child in self.hbox.get_children() :
 			self.hbox.remove(child)
 
@@ -1317,7 +1317,7 @@ class ElementNotebook :
 		self.hbox.pack_start(self.notebook, True, padding=2)
 
 		if validate_type == "dtd" :
-			self.dtd_elem = manager.get_dtd_elem(obj_type)
+			self.dtd_elem = manager.get_dtd_elem(self.obj_type)
 			for (name, mod) in self.dtd_elem.get_content_model()[1] :
 				elem_node_list = []
 				for elem_node in self.xml_node.getElementsByTagName(name) :
@@ -1422,6 +1422,16 @@ class ElementNotebook :
 				objdlg.destroy()
 				self.on_changed()
 				return
+			else :
+				xml_str = new_xml_node.toxml().replace("\n", "")
+				if selected_node.tagName == new_xml_node.tagName and \
+						selected_node.getAttribute("id") == new_xml_node.getAttribute("id") :
+					manager.cib_do_cmd("cib_replace\n%s\n%s"%(str(self.obj_type), str(xml_str)))
+					if manager.failed_reason != "" :
+						msgbox(self.failed_reason)
+					else :
+						objdlg.destroy()
+						return
 
 	def on_changed(self) :
 		self.update()
@@ -2820,7 +2830,7 @@ class MainWindow :
 		if type == "configuration" :
 			self.cur_view = ClusterView()
 		elif type in ["crm_config", "nodes", "resources", "constraints", "status"] :
-			self.cur_view = ObjectView(manager.xml_nodes.get(type))
+			self.cur_view = ObjectView(manager.xml_nodes.get(type), is_topview = True)
 		elif type == "node" and status not in [_("never started"),_("ping node"),_("unknown type")]:
 			self.cur_view = NodeView(name)
 		elif type in [_("native")] :

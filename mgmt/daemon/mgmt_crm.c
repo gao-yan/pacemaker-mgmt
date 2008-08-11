@@ -2543,7 +2543,7 @@ char*
 on_cib_replace(char* argv[], int argc)
 {
 	int rc;
-	crm_data_t* fragment = NULL;
+	/*crm_data_t* fragment = NULL;*/
 	crm_data_t* cib_object = NULL;
 	crm_data_t* output;
 	const char* type = argv[0];
@@ -2559,9 +2559,9 @@ on_cib_replace(char* argv[], int argc)
 
 	mgmt_log(LOG_INFO, "CIB replace: %s", xmls);
 		
-	fragment = create_cib_fragment(cib_object, type);
-	rc = cib_conn->cmds->replace(cib_conn, type, fragment, &output, cib_sync_call);
-	free_xml(fragment);
+	/*fragment = create_cib_fragment(cib_object, type);*/
+	rc = cib_conn->cmds->replace(cib_conn, type, cib_object, &output, cib_sync_call);
+	/*free_xml(fragment);*/
 	free_xml(cib_object);
 	if (rc < 0) {
 		return crm_failed_msg(output, rc);
