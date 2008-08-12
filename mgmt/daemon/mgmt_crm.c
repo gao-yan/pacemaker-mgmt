@@ -2557,7 +2557,7 @@ on_cib_replace(char* argv[], int argc)
 		return cl_strdup(MSG_FAIL);
 	}
 
-	mgmt_log(LOG_INFO, "CIB replace: %s", xmls);
+	mgmt_log(LOG_INFO, "CIB replace: %s", type);
 		
 	/*fragment = create_cib_fragment(cib_object, type);*/
 	rc = cib_conn->cmds->replace(cib_conn, type, cib_object, &output, cib_sync_call);

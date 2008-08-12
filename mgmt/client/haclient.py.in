@@ -1253,7 +1253,7 @@ class ObjectView :
 			self.obj_attrs = obj_attrs
 			
 		if has_elem :
-			self.elem_notebook= ElementNotebook(self.new_xml_node, self.is_topview, self.change_call_back)
+			self.elem_notebook = ElementNotebook(self.new_xml_node, self.is_topview, self.change_call_back)
 			self.vbox.pack_start(self.elem_notebook.widget, True, padding = 5)
 
 		self.vbox.show_all()
@@ -1437,7 +1437,7 @@ class ElementNotebook :
 						selected_node.getAttribute("id") == new_xml_node.getAttribute("id") :
 					manager.cib_do_cmd("cib_replace\n%s\n%s"%(str(self.obj_type), str(xml_str)))
 					if manager.failed_reason != "" :
-						msgbox(self.failed_reason)
+						msgbox(manager.failed_reason)
 					else :
 						objdlg.destroy()
 						return
@@ -1457,7 +1457,14 @@ class ElementNotebook :
 			return
 
 		selected_node.parentNode.removeChild(selected_node)
-		self.on_changed()
+
+		if self.is_topview :
+			xml_str = self.xml_node.toxml().replace("\n", "")
+			manager.cib_do_cmd("cib_replace\n%s\n%s"%(str(self.obj_type), str(xml_str)))
+			if manager.failed_reason != "" :
+				msgbox(manager.failed_reason)
+		else :
+			self.on_changed()
 
 	def on_down(self, widget) :
 		elem_node_list = self.get_elem_list().elem_node_list
@@ -1480,7 +1487,14 @@ class ElementNotebook :
 			except :
 				return
 		selected_node.parentNode.removeChild(selected_node)
-		self.on_changed()
+
+		if self.is_topview :
+			xml_str = self.xml_node.toxml().replace("\n", "")
+			manager.cib_do_cmd("cib_replace\n%s\n%s"%(str(self.obj_type), str(xml_str)))
+			if manager.failed_reason != "" :
+				msgbox(manager.failed_reason)
+		else :
+			self.on_changed()
 
 	def on_changed(self) :
 		self.update()
