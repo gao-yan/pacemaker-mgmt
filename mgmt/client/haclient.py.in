@@ -556,8 +556,9 @@ class ElementList:
 			self.dtd_elem = manager.get_dtd_elem(obj_type)
 			attr_list = self.dtd_elem.get_attr_list()
 			if len(attr_list) > 0 :
-				self.store = gtk.ListStore(*(tuple(str for i in range(len(attr_list)))))
+				self.store = gtk.ListStore(*(tuple(str for i in range(len(attr_list)+1))))
 				tree = gtk.TreeView(self.store)
+				add_column(tree, _("Type"), 0, self.render_icon, visible=False)
 				for i in range(len(attr_list)) :
 					if i == 0 :
 						icon_func = self.render_icon
@@ -567,7 +568,7 @@ class ElementList:
 						visible = False
 					else :
 						visible = True
-					add_column(tree, _(name_cap(attr_list[i])), i, icon_func, visible=visible)
+					add_column(tree, _(name_cap(attr_list[i])), i+1, icon_func, visible=visible)
 
 		sw = gtk.ScrolledWindow()
 		sw.set_shadow_type(gtk.SHADOW_IN)
@@ -605,16 +606,54 @@ class ElementList:
 		self.store.clear()
 		self.nodes = {}
 		for elem_node in elem_node_list :
-			values = [elem_node.getAttribute(attr_name) for attr_name in self.attr_list]
+			values = [self.obj_type]
+			values.extend([elem_node.getAttribute(attr_name) for attr_name in self.attr_list])
 			iter = self.store.append(values)
-			self.nodes[elem_node.getAttribute("id")] = elem_node
+			self.nodes[(elem_node.tagName, elem_node.getAttribute("id"))] = elem_node
 
 	def get_selected_node(self) :
 		(model, iter) = self.tree.get_selection().get_selected()
 		if iter != None :
-			return self.nodes[model.get_value(iter, 0)]
+			return self.nodes[(model.get_value(iter, 0), model.get_value(iter, 1))]
 		else :
 			return None
+
+	def save_iter_status(self, model, path, iter, expand_status):
+		type = model.get_value(iter, 0)
+		id = model.get_value(iter, 1)
+		expand_status[(type, id)] = self.tree.row_expanded(path)
+	
+	def restore_iter_status(self, model, path, iter, user_data):
+		(select_type, select_id, select_path, expand_status) = user_data
+		type = model.get_value(iter, 0)
+		id = model.get_value(iter, 1)
+		path = model.get_path(iter)
+		if type == select_type and id == select_id :
+			self.tree.get_selection().select_iter(iter)
+		if expand_status.has_key((type, id)) :
+			if expand_status[type, id] :
+				self.tree.expand_row(path, False)
+			else :
+				self.tree.collapse_row(path)
+		else :
+			self.tree.expand_row(path, False)
+			
+	def save_tree_status(self) :
+		(model, iter) = self.tree.get_selection().get_selected()
+		if iter != None :
+			select_type = model.get_value(iter, 0)
+			select_id = model.get_value(iter, 1)
+			select_path = model.get_path(iter)
+		else :
+			select_type = None
+			select_id = None
+			select_path = None
+		expand_status = {}
+		self.store.foreach(self.save_iter_status, expand_status)
+		return (select_type, select_id, select_path, expand_status)
+
+	def restore_tree_status(self, tree_status) :
+		self.store.foreach(self.restore_iter_status, tree_status)
 
 class Tree :
 	store = None
@@ -1194,7 +1233,7 @@ class ClusterView(View) :
 
 class ObjectView :
 	obj_attrs = None
-	element_notebook = None
+	elem_notebook = None
 	
 	def __init__(self, xml_node, is_newobj = False, change_call_back = None, is_topview = False) :
 		self.is_newobj = is_newobj
@@ -1212,6 +1251,10 @@ class ObjectView :
 			self.init_xml_node = xml_node
 			self.new_xml_node = xml_node.cloneNode(True)
 			self.new_xml_node.adopterNode = xml_node.parentNode
+
+		notebook_status = None
+		if self.elem_notebook != None :
+			notebook_status = self.elem_notebook.save_status()
 
 		for child in self.vbox.get_children() :
 			self.vbox.remove(child)
@@ -1255,6 +1298,8 @@ class ObjectView :
 		if has_elem :
 			self.elem_notebook = ElementNotebook(self.new_xml_node, self.is_topview, self.change_call_back)
 			self.vbox.pack_start(self.elem_notebook.widget, True, padding = 5)
+			if notebook_status != None :
+				self.elem_notebook.restore_status(notebook_status)
 
 		self.vbox.show_all()
 		self.on_after_show()
@@ -1262,6 +1307,8 @@ class ObjectView :
 	def on_after_show(self) :
 		if self.obj_attrs != None :
 			self.obj_attrs.on_after_show()
+		if self.elem_notebook != None :
+			self.elem_notebook.on_after_show()
 
 	def validate(self) :
 		passed = self.obj_attrs.verify_values()
@@ -1273,7 +1320,7 @@ class ObjectView :
 		self.update()
 
 class ElementNotebook :
-	last_page_num = None
+	notebook = None
 	def __init__(self, xml_node, is_topview = False, change_call_back = None) :
 		self.is_topview = is_topview
 		self.change_call_back = change_call_back
@@ -1359,11 +1406,8 @@ class ElementNotebook :
 			self.hbox.show_all()
 			self.notebook.set_size_request(320, 180)
 			self.notebook.connect("switch-page", self.on_switch_page)
-			if self.last_page_num != None :
-				self.notebook.set_current_page(self.last_page_num)
-		self.update_ui()
 
-	def update_ui(self, page_num = None) :
+	def on_after_show(self, page_num = None) :
 		selected_node = self.get_selected_node(page_num)
 
 		self.edit_btn.set_sensitive(selected_node != None)
@@ -1380,15 +1424,14 @@ class ElementNotebook :
 						selected_node != elem_node_list[-1])
 
 	def on_cursor_changed(self, treeview) : 
-		self.update_ui()
+		self.on_after_show()
 
 	def on_click(self, widget, event) :
 		if event.type == gtk.gdk._2BUTTON_PRESS :
 			self.on_edit(widget)
 
 	def on_switch_page(self, notebook, page, page_num) :
-		self.update_ui(page_num)
-		self.last_page_num = page_num
+		self.on_after_show(page_num)
 
 	def get_selected_node(self, page_num = None) :
 		if page_num == None :
@@ -1497,9 +1540,28 @@ class ElementNotebook :
 			self.on_changed()
 
 	def on_changed(self) :
+		notebook_status = self.save_status()
 		self.update()
+		self.restore_status(notebook_status)
+		self.on_after_show()
 		if self.change_call_back != None :
 			self.change_call_back()
+
+	def save_status(self) :
+		elem_list =  self.get_elem_list()
+		if elem_list == None :
+			return None
+		page_type = elem_list.obj_type
+		tree_status =  elem_list.save_tree_status()
+		return (page_type, tree_status)
+
+	def restore_status(self, notebook_status) :
+		(page_type, tree_status) = notebook_status
+		for i in range(len(self.elem_lists)) :
+			if self.elem_lists[i].obj_type == page_type :
+				self.notebook.set_current_page(i)
+				self.elem_lists[i].restore_tree_status(tree_status)
+				break
 
 class CRMConfigView(View) :
 	name = "clusterview"
