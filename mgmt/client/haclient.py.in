@@ -568,7 +568,7 @@ class ElementList:
 						visible = False
 					else :
 						visible = True
-					add_column(tree, _(name_cap(attr_list[i])), i+1, None, visible=visible)
+					add_column(tree, _(name_cap(attr_list[i])), i+1, icon_func, visible=visible)
 
 		sw = gtk.ScrolledWindow()
 		sw.set_shadow_type(gtk.SHADOW_IN)
@@ -583,20 +583,35 @@ class ElementList:
 	def render_icon(self, tvcolumn, cell, model, iter):
 		icons = {
 				"cluster_property_set": gtk.STOCK_PREFERENCES,
+				"node": gtk.STOCK_ORIENTATION_PORTRAIT,
+				"primitive": gtk.STOCK_DND,
+				"group": gtk.STOCK_DND_MULTIPLE,
+				"clone": gtk.STOCK_COPY,
+				"master_slave": gtk.STOCK_COPY,
 				"rsc_order": gtk.STOCK_PROPERTIES,
 				"rsc_location": gtk.STOCK_PROPERTIES,
 				"rsc_colocation": gtk.STOCK_PROPERTIES,
+				"operations": gtk.STOCK_DIALOG_AUTHENTICATION,
 				"op": gtk.STOCK_DIALOG_AUTHENTICATION,
 				"instance_attributes": gtk.STOCK_PREFERENCES,
 				"meta_attributes": gtk.STOCK_PREFERENCES,
-				"life_time": gtk.STOCK_ORIENTATION_PORTRAIT,
-				"rule" : gtk.STOCK_PREFERENCES,
-				"date_expression": gtk.STOCK_DND,
+				"attributes": gtk.STOCK_PREFERENCES,
+				"life_time": gtk.STOCK_INDENT,
+				"rule" : gtk.STOCK_JUSTIFY_FILL,
+				"expression": gtk.STOCK_MEDIA_STOP,
+				"nvpair": gtk.STOCK_MEDIA_STOP,
+				"date_expression": gtk.STOCK_JUSTIFY_FILL,
 				"transient_attributes": gtk.STOCK_PREFERENCES,
-				"note_state": gtk.STOCK_FIND,
-				"lrm": gtk.STOCK_FIND
+				"date_spec": gtk.STOCK_MEDIA_STOP,
+				"duration": gtk.STOCK_MEDIA_STOP,
+				"node_state": gtk.STOCK_FIND,
+				"lrm": gtk.STOCK_FIND,
+				"lrm_resources": gtk.STOCK_DND_MULTIPLE,
+				"lrm_resource": gtk.STOCK_DND,
+				"lrm_rsc_op": gtk.STOCK_DIALOG_AUTHENTICATION
+			
 			}
-		pb = self.tree.render_icon(icons.get(model.get_value(iter, 0), gtk.STOCK_DIALOG_INFO),
+		pb = self.tree.render_icon(icons.get(model.get_value(iter, 0), gtk.STOCK_MEDIA_STOP),
 			gtk.ICON_SIZE_BUTTON, None)
        		cell.set_property('pixbuf', pb)
 		return
@@ -1289,9 +1304,8 @@ class ObjectView :
 	def update(self, xml_node = None) :
 		is_newobj = self.is_newobj
 		if xml_node != None :
-			self.init_xml_node = xml_node
-			self.new_xml_node = xml_node.cloneNode(True)
-			self.new_xml_node.adopterNode = xml_node.parentNode
+			self.xml_node = xml_node
+			self.init_xml_node = xml_node.cloneNode(True)
 
 		notebook_status = None
 		if self.elem_notebook != None :
@@ -1300,7 +1314,7 @@ class ObjectView :
 		for child in self.vbox.get_children() :
 			self.vbox.remove(child)
 
-		obj_type = self.new_xml_node.tagName
+		obj_type = self.xml_node.tagName
 		if validate_type == "dtd" :
 			self.dtd_elem = manager.get_dtd_elem(obj_type)
 			if len(self.dtd_elem.get_attr_list()) > 0 :
@@ -1313,31 +1327,31 @@ class ObjectView :
 				has_elem = False
 		if has_attr :
 			if obj_type == "rsc_order" :
-				obj_attrs = RscOrder(self.new_xml_node, is_newobj, self.change_call_back)
+				obj_attrs = RscOrder(self.xml_node, is_newobj, self.change_call_back)
 			elif obj_type == "rsc_colocation" :
-				obj_attrs = RscColocation(self.new_xml_node, is_newobj, self.change_call_back)
+				obj_attrs = RscColocation(self.xml_node, is_newobj, self.change_call_back)
 			elif obj_type == "nvpair" :
-				if self.new_xml_node.adopterNode.parentNode.tagName == "instance_attributes" and \
-						self.new_xml_node.adopterNode.parentNode.adopterNode.tagName == "primitive" :
-					obj_attrs = PrimInstAttrsNV(self.new_xml_node, is_newobj, self.change_call_back)
-				elif self.new_xml_node.adopterNode.parentNode.tagName == "meta_attributes" :
-					obj_attrs = MetaAttrsNV(self.new_xml_node, is_newobj, self.change_call_back)
-				elif self.new_xml_node.adopterNode.parentNode.tagName == "cluster_property_set" :
-					obj_attrs = CRMConfNV(self.new_xml_node, is_newobj, self.change_call_back)
+				if self.xml_node.parentNode.parentNode.tagName == "instance_attributes" and \
+						self.xml_node.parentNode.parentNode.parentNode.tagName == "primitive" :
+					obj_attrs = PrimInstAttrsNV(self.xml_node, is_newobj, self.change_call_back)
+				elif self.xml_node.parentNode.parentNode.tagName == "meta_attributes" :
+					obj_attrs = MetaAttrsNV(self.xml_node, is_newobj, self.change_call_back)
+				elif self.xml_node.parentNode.parentNode.tagName == "cluster_property_set" :
+					obj_attrs = CRMConfNV(self.xml_node, is_newobj, self.change_call_back)
 				else :
-					obj_attrs = ObjectAttrs(self.new_xml_node, is_newobj, self.change_call_back)
+					obj_attrs = ObjectAttrs(self.xml_node, is_newobj, self.change_call_back)
 			elif obj_type == "expression" :
-				obj_attrs = Expression(self.new_xml_node, is_newobj, self.change_call_back)
+				obj_attrs = Expression(self.xml_node, is_newobj, self.change_call_back)
 			elif obj_type == "op" :
-				obj_attrs = OP(self.new_xml_node, is_newobj, self.change_call_back)
+				obj_attrs = OP(self.xml_node, is_newobj, self.change_call_back)
 			else :
-				obj_attrs = ObjectAttrs(self.new_xml_node, is_newobj, self.change_call_back)
+				obj_attrs = ObjectAttrs(self.xml_node, is_newobj, self.change_call_back)
 
 			self.vbox.pack_start(obj_attrs.attrs_vbox, False)
 			self.obj_attrs = obj_attrs
 			
 		if has_elem :
-			self.elem_notebook = ElementNotebook(self.new_xml_node, self.is_topview, self.change_call_back)
+			self.elem_notebook = ElementNotebook(self.xml_node, self.is_topview, self.change_call_back)
 			self.vbox.pack_start(self.elem_notebook.widget, True, padding = 5)
 			if notebook_status != None :
 				self.elem_notebook.restore_status(notebook_status)
@@ -1352,12 +1366,19 @@ class ObjectView :
 			self.elem_notebook.on_after_show()
 
 	def validate(self) :
-		passed = self.obj_attrs.verify_values()
+		passed = True
+		if self.obj_attrs != None :
+			passed = self.obj_attrs.verify_values()
 		return passed
 
 	def reset(self) :
-		self.new_xml_node = self.init_xml_node.cloneNode(True)
-		self.new_xml_node.adopterNode = self.init_xml_node.parentNode
+		new_xml_node = self.init_xml_node.cloneNode(True)
+		try :
+			self.xml_node.parentNode.replaceChild(new_xml_node, self.xml_node)
+		except xml.dom.NotFoundErr :
+			msgbox(_("The object doesn't exist"))
+			return
+		self.xml_node = new_xml_node
 		self.update()
 
 class ElementNotebook :
@@ -1504,16 +1525,11 @@ class ElementNotebook :
 		while True :
 			new_xml_node = objdlg.run()
 			if new_xml_node == None :
+				self.on_changed()
 				return
 			if not self.is_topview :
-				try :
-					selected_node.parentNode.replaceChild(new_xml_node, selected_node)
-				except xml.dom.NotFoundErr :
-					msgbox(_("The original object doesn't exist"))
-					objdlg.destroy()
-					return
 				objdlg.destroy()
-				self.on_changed()
+				#self.on_changed()
 				return
 			else :
 				xml_str = new_xml_node.toxml().replace("\n", "")
@@ -2476,6 +2492,7 @@ class ObjectViewDlg :
 		while True :
 			ret = self.dialog.run()
 			if ret in [gtk.RESPONSE_CANCEL, gtk.RESPONSE_DELETE_EVENT] :
+				self.obj_view.reset()
 				self.destroy()
 				return None
 			elif ret == gtk.RESPONSE_APPLY :
@@ -2483,7 +2500,7 @@ class ObjectViewDlg :
 			else :
 				passed = self.obj_view.validate()
 				if passed :
-					return self.obj_view.new_xml_node
+					return self.obj_view.xml_node
 
 	def destroy(self) :
 		global top_window
@@ -5033,7 +5050,7 @@ class ObjectAttrs(WidgetGroup) :
 
 class MetaAttrsNV(ObjectAttrs) :
 	def __init__(self, xml_node, is_newobj = False, change_call_back = None) :
-		self.target_node = xml_node.adopterNode.parentNode.adopterNode
+		self.target_node = xml_node.parentNode.parentNode.parentNode
 		if validate_type == "dtd" :
 			self.target_type = self.target_node.tagName
 			self.target_dtd_elem = manager.get_dtd_elem(self.target_type)
@@ -5093,7 +5110,7 @@ class MetaAttrsNV(ObjectAttrs) :
 					value_store.append([attr_default, "["+_("default")+"]"])
 			elif attr_name in options_dict.keys() :
 				value_store.extend([attr_value, ""] for attr_value in options_dict[attr_name])
-				if self.target_node.adopterNode.tagName == "clone" :
+				if self.target_node.parentNode.tagName == "clone" :
 					value_store.extend([attr_value, ""] for attr_value in ["master", "slave"])
 
 			if widgets.has_key("combo_entries") and widgets["combo_entries"].has_key("value") :
@@ -5195,7 +5212,7 @@ class CRMConfNV(MetaNV) :
 class PrimInstAttrsNV(MetaNV) :
 	meta = None
 	def __init__(self, xml_node, is_newobj = False, change_call_back = None) :
-		primitive_node = xml_node.adopterNode.parentNode.adopterNode
+		primitive_node = xml_node.parentNode.parentNode.parentNode
 		primitive_class = str(primitive_node.getAttribute("class"))
 		primitive_type = str(primitive_node.getAttribute("type"))
 		primitive_provider = str(primitive_node.getAttribute("provider"))
@@ -5231,7 +5248,7 @@ class Expression(ObjectAttrs) :
 
 class OP(ObjectAttrs) :
 	def __init__(self, xml_node, is_newobj = False, change_call_back = None) :
-		primitive_node = xml_node.adopterNode.parentNode
+		primitive_node = xml_node.parentNode.parentNode
 		primitive_class = str(primitive_node.getAttribute("class"))
 		primitive_type = str(primitive_node.getAttribute("type"))
 		primitive_provider = str(primitive_node.getAttribute("provider"))
