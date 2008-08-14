@@ -568,7 +568,7 @@ class ElementList:
 						visible = False
 					else :
 						visible = True
-					add_column(tree, _(name_cap(attr_list[i])), i+1, icon_func, visible=visible)
+					add_column(tree, _(name_cap(attr_list[i])), i+1, None, visible=visible)
 
 		sw = gtk.ScrolledWindow()
 		sw.set_shadow_type(gtk.SHADOW_IN)
@@ -596,7 +596,7 @@ class ElementList:
 				"note_state": gtk.STOCK_FIND,
 				"lrm": gtk.STOCK_FIND
 			}
-		pb = self.tree.render_icon(icons.get(self.obj_type, gtk.STOCK_DIALOG_INFO),
+		pb = self.tree.render_icon(icons.get(model.get_value(iter, 0), gtk.STOCK_DIALOG_INFO),
 			gtk.ICON_SIZE_BUTTON, None)
        		cell.set_property('pixbuf', pb)
 		return
@@ -654,6 +654,47 @@ class ElementList:
 
 	def restore_tree_status(self, tree_status) :
 		self.store.foreach(self.restore_iter_status, tree_status)
+
+class ElementTree(ElementList):
+	def __init__(self, obj_type, elem_node_list) :
+		self.obj_type = obj_type
+		self.store = gtk.TreeStore(*(tuple(str for i in range(2))))
+		tree = gtk.TreeView(self.store)
+		add_column(tree, _("Type"), 0, self.render_icon)
+		add_column(tree, _("ID"), 1)
+
+		sw = gtk.ScrolledWindow()
+		sw.set_shadow_type(gtk.SHADOW_IN)
+		sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+		sw.add(tree)
+		self.widget = sw
+		self.tree = tree
+
+		self.update(elem_node_list)
+
+	def update(self, elem_node_list) :
+		self.elem_node_list = elem_node_list
+		self.store.clear()
+		self.nodes = {}
+		for elem_node in elem_node_list :
+			node_type = elem_node.tagName
+			node_id = elem_node.getAttribute("id")
+			values = [node_type, node_id]
+			iter = self.store.append(None, values)
+			self.nodes[(node_type, node_id)] = elem_node
+			self.append_child_nodes(iter, elem_node)
+
+	def append_child_nodes(self, iter, node) :
+		for child_node in node.childNodes :
+			if child_node.nodeType != xml.dom.Node.ELEMENT_NODE :
+				continue
+			child_type = child_node.tagName
+			child_id = child_node.getAttribute("id")
+			values = [child_type]
+			values.append(child_id)
+			child_iter = self.store.append(iter, values)
+			self.nodes[(child_type, child_id)] = child_node
+			self.append_child_nodes(child_iter, child_node)
 
 class Tree :
 	store = None
@@ -1381,7 +1422,7 @@ class ElementNotebook :
 								if sub_elem_node in elem_node.childNodes :
 									sub_elem_node_list.append(sub_elem_node)
 						elem_node_list = sub_elem_node_list
-					elem_list = ElementList(name, elem_node_list)
+					elem_list = ElementTree(name, elem_node_list)
 					self.notebook.append_page(elem_list.widget, tab_label)
 					self.elem_lists.append(elem_list)
 					elem_list.tree.connect("cursor-changed", self.on_cursor_changed)
@@ -5150,8 +5191,6 @@ class CRMConfNV(MetaNV) :
 		else :
 			self.meta = crmd_meta
 		MetaNV.__init__(self, xml_node, is_newobj, change_call_back)
-
-
 
 class PrimInstAttrsNV(MetaNV) :
 	meta = None
