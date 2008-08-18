@@ -633,27 +633,18 @@ class ElementList:
 	def get_selected_node(self) :
 		(model, iter) = self.tree.get_selection().get_selected()
 		if iter != None :
-			node_type = model.get_value(iter, 0)
-			node_id = model.get_value(iter, 1)
-			if node_id == "" :
-				node_id = model.get_value(model.iter_parent(iter), 1)
+			(node_type, node_id) = self.get_node_key(model, iter)
 			return self.nodes.get((node_type, node_id))
 		else :
 			return None
 
 	def save_iter_status(self, model, path, iter, expand_status):
-		type = model.get_value(iter, 0)
-		id = model.get_value(iter, 1)
-		if id == "" :
-			id = model.get_value(model.iter_parent(iter), 1)
+		(type, id) = self.get_node_key(model, iter)
 		expand_status[(type, id)] = self.tree.row_expanded(path)
 	
 	def restore_iter_status(self, model, path, iter, user_data):
 		(select_type, select_id, select_path, expand_status) = user_data
-		type = model.get_value(iter, 0)
-		id = model.get_value(iter, 1)
-		if id == "" :
-			id = model.get_value(model.iter_parent(iter), 1)
+		(type, id) = self.get_node_key(model, iter)
 		path = model.get_path(iter)
 		if type == select_type and id == select_id :
 			self.tree.get_selection().select_iter(iter)
@@ -668,11 +659,7 @@ class ElementList:
 	def save_tree_status(self) :
 		(model, iter) = self.tree.get_selection().get_selected()
 		if iter != None :
-			select_type = model.get_value(iter, 0)
-			select_id = model.get_value(iter, 1)
-			if select_id == "" :
-				select_id = model.get_value(model.iter_parent(iter), 1)
-			
+			(select_type, select_id) = self.get_node_key(model, iter)
 			select_path = model.get_path(iter)
 		else :
 			select_type = None
@@ -684,6 +671,13 @@ class ElementList:
 
 	def restore_tree_status(self, tree_status) :
 		self.store.foreach(self.restore_iter_status, tree_status)
+
+	def get_node_key(self, model, iter) :
+		type = model.get_value(iter, 0)
+		id = model.get_value(iter, 1)
+		if id == "" :
+			id = model.get_value(model.iter_parent(iter), 1)
+		return (type, id)
 
 class ElementTree(ElementList):
 	def __init__(self, obj_type, elem_node_list) :
@@ -1561,17 +1555,31 @@ class ElementNotebook :
 						objdlg.destroy()
 						return
 	def on_up(self, widget) :
-		elem_node_list = self.get_elem_list().elem_node_list
-		selected_node = self.get_selected_node()
-		try :
-			selected_index = elem_node_list.index(selected_node)
-		except ValueError :
+		elem_list = self.get_elem_list()
+		if elem_list == None :
 			return
 
-		if selected_index < 1 :
+		(model, iter) = elem_list.tree.get_selection().get_selected()
+		if iter == None or model.get_path(iter)[-1] == 0 :
 			return
+
+		(type, id) =  elem_list.get_node_key(model, iter)
+
+		path = model.get_path(iter)
+		if path[-1] < 1 :
+			return
+		prev_path_list = list(path[:])
+		prev_path_list[-1] = prev_path_list[-1] - 1
+		prev_path = tuple(prev_path_list)
+
+		prev_iter = model.get_iter(prev_path)
+		(prev_type, prev_id) = elem_list.get_node_key(model, prev_iter)
+
+		selected_node = elem_list.nodes[(type, id)]
+		prev_node = elem_list.nodes[(prev_type, prev_id)]
+
 		try :
-			selected_node.parentNode.insertBefore(selected_node.cloneNode(True), elem_node_list[selected_index-1])
+			selected_node.parentNode.insertBefore(selected_node.cloneNode(True), prev_node)
 		except :
 			return
 
@@ -1586,23 +1594,30 @@ class ElementNotebook :
 			self.on_changed()
 
 	def on_down(self, widget) :
-		elem_node_list = self.get_elem_list().elem_node_list
-		selected_node = self.get_selected_node()
-		try :
-			selected_index = elem_node_list.index(selected_node)
-		except ValueError :
+		elem_list = self.get_elem_list()
+		if elem_list == None :
 			return
 
-		if selected_index == len(elem_node_list)-1 :
+		(model, iter) = elem_list.tree.get_selection().get_selected()
+		if iter == None or model.iter_next(iter) == None :
 			return
-		elif selected_index == len(elem_node_list)-2 :
+
+		(type, id) =  elem_list.get_node_key(model, iter)
+		selected_node = elem_list.nodes[(type, id)]
+
+		n_iter = model.iter_next(iter)
+		nn_iter = model.iter_next(n_iter)
+
+		if nn_iter == None :
 			try :
 				selected_node.parentNode.appendChild(selected_node.cloneNode(True))
 			except :
 				return
 		else :
+			(nn_type, nn_id) = elem_list.get_node_key(model, nn_iter)
+			nn_node = elem_list.nodes[(nn_type, nn_id)]
 			try :
-				selected_node.parentNode.insertBefore(selected_node.cloneNode(True), elem_node_list[selected_index+2])
+				selected_node.parentNode.insertBefore(selected_node.cloneNode(True), nn_node)
 			except :
 				return
 		selected_node.parentNode.removeChild(selected_node)
