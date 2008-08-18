@@ -1495,11 +1495,10 @@ class ElementNotebook :
 		if elem_list == None :
 			return
 
-		elem_node_list = elem_list.elem_node_list
-		self.up_btn.set_sensitive(selected_node != None and len(elem_node_list) > 1 and
-						selected_node != elem_node_list[0])
-		self.down_btn.set_sensitive(selected_node != None and len(elem_node_list) > 1 and
-						selected_node != elem_node_list[-1])
+		(model, iter) = elem_list.tree.get_selection().get_selected()
+
+		self.up_btn.set_sensitive(iter != None and model.get_path(iter)[-1] != 0)
+		self.down_btn.set_sensitive(iter != None and model.iter_next(iter) != None)
 
 	def on_cursor_changed(self, treeview) : 
 		self.on_after_show()
