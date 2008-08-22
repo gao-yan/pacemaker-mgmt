@@ -1331,6 +1331,10 @@ class ObjectView :
 			self.xml_node = xml_node
 			self.init_xml_node = xml_node.cloneNode(True)
 
+		attrs_status = False
+		if self.obj_attrs != None :
+			attrs_status = self.obj_attrs.save_status()
+
 		notebook_status = None
 		if self.elem_notebook != None :
 			notebook_status = self.elem_notebook.save_status()
@@ -1372,15 +1376,17 @@ class ObjectView :
 			else :
 				obj_attrs = ObjectAttrs(self.xml_node, is_newobj, self.change_call_back)
 
+			obj_attrs.restore_status(attrs_status)
 			self.vbox.pack_start(obj_attrs.attrs_vbox, False)
 			self.obj_attrs = obj_attrs
 			
 		if has_elem :
 			elem_mode = self.mode_combobox.get_active()
 			self.elem_notebook = ElementNotebook(self.xml_node, self.is_topview, self.change_call_back, elem_mode)
-			self.vbox.pack_start(self.elem_notebook.widget, True, padding = 5)
 			if notebook_status != None :
 				self.elem_notebook.restore_status(notebook_status)
+
+			self.vbox.pack_start(self.elem_notebook.widget, True, padding = 5)
 
 		self.vbox.show_all()
 		self.on_after_show()
@@ -5120,6 +5126,12 @@ class ObjectAttrs(WidgetGroup) :
 				self.xml_node.setAttribute(attr_name, object_attrs.get(attr_name , ""))
 			elif self.xml_node.hasAttribute(attr_name) :
 				self.xml_node.removeAttribute(attr_name)
+
+	def save_status(self) :
+		return self.optional_expander.get_expanded()
+
+	def restore_status(self, saved_status) :
+		self.optional_expander.set_expanded(saved_status)
 
 class MetaAttrsNV(ObjectAttrs) :
 	def __init__(self, xml_node, is_newobj = False, change_call_back = None) :
