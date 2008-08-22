@@ -1429,8 +1429,11 @@ class ElementNotebook :
 		vbox = gtk.VBox()
 		self.widget = vbox
 
-		hbox = gtk.HBox()
-		vbox.pack_start(hbox)
+		self.hbox = gtk.HBox()
+		vbox.pack_start(self.hbox)
+
+		self.sub_vbox = gtk.VBox()
+		vbox.pack_start(self.sub_vbox, False)
 
 		bbox = gtk.HButtonBox()
 		bbox.set_layout(gtk.BUTTONBOX_START)
@@ -1443,7 +1446,6 @@ class ElementNotebook :
 		bbox.add(del_btn)
 		vbox.pack_start(bbox, False, padding=2)
 
-		self.hbox = hbox
 
 		#self.add_btn_handler = add_btn.connect("clicked", self.on_add)
 		self.edit_btn_handler = edit_btn.connect("clicked", self.on_edit)
@@ -1525,6 +1527,45 @@ class ElementNotebook :
 
 		self.up_btn.set_sensitive(iter != None and model.get_path(iter)[-1] != 0)
 		self.down_btn.set_sensitive(iter != None and model.iter_next(iter) != None)
+		self.show_sub_attrs(selected_node)
+
+	def show_sub_attrs(self, selected_node) :
+		for child in self.sub_vbox.get_children() :
+			self.sub_vbox.remove(child)
+
+		if selected_node == None :
+			return
+
+		if validate_type == "dtd" :
+			dtd_elem = manager.get_dtd_elem(selected_node.tagName)
+			attr_list = dtd_elem.get_attr_list()
+
+		name_labels = []
+		name_label_max_len = 0
+		for attr_name in attr_list :
+			attr_value = selected_node.getAttribute(attr_name)
+			if attr_value == "" :
+				continue
+			hbox = gtk.HBox()
+			name_label = gtk.Label(_(name_cap(attr_name)+":"))
+			name_label.set_alignment(0, 0.5)
+
+			name_labels.append(name_label)
+			name_label_len = len(name_label.get_text())
+			if name_label_len > name_label_max_len :
+				name_label_max_len = name_label_len
+
+			value_label = gtk.Label(attr_value)
+			value_label.set_alignment(0, 0.5)
+
+			hbox.pack_start(name_label, False, padding=5)
+			hbox.pack_start(value_label, False, padding=5)
+			self.sub_vbox.pack_start(hbox, False, padding=2)
+
+		for name_label in name_labels :
+			name_label.set_width_chars(name_label_max_len)
+
+		self.sub_vbox.show_all()
 
 	def on_cursor_changed(self, treeview) : 
 		self.on_after_show()
