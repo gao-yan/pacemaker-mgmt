@@ -1309,6 +1309,20 @@ class ObjectView :
 		self.vbox = vbox
 		self.widget = vbox
 
+		self.mode_combobox = gtk.combo_box_new_text()
+		self.mode_combobox.append_text(_("List mode"))
+		self.mode_combobox.append_text(_("Tree mode"))
+		self.mode_combobox.set_active(0)
+		self.mode_combobox.connect("changed", self.on_changed)
+		
+		self.hbox = gtk.HBox()
+		self.hbox.pack_end(self.mode_combobox, False)
+
+		self.label = gtk.Label(_("Show: "))
+		self.hbox.pack_end(self.label, False)
+
+		self.vbox.pack_start(self.hbox, False, padding=2)
+
 		self.update(xml_node)
 
 	def update(self, xml_node = None) :
@@ -1322,7 +1336,8 @@ class ObjectView :
 			notebook_status = self.elem_notebook.save_status()
 
 		for child in self.vbox.get_children() :
-			self.vbox.remove(child)
+			if child != self.hbox :
+				self.vbox.remove(child)
 
 		obj_type = self.xml_node.tagName
 		if validate_type == "dtd" :
@@ -1361,7 +1376,8 @@ class ObjectView :
 			self.obj_attrs = obj_attrs
 			
 		if has_elem :
-			self.elem_notebook = ElementNotebook(self.xml_node, self.is_topview, self.change_call_back)
+			elem_mode = self.mode_combobox.get_active()
+			self.elem_notebook = ElementNotebook(self.xml_node, self.is_topview, self.change_call_back, elem_mode)
 			self.vbox.pack_start(self.elem_notebook.widget, True, padding = 5)
 			if notebook_status != None :
 				self.elem_notebook.restore_status(notebook_status)
@@ -1369,11 +1385,18 @@ class ObjectView :
 		self.vbox.show_all()
 		self.on_after_show()
 
+		if not has_elem :
+			self.label.hide_all()
+			self.mode_combobox.hide_all()
+
 	def on_after_show(self) :
 		if self.obj_attrs != None :
 			self.obj_attrs.on_after_show()
 		if self.elem_notebook != None :
 			self.elem_notebook.on_after_show()
+
+	def on_changed(self, widget) :
+		self.update()
 
 	def validate(self) :
 		passed = True
@@ -1393,15 +1416,15 @@ class ObjectView :
 
 class ElementNotebook :
 	notebook = None
-	def __init__(self, xml_node, is_topview = False, change_call_back = None) :
+	def __init__(self, xml_node, is_topview = False, change_call_back = None, elem_mode = 0) :
 		self.is_topview = is_topview
 		self.change_call_back = change_call_back
+		self.elem_mode = elem_mode
 		vbox = gtk.VBox()
 		self.widget = vbox
 
 		hbox = gtk.HBox()
 		vbox.pack_start(hbox)
-
 
 		bbox = gtk.HButtonBox()
 		bbox.set_layout(gtk.BUTTONBOX_START)
@@ -1453,7 +1476,10 @@ class ElementNotebook :
 								if sub_elem_node in elem_node.childNodes :
 									sub_elem_node_list.append(sub_elem_node)
 						elem_node_list = sub_elem_node_list
-					elem_list = ElementTree(name, elem_node_list)
+					if self.elem_mode == 0 :
+						elem_list = ElementList(name, elem_node_list)
+					else :
+						elem_list = ElementTree(name, elem_node_list)
 					self.notebook.append_page(elem_list.widget, tab_label)
 					self.elem_lists.append(elem_list)
 					elem_list.tree.connect("cursor-changed", self.on_cursor_changed)
@@ -1538,7 +1564,9 @@ class ElementNotebook :
 				return
 			if not self.is_topview :
 				objdlg.destroy()
-				#self.on_changed()
+				self.on_changed()
+				if self.change_call_back != None :
+					self.change_call_back()
 				return
 			else :
 				if selected_node.tagName == new_xml_node.tagName and \
@@ -1635,8 +1663,6 @@ class ElementNotebook :
 		self.update()
 		self.restore_status(notebook_status)
 		self.on_after_show()
-		if self.change_call_back != None :
-			self.change_call_back()
 
 	def save_status(self) :
 		elem_list =  self.get_elem_list()
@@ -4832,6 +4858,10 @@ class ObjectAttrs(WidgetGroup) :
 		if self.static_desc != None :
 			self.show_desc(self.static_desc)
 
+		for widget_type in ("combos", "bool_combos", "combo_entries") :
+			if self.widgets.has_key(widget_type) :
+				for widget in self.widgets[widget_type].values() :
+					widget.connect("changed", self.on_changed_later)
 
 	def render_attrs_vbox(self) :
 		required_vbox = gtk.VBox()
@@ -5035,6 +5065,15 @@ class ObjectAttrs(WidgetGroup) :
 
 
 	def on_changed(self, widget) :
+		self.save()
+		if self.dynamic_fill != None :
+			self.dynamic_fill(widget)
+		if self.dynamic_desc != None :
+			desc = self.dynamic_desc(widget)
+			if desc != None :
+				self.show_desc(desc)
+
+	def on_changed_later(self, widget) :
 		self.save()
 		if self.dynamic_fill != None :
 			self.dynamic_fill(widget)
