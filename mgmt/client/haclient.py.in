@@ -1409,6 +1409,10 @@ class ObjectView :
 			self.update()
 			return
 
+		self.edit_xml()
+		self.mode_combobox.set_active(self.show_mode)
+
+	def edit_xml(self) :
 		xml_dlg = EditXMLDlg(self.xml_node)
 		while True :
 			new_xml_node = xml_dlg.run()
@@ -1430,7 +1434,6 @@ class ObjectView :
 				else :
 					xml_dlg.destroy()
 					break
-		self.mode_combobox.set_active(self.show_mode)
 
 	def validate(self) :
 		passed = True
@@ -1820,19 +1823,17 @@ class ElementNotebook :
 					self.change_call_back()
 				return
 			else :
-				if selected_node.tagName == new_xml_node.tagName and \
-						selected_node.getAttribute("id") == new_xml_node.getAttribute("id") :
-					if new_xml_node.getAttribute("id") != "" :
-						xml_str = new_xml_node.toxml().replace("\n", "")
-					else :
-						xml_str = new_xml_node.parentNode.toxml().replace("\n", "")
+				if new_xml_node.getAttribute("id") != "" :
+					xml_str = new_xml_node.toxml().replace("\n", "")
+				else :
+					xml_str = new_xml_node.parentNode.toxml().replace("\n", "")
 
-					manager.cib_do_cmd("cib_replace\n%s\n%s"%(str(self.obj_type), str(xml_str)))
-					if manager.failed_reason != "" :
-						msgbox(manager.failed_reason)
-					else :
-						objdlg.destroy()
-						return
+				manager.cib_do_cmd("cib_replace\n%s\n%s"%(str(self.obj_type), str(xml_str)))
+				if manager.failed_reason != "" :
+					msgbox(manager.failed_reason)
+				else :
+					objdlg.destroy()
+					return
 	def on_up(self, widget) :
 		elem_list = self.get_elem_list()
 		if elem_list == None :
