@@ -1459,23 +1459,48 @@ class EditXMLDlg:
 		sw = gtk.ScrolledWindow()
 		sw.set_shadow_type(gtk.SHADOW_IN)
 		sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-		xml_text = gtk.TextView()
-		xml_text.set_wrap_mode(gtk.WRAP_WORD)
-		self.xml_textbuffer = xml_text.get_buffer()
-		sw.add(xml_text)
+		self.xml_text = gtk.TextView()
+		self.xml_text.set_wrap_mode(gtk.WRAP_WORD)
+		self.xml_textbuffer = self.xml_text.get_buffer()
+		sw.add(self.xml_text)
 		dialog.vbox.pack_start(sw, padding=1)
 		dialog.set_response_sensitive(gtk.RESPONSE_APPLY, False)
 
+		self.statusbar = gtk.Statusbar()
+		dialog.vbox.pack_end(self.statusbar, False)
+
 		self.xml_str = xml_node.toxml()
 		self.xml_textbuffer.set_text(self.xml_str)
+		self.update_statusbar()
 		self.xml_textbuffer.connect("changed", self.on_changed)
 
+		self.xml_text.connect_after("move-cursor", self.update_statusbar)
+		self.xml_text.connect("event-after", self.on_click_text)
+		self.xml_text.connect_after("toggle-overwrite", self.update_statusbar)
 		dialog.show_all()
 		self.dialog = dialog
 		self.save_top_window = top_window
 
 	def on_changed(self, widget) :
 		self.dialog.set_response_sensitive(gtk.RESPONSE_APPLY, True)
+		self.update_statusbar()
+
+	def on_click_text(self, widget, event) :
+		if event.type == gtk.gdk.BUTTON_PRESS and event.button == 1 :
+			self.update_statusbar()
+
+	def update_statusbar(self, textview = None , step_size = None, count = None, extend_selection = None) :
+		iter = self.xml_textbuffer.get_iter_at_mark(self.xml_textbuffer.get_insert())
+		line = iter.get_line()
+		column = iter.get_line_offset()
+
+		if self.xml_text.get_overwrite() :
+			overwrite = _("OVR")
+		else :
+			overwrite = _("INS")
+
+		self.statusbar.pop(0)
+		self.statusbar.push(0, _("Ln %d, Col %d\t%s"%(line+1, column+1, overwrite)))
 
 	def run(self) :
 		while True :
@@ -1652,7 +1677,7 @@ class ElementNotebook :
 		self.on_after_show()
 
 	def on_click(self, widget, event) :
-		if event.type == gtk.gdk._2BUTTON_PRESS :
+		if event.type == gtk.gdk._2BUTTON_PRESS and event.button == 1 :
 			self.on_edit(widget)
 
 	def on_switch_page(self, notebook, page, page_num) :
