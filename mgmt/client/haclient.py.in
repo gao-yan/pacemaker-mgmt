@@ -1516,7 +1516,7 @@ class EditXMLDlg:
 				try :
 					new_xml_node = parseString(new_xml_str).documentElement
 				except xml.parsers.expat.ExpatError, msg :
-					msgbox(_(msg))
+					msgbox(_("Failed to parse the XML: ") + _(msg))
 					continue
 
 				return new_xml_node
@@ -4211,8 +4211,8 @@ class Manager :
 		xml_nodes = {}
 		try :
 			xml_nodes["cib"] = parseString(cib_xml).documentElement
-		except xml.parsers.expat.ExpatError:
-			msgbox("Failed to parse cib xml")
+		except xml.parsers.expat.ExpatError, msg :
+			msgbox(_("Failed to parse the CIB: ") + _(msg))
 			return None
 			
 		"""xml_status = self.cib_do_cmd("cib_query\nstatus")
@@ -4299,8 +4299,8 @@ class Manager :
 
 		try :
 			doc_xml = parseString(meta_data).documentElement
-		except xml.parsers.expat.ExpatError:
-			log("Failed to parse the metadata of CRM: "+ crm_cmd)
+		except xml.parsers.expat.ExpatError, msg :
+			log("Failed to parse the metadata of %s: %s"%(crm_cmd, msg))
 			return None
 			
 		meta = RAMeta()
@@ -4666,10 +4666,10 @@ class Manager :
 				meta_data = meta_data + line + "\n"
 		try :
 			doc_xml = parseString(meta_data).documentElement
-		except xml.parsers.expat.ExpatError:
-			err_msg = "Failed to parse the metadata of resource agent: "
-			log(err_msg + rsc_type)
-			msgbox(_(err_msg) + rsc_type)
+		except xml.parsers.expat.ExpatError, msg :
+			errmsg = "Failed to parse the metadata of %s: %s"
+			log(errmsg%(rsc_type, msg))
+			msgbox(_(errmsg)%(rsc_type, _(msg)))
 			return None
 			
 		meta = RAMeta()
