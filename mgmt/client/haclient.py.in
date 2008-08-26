@@ -1300,6 +1300,7 @@ class ClusterView(View) :
 class ObjectView :
 	obj_attrs = None
 	elem_notebook = None
+	show_mode = 0
 	
 	def __init__(self, xml_node, is_newobj = False, change_call_back = None, is_topview = False) :
 		self.is_newobj = is_newobj
@@ -1310,11 +1311,12 @@ class ObjectView :
 		self.widget = vbox
 
 		self.mode_combobox = gtk.combo_box_new_text()
-		self.mode_combobox.append_text(_("List mode"))
-		self.mode_combobox.append_text(_("Tree mode"))
-		self.mode_combobox.set_active(0)
+		self.mode_combobox.append_text(_("List Mode"))
+		self.mode_combobox.append_text(_("Tree Mode"))
+		self.mode_combobox.append_text(_("XML Mode"))
+		self.mode_combobox.set_active(self.show_mode)
 		self.mode_combobox.connect("changed", self.on_changed)
-		
+
 		self.hbox = gtk.HBox()
 		self.hbox.pack_end(self.mode_combobox, False)
 
@@ -1381,8 +1383,7 @@ class ObjectView :
 			self.obj_attrs = obj_attrs
 			
 		if has_elem :
-			elem_mode = self.mode_combobox.get_active()
-			self.elem_notebook = ElementNotebook(self.xml_node, self.is_topview, self.change_call_back, elem_mode)
+			self.elem_notebook = ElementNotebook(self.xml_node, self.is_topview, self.change_call_back, self.show_mode)
 			if notebook_status != None :
 				self.elem_notebook.restore_status(notebook_status)
 
@@ -1402,7 +1403,34 @@ class ObjectView :
 			self.elem_notebook.on_after_show()
 
 	def on_changed(self, widget) :
-		self.update()
+		show_mode = self.mode_combobox.get_active()
+		if show_mode != 2 :
+			self.show_mode = show_mode
+			self.update()
+			return
+
+		xml_dlg = EditXMLDlg(self.xml_node)
+		while True :
+			new_xml_node = xml_dlg.run()
+			if new_xml_node == None :
+				break
+			if not self.is_topview :
+				xml_dlg.destroy()
+				self.xml_node.parentNode.replaceChild(new_xml_node, self.xml_node)
+				self.xml_node = new_xml_node
+				self.update()
+				if self.change_call_back != None :
+					self.change_call_back()
+				break
+			else :
+				xml_str = new_xml_node.toxml().replace("\n", "")
+				manager.cib_do_cmd("cib_replace\n%s\n%s"%(str(self.xml_node.tagName), str(xml_str)))
+				if manager.failed_reason != "" :
+					msgbox(manager.failed_reason)
+				else :
+					xml_dlg.destroy()
+					break
+		self.mode_combobox.set_active(self.show_mode)
 
 	def validate(self) :
 		passed = True
@@ -1420,12 +1448,65 @@ class ObjectView :
 		self.xml_node = new_xml_node
 		self.update()
 
+class EditXMLDlg:
+	def __init__(self, xml_node) :
+		global top_window
+
+		dialog = gtk.Dialog(_("Edit XML"), top_window, gtk.DIALOG_MODAL,
+			(gtk.STOCK_OK, gtk.RESPONSE_OK, str(_("Reset")), gtk.RESPONSE_APPLY, gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL))
+		dialog.set_size_request(700, 600)
+
+		sw = gtk.ScrolledWindow()
+		sw.set_shadow_type(gtk.SHADOW_IN)
+		sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+		xml_text = gtk.TextView()
+		xml_text.set_wrap_mode(gtk.WRAP_WORD)
+		self.xml_textbuffer = xml_text.get_buffer()
+		sw.add(xml_text)
+		dialog.vbox.pack_start(sw, padding=1)
+		dialog.set_response_sensitive(gtk.RESPONSE_APPLY, False)
+
+		self.xml_str = xml_node.toxml()
+		self.xml_textbuffer.set_text(self.xml_str)
+		self.xml_textbuffer.connect("changed", self.on_changed)
+
+		dialog.show_all()
+		self.dialog = dialog
+		self.save_top_window = top_window
+
+	def on_changed(self, widget) :
+		self.dialog.set_response_sensitive(gtk.RESPONSE_APPLY, True)
+
+	def run(self) :
+		while True :
+			ret = self.dialog.run()
+			if ret in [gtk.RESPONSE_CANCEL, gtk.RESPONSE_DELETE_EVENT] :
+				self.destroy()
+				return None
+			elif ret == gtk.RESPONSE_APPLY :
+				self.xml_textbuffer.set_text(self.xml_str)
+				self.dialog.set_response_sensitive(gtk.RESPONSE_APPLY, False)
+			else :
+				new_xml_str = self.xml_textbuffer.get_text(*self.xml_textbuffer.get_bounds())
+				try :
+					new_xml_node = parseString(new_xml_str).documentElement
+				except xml.parsers.expat.ExpatError, msg :
+					msgbox(_(msg))
+					continue
+
+				return new_xml_node
+
+	def destroy(self) :
+		global top_window
+		self.dialog.destroy()
+		top_window = self.save_top_window
+
 class ElementNotebook :
 	notebook = None
-	def __init__(self, xml_node, is_topview = False, change_call_back = None, elem_mode = 0) :
+	def __init__(self, xml_node, is_topview = False, change_call_back = None, show_mode = 0) :
 		self.is_topview = is_topview
 		self.change_call_back = change_call_back
-		self.elem_mode = elem_mode
+		self.show_mode = show_mode
 		vbox = gtk.VBox()
 		self.widget = vbox
 
@@ -1484,7 +1565,7 @@ class ElementNotebook :
 								if sub_elem_node in elem_node.childNodes :
 									sub_elem_node_list.append(sub_elem_node)
 						elem_node_list = sub_elem_node_list
-					if self.elem_mode == 0 :
+					if self.show_mode == 0 :
 						elem_list = ElementList(name, elem_node_list)
 					else :
 						elem_list = ElementTree(name, elem_node_list)
