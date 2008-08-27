@@ -1357,7 +1357,9 @@ class ObjectView :
 			else :
 				has_elem = False
 		if has_attr :
-			if obj_type == "rsc_order" :
+			if obj_type == "primitive" :
+				obj_attrs = Primitive(self.xml_node, is_newobj, self.change_call_back)
+			elif obj_type == "rsc_order" :
 				obj_attrs = RscOrder(self.xml_node, is_newobj, self.change_call_back)
 			elif obj_type == "rsc_colocation" :
 				obj_attrs = RscColocation(self.xml_node, is_newobj, self.change_call_back)
@@ -1449,7 +1451,6 @@ class ObjectView :
 			msgbox(_("The object doesn't exist"))
 			return
 		self.xml_node = new_xml_node
-		self.update()
 
 class EditXMLDlg:
 	def __init__(self, xml_node) :
@@ -2828,6 +2829,7 @@ class ObjectViewDlg :
 				_("Reset the configurations?"))
 		if ret == gtk.RESPONSE_YES :
 			self.obj_view.reset()
+			self.obj_view.update()
 			self.dialog.set_response_sensitive(gtk.RESPONSE_APPLY, False)
 
 class ClusterReportDlg :
@@ -4753,8 +4755,11 @@ class Manager :
 		
 			
 	def get_rsc_meta(self, rsc_class, rsc_type, rsc_provider) :
-		if rsc_class == None or rsc_type == None :
+		if rsc_class == None or rsc_class == "" \
+				or rsc_type == None or rsc_type == "" \
+				or rsc_provider == None or rsc_provider == "" :
 			return None
+
 		lines = self.query("rsc_metadata\n%s\n%s\n%s"% \
 				(rsc_class, rsc_type, rsc_provider),True)
 		if lines == None :
@@ -4811,10 +4816,7 @@ class Manager :
 		return self.query("rsc_types\n"+rsc_class,True)
 	
 	def get_rsc_providers(self, rsc_class, rsc_type) :
-		provider = self.query("rsc_providers\n%s\n%s"%(rsc_class, rsc_type),True)
-		if provider == [] :
-			return ["heartbeat"]
-		return provider
+		return self.query("rsc_providers\n%s\n%s"%(rsc_class, rsc_type),True)
 
 	def rsc_exists(self, rsc_id) :
 		return rsc_id in self.get_all_rsc()
@@ -5113,6 +5115,7 @@ class ObjectAttrs(WidgetGroup) :
 		for widget_type in ("combos", "bool_combos", "combo_entries") :
 			if self.widgets.has_key(widget_type) :
 				for widget in self.widgets[widget_type].values() :
+					widget.disconnect_by_func(self.on_changed)
 					widget.connect("changed", self.on_changed_later)
 
 	def render_attrs_vbox(self) :
@@ -5378,6 +5381,93 @@ class ObjectAttrs(WidgetGroup) :
 
 	def restore_status(self, saved_status) :
 		self.optional_expander.set_expanded(saved_status)
+
+class Primitive(ObjectAttrs) :
+	def dynamic_fill(self, widget) :
+		widgets = self.widgets
+
+		primitive = self.get_values()
+		primitive_class = primitive.get("class", "")
+		if primitive_class == "" :
+			return
+
+		if widgets.has_key("combos") and widgets["combos"].has_key("class") \
+				and widget == widgets["combos"]["class"] :
+			ra_list = manager.get_rsc_types(primitive_class)
+			ra_list.sort()
+			type_store = [[ra, ""] for ra in ra_list]
+			if widgets.has_key("combo_entries") and widgets["combo_entries"].has_key("type") :
+				self.combobox_store_append(widgets["combo_entries"]["type"], type_store)
+
+			self.fill_provider(primitive)
+
+		elif widgets.has_key("combo_entries") and widgets["combo_entries"].has_key("type") \
+				and widget == widgets["combo_entries"]["type"] :
+			self.fill_provider(primitive)
+
+	def fill_provider(self, primitive) :
+		widgets = self.widgets
+		primitive_class = primitive.get("class", "")
+		primitive_type = primitive.get("type", "")
+		if primitive_class != "" and primitive_type != "" :
+			provider_list = manager.get_rsc_providers(primitive_class, primitive_type)
+		else :
+			provider_list = None
+		if provider_list == None :
+			providers_store = []
+		else :	
+			providers_store = [[provider, ""] for provider in provider_list]
+		if widgets.has_key("combo_entries") and widgets["combo_entries"].has_key("provider") :
+			self.combobox_store_append(widgets["combo_entries"]["provider"], providers_store)
+			if provider_list != None and len(provider_list) > 0 :
+				widgets["combo_entries"]["provider"].child.set_text(provider_list[0])
+
+	def dynamic_desc(self, widget) :
+		widgets = self.widgets
+		desc = None
+		if widgets.has_key("combos") and widgets["combos"].has_key("class") \
+				and widget == widgets["combos"]["class"] :
+			desc = self.get_meta_desc()
+
+		if widgets.has_key("combo_entries") and widgets["combo_entries"].has_key("type") \
+				and widget == widgets["combo_entries"]["type"] :
+			desc = self.get_meta_desc()
+
+		if widgets.has_key("combo_entries") and widgets["combo_entries"].has_key("provider") \
+				and widget == widgets["combo_entries"]["provider"] :
+			desc = self.get_meta_desc()
+
+		return desc
+
+	def get_meta_desc(self) :
+		primitive = self.get_values()
+		primitive_class = primitive.get("class", "")
+		primitive_type = primitive.get("type", "")
+		primitive_provider = primitive.get("provider", "")
+		meta = manager.get_rsc_meta(primitive_class, primitive_type, primitive_provider) 
+		if meta == None :
+			return [""]
+
+		longdesc = meta.longdesc
+		if longdesc == None :
+			longdesc = ""
+		else :
+			longdesc = longdesc.replace(_(".  "), _(".\n"))
+
+		shortdesc = meta.shortdesc
+		if shortdesc == None :
+			shortdesc = ""
+
+		if len(longdesc) == 0 :
+			desc = [shortdesc]
+		elif longdesc.find(shortdesc) > -1 :
+			desc = [longdesc]
+		else :
+			if shortdesc.endswith(_(".")) :
+				desc = [shortdesc + "\n" + longdesc]
+			else :
+				desc = [shortdesc + _(".") + "\n" + longdesc]
+		return desc
 
 class MetaAttrsNV(ObjectAttrs) :
 	def __init__(self, xml_node, is_newobj = False, change_call_back = None) :
