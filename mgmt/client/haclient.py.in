@@ -27,6 +27,7 @@ Copyright (C) 2005 International Business Machines
 import sys, os, string, socket, syslog, webbrowser, pickle, xml, gc, time, binascii, thread, tarfile
 from stat import *
 from xml.dom.minidom import parseString
+from xml.dom.minidom import getDOMImplementation
 from xml.parsers.xmlproc.xmldtd import load_dtd_string
 
 import locale, gettext
@@ -1666,7 +1667,7 @@ class ElementNotebook :
 		vbox.pack_start(bbox, False, padding=2)
 
 
-		#self.add_btn_handler = add_btn.connect("clicked", self.on_add)
+		self.add_btn_handler = add_btn.connect("clicked", self.on_add)
 		self.edit_btn_handler = edit_btn.connect("clicked", self.on_edit)
 
 		self.add_btn = add_btn
@@ -1815,8 +1816,91 @@ class ElementNotebook :
 		return elem_list
 
 	def on_add(self, widget) :
-		objdlg = ObjectViewDlg()
-		object = objdlg.run(True, _(name_cap(self.obj_type)), self.obj_type)
+		global top_window
+
+		dialog = gtk.Dialog("Add", top_window, gtk.DIALOG_MODAL,
+			(gtk.STOCK_OK, gtk.RESPONSE_OK, gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL))
+		dialog.set_border_width(5)
+
+		option_list = self.get_elem_options()
+		radio_btns = {}
+		radio_btn = None
+		for option in option_list :
+			radio_btn = gtk.RadioButton(radio_btn, _(name_cap(option)))	
+			dialog.vbox.pack_start(radio_btn, False, padding=2)
+			radio_btns[radio_btn] = option
+
+		save_top_window = top_window
+		top_window = dialog
+		dialog.vbox.show_all()
+
+		ret = dialog.run()
+		if ret == gtk.RESPONSE_OK :
+			for radio_btn in radio_btns :
+				if radio_btn.get_active() :
+					obj_type = radio_btns[radio_btn]
+					break
+		else :
+			obj_type = None
+
+		top_window = save_top_window
+		dialog.destroy()
+
+		if obj_type == None :
+			return
+
+		impl = getDOMImplementation()
+		newdoc = impl.createDocument(None, obj_type, None)
+		new_elem = newdoc.documentElement
+		self.xml_node.appendChild(new_elem)
+
+		objdlg = ObjectViewDlg(new_elem, True)
+
+		while True :
+			new_xml_node = objdlg.run()
+			if new_xml_node == None :
+				tmp_elem = objdlg.obj_view.xml_node
+				tmp_elem.parentNode.removeChild(tmp_elem)
+				return
+			if not self.is_topview :
+				objdlg.destroy()
+				self.on_changed()
+				if self.change_call_back != None :
+					self.change_call_back()
+				return
+			else :
+				xml_str = new_xml_node.toxml().replace("\n", "")
+				manager.cib_do_cmd("cib_create\n%s\n%s"%(str(self.obj_type), str(xml_str)))
+				if manager.failed_reason != "" :
+					msgbox(manager.failed_reason)
+				else :
+					objdlg.destroy()
+					return
+
+	def get_elem_options(self) :
+		(sep,cont,mod) =  self.dtd_elem.get_content_model()
+		option_list = []
+		if mod == "*" :
+			for sub in cont :
+				if len(sub) == 2 :
+					option_list.append(sub[0])
+		else :
+			if sep != "|" :
+				for sub in cont :
+					if len(sub) == 2 :
+						if sub[1] == "*" or sub[1] == "+":
+							option_list.append(sub[0])
+						elif sub[1] == "" or sub[1] == "?" :
+							elem_node_list = []
+							for elem_node in self.xml_node.getElementsByTagName(sub[0]) :
+								if elem_node in self.xml_node.childNodes :
+									elem_node_list.append(elem_node)
+							if len(elem_node_list) < 1 or \
+									len(manager.get_dtd_elem(sub[0]).get_attr_list()) == 0 :
+								option_list.append(sub[0])
+
+		return option_list
+							
 
 	def on_edit(self, widget) :
 		selected_node = self.get_selected_node()
@@ -1925,7 +2009,8 @@ class ElementNotebook :
 	def on_changed(self) :
 		notebook_status = self.save_status()
 		self.update()
-		self.restore_status(notebook_status)
+		if notebook_status != None :
+			self.restore_status(notebook_status)
 		self.on_after_show()
 
 	def save_status(self) :
