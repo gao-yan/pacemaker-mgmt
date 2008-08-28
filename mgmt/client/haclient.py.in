@@ -1348,14 +1348,25 @@ class ObjectView :
 		obj_type = self.xml_node.tagName
 		if validate_type == "dtd" :
 			self.dtd_elem = manager.get_dtd_elem(obj_type)
-			if len(self.dtd_elem.get_attr_list()) > 0 :
-				has_attr = True
-			else :
-				has_attr = False
-			if len(self.dtd_elem.get_content_model()[1])  > 0 :
-				has_elem = True
-			else :
-				has_elem = False
+			attr_list = self.dtd_elem.get_attr_list()
+			sub_obj_list = self.dtd_elem.get_content_model()[1]
+
+		if len(attr_list) > 0 :
+			has_attr = True
+		else :
+			has_attr = False
+		if len(sub_obj_list)  > 0 :
+			has_elem = True
+		else :
+			has_elem = False
+
+		if len(attr_list) < 9 :
+			self.obj_box = gtk.VBox()
+		else :
+			self.obj_box = gtk.HBox()
+
+		self.vbox.pack_start(self.obj_box)
+
 		if has_attr :
 			if obj_type == "primitive" :
 				obj_attrs = Primitive(self.xml_node, is_newobj, self.change_call_back)
@@ -1381,7 +1392,7 @@ class ObjectView :
 				obj_attrs = ObjectAttrs(self.xml_node, is_newobj, self.change_call_back)
 
 			obj_attrs.restore_status(attrs_status)
-			self.vbox.pack_start(obj_attrs.attrs_vbox, False)
+			self.obj_box.pack_start(obj_attrs.attrs_vbox, False)
 			self.obj_attrs = obj_attrs
 			
 		if has_elem :
@@ -1389,7 +1400,7 @@ class ObjectView :
 			if notebook_status != None :
 				self.elem_notebook.restore_status(notebook_status)
 
-			self.vbox.pack_start(self.elem_notebook.widget, True, padding = 5)
+			self.obj_box.pack_start(self.elem_notebook.widget, True, padding = 5)
 
 		self.vbox.show_all()
 		self.on_after_show()
