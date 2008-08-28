@@ -1361,12 +1361,11 @@ class ObjectView :
 		else :
 			has_elem = False
 
-		if len(attr_list) < 9 :
-			self.obj_box = gtk.VBox()
+		if len(attr_list) > 7 :
+			obj_box = gtk.HBox()
+			self.vbox.pack_start(obj_box)
 		else :
-			self.obj_box = gtk.HBox()
-
-		self.vbox.pack_start(self.obj_box)
+			obj_box = self.vbox
 
 		if has_attr :
 			if obj_type == "primitive" :
@@ -1393,15 +1392,15 @@ class ObjectView :
 				obj_attrs = ObjectAttrs(self.xml_node, is_newobj, self.change_call_back)
 
 			obj_attrs.restore_status(attrs_status)
-			self.obj_box.pack_start(obj_attrs.attrs_vbox, False)
+			obj_box.pack_start(obj_attrs.attrs_vbox, False)
 			self.obj_attrs = obj_attrs
 			
 		if has_elem :
 			self.elem_notebook = ElementNotebook(self.xml_node, self.is_topview, self.change_call_back, self.show_mode)
 			if notebook_status != None :
 				self.elem_notebook.restore_status(notebook_status)
-
-			self.obj_box.pack_start(self.elem_notebook.widget, True, padding = 5)
+			obj_box.pack_start(self.elem_notebook.widget, True, padding = 5)
+			self.vbox.pack_start(self.elem_notebook.bbox, False, padding = 2)
 
 		self.vbox.show_all()
 		self.on_after_show()
@@ -1656,7 +1655,7 @@ class ElementNotebook :
 		vbox.pack_start(self.sub_vbox, False)
 
 		bbox = gtk.HButtonBox()
-		bbox.set_layout(gtk.BUTTONBOX_START)
+		bbox.set_layout(gtk.BUTTONBOX_END)
 		bbox.set_spacing(5)
 		add_btn = gtk.Button(stock=gtk.STOCK_ADD)
 		bbox.add(add_btn)
@@ -1664,8 +1663,7 @@ class ElementNotebook :
 		bbox.add(edit_btn)
 		del_btn = gtk.Button(stock=gtk.STOCK_REMOVE)
 		bbox.add(del_btn)
-		vbox.pack_start(bbox, False, padding=2)
-
+		self.bbox = bbox
 
 		self.add_btn_handler = add_btn.connect("clicked", self.on_add)
 		self.edit_btn_handler = edit_btn.connect("clicked", self.on_edit)
@@ -1683,7 +1681,7 @@ class ElementNotebook :
 		for child in self.hbox.get_children() :
 			self.hbox.remove(child)
 
-		self.notebook =  gtk.Notebook()
+		self.notebook = gtk.Notebook()
 		self.hbox.pack_start(self.notebook, True, padding=2)
 
 		if validate_type == "dtd" :
