@@ -1848,9 +1848,32 @@ class ElementNotebook :
 			return
 
 		impl = getDOMImplementation()
-		newdoc = impl.createDocument(None, obj_type, None)
-		new_elem = newdoc.documentElement
-		self.xml_node.appendChild(new_elem)
+		dtd_elem = manager.get_dtd_elem(obj_type)
+		if len(dtd_elem.get_attr_list()) > 0 :
+			newdoc = impl.createDocument(None, obj_type, None)
+			new_elem = newdoc.documentElement
+			self.xml_node.appendChild(new_elem)
+		else :
+			elem_node_list = []
+			for elem_node in self.xml_node.getElementsByTagName(obj_type) :
+				if elem_node in self.xml_node.childNodes :
+					elem_node_list.append(elem_node)
+			if len(elem_node_list) == 0 :
+				newdoc = impl.createDocument(None, obj_type, None)
+				mid_elem = newdoc.documentElement
+				self.xml_node.appendChild(mid_elem)
+			else :
+				mid_elem = elem_node_list[0]
+
+			(sep,cont,mod) = dtd_elem.get_content_model()
+			if len(cont) >0 :
+				sub_obj_type = cont[0][0]
+			else :
+				return
+				
+			newdoc = impl.createDocument(None, sub_obj_type, None)
+			new_elem = newdoc.documentElement
+			mid_elem.appendChild(new_elem)
 
 		objdlg = ObjectViewDlg(new_elem, True)
 
