@@ -1821,31 +1821,37 @@ class ElementNotebook :
 		dialog.set_border_width(5)
 
 		option_list = self.get_elem_options()
-		radio_btns = {}
-		radio_btn = None
-		for option in option_list :
-			radio_btn = gtk.RadioButton(radio_btn, _(name_cap(option)))	
-			dialog.vbox.pack_start(radio_btn, False, padding=2)
-			radio_btns[radio_btn] = option
 
-		save_top_window = top_window
-		top_window = dialog
-		dialog.vbox.show_all()
-
-		ret = dialog.run()
-		if ret == gtk.RESPONSE_OK :
-			for radio_btn in radio_btns :
-				if radio_btn.get_active() :
-					obj_type = radio_btns[radio_btn]
-					break
-		else :
-			obj_type = None
-
-		top_window = save_top_window
-		dialog.destroy()
-
-		if obj_type == None :
+		if len(option_list) == 0 :
 			return
+		elif len(option_list) == 1 :
+			obj_type = option_list[0]
+		else :
+			radio_btns = {}
+			radio_btn = None
+			for option in option_list :
+				radio_btn = gtk.RadioButton(radio_btn, _(name_cap(option)))	
+				dialog.vbox.pack_start(radio_btn, False, padding=2)
+				radio_btns[radio_btn] = option
+
+			save_top_window = top_window
+			top_window = dialog
+			dialog.vbox.show_all()
+
+			ret = dialog.run()
+			if ret == gtk.RESPONSE_OK :
+				for radio_btn in radio_btns :
+					if radio_btn.get_active() :
+						obj_type = radio_btns[radio_btn]
+						break
+			else :
+				obj_type = None
+
+			top_window = save_top_window
+			dialog.destroy()
+
+			if obj_type == None :
+				return
 
 		impl = getDOMImplementation()
 		dtd_elem = manager.get_dtd_elem(obj_type)
