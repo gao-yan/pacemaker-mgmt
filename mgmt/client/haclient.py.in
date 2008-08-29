@@ -168,6 +168,7 @@ def confirmbox(msg, button=(gtk.STOCK_YES, gtk.RESPONSE_YES, gtk.STOCK_NO, gtk.R
 	confirm_msg =  gtk.Label()
 	confirm_msg.set_text(msg)
 	confirm_msg.set_selectable(True)
+	confirm_msg.set_line_wrap(True)
 	dialog.vbox.pack_start(frame)
 	hb=gtk.HBox()
 	hb.pack_start(im)
@@ -1667,6 +1668,7 @@ class ElementNotebook :
 
 		self.add_btn_handler = add_btn.connect("clicked", self.on_add)
 		self.edit_btn_handler = edit_btn.connect("clicked", self.on_edit)
+		self.del_btn_handler = del_btn.connect("clicked", self.on_del)
 
 		self.add_btn = add_btn
 		self.edit_btn = edit_btn
@@ -1957,6 +1959,26 @@ class ElementNotebook :
 				else :
 					objdlg.destroy()
 					return
+
+	def on_del(self, widget) :
+		selected_node = self.get_selected_node()
+		if selected_node == None :
+			return
+		ret = confirmbox(_("This will delete the %s \"%s\"")%(_(name_cap(selected_node.tagName)), selected_node.getAttribute("id")),
+				(gtk.STOCK_YES, gtk.RESPONSE_YES, gtk.STOCK_NO, gtk.RESPONSE_NO),
+				_("Delete the selected object?"))
+		if ret == gtk.RESPONSE_YES :
+			if not self.is_topview :
+				selected_node.parentNode.removeChild(selected_node)
+				self.on_changed()
+				if self.change_call_back != None :
+					 self.change_call_back()
+			else :
+				xml_str = selected_node.toxml().replace("\n", "")
+				manager.cib_do_cmd("cib_delete\n%s\n%s"%(str(self.obj_type), str(xml_str)))
+				if manager.failed_reason != "" :
+					msgbox(manager.failed_reason)
+
 	def on_up(self, widget) :
 		elem_list = self.get_elem_list()
 		if elem_list == None :
@@ -2947,7 +2969,7 @@ class ObjectViewDlg :
 		self.dialog.set_response_sensitive(gtk.RESPONSE_APPLY, True)
 
 	def on_reset(self) :
-		ret = confirmbox(_("This will reset element attributes and sub-elements to the initial configurations."),
+		ret = confirmbox(_("This will reset the current object attributes and all sub-objects to the initial configurations."),
 				(gtk.STOCK_YES, gtk.RESPONSE_YES, gtk.STOCK_NO, gtk.RESPONSE_NO),
 				_("Reset the configurations?"))
 		if ret == gtk.RESPONSE_YES :

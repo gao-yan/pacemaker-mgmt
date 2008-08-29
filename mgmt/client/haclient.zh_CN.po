@@ -1044,8 +1044,17 @@ msgstr "您想应用修改吗？"
 msgid "The data of current view have been changed."
 msgstr "当前视图中的数据已修改。"
 
-msgid "This will reset element attributes and sub-elements to the initial configurations."
-msgstr "这会重置元素属性以及子元素为初始设置。"
+msgid "This will reset the current object attributes and all sub-objects to the initial configurations."
+msgstr "这会重置当前对象属性以及所有子对象为初始设置。"
 
 msgid "Reset the configurations?"
 msgstr "重置设置？"
+
+msgid "This will delete the %s \"%s\""
+msgstr "这会删除%s \"%s\""
+
+msgid "Delete the selected object?"
+msgstr "删除选定的对象？"
+
+msgid "Primitive"
+msgstr "普通资源"

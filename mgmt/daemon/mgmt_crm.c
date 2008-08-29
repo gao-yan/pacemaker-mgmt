@@ -2467,7 +2467,7 @@ on_cib_create(char* argv[], int argc)
 		return cl_strdup(MSG_FAIL);
 	}
 
-	mgmt_log(LOG_INFO, "CIB create: %s", xmls);
+	mgmt_log(LOG_INFO, "CIB create: %s", type);
 		
 	fragment = create_cib_fragment(cib_object, type);
 	rc = cib_conn->cmds->create(cib_conn, type, fragment, &output, cib_sync_call);
@@ -2587,7 +2587,7 @@ on_cib_delete(char* argv[], int argc)
 	if (cib_object == NULL) {
 		return cl_strdup(MSG_FAIL);
 	}
-	mgmt_log(LOG_INFO, "CIB delete: %s", xmls);
+	mgmt_log(LOG_INFO, "CIB delete: %s", type);
 
 	rc = cib_conn->cmds->delete(cib_conn, type, cib_object, &output, cib_sync_call);
 	free_xml(cib_object);	
