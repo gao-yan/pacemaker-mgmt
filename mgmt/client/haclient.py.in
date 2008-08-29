@@ -2935,7 +2935,8 @@ class ObjectViewDlg :
 		dialog = gtk.Dialog(title, top_window, gtk.DIALOG_MODAL,
 			(gtk.STOCK_OK, gtk.RESPONSE_OK, str(_("Reset")), gtk.RESPONSE_APPLY, gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL))
 		dialog.set_border_width(5)
-		self.dialog =  dialog
+		dialog.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_NORMAL)
+		self.dialog = dialog
 
 		obj_view = ObjectView(self.xml_node, is_newobj, self.on_changed)
 		self.obj_view = obj_view
@@ -2945,7 +2946,7 @@ class ObjectViewDlg :
 
 		self.save_top_window = top_window
 		top_window = dialog
-	
+
 	def run(self) :
 		while True :
 			ret = self.dialog.run()
