@@ -975,6 +975,513 @@ class Tree :
 	 		running_rsc = manager.get_running_rsc(node)
  			for rsc in running_rsc :
  				self.add_rsc(node_iter, rsc)
+class ManageView :
+	def __init__(self) :
+		vbox = gtk.VBox()
+		#vbox.set_border_width(5)
+		self.vbox = vbox
+		self.widget = vbox
+
+		self.load_icon("ha-standby-node","@HA_DATADIR@/heartbeat-gui/standby-node.png")
+		self.load_icon("ha-active-node","@HA_DATADIR@/heartbeat-gui/active-node.png")
+		#self.load_icon("ha-master-resource","@HA_DATADIR@/heartbeat-gui/master-resource.png")
+		#self.load_icon("ha-slave-resource","@HA_DATADIR@/heartbeat-gui/slave-resource.png")
+
+		if pygtk_2_6_newer() :
+			startrsc_icon = gtk.STOCK_MEDIA_PLAY
+			stoprsc_icon = gtk.STOCK_MEDIA_STOP
+		else :
+			self.load_icon("ha-start-resource","@HA_DATADIR@/heartbeat-gui/start-resource.png")
+			self.load_icon("ha-stop-resource","@HA_DATADIR@/heartbeat-gui/stop-resource.png")
+			startrsc_icon = "ha-start-resource"
+			stoprsc_icon = "ha-stop-resource"
+
+		rsc_actions = [
+			('startrsc', startrsc_icon, _('Start'), None,_('start resource'), self.on_rsc_action),
+			('stoprsc', stoprsc_icon, _('Stop'), None,_('stop resource'), self.on_rsc_action),
+			('defaultrsc', gtk.STOCK_EXECUTE, _('Default'), None,_('work as default'), self.on_rsc_action),
+			('cleanuprsc', gtk.STOCK_CLEAR, _('Cleanup Resource'), None,_('cleanup resource'), self.on_rsc_cleanup),
+			('migratersc', gtk.STOCK_REDO,  _('Migrate Resource'), None, _('migrate a resource to specified node'), 
+				self.on_migrate_rsc),
+			('unmigratersc', gtk.STOCK_UNDO,  _('Clear Migrate Constraints'),
+				None, _('clear constraints created by migrate'),
+				self.on_unmigrate_rsc)
+			]
+		node_actions = [
+			('standby', "ha-standby-node", _('Standby'), None,_('make the node standby'), self.on_standby),
+			('active', "ha-active-node", _('Active'), None,_('make the node active'), self.on_active)
+			]
+
+		toolbar = gtk.Toolbar()
+		toolbar.set_orientation(gtk.ORIENTATION_HORIZONTAL)
+		toolbar.set_style(gtk.TOOLBAR_ICONS)
+		self.vbox.pack_start(toolbar, False)
+
+		rsc_action_group = gtk.ActionGroup("rsc_mgmt")
+		rsc_action_group.add_actions(rsc_actions)
+
+		for action in rsc_actions :
+			action_name = action[0]
+			tool_item = rsc_action_group.get_action(action_name).create_tool_item()
+			toolbar.insert(tool_item, -1)
+
+		separator = gtk.SeparatorToolItem()
+		toolbar.insert(separator, -1)
+
+		node_action_group = gtk.ActionGroup("node_mgmt")
+		node_action_group.add_actions(node_actions)
+
+		for action in node_actions :
+			action_name = action[0]
+			tool_item = node_action_group.get_action(action_name).create_tool_item()
+			toolbar.insert(tool_item, -1)
+
+		self.manage_tree = ManageTree()
+		self.vbox.pack_start(self.manage_tree.widget)
+
+		"""notebook =  gtk.Notebook()
+		self.notebook = notebook
+		vbox.pack_start(notebook, padding=2)
+
+		check_vbox = gtk.VBox()
+		check_vbox.set_border_width(5)
+		tab_label = gtk.Label(_("Check"))
+		notebook.append_page(check_vbox, tab_label)
+		self.check_vbox = check_vbox
+
+		scores_vbox = gtk.VBox()
+		scores_vbox.set_border_width(5)
+		tab_label = gtk.Label(_("Scores"))
+		notebook.append_page(scores_vbox, tab_label)
+		self.scores_vbox = scores_vbox"""
+	
+
+		self.update()
+
+	def update(self, xml_node = None) :
+		self.manage_tree.update()
+		self.vbox.show_all()
+
+	def load_icon(self, name, file) :
+		icons = gtk.IconFactory()
+		icons.add(name,gtk.IconSet(gtk.gdk.pixbuf_new_from_file(file)))
+		icons.add_default()
+
+	def on_rsc_action(self, action) :
+		(cur_type, cur_name) = self.manage_tree.get_selected_node()
+		if action.get_name() == "startrsc" :
+			target_role = "started"
+		elif action.get_name() == "stoprsc" :
+			target_role = "stopped"
+		else :
+			target_role = "#default"
+				
+		(attrs, running_on, metaattrs, params, ops) = \
+			manager.get_rsc_info(cur_name)
+		for param in params :
+			if param["name"] == "target_role" and param["value"] == target_role :
+				return
+
+		for subrsc in manager.get_sub_rsc(cur_name) :
+			(attrs, running_on, metaattrs, params, ops) = \
+				manager.get_rsc_info(subrsc)
+			for metaattr in metaattrs :
+				if metaattr["name"] == "target_role":
+					retval = confirmbox(_("Caused by your previous action, this attribute has been set to \"")
+								+metaattr["value"]
+								+_("\".")+"\n\n"
+								+_("Recommended:")+"\n"
+								+_("Select \"Clear\" to remove the set.")+"\n"
+								+_("The sub-resource will inherit this attribute from current resource."),
+								(gtk.STOCK_CLEAR, gtk.RESPONSE_NO,
+								gtk.STOCK_YES, gtk.RESPONSE_YES,
+								gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL),
+								_("Do you want to retain the \"target_role\" set for sub-resource \"")
+								+subrsc+_("\"?"))
+					if retval in [gtk.RESPONSE_CANCEL, gtk.RESPONSE_DELETE_EVENT] :
+						return	
+					if retval == gtk.RESPONSE_NO:
+						new_metaattrs = metaattrs[:]
+						new_metaattrs.remove(metaattr)
+						manager.update_attrs("up_rsc_metaattrs\n"+subrsc ,"del_rsc_metaattr",
+							metaattrs, new_metaattrs, ["id","name","value"]);
+		manager.do_cmd("set_target_role\n%s\n%s"%(cur_name,target_role))
+
+	def on_rsc_cleanup(self, action) :
+		(cur_type, cur_name) = self.manage_tree.get_selected_node()
+		rsc_list = manager.get_all_rsc()
+		if rsc_list == None :
+			return
+		rsc_options = rsc_list[:]
+		rsc_options.insert(0, _("all resources"))
+
+		node_list = manager.get_normal_nodes()
+		if node_list == None :
+			return
+		node_options = node_list[:]
+		node_options.insert(0, _("all nodes"))
+
+		cleanup = kvbox(_("Cleanup Resource"),
+				[Field("rsc", _("Resource"), cur_name, rsc_options, False, entry_editable = False),
+				Field("node", _("Node"), _("all nodes"), node_options, False, entry_editable = False)])
+
+		if cleanup != None :
+			cleanup_rscs = []
+			if cleanup["rsc"] == _("all resources") :
+				for rsc in rsc_list :
+					if manager.get_rsc_type(rsc) == "native" :
+						cleanup_rscs.append(rsc)
+			elif manager.get_rsc_type(cleanup["rsc"]) != "native" :
+				all_subrscs = manager.get_all_subrsc(cleanup["rsc"])
+				if all_subrscs == None :
+					return
+				for rsc in all_subrscs :
+					if manager.get_rsc_type(rsc) == "native" :
+						cleanup_rscs.append(rsc)
+			else :
+				cleanup_rscs.append(cleanup["rsc"])
+			
+			if cleanup["node"] == _("all nodes") :
+				cleanup_nodes = node_list
+			else :
+				cleanup_nodes = [cleanup["node"]]
+					
+			for rsc in cleanup_rscs :
+				for node in cleanup_nodes :
+					manager.do_cmd("cleanup_rsc\n"+ node + "\n" + rsc)
+
+	def on_migrate_rsc(self, action) :
+		(cur_type, cur_name) = self.manage_tree.get_selected_node()
+		node_list = manager.get_normal_nodes()
+		node_list.insert(0, "")
+		
+		migrate = kvbox(_("Migrate Resource"),
+				[Field("rsc", _("Resource"), cur_name, manager.get_all_rsc(), False, entry_editable = False),
+				Field("to_node", _("To Node"), "", node_list, True, entry_editable = False),
+				Field("force", _("Force"), "", ["", "True", "False"], True, entry_editable = False)])
+
+		if migrate != None :
+			running_on = manager.query("rsc_running_on\n%s"%migrate["rsc"])
+			if running_on == None or running_on == [] :
+				if migrate["to_node"] == "" :
+					msgbox(migrate["rsc"]+_(" not migrated: not-active and no prefered node specified."))
+					return
+
+			if migrate["to_node"] in running_on :
+				msgbox(migrate["rsc"]+_(" is already running on ")+migrate["to_node"])
+				return
+
+			if migrate["to_node"] != None and len(migrate["to_node"]) > 0 :
+				location = {}
+				location["id"] = "cli-prefer-" + migrate["rsc"]
+				location["rsc"] = migrate["rsc"]
+				location["score"] = "INFINITY"
+				location["boolean_op"] = ""
+				location["exprs"] = []
+				expr = {}
+				expr["id"] = uuid() 
+				expr["attribute"] = "#uname"
+				expr["operation"] = "eq"
+				expr["value"] = migrate["to_node"]
+				location["exprs"].append(expr)
+
+				manager.update_constraint("rsc_location", location)
+
+			if running_on != None and len(running_on) > 0 :
+				if migrate["force"] == "True" or migrate["to_node"] == "" :
+					location = {}
+					location["id"] = "cli-standby-" + migrate["rsc"]
+					location["rsc"] = migrate["rsc"]
+					location["score"] = "-INFINITY"
+					location["boolean_op"] = ""
+					location["exprs"] = []
+					expr = {}
+					expr["id"] = uuid() 
+					expr["attribute"] = "#uname"
+					expr["operation"] = "eq"
+					expr["value"] = running_on[0]
+					location["exprs"].append(expr)
+					manager.update_constraint("rsc_location", location)
+
+	def on_unmigrate_rsc(self, action) :
+		location_ids = manager.query("get_cos\nrsc_location")
+		migrate_ids = {}
+		rsc_ids = []
+		for id in location_ids :
+			for prefix in ["cli-prefer-", "cli-standby-"] :
+				if id.startswith(prefix) :
+					split_id = id.split(prefix)
+					if len(split_id) > 1 :
+						rsc_id = split_id[1]
+						if not migrate_ids.has_key(rsc_id) :
+							migrate_ids[rsc_id] = []
+						migrate_ids[rsc_id].append(id)
+
+		all_str = _("all migrated resources")
+		rsc_list = migrate_ids.keys()[:]
+		rsc_list.insert(0, all_str)
+		unmigrate = kvbox(_("Clear Migrate Constraints"),
+				[Field("rsc", _("Resource"), all_str, rsc_list, False, entry_editable = False)])
+
+		if unmigrate != None :
+			if unmigrate["rsc"] == all_str :
+				for rsc_id in migrate_ids.keys() :
+					for id in migrate_ids[rsc_id] :
+						manager.do_cmd("del_co\nrsc_location\n"+id)
+			else :
+				for id in migrate_ids[unmigrate["rsc"]] :
+					manager.do_cmd("del_co\nrsc_location\n"+id)
+
+	def on_standby(self, action) :
+		(cur_type, cur_name) = self.manage_tree.get_selected_node()
+		if confirmbox(_("Make") +" " +cur_name + " " +_("standby")+"?") == gtk.RESPONSE_YES:
+			manager.do_cmd("standby\n"+cur_name + "\n" + "on")
+
+	def on_active(self, action) :
+		(cur_type, cur_name) = self.manage_tree.get_selected_node()
+		if confirmbox(_("Make") +" " +cur_name + " " + _("active")+"?") == gtk.RESPONSE_YES :
+			manager.do_cmd("standby\n"+cur_name + "\n" + "off")
+
+
+class ManageTree() :
+	store = None
+	tree = None
+	last_iter = None
+	def on_right_click(self, widget, event) :
+		if event.type == gtk.gdk.BUTTON_PRESS and event.button == 3 :
+			menu = None
+			if window.cur_type in ["node"] :
+				menu = window.uimanager.get_widget("/node_popup")
+			elif window.cur_type in ["primitive", "group", "clone", "master_slave"] :
+				menu = window.uimanager.get_widget("/resource_popup")
+			else :
+				menu = window.uimanager.get_widget("/tools_popup")
+			menu.popup(None, None, None, event.button, event.time)
+
+	def __init__(self) :
+		treeiter = {}
+		self.store = gtk.TreeStore(str, str, str, str)
+
+		tree = gtk.TreeView(self.store)
+		add_column(tree, _("Type"), 0, self.render_icon)
+		add_column(tree, _("Name"), 1)
+		add_column(tree, _("Status"), 2)
+		add_column(tree, _("Details"), 3)
+		#tree.connect("cursor-changed", self.on_cursor_changed, tree.get_selection())
+		#tree.connect("event-after", self.on_right_click)
+
+		sw = gtk.ScrolledWindow()
+		sw.set_shadow_type(gtk.SHADOW_IN)
+		sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+		sw.add(tree)
+		self.widget = sw
+		self.tree = tree
+
+		self.load_icon("failed","@HA_DATADIR@/heartbeat-gui/failed.png")
+		self.load_icon("timeout","@HA_DATADIR@/heartbeat-gui/timeout.png")
+		self.load_icon("running","@HA_DATADIR@/heartbeat-gui/running.png")
+		self.load_icon("stopped","@HA_DATADIR@/heartbeat-gui/stopped.png")
+		self.load_icon("dirty-stopped","@HA_DATADIR@/heartbeat-gui/dirty-stopped.png")
+
+	def get_selected_node(self):
+		(model, iter) = self.tree.get_selection().get_selected()
+		name = model.get_value(iter, 0)
+		name = model.get_value(iter, 1)
+		return (type, name)
+	
+	def render_icon(self, tvcolumn, cell, model, iter):
+ 		icons = {-2:"stopped",
+			 -1:gtk.STOCK_PREFERENCES,
+			  0:"running",
+			  1:"stopped",
+			  2:"dirty-stopped",
+			  3:"failed"}
+		status = self.iter_status(model,iter)
+		pb = self.tree.render_icon(icons[status],
+			gtk.ICON_SIZE_SMALL_TOOLBAR, None)
+       		cell.set_property('pixbuf', pb)
+		return
+
+	def load_icon(self, name, file) :
+		icons = gtk.IconFactory()
+		icons.add(name,gtk.IconSet(gtk.gdk.pixbuf_new_from_file(file)))
+		icons.add_default()
+
+	def iter_status(self, model, iter) :
+		# -1:config 0: ok, 1: stopped, 2: umanaged, 3:failed, 4:stop failed
+		type = model.get_value(iter, 0)
+		status = model.get_value(iter, 2)
+		iter_status = 0
+		if type == _("native") :
+			if string.find(status, _("not running")) != -1 :
+				iter_status = 1
+			elif string.find(status, _("running")) != -1 :
+				iter_status = 0
+			elif string.find(status, _("fail")) != -1 :
+				iter_status = 3
+			else :
+				iter_status = 2
+		
+		elif type == "node" :
+			if status == _("ping node") :
+				iter_status = -1				
+			elif string.find(status, _("running")) != -1 :
+				iter_status = 0
+			else :
+				iter_status = 1
+		elif type in [_("group"),_("resources"),_("clone"),_("master")]:
+			iter_status = 0
+		elif type in [_("Orders"),_("Locations"), _("Colocations")] :
+			iter_status = -1
+		else :
+			iter_status = -2
+		if model.iter_has_child(iter) :
+			for i in range(0, model.iter_n_children(iter)) :
+				child = model.iter_nth_child(iter,i)
+				child_status = self.iter_status(model, child)
+				if child_status > iter_status :
+					iter_status = child_status
+		
+		return iter_status
+
+	def save_iter_status(self, model, path, iter, expand_status):
+		type = model.get_value(iter, 0)
+		name = model.get_value(iter, 1)
+		expand_status[(type, name)] = self.tree.row_expanded(path)
+
+	
+	def restore_iter_status(self, model, path, iter, user_data):
+		(select_name, select_type, select_path, expand_status) = user_data
+		type = model.get_value(iter, 0)
+		name = model.get_value(iter, 1)
+		path = model.get_path(iter)
+		if name == select_name and type == select_type and path == select_path:
+			self.tree.get_selection().select_iter(iter)
+		if expand_status.has_key((name,type)) :
+			if expand_status[name, type] :
+				self.tree.expand_row(path, False)
+			else :
+				self.tree.collapse_row(path)
+		else :
+			self.tree.expand_row(path, False)
+			
+	def save_tree_status(self) :
+		(model, iter) = self.tree.get_selection().get_selected()
+		if iter != None :
+			select_type = model.get_value(iter, 0)
+			select_name = model.get_value(iter, 1)
+			select_path = model.get_path(iter)
+		else :
+			select_name = None
+			select_type = None
+			select_path = None
+		expand_status = {}
+		self.store.foreach(self.save_iter_status, expand_status)
+		return (select_name, select_type, select_path, expand_status)
+
+	def restore_tree_status(self, tree_status) :
+		self.store.foreach(self.restore_iter_status, tree_status)
+		
+	def update(self) :
+		
+		tree_status = self.save_tree_status()		
+		
+		self.store.clear()
+		if not manager.connected :
+			return
+		
+		nodes = manager.get_all_nodes()
+		if nodes == None :
+			return
+
+		active_nodes = manager.get_active_nodes()
+		if active_nodes == None :
+			return
+
+		crm_nodes = manager.get_crm_nodes()
+		if crm_nodes == None :
+			return
+		
+		config = manager.get_crm_info()
+		if config.has_key("have_quorum") and config["have_quorum"] == "true" :
+			status = _("with quorum")
+		else :
+			status = _("without quorum")
+		
+		cluster_type = manager.get_cluster_type().capitalize()
+		if len(cluster_type) > 0 :
+			cluster_type += " & Pacemaker"
+		else :
+			cluster_type += "Pacemkaer"
+
+		root = self.store.append(None, ["cluster", cluster_type, status, ""])
+		
+		nodes_root = self.store.append(root, ["nodes", _("Nodes"),"", ""])
+
+		for node in nodes :
+			self.add_node(nodes_root, node, node in active_nodes, node in crm_nodes)
+
+		rscs_root = self.store.append(root, ["resources", _("Resources"),"", ""])
+		rscs = manager.get_top_rsc()
+		for rsc in rscs :
+			self.add_rsc(rscs_root, rsc)
+		
+		self.restore_tree_status(tree_status)
+		(name, type, path, expand_status) = tree_status
+		if  name == None :
+			self.tree.get_selection().select_iter(root)
+			self.tree.expand_all()
+ 		#self.on_cursor_changed(self.widget, self.widget.get_selection())
+		
+		
+	def add_rsc(self, parent, rsc) :
+		type = manager.get_rsc_type(rsc)
+		status = ""
+		label = ""
+		if type == "native" :
+			label = _("native")
+			status = manager.get_rsc_status(rsc)
+			nodes = manager.get_rsc_running_on(rsc)
+			if nodes != None and len(nodes)>0:
+				self.store.append(parent,[_(label), rsc, _(status) + _(" on ")+str(nodes), ""])
+			else :
+				self.store.append(parent,[_(label), rsc, _(status), ""])
+				
+		elif type in ["group","clone","master"] :
+			label = type
+			status = type
+			iter = self.store.append(parent,[_(label), rsc, _(status), ""])
+			for subrsc in manager.get_sub_rsc(rsc) :
+				self.add_rsc(iter, subrsc)
+					
+	def add_node(self, nodes_root, node, active, started):
+		status = _("unknown")
+		if not started :
+			node_type = manager.get_nodetype(node)[0];
+			if  node_type == "normal" :
+				status = _("never started")
+			elif node_type == "ping" :
+				status = _("ping node")
+			else :
+				status = _("unknown type")
+		else :
+			if not active :
+				status = _("stopped")
+			else :		
+				dc = manager.get_dc()
+				if dc != None and node in dc :
+					status = _("running(dc)")
+				else :
+					status = _("running")
+			if manager.get_node_config(node)["standby"] == "True" :
+				status = status + "-"+ _("standby")
+
+		node_iter = self.store.append(nodes_root,["node", node, status, ""])
+
+		if active :
+	 		running_rsc = manager.get_running_rsc(node)
+ 			for rsc in running_rsc :
+ 				self.add_rsc(node_iter, rsc)
 
 class MainTree(Tree) :
 	def __init__(self) :
@@ -994,6 +1501,7 @@ class MainTree(Tree) :
 					
 
 			#(u',', [(u'configuration', ''), (u'status', '')], '')
+		self.store.append(None, ["Management", "management"])
 
 		widget = gtk.TreeView(self.store)
 		widget.set_headers_visible(False)
@@ -1032,7 +1540,8 @@ class MainTree(Tree) :
 				"crm_config": gtk.STOCK_PREFERENCES,
 				"nodes": gtk.STOCK_NETWORK,
 				"resources": gtk.STOCK_DIRECTORY,
-				"constraints": gtk.STOCK_PROPERTIES
+				"constraints": gtk.STOCK_PROPERTIES,
+				"management" : gtk.STOCK_EXECUTE
 			}
  		icons = {-2:gtk.STOCK_DIALOG_INFO,
 			 -1:gtk.STOCK_PREFERENCES,
@@ -3476,6 +3985,8 @@ class MainWindow :
 			self.cur_view = ObjectView(manager.xml_nodes.get(type), is_topview = True)
 		elif type == "node" and status not in [_("never started"),_("ping node"),_("unknown type")]:
 			self.cur_view = NodeView(name)
+		elif type == "management" :
+			self.cur_view = ManageView()
 		elif type in [_("native")] :
 			self.cur_view = RscView(name)
 		elif type == _("location") :
