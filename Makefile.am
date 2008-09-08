@@ -65,7 +65,7 @@ changes:
 
 obs:	tgz
 	make changes > .changes
-	scp .changes $(TARFILE) vmhost.beekhof.net:Development/obs/server:ha-clustering/pygui/
+	scp .changes $(TARFILE) c001n16.suse.de:Development/obs/server:ha-clustering/pygui/
 
 dev:	tgz
 	make changes > .changes
