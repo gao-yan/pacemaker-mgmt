@@ -950,7 +950,7 @@ class Tree :
 	def add_node(self, nodes_root, node, active, started):
 		status = _("unknown")
 		if not started :
-			node_type = manager.get_nodetype(node)[0];
+			node_type = manager.get_nodetype(node)
 			if  node_type == "normal" :
 				status = _("never started")
 			elif node_type == "ping" :
@@ -1457,7 +1457,7 @@ class ManageTree() :
 	def add_node(self, nodes_root, node, active, started):
 		status = _("unknown")
 		if not started :
-			node_type = manager.get_nodetype(node)[0];
+			node_type = manager.get_nodetype(node)
 			if  node_type == "normal" :
 				status = _("never started")
 			elif node_type == "ping" :
@@ -5176,7 +5176,11 @@ class Manager :
 		return self.all_nodes
 
 	def get_nodetype(self, node):
-		return self.query("node_type\n%s"%node)
+		node_type = self.query("node_type\n%s"%node)
+		if len(node_type) > 0 :
+			return node_type[0]
+		else :
+			return None
 	
 	def get_normal_nodes(self) :
 		nodes = self.query("all_nodes")
@@ -5185,7 +5189,7 @@ class Manager :
 
 		normal_nodes = []
 		for node in nodes :
-			if self.get_nodetype(node)[0] == "normal" :
+			if self.get_nodetype(node) == "normal" :
 				normal_nodes.append(node)
 		return normal_nodes
 
