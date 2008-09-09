@@ -4965,6 +4965,7 @@ class Manager :
 		return string.join(ret_list[1:], "\n")
 
 	def update_cib_xml(self) :
+		self.xml_nodes = {}
 		xml_nodes = self.xml_nodes
 		cib_xml = self.cib_do_cmd("cib_query\ncib")
 		if self.failed_reason != "" :
@@ -5003,7 +5004,6 @@ class Manager :
 					if sub_mod != '' :
 						continue
 					xml_nodes[sub_name] = xml_nodes[name].getElementsByTagName(sub_name)[0]
-		self.xml_nodes = xml_nodes
 
 		"""config_xml = self.cib_xml.getElementsByTagName("configuration")
 		self.crm_xml = config_xml.getElementsByTagName("crm_config")
@@ -6064,10 +6064,11 @@ class Primitive(ObjectAttrs) :
 		if widgets.has_key("combos") and widgets["combos"].has_key("class") \
 				and widget == widgets["combos"]["class"] :
 			ra_list = manager.get_rsc_types(primitive_class)
-			ra_list.sort()
-			type_store = [[ra, ""] for ra in ra_list]
-			if widgets.has_key("combo_entries") and widgets["combo_entries"].has_key("type") :
-				self.combobox_store_append(widgets["combo_entries"]["type"], type_store)
+			if ra_list != None :
+				ra_list.sort()
+				type_store = [[ra, ""] for ra in ra_list]
+				if widgets.has_key("combo_entries") and widgets["combo_entries"].has_key("type") :
+					self.combobox_store_append(widgets["combo_entries"]["type"], type_store)
 
 			self.fill_provider(primitive)
 
