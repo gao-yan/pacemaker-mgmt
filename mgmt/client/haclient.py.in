@@ -1501,7 +1501,8 @@ class MainTree(Tree) :
 					
 
 			#(u',', [(u'configuration', ''), (u'status', '')], '')
-		self.store.append(None, ["Management", "management"])
+		treeiter["management"] = self.store.append(None, ["Management", "management"])
+		self.treeiter = treeiter
 
 		widget = gtk.TreeView(self.store)
 		widget.set_headers_visible(False)
@@ -1594,10 +1595,11 @@ class MainTree(Tree) :
 		return iter_status
 		
 	def update(self) :
-		pass
-	
-				
-
+		selection = self.widget.get_selection()
+		(model, iter) = selection.get_selected()
+		if iter == None :
+			selection.select_iter(self.treeiter["management"])
+			window.select_view("management")
 
 class View :
 	glade = None
@@ -3973,7 +3975,7 @@ class MainWindow :
 			return True
 		return False
 	
-	def select_view(self, type, name, status = None) :
+	def select_view(self, type, name = None, status = None) :
 		for child in self.mainview_sw.get_children() :
 			self.mainview_sw.remove(child)
 
