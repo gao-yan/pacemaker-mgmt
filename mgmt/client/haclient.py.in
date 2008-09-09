@@ -3983,7 +3983,8 @@ class MainWindow :
 		self.update_ui()
 		if type == "configuration" :
 			self.cur_view = ClusterView()
-		elif type in ["crm_config", "nodes", "resources", "constraints", "status"] :
+		elif type in ["crm_config", "nodes", "resources", "constraints", "status"] \
+				and manager.xml_nodes.get(type) != None :
 			self.cur_view = ObjectView(manager.xml_nodes.get(type), is_topview = True)
 		elif type == "node" and status not in [_("never started"),_("ping node"),_("unknown type")]:
 			self.cur_view = NodeView(name)
@@ -4725,6 +4726,7 @@ class Manager :
 	session_lock = thread.allocate_lock()
 	async_ret_str = {}
 	async_ret_list = {} 
+	xml_nodes = {}
 		
 	# cache functions
 
@@ -4963,12 +4965,15 @@ class Manager :
 		return string.join(ret_list[1:], "\n")
 
 	def update_cib_xml(self) :
+		xml_nodes = self.xml_nodes
 		cib_xml = self.cib_do_cmd("cib_query\ncib")
 		if self.failed_reason != "" :
 			msgbox(self.failed_reason)
 			return None
 
-		xml_nodes = {}
+		if cib_xml == None :
+			return None
+
 		try :
 			xml_nodes["cib"] = parseString(cib_xml).documentElement
 		except xml.parsers.expat.ExpatError, msg :

@@ -2493,7 +2493,7 @@ on_cib_query(char* argv[], int argc)
 	type = argv[1];
 	mgmt_log(LOG_INFO, "CIB query: %s", type);
 		
-	rc = cib_conn->cmds->query(cib_conn, type, &output, cib_sync_call);
+	rc = cib_conn->cmds->query(cib_conn, type, &output, cib_sync_call|cib_scope_local);
 	if (rc < 0) {
 		return crm_failed_msg(output, rc);
 	} else {
