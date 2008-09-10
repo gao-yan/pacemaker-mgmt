@@ -4039,11 +4039,11 @@ class MainWindow :
 				return
 			else:
 				manager.save_login_info(server,user)
+				self.maintree = MainTree()
+				self.maintree_sw.add(self.maintree.widget)
+				self.maintree_sw.show_all()
 	
 		self.update_ui()
-		self.maintree = MainTree()
-		self.maintree_sw.add(self.maintree.widget)
-		self.maintree_sw.show_all()
 
 	def on_logout(self, action) :
 		manager.logout()
