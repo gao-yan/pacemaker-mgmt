@@ -4972,7 +4972,7 @@ class Manager :
 			msgbox(self.failed_reason)
 			return None
 
-		if cib_xml == None :
+		if cib_xml == None or cib_xml == "" :
 			return None
 
 		try :
@@ -5177,7 +5177,7 @@ class Manager :
 
 	def get_nodetype(self, node):
 		node_type = self.query("node_type\n%s"%node)
-		if len(node_type) > 0 :
+		if node_type != None and len(node_type) > 0 :
 			return node_type[0]
 		else :
 			return None
@@ -5291,6 +5291,8 @@ class Manager :
 		if sub_rscs != None :
 			for sub_rsc in sub_rscs :
 				self.parent[sub_rsc] = rsc_id
+		else :
+			return []
 		return sub_rscs
 
 	def get_all_subrsc(self, rsc_id) :

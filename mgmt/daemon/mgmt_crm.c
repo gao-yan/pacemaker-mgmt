@@ -2481,6 +2481,45 @@ on_cib_create(char* argv[], int argc)
 	}
 }
 
+/*
+char*
+on_cib_query(char* argv[], int argc)
+{
+	const char* type = NULL;
+	char cmd[MAX_STRLEN];
+	char buf[MAX_STRLEN];	
+	char* ret = cl_strdup(MSG_OK);
+	FILE *fstream = NULL;
+	ARGC_CHECK(2)
+
+	type = argv[1];
+	mgmt_log(LOG_INFO, "CIB query: %s", type);
+		
+	snprintf(cmd, sizeof(cmd), "cibadmin -Q -o %s", type);
+	if ((fstream = popen(cmd, "r")) == NULL){
+		mgmt_log(LOG_ERR, "error on popen %s: %s",
+			 cmd, strerror(errno));
+		return cl_strdup(MSG_FAIL);
+	}
+
+	while (!feof(fstream)){
+		memset(buf, 0, sizeof(buf));
+		if (fgets(buf, sizeof(buf), fstream) != NULL){
+			ret = mgmt_msg_append(ret, buf);
+			ret[strlen(ret)-1] = '\0';
+		}
+		else{
+			sleep(1);
+		}
+	}
+
+	if (pclose(fstream) == -1)
+		mgmt_log(LOG_WARNING, "failed to close pipe");
+
+	return ret;
+}
+*/
+
 char*
 on_cib_query(char* argv[], int argc)
 {
