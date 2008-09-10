@@ -48,7 +48,7 @@
 #include <mgmt/mgmt.h>
 #include "mgmt_internal.h"
 
-#include <crm/common/util.h>
+#include <crm/crm.h>
 
 /* common daemon and debug functions */
 
