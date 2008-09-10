@@ -1177,6 +1177,9 @@ AC_SUBST(HA_HBCONF_DIR)
 HB_RA_DIR=`extract_heartbeat_define hb_config.h HB_RA_DIR`
 AC_SUBST(HB_RA_DIR)
 
+HA_LIBDIR=`extract_heartbeat_define hb_config.h HA_LIBDIR`
+AC_SUBST(HA_LIBDIR)
+
 hb_libdir=`extract_heartbeat_define hb_config.h HA_LIBHBDIR`
 AC_SUBST(hb_libdir)
 
@@ -1200,6 +1203,10 @@ AC_SUBST(HA_APIGROUP)
 
 HA_CCMUSER=`extract_heartbeat_define hb_config.h HA_CCMUSER`
 AC_SUBST(HA_CCMUSER)
+
+HA_DATADIR="${datadir}"
+AC_SUBST(HA_DATADIR)
+AC_DEFINE_UNQUOTED(HA_DATADIR,"$HA_DATADIR", data (arch-independent) directory)
 
 HA_NOARCHDATAHBDIR="${datadir}/heartbeat"
 AC_DEFINE_UNQUOTED(HA_NOARCHDATAHBDIR,"$HA_NOARCHDATAHBDIR", Heartbeat noarch data directory)
