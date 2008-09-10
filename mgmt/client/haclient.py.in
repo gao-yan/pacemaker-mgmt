@@ -27,6 +27,7 @@ Copyright (C) 2005 International Business Machines
 import sys, os, string, socket, syslog, webbrowser, pickle, xml, gc, time, binascii, thread, tarfile
 from stat import *
 from xml.dom.minidom import parseString
+from xml.dom.minidom import getDOMImplementation
 from xml.parsers.xmlproc.xmldtd import load_dtd_string
 
 import locale, gettext
@@ -41,6 +42,14 @@ pygtk.require('2.0')
 import gtk, gtk.glade, gobject
 
 UI_FILE = "@HA_DATADIR@/heartbeat-gui/haclient.glade"
+
+validate_type = "dtd"
+name_cap = lambda name: name.replace("-"," ").replace("_"," ").title().replace("Crmd","CRMD").\
+				replace("Crm","CRM").replace("Pe ", "PE ").replace("Dc ","DC ").\
+				replace("Cib", "CIB").replace("Ccm", "CCM").replace("Ha", "HA").\
+				replace("Id", "ID").replace("Dtd", "DTD").replace("Uuid", "UUID").\
+				replace("HAve", "Have").replace("Rsc ", "").replace("Rsc", "Resource").\
+				replace("Lrm", "LRM")
 
 window = None
 manager = None
@@ -159,6 +168,7 @@ def confirmbox(msg, button=(gtk.STOCK_YES, gtk.RESPONSE_YES, gtk.STOCK_NO, gtk.R
 	confirm_msg =  gtk.Label()
 	confirm_msg.set_text(msg)
 	confirm_msg.set_selectable(True)
+	confirm_msg.set_line_wrap(True)
 	dialog.vbox.pack_start(frame)
 	hb=gtk.HBox()
 	hb.pack_start(im)
@@ -470,7 +480,6 @@ class ListWithAddDel :
 		self.attr_list = attr_list
 		self.store = self.create_store(len(attr_list))
 		widget.set_model(self.store)
-		name_cap = lambda name: name.replace("-"," ").replace("_"," ").title().replace("Id","ID")
 		for i in range(len(attr_list)) :
 			attr_name = attr_list[i]
 			attr = dtd_elem.get_attr(attr_name)
@@ -537,55 +546,230 @@ class ListWithAddDel :
 			items.append(item)
 			iter = self.store.iter_next(iter)
 		return items
-	
-			
-class Tree :
+
+class ElementList:
 	store = None
 	widget = None
+
+	def __init__(self, obj_type, elem_node_list) :
+		self.obj_type = obj_type
+		treeiter = {}
+		if validate_type == "dtd" :
+			self.dtd_elem = manager.get_dtd_elem(obj_type)
+			attr_list = self.dtd_elem.get_attr_list()
+			if len(attr_list) > 0 :
+				self.store = gtk.ListStore(*(tuple(str for i in range(len(attr_list)+1))))
+				tree = gtk.TreeView(self.store)
+				add_column(tree, _("Type"), 0, self.render_icon, visible=False)
+				for i in range(len(attr_list)) :
+					if i == 0 :
+						icon_func = self.render_icon
+					else :
+						icon_func = None
+					if attr_list[i] == "id" and self.dtd_elem.get_content_model()[1] == [] :
+						visible = False
+					else :
+						visible = True
+					add_column(tree, _(name_cap(attr_list[i])), i+1, icon_func, visible=visible)
+
+		sw = gtk.ScrolledWindow()
+		sw.set_shadow_type(gtk.SHADOW_IN)
+		sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+		sw.add(tree)
+		self.widget = sw
+		self.tree = tree
+		self.attr_list = attr_list
+
+		self.update(elem_node_list)
+
+	def render_icon(self, tvcolumn, cell, model, iter):
+		icons = {
+				"cluster_property_set": gtk.STOCK_PREFERENCES,
+				"node": gtk.STOCK_ORIENTATION_PORTRAIT,
+				"primitive": gtk.STOCK_DND,
+				"group": gtk.STOCK_DND_MULTIPLE,
+				"clone": gtk.STOCK_COPY,
+				"master_slave": gtk.STOCK_COPY,
+				"rsc_order": gtk.STOCK_PROPERTIES,
+				"rsc_location": gtk.STOCK_PROPERTIES,
+				"rsc_colocation": gtk.STOCK_PROPERTIES,
+				"operations": gtk.STOCK_DIALOG_AUTHENTICATION,
+				"op": gtk.STOCK_DIALOG_AUTHENTICATION,
+				"instance_attributes": gtk.STOCK_PREFERENCES,
+				"meta_attributes": gtk.STOCK_PREFERENCES,
+				"attributes": gtk.STOCK_PREFERENCES,
+				"life_time": gtk.STOCK_INDENT,
+				"rule" : gtk.STOCK_JUSTIFY_FILL,
+				"expression": gtk.STOCK_MEDIA_STOP,
+				"nvpair": gtk.STOCK_MEDIA_STOP,
+				"date_expression": gtk.STOCK_JUSTIFY_FILL,
+				"transient_attributes": gtk.STOCK_PREFERENCES,
+				"date_spec": gtk.STOCK_MEDIA_STOP,
+				"duration": gtk.STOCK_MEDIA_STOP,
+				"node_state": gtk.STOCK_FIND,
+				"lrm": gtk.STOCK_FIND,
+				"lrm_resources": gtk.STOCK_DND_MULTIPLE,
+				"lrm_resource": gtk.STOCK_DND,
+				"lrm_rsc_op": gtk.STOCK_DIALOG_AUTHENTICATION
+			
+			}
+		pb = self.tree.render_icon(icons.get(model.get_value(iter, 0), gtk.STOCK_MEDIA_STOP),
+			gtk.ICON_SIZE_BUTTON, None)
+       		cell.set_property('pixbuf', pb)
+		return
+
+	def update(self, elem_node_list) :
+		self.elem_node_list = elem_node_list
+		self.store.clear()
+		self.nodes = {}
+		for elem_node in elem_node_list :
+			values = [self.obj_type]
+			values.extend([elem_node.getAttribute(attr_name) for attr_name in self.attr_list])
+			iter = self.store.append(values)
+			elem_type = elem_node.tagName
+			elem_id = elem_node.getAttribute("id")
+			if elem_id == "" :
+				elem_id = elem_node.parentNode.getAttribute("id") 
+			self.nodes[(elem_type, elem_id)] = elem_node
+
+	def get_selected_node(self) :
+		(model, iter) = self.tree.get_selection().get_selected()
+		if iter != None :
+			(node_type, node_id) = self.get_node_key(model, iter)
+			return self.nodes.get((node_type, node_id))
+		else :
+			return None
+
+	def save_iter_status(self, model, path, iter, expand_status):
+		(type, id) = self.get_node_key(model, iter)
+		expand_status[(type, id)] = self.tree.row_expanded(path)
+	
+	def restore_iter_status(self, model, path, iter, user_data):
+		(select_type, select_id, select_path, expand_status) = user_data
+		(type, id) = self.get_node_key(model, iter)
+		path = model.get_path(iter)
+		if type == select_type and id == select_id :
+			self.tree.get_selection().select_iter(iter)
+		if expand_status.has_key((type, id)) :
+			if expand_status[type, id] :
+				self.tree.expand_row(path, False)
+			else :
+				self.tree.collapse_row(path)
+		else :
+			self.tree.collapse_row(path)
+			
+	def save_tree_status(self) :
+		(model, iter) = self.tree.get_selection().get_selected()
+		if iter != None :
+			(select_type, select_id) = self.get_node_key(model, iter)
+			select_path = model.get_path(iter)
+		else :
+			select_type = None
+			select_id = None
+			select_path = None
+		expand_status = {}
+		self.store.foreach(self.save_iter_status, expand_status)
+		return (select_type, select_id, select_path, expand_status)
+
+	def restore_tree_status(self, tree_status) :
+		self.store.foreach(self.restore_iter_status, tree_status)
+
+	def get_node_key(self, model, iter) :
+		type = model.get_value(iter, 0)
+		id = model.get_value(iter, 1)
+		if id == "" :
+			id = model.get_value(model.iter_parent(iter), 1)
+		return (type, id)
+
+class ElementTree(ElementList):
+	def __init__(self, obj_type, elem_node_list) :
+		self.obj_type = obj_type
+		self.store = gtk.TreeStore(*(tuple(str for i in range(2))))
+		tree = gtk.TreeView(self.store)
+		add_column(tree, _("Type"), 0, self.render_icon)
+		add_column(tree, _("ID"), 1)
+
+		sw = gtk.ScrolledWindow()
+		sw.set_shadow_type(gtk.SHADOW_IN)
+		sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+		sw.add(tree)
+		self.widget = sw
+		self.tree = tree
+
+		self.update(elem_node_list)
+
+	def update(self, elem_node_list) :
+		self.elem_node_list = elem_node_list
+		self.store.clear()
+		self.nodes = {}
+		for elem_node in elem_node_list :
+			iter = self.append_node(None, elem_node)
+			self.append_child_nodes(iter, elem_node)
+
+	def append_node(self, iter, node) :
+		node_type = node.tagName
+		node_id = node.getAttribute("id")
+		values = [node_type, node_id]
+		child_iter = self.store.append(iter, values)
+		if node_id == "" :
+			node_id = node.parentNode.getAttribute("id")
+		self.nodes[(node_type, node_id)] = node
+		return child_iter
+
+	def append_child_nodes(self, iter, node) :
+		for child_node in node.childNodes :
+			if child_node.nodeType != xml.dom.Node.ELEMENT_NODE :
+				continue
+			child_iter = self.append_node(iter, child_node)
+			self.append_child_nodes(child_iter, child_node)
+
+class Tree :
+	store = None
+	tree = None
 	last_iter = None
 	def on_right_click(self, widget, event) :
 		if event.type == gtk.gdk.BUTTON_PRESS and event.button == 3 :
 			menu = None
 			if window.cur_type in ["node"] :
 				menu = window.uimanager.get_widget("/node_popup")
-			elif window.cur_type in ["cluster"] or window.cur_type == None:
-				menu = window.uimanager.get_widget("/connection_popup")
-			else :
+			elif window.cur_type in ["primitive", "group", "clone", "master_slave"] :
 				menu = window.uimanager.get_widget("/resource_popup")
+			else :
+				menu = window.uimanager.get_widget("/tools_popup")
 			menu.popup(None, None, None, event.button, event.time)
 
-	def __init__(self, widget) :
-		self.store = gtk.TreeStore(str, str, str)
-		widget.set_model(self.store)
-		add_column(widget, _("Name"), 0, self.render_icon)
-		add_column(widget, _("Status"), 1)
-		widget.set_size_request(300, 100)
-		widget.connect("cursor-changed", self.on_cursor_changed, widget.get_selection())
-		widget.connect("event-after", self.on_right_click)
-		self.widget = widget
-	
-	def on_cursor_changed(self, treeview, selection) :
-		(model, iter) = selection.get_selected()
-		if not window.can_change_view() :
-			if self.last_iter != None :
-				selection.select_iter(self.last_iter)
-				return
-		if iter == None :
-			window.select_view(None, None, None)
-			return
-		type = model.get_value(iter, 2)
-		name = model.get_value(iter, 0)
-		status = model.get_value(iter, 1)
-		window.select_view(type, name, status)
-		self.last_iter = iter
-		
+	def __init__(self, obj_type) :
+		treeiter = {}
+		if validate_type == "dtd" :
+			self.dtd_elem = manager.get_dtd_elem(obj_type)
+			self.store = gtk.TreeStore(str, str)
+			for (name, mod) in self.dtd_elem.get_content_model()[1] :
+				if mod == '' :
+					treeiter[name] = self.store.append(None, [_(name_cap(name)), name])
+					
+			#for elem_name in dtd_elem.get_attr_list() :
+
+			#(u',', [(u'configuration', ''), (u'status', '')], '')
+
+		tree = gtk.TreeView(self.store)
+		tree.set_headers_visible(False)
+		#widget.set_model(self.store)
+		#add_column(widget, _("Name"), 0, self.render_icon)
+		#add_column(widget, _("Status"), 1)
+		add_column(tree, _(obj_type), 0, self.render_icon)
+		tree.set_size_request(150, 100)
+		tree.connect("cursor-changed", self.on_cursor_changed, tree.get_selection())
+		tree.connect("event-after", self.on_right_click)
+		self.tree = tree
+
 	def select_row(self, model, path, iter, user_data):
 		name, type = user_data
 		selection = self.widget.get_selection()
 		if (name, type) == (model.get_value(iter,0), model.get_value(iter,2)) :
 			selection.select_path(path)
 			return True
-		
+
+	
 	def render_icon(self, tvcolumn, cell, model, iter):
  		icons = {-2:gtk.STOCK_DIALOG_INFO,
 			 -1:gtk.STOCK_PREFERENCES,
@@ -598,7 +782,7 @@ class Tree :
 			gtk.ICON_SIZE_BUTTON, None)
        		cell.set_property('pixbuf', pb)
 		return
-	
+
 	def iter_status(self, model, iter) :
 		# -1:config 0: ok, 1: stopped, 2: umanaged, 3:failed, 4:stop failed
 		type = model.get_value(iter, 2)
@@ -634,7 +818,7 @@ class Tree :
 				if child_status > iter_status :
 					iter_status = child_status
 		
-		return iter_status				
+		return iter_status
 
 	def save_iter_status(self, model, path, iter, expand_status):
 		name = model.get_value(iter, 0)
@@ -658,7 +842,7 @@ class Tree :
 			self.widget.expand_row(path, False)
 			
 	def save_tree_status(self) :
-		(model, iter) = self.widget.get_selection().get_selected()
+		(model, iter) = self.tree.get_selection().get_selected()
 		if iter != None :
 			select_name = model.get_value(iter, 0)
 			select_type = model.get_value(iter, 2)
@@ -766,7 +950,7 @@ class Tree :
 	def add_node(self, nodes_root, node, active, started):
 		status = _("unknown")
 		if not started :
-			node_type = manager.get_nodetype(node)[0];
+			node_type = manager.get_nodetype(node)
 			if  node_type == "normal" :
 				status = _("never started")
 			elif node_type == "ping" :
@@ -791,6 +975,631 @@ class Tree :
 	 		running_rsc = manager.get_running_rsc(node)
  			for rsc in running_rsc :
  				self.add_rsc(node_iter, rsc)
+class ManageView :
+	def __init__(self) :
+		vbox = gtk.VBox()
+		#vbox.set_border_width(5)
+		self.vbox = vbox
+		self.widget = vbox
+
+		self.load_icon("ha-standby-node","@HA_DATADIR@/heartbeat-gui/standby-node.png")
+		self.load_icon("ha-active-node","@HA_DATADIR@/heartbeat-gui/active-node.png")
+		#self.load_icon("ha-master-resource","@HA_DATADIR@/heartbeat-gui/master-resource.png")
+		#self.load_icon("ha-slave-resource","@HA_DATADIR@/heartbeat-gui/slave-resource.png")
+
+		if pygtk_2_6_newer() :
+			startrsc_icon = gtk.STOCK_MEDIA_PLAY
+			stoprsc_icon = gtk.STOCK_MEDIA_STOP
+		else :
+			self.load_icon("ha-start-resource","@HA_DATADIR@/heartbeat-gui/start-resource.png")
+			self.load_icon("ha-stop-resource","@HA_DATADIR@/heartbeat-gui/stop-resource.png")
+			startrsc_icon = "ha-start-resource"
+			stoprsc_icon = "ha-stop-resource"
+
+		rsc_actions = [
+			('startrsc', startrsc_icon, _('Start'), None,_('start resource'), self.on_rsc_action),
+			('stoprsc', stoprsc_icon, _('Stop'), None,_('stop resource'), self.on_rsc_action),
+			('defaultrsc', gtk.STOCK_EXECUTE, _('Default'), None,_('work as default'), self.on_rsc_action),
+			('cleanuprsc', gtk.STOCK_CLEAR, _('Cleanup Resource'), None,_('cleanup resource'), self.on_rsc_cleanup),
+			('migratersc', gtk.STOCK_REDO,  _('Migrate Resource'), None, _('migrate a resource to specified node'), 
+				self.on_migrate_rsc),
+			('unmigratersc', gtk.STOCK_UNDO,  _('Clear Migrate Constraints'),
+				None, _('clear constraints created by migrate'),
+				self.on_unmigrate_rsc)
+			]
+		node_actions = [
+			('standby', "ha-standby-node", _('Standby'), None,_('make the node standby'), self.on_standby),
+			('active', "ha-active-node", _('Active'), None,_('make the node active'), self.on_active)
+			]
+
+		toolbar = gtk.Toolbar()
+		toolbar.set_orientation(gtk.ORIENTATION_HORIZONTAL)
+		toolbar.set_style(gtk.TOOLBAR_ICONS)
+		self.vbox.pack_start(toolbar, False)
+
+		rsc_action_group = gtk.ActionGroup("rsc_mgmt")
+		rsc_action_group.add_actions(rsc_actions)
+
+		for action in rsc_actions :
+			action_name = action[0]
+			tool_item = rsc_action_group.get_action(action_name).create_tool_item()
+			toolbar.insert(tool_item, -1)
+
+		separator = gtk.SeparatorToolItem()
+		toolbar.insert(separator, -1)
+
+		node_action_group = gtk.ActionGroup("node_mgmt")
+		node_action_group.add_actions(node_actions)
+
+		for action in node_actions :
+			action_name = action[0]
+			tool_item = node_action_group.get_action(action_name).create_tool_item()
+			toolbar.insert(tool_item, -1)
+
+		self.manage_tree = ManageTree()
+		self.vbox.pack_start(self.manage_tree.widget)
+
+		"""notebook =  gtk.Notebook()
+		self.notebook = notebook
+		vbox.pack_start(notebook, padding=2)
+
+		check_vbox = gtk.VBox()
+		check_vbox.set_border_width(5)
+		tab_label = gtk.Label(_("Check"))
+		notebook.append_page(check_vbox, tab_label)
+		self.check_vbox = check_vbox
+
+		scores_vbox = gtk.VBox()
+		scores_vbox.set_border_width(5)
+		tab_label = gtk.Label(_("Scores"))
+		notebook.append_page(scores_vbox, tab_label)
+		self.scores_vbox = scores_vbox"""
+	
+
+		self.update()
+
+	def update(self, xml_node = None) :
+		self.manage_tree.update()
+		self.vbox.show_all()
+
+	def load_icon(self, name, file) :
+		icons = gtk.IconFactory()
+		icons.add(name,gtk.IconSet(gtk.gdk.pixbuf_new_from_file(file)))
+		icons.add_default()
+
+	def on_rsc_action(self, action) :
+		(cur_type, cur_name) = self.manage_tree.get_selected_node()
+		if action.get_name() == "startrsc" :
+			target_role = "started"
+		elif action.get_name() == "stoprsc" :
+			target_role = "stopped"
+		else :
+			target_role = "#default"
+				
+		(attrs, running_on, metaattrs, params, ops) = \
+			manager.get_rsc_info(cur_name)
+		for param in params :
+			if param["name"] == "target_role" and param["value"] == target_role :
+				return
+
+		for subrsc in manager.get_sub_rsc(cur_name) :
+			(attrs, running_on, metaattrs, params, ops) = \
+				manager.get_rsc_info(subrsc)
+			for metaattr in metaattrs :
+				if metaattr["name"] == "target_role":
+					retval = confirmbox(_("Caused by your previous action, this attribute has been set to \"")
+								+metaattr["value"]
+								+_("\".")+"\n\n"
+								+_("Recommended:")+"\n"
+								+_("Select \"Clear\" to remove the set.")+"\n"
+								+_("The sub-resource will inherit this attribute from current resource."),
+								(gtk.STOCK_CLEAR, gtk.RESPONSE_NO,
+								gtk.STOCK_YES, gtk.RESPONSE_YES,
+								gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL),
+								_("Do you want to retain the \"target_role\" set for sub-resource \"")
+								+subrsc+_("\"?"))
+					if retval in [gtk.RESPONSE_CANCEL, gtk.RESPONSE_DELETE_EVENT] :
+						return	
+					if retval == gtk.RESPONSE_NO:
+						new_metaattrs = metaattrs[:]
+						new_metaattrs.remove(metaattr)
+						manager.update_attrs("up_rsc_metaattrs\n"+subrsc ,"del_rsc_metaattr",
+							metaattrs, new_metaattrs, ["id","name","value"]);
+		manager.do_cmd("set_target_role\n%s\n%s"%(cur_name,target_role))
+
+	def on_rsc_cleanup(self, action) :
+		(cur_type, cur_name) = self.manage_tree.get_selected_node()
+		rsc_list = manager.get_all_rsc()
+		if rsc_list == None :
+			return
+		rsc_options = rsc_list[:]
+		rsc_options.insert(0, _("all resources"))
+
+		node_list = manager.get_normal_nodes()
+		if node_list == None :
+			return
+		node_options = node_list[:]
+		node_options.insert(0, _("all nodes"))
+
+		cleanup = kvbox(_("Cleanup Resource"),
+				[Field("rsc", _("Resource"), cur_name, rsc_options, False, entry_editable = False),
+				Field("node", _("Node"), _("all nodes"), node_options, False, entry_editable = False)])
+
+		if cleanup != None :
+			cleanup_rscs = []
+			if cleanup["rsc"] == _("all resources") :
+				for rsc in rsc_list :
+					if manager.get_rsc_type(rsc) == "native" :
+						cleanup_rscs.append(rsc)
+			elif manager.get_rsc_type(cleanup["rsc"]) != "native" :
+				all_subrscs = manager.get_all_subrsc(cleanup["rsc"])
+				if all_subrscs == None :
+					return
+				for rsc in all_subrscs :
+					if manager.get_rsc_type(rsc) == "native" :
+						cleanup_rscs.append(rsc)
+			else :
+				cleanup_rscs.append(cleanup["rsc"])
+			
+			if cleanup["node"] == _("all nodes") :
+				cleanup_nodes = node_list
+			else :
+				cleanup_nodes = [cleanup["node"]]
+					
+			for rsc in cleanup_rscs :
+				for node in cleanup_nodes :
+					manager.do_cmd("cleanup_rsc\n"+ node + "\n" + rsc)
+
+	def on_migrate_rsc(self, action) :
+		(cur_type, cur_name) = self.manage_tree.get_selected_node()
+		node_list = manager.get_normal_nodes()
+		node_list.insert(0, "")
+		
+		migrate = kvbox(_("Migrate Resource"),
+				[Field("rsc", _("Resource"), cur_name, manager.get_all_rsc(), False, entry_editable = False),
+				Field("to_node", _("To Node"), "", node_list, True, entry_editable = False),
+				Field("force", _("Force"), "", ["", "True", "False"], True, entry_editable = False)])
+
+		if migrate != None :
+			running_on = manager.query("rsc_running_on\n%s"%migrate["rsc"])
+			if running_on == None or running_on == [] :
+				if migrate["to_node"] == "" :
+					msgbox(migrate["rsc"]+_(" not migrated: not-active and no prefered node specified."))
+					return
+
+			if migrate["to_node"] in running_on :
+				msgbox(migrate["rsc"]+_(" is already running on ")+migrate["to_node"])
+				return
+
+			if migrate["to_node"] != None and len(migrate["to_node"]) > 0 :
+				location = {}
+				location["id"] = "cli-prefer-" + migrate["rsc"]
+				location["rsc"] = migrate["rsc"]
+				location["score"] = "INFINITY"
+				location["boolean_op"] = ""
+				location["exprs"] = []
+				expr = {}
+				expr["id"] = uuid() 
+				expr["attribute"] = "#uname"
+				expr["operation"] = "eq"
+				expr["value"] = migrate["to_node"]
+				location["exprs"].append(expr)
+
+				manager.update_constraint("rsc_location", location)
+
+			if running_on != None and len(running_on) > 0 :
+				if migrate["force"] == "True" or migrate["to_node"] == "" :
+					location = {}
+					location["id"] = "cli-standby-" + migrate["rsc"]
+					location["rsc"] = migrate["rsc"]
+					location["score"] = "-INFINITY"
+					location["boolean_op"] = ""
+					location["exprs"] = []
+					expr = {}
+					expr["id"] = uuid() 
+					expr["attribute"] = "#uname"
+					expr["operation"] = "eq"
+					expr["value"] = running_on[0]
+					location["exprs"].append(expr)
+					manager.update_constraint("rsc_location", location)
+
+	def on_unmigrate_rsc(self, action) :
+		location_ids = manager.query("get_cos\nrsc_location")
+		migrate_ids = {}
+		rsc_ids = []
+		for id in location_ids :
+			for prefix in ["cli-prefer-", "cli-standby-"] :
+				if id.startswith(prefix) :
+					split_id = id.split(prefix)
+					if len(split_id) > 1 :
+						rsc_id = split_id[1]
+						if not migrate_ids.has_key(rsc_id) :
+							migrate_ids[rsc_id] = []
+						migrate_ids[rsc_id].append(id)
+
+		all_str = _("all migrated resources")
+		rsc_list = migrate_ids.keys()[:]
+		rsc_list.insert(0, all_str)
+		unmigrate = kvbox(_("Clear Migrate Constraints"),
+				[Field("rsc", _("Resource"), all_str, rsc_list, False, entry_editable = False)])
+
+		if unmigrate != None :
+			if unmigrate["rsc"] == all_str :
+				for rsc_id in migrate_ids.keys() :
+					for id in migrate_ids[rsc_id] :
+						manager.do_cmd("del_co\nrsc_location\n"+id)
+			else :
+				for id in migrate_ids[unmigrate["rsc"]] :
+					manager.do_cmd("del_co\nrsc_location\n"+id)
+
+	def on_standby(self, action) :
+		(cur_type, cur_name) = self.manage_tree.get_selected_node()
+		if confirmbox(_("Make") +" " +cur_name + " " +_("standby")+"?") == gtk.RESPONSE_YES:
+			manager.do_cmd("standby\n"+cur_name + "\n" + "on")
+
+	def on_active(self, action) :
+		(cur_type, cur_name) = self.manage_tree.get_selected_node()
+		if confirmbox(_("Make") +" " +cur_name + " " + _("active")+"?") == gtk.RESPONSE_YES :
+			manager.do_cmd("standby\n"+cur_name + "\n" + "off")
+
+
+class ManageTree() :
+	store = None
+	tree = None
+	last_iter = None
+	def on_right_click(self, widget, event) :
+		if event.type == gtk.gdk.BUTTON_PRESS and event.button == 3 :
+			menu = None
+			if window.cur_type in ["node"] :
+				menu = window.uimanager.get_widget("/node_popup")
+			elif window.cur_type in ["primitive", "group", "clone", "master_slave"] :
+				menu = window.uimanager.get_widget("/resource_popup")
+			else :
+				menu = window.uimanager.get_widget("/tools_popup")
+			menu.popup(None, None, None, event.button, event.time)
+
+	def __init__(self) :
+		treeiter = {}
+		self.store = gtk.TreeStore(str, str, str, str)
+
+		tree = gtk.TreeView(self.store)
+		add_column(tree, _("Type"), 0, self.render_icon)
+		add_column(tree, _("Name"), 1)
+		add_column(tree, _("Status"), 2)
+		add_column(tree, _("Details"), 3)
+		#tree.connect("cursor-changed", self.on_cursor_changed, tree.get_selection())
+		#tree.connect("event-after", self.on_right_click)
+
+		sw = gtk.ScrolledWindow()
+		sw.set_shadow_type(gtk.SHADOW_IN)
+		sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+		sw.add(tree)
+		self.widget = sw
+		self.tree = tree
+
+		self.load_icon("failed","@HA_DATADIR@/heartbeat-gui/failed.png")
+		self.load_icon("timeout","@HA_DATADIR@/heartbeat-gui/timeout.png")
+		self.load_icon("running","@HA_DATADIR@/heartbeat-gui/running.png")
+		self.load_icon("stopped","@HA_DATADIR@/heartbeat-gui/stopped.png")
+		self.load_icon("dirty-stopped","@HA_DATADIR@/heartbeat-gui/dirty-stopped.png")
+
+	def get_selected_node(self):
+		(model, iter) = self.tree.get_selection().get_selected()
+		name = model.get_value(iter, 0)
+		name = model.get_value(iter, 1)
+		return (type, name)
+	
+	def render_icon(self, tvcolumn, cell, model, iter):
+ 		icons = {-2:"stopped",
+			 -1:gtk.STOCK_PREFERENCES,
+			  0:"running",
+			  1:"stopped",
+			  2:"dirty-stopped",
+			  3:"failed"}
+		status = self.iter_status(model,iter)
+		pb = self.tree.render_icon(icons[status],
+			gtk.ICON_SIZE_SMALL_TOOLBAR, None)
+       		cell.set_property('pixbuf', pb)
+		return
+
+	def load_icon(self, name, file) :
+		icons = gtk.IconFactory()
+		icons.add(name,gtk.IconSet(gtk.gdk.pixbuf_new_from_file(file)))
+		icons.add_default()
+
+	def iter_status(self, model, iter) :
+		# -1:config 0: ok, 1: stopped, 2: umanaged, 3:failed, 4:stop failed
+		type = model.get_value(iter, 0)
+		status = model.get_value(iter, 2)
+		iter_status = 0
+		if type == _("native") :
+			if string.find(status, _("not running")) != -1 :
+				iter_status = 1
+			elif string.find(status, _("running")) != -1 :
+				iter_status = 0
+			elif string.find(status, _("fail")) != -1 :
+				iter_status = 3
+			else :
+				iter_status = 2
+		
+		elif type == "node" :
+			if status == _("ping node") :
+				iter_status = -1				
+			elif string.find(status, _("running")) != -1 :
+				iter_status = 0
+			else :
+				iter_status = 1
+		elif type in [_("group"),_("resources"),_("clone"),_("master")]:
+			iter_status = 0
+		elif type in [_("Orders"),_("Locations"), _("Colocations")] :
+			iter_status = -1
+		else :
+			iter_status = -2
+		if model.iter_has_child(iter) :
+			for i in range(0, model.iter_n_children(iter)) :
+				child = model.iter_nth_child(iter,i)
+				child_status = self.iter_status(model, child)
+				if child_status > iter_status :
+					iter_status = child_status
+		
+		return iter_status
+
+	def save_iter_status(self, model, path, iter, expand_status):
+		type = model.get_value(iter, 0)
+		name = model.get_value(iter, 1)
+		expand_status[(type, name)] = self.tree.row_expanded(path)
+
+	
+	def restore_iter_status(self, model, path, iter, user_data):
+		(select_name, select_type, select_path, expand_status) = user_data
+		type = model.get_value(iter, 0)
+		name = model.get_value(iter, 1)
+		path = model.get_path(iter)
+		if name == select_name and type == select_type and path == select_path:
+			self.tree.get_selection().select_iter(iter)
+		if expand_status.has_key((name,type)) :
+			if expand_status[name, type] :
+				self.tree.expand_row(path, False)
+			else :
+				self.tree.collapse_row(path)
+		else :
+			self.tree.expand_row(path, False)
+			
+	def save_tree_status(self) :
+		(model, iter) = self.tree.get_selection().get_selected()
+		if iter != None :
+			select_type = model.get_value(iter, 0)
+			select_name = model.get_value(iter, 1)
+			select_path = model.get_path(iter)
+		else :
+			select_name = None
+			select_type = None
+			select_path = None
+		expand_status = {}
+		self.store.foreach(self.save_iter_status, expand_status)
+		return (select_name, select_type, select_path, expand_status)
+
+	def restore_tree_status(self, tree_status) :
+		self.store.foreach(self.restore_iter_status, tree_status)
+		
+	def update(self) :
+		
+		tree_status = self.save_tree_status()		
+		
+		self.store.clear()
+		if not manager.connected :
+			return
+		
+		nodes = manager.get_all_nodes()
+		if nodes == None :
+			return
+
+		active_nodes = manager.get_active_nodes()
+		if active_nodes == None :
+			return
+
+		crm_nodes = manager.get_crm_nodes()
+		if crm_nodes == None :
+			return
+		
+		config = manager.get_crm_info()
+		if config.has_key("have_quorum") and config["have_quorum"] == "true" :
+			status = _("with quorum")
+		else :
+			status = _("without quorum")
+		
+		cluster_type = manager.get_cluster_type().capitalize()
+		if len(cluster_type) > 0 :
+			cluster_type += " & Pacemaker"
+		else :
+			cluster_type += "Pacemkaer"
+
+		root = self.store.append(None, ["cluster", cluster_type, status, ""])
+		
+		nodes_root = self.store.append(root, ["nodes", _("Nodes"),"", ""])
+
+		for node in nodes :
+			self.add_node(nodes_root, node, node in active_nodes, node in crm_nodes)
+
+		rscs_root = self.store.append(root, ["resources", _("Resources"),"", ""])
+		rscs = manager.get_top_rsc()
+		for rsc in rscs :
+			self.add_rsc(rscs_root, rsc)
+		
+		self.restore_tree_status(tree_status)
+		(name, type, path, expand_status) = tree_status
+		if  name == None :
+			self.tree.get_selection().select_iter(root)
+			self.tree.expand_all()
+ 		#self.on_cursor_changed(self.widget, self.widget.get_selection())
+		
+		
+	def add_rsc(self, parent, rsc) :
+		type = manager.get_rsc_type(rsc)
+		status = ""
+		label = ""
+		if type == "native" :
+			label = _("native")
+			status = manager.get_rsc_status(rsc)
+			nodes = manager.get_rsc_running_on(rsc)
+			if nodes != None and len(nodes)>0:
+				self.store.append(parent,[_(label), rsc, _(status) + _(" on ")+str(nodes), ""])
+			else :
+				self.store.append(parent,[_(label), rsc, _(status), ""])
+				
+		elif type in ["group","clone","master"] :
+			label = type
+			status = type
+			iter = self.store.append(parent,[_(label), rsc, _(status), ""])
+			for subrsc in manager.get_sub_rsc(rsc) :
+				self.add_rsc(iter, subrsc)
+					
+	def add_node(self, nodes_root, node, active, started):
+		status = _("unknown")
+		if not started :
+			node_type = manager.get_nodetype(node)
+			if  node_type == "normal" :
+				status = _("never started")
+			elif node_type == "ping" :
+				status = _("ping node")
+			else :
+				status = _("unknown type")
+		else :
+			if not active :
+				status = _("stopped")
+			else :		
+				dc = manager.get_dc()
+				if dc != None and node in dc :
+					status = _("running(dc)")
+				else :
+					status = _("running")
+			if manager.get_node_config(node)["standby"] == "True" :
+				status = status + "-"+ _("standby")
+
+		node_iter = self.store.append(nodes_root,["node", node, status, ""])
+
+		if active :
+	 		running_rsc = manager.get_running_rsc(node)
+ 			for rsc in running_rsc :
+ 				self.add_rsc(node_iter, rsc)
+
+class MainTree(Tree) :
+	def __init__(self) :
+		obj_type = "cib"
+		self.store = gtk.TreeStore(str, str)
+		treeiter = {}
+		if validate_type == "dtd" :
+			self.dtd_elem = manager.get_dtd_elem(obj_type)
+			for (name, mod) in self.dtd_elem.get_content_model()[1] :
+				if mod == '' :
+					treeiter[name] = self.store.append(None, [_(name_cap(name)), name])
+					sub_dtd_elem = manager.get_dtd_elem(name)
+					for (sub_name, sub_mod) in sub_dtd_elem.get_content_model()[1] :
+						if sub_mod == '' :
+							treeiter[sub_name] =  \
+								self.store.append(treeiter[name], [_(name_cap(sub_name)), sub_name])
+					
+
+			#(u',', [(u'configuration', ''), (u'status', '')], '')
+		treeiter["management"] = self.store.append(None, ["Management", "management"])
+		self.treeiter = treeiter
+
+		widget = gtk.TreeView(self.store)
+		widget.set_headers_visible(False)
+		add_column(widget, _(obj_type), 0, self.render_icon)
+		widget.expand_all()
+		widget.set_size_request(150, 100)
+		widget.connect("cursor-changed", self.on_cursor_changed, widget.get_selection())
+		widget.connect("event-after", self.on_right_click)
+		self.widget = widget
+
+
+	def on_cursor_changed(self, treeview, selection) :
+		(model, iter) = selection.get_selected()
+		#if not window.can_change_view() :
+		#	if self.last_iter != None :
+		#		selection.select_iter(self.last_iter)
+		#		return
+		if iter == None :
+			window.select_view(None, None, None)
+			return
+		#type = model.get_value(iter, 2)
+		name = model.get_value(iter, 0)
+		type = model.get_value(iter, 1)
+		#status = model.get_value(iter, 1)
+		window.select_view(type, name)
+		self.last_iter = iter
+		
+
+
+	def render_icon(self, tvcolumn, cell, model, iter):
+		name = model.get_value(iter, 1)
+		stocks = {
+				"cib":  gtk.STOCK_HARDDISK,
+				"configuration": gtk.STOCK_HARDDISK,
+				"status": gtk.STOCK_FIND,
+				"crm_config": gtk.STOCK_PREFERENCES,
+				"nodes": gtk.STOCK_NETWORK,
+				"resources": gtk.STOCK_DIRECTORY,
+				"constraints": gtk.STOCK_PROPERTIES,
+				"management" : gtk.STOCK_EXECUTE
+			}
+ 		icons = {-2:gtk.STOCK_DIALOG_INFO,
+			 -1:gtk.STOCK_PREFERENCES,
+			  0:gtk.STOCK_YES,
+			  1:gtk.STOCK_DIALOG_INFO,
+			  2:gtk.STOCK_DIALOG_WARNING,
+			  3:gtk.STOCK_DIALOG_ERROR}
+		status = self.iter_status(model,iter)
+		pb = self.widget.render_icon(stocks.get(name, gtk.STOCK_DIALOG_INFO),
+			gtk.ICON_SIZE_BUTTON, None)
+       		cell.set_property('pixbuf', pb)
+		return
+
+	def iter_status(self, model, iter) :
+		return 0
+		# -1:config 0: ok, 1: stopped, 2: umanaged, 3:failed, 4:stop failed
+		type = model.get_value(iter, 2)
+		status = model.get_value(iter, 1)
+		iter_status = 0
+		if type == _("native") :
+			if string.find(status, _("not running")) != -1 :
+				iter_status = 1
+			elif string.find(status, _("running")) != -1 :
+				iter_status = 0
+			elif string.find(status, _("fail")) != -1 :
+				iter_status = 3
+			else :
+				iter_status = 2
+		
+		elif type == "node" :
+			if status == _("ping node") :
+				iter_status = -1				
+			elif string.find(status, _("running")) != -1 :
+				iter_status = 0
+			else :
+				iter_status = 1
+		elif type in [_("group"),_("resources"),_("clone"),_("master")]:
+			iter_status = 0
+		elif type in [_("orders"),_("locations"), _("colocations")] :
+			iter_status = -1
+		else :
+			iter_status = -2
+		if model.iter_has_child(iter) :
+			for i in range(0, model.iter_n_children(iter)) :
+				child = model.iter_nth_child(iter,i)
+				child_status = self.iter_status(model, child)
+				if child_status > iter_status :
+					iter_status = child_status
+		
+		return iter_status
+		
+	def update(self) :
+		selection = self.widget.get_selection()
+		(model, iter) = selection.get_selected()
+		if iter == None :
+			selection.select_iter(self.treeiter["management"])
+			window.select_view("management")
 
 class View :
 	glade = None
@@ -864,8 +1673,923 @@ class NodeView(View) :
 		make_label_active(self.glade.get_widget("l_unclean"),_("Unclean:"),"www.linux-ha.org")
 		make_label_active(self.glade.get_widget("l_expected_up"),_("Expected up:"),"www.linux-ha.org")
 	
-		
+
 class ClusterView(View) :
+	def update(self, xml_node = None) :
+		self.cluster_info_labels = None
+		self.cib_attrs_labels = None
+		for line in self.cluster_info_vbox.get_children() :
+			self.cluster_info_vbox.remove(line)
+		for line in self.cib_attrs_vbox.get_children() :
+			self.cib_attrs_vbox.remove(line)
+
+		self.widget.show_all()
+
+		config = manager.get_cluster_config()
+		if config == None and len(config) == 0 :
+			self.widget.get_nth_page(0).hide_all()
+		else :	
+			cluster_info_labels= {}
+			for key in config.keys():
+				if config.get(key, "") == "" :
+					continue
+				cluster_info_labels[key] = self.add_line(self.cluster_info_vbox, config.get(key,""))
+			self.cluster_info_labels = cluster_info_labels
+			self.widget.get_nth_page(0).show_all()
+
+		xml_node = manager.xml_nodes.get("cib")
+		if xml_node == None :
+			self.widget.get_nth_page(1).hide_all()
+		else :
+			obj_type = xml_node.tagName
+			if validate_type == "dtd" :
+				dtd_elem = manager.get_dtd_elem(obj_type)
+				cib_attrs_labels = {}
+				for attr_name in dtd_elem.get_attr_list() :
+					attr_value = xml_node.getAttribute(attr_name)
+					if attr_value == "" :
+						continue
+					cib_attrs_labels[attr_name] = self.add_line(self.cib_attrs_vbox, attr_value)
+				self.cib_attrs_labels = cib_attrs_labels
+				self.widget.get_nth_page(1).show_all()
+
+		self.on_after_show()
+
+	def add_line(self, vbox, value) :
+		hbox = gtk.HBox()
+		name_label = gtk.Label()
+		name_label.set_alignment(0, 0.5)
+		eventbox = gtk.EventBox()
+		eventbox.add(name_label)
+
+		value_label = gtk.Label(value)
+		value_label.set_alignment(0, 0.5)
+
+		hbox.pack_start(eventbox, False, padding=5)
+		hbox.pack_start(value_label, False, padding=5)
+		vbox.pack_start(hbox, False, padding=2)
+
+		return name_label
+
+	def on_after_show(self) :
+		info_dict =	{
+				"quorum_server":	"Quorum Server",
+				"use_logd":		"Use Logd",
+				"autojoin":		"Auto Join",
+				"apiauth":		"API Authentication",
+				"auto_failback":	"Auto Failback",
+				"baud":			"Baud Rate",
+				"debug":		"Debug Level",
+				"debugfile":		"Debug File",
+				"deadping":		"Dead Ping",
+				"deadtime":		"Dead Time",
+				"hbversion":		"Heartbeat Version",
+				"hopfudge":		"Hop Fudge",
+				"initdead":		"Initial Dead Time",
+				"keepalive":		"Keep Alive",
+				"logfacility":		"Log Facility",
+				"logfile":		"Log File",
+				"msgfmt":		"Message Format",
+				"nice_failback":	"Nice Failback",
+				"node":			"Node",
+				"normalpoll":		"Normal Poll",
+				"stonith":		"Stonith",
+				"udpport":		"UDP Port",
+				"warntime":		"Warning Time",
+				"watchdog":		"Watchdog",
+				"cluster":		"Cluster"
+				}
+
+
+		if self.cluster_info_labels != None :
+			cluster_type = manager.get_cluster_type()
+			if cluster_type == "openais" :
+				target_site = "www.openais.org"
+			elif cluster_type == "heartbeat" :
+				target_site = "www.linux-ha.org"
+			else :
+				target_site = "www.clusterlabs.org"
+
+			name_label_max_len = 0
+			for key in self.cluster_info_labels.keys() :
+				make_label_active(self.cluster_info_labels[key], _(info_dict.get(key, key)+":"), target_site)
+				name_label_len = len(self.cluster_info_labels[key].get_text())
+				if name_label_len >  name_label_max_len :
+					name_label_max_len = name_label_len
+
+			for name_label in self.cluster_info_labels.values() :
+				name_label.set_width_chars(name_label_max_len)
+
+		if self.cib_attrs_labels != None :
+			target_site = "www.clusterlabs.org"
+			name_label_max_len = 0
+			for key in self.cib_attrs_labels.keys() :
+				make_label_active(self.cib_attrs_labels[key], _(name_cap(key)+":"), target_site)
+				name_label_len = len(self.cib_attrs_labels[key].get_text())
+				if name_label_len >  name_label_max_len :
+					name_label_max_len = name_label_len
+
+			for name_label in self.cib_attrs_labels.values() :
+				name_label.set_width_chars(name_label_max_len)
+			
+	def __init__(self) :
+		notebook =  gtk.Notebook()
+		self.widget = notebook
+
+		cluster_info_vbox = gtk.VBox()
+		cluster_info_vbox.set_border_width(5)
+		tab_label = gtk.Label(_("Cluster"))
+		notebook.append_page(cluster_info_vbox, tab_label)
+		self.cluster_info_vbox = cluster_info_vbox
+
+		cib_attrs_vbox = gtk.VBox()
+		cib_attrs_vbox.set_border_width(5)
+		tab_label = gtk.Label(_("CIB"))
+		notebook.append_page(cib_attrs_vbox, tab_label)
+		self.cib_attrs_vbox = cib_attrs_vbox
+
+		self.update()
+
+class ObjectView :
+	obj_attrs = None
+	elem_notebook = None
+	show_mode = 0
+	
+	def __init__(self, xml_node, is_newobj = False, change_call_back = None, is_topview = False) :
+		self.is_newobj = is_newobj
+		self.is_topview = is_topview
+		self.change_call_back = change_call_back
+		vbox = gtk.VBox()
+		self.vbox = vbox
+		self.widget = vbox
+
+		self.mode_combobox = gtk.combo_box_new_text()
+		self.mode_combobox.append_text(_("List Mode"))
+		self.mode_combobox.append_text(_("Tree Mode"))
+		self.mode_combobox.append_text(_("XML Mode"))
+		self.mode_combobox.set_active(self.show_mode)
+		self.mode_combobox.connect("changed", self.on_changed)
+
+		self.hbox = gtk.HBox()
+		self.hbox.pack_end(self.mode_combobox, False)
+
+		self.label = gtk.Label(_("Show: "))
+		self.hbox.pack_end(self.label, False)
+
+		self.vbox.pack_start(self.hbox, False, padding=2)
+
+		self.update(xml_node)
+
+	def update(self, xml_node = None) :
+		is_newobj = self.is_newobj
+		if xml_node != None :
+			self.xml_node = xml_node
+			self.init_xml_node = xml_node.cloneNode(True)
+
+		attrs_status = False
+		if self.obj_attrs != None :
+			attrs_status = self.obj_attrs.save_status()
+
+		notebook_status = None
+		if self.elem_notebook != None :
+			notebook_status = self.elem_notebook.save_status()
+
+		for child in self.vbox.get_children() :
+			if child != self.hbox :
+				self.vbox.remove(child)
+
+		obj_type = self.xml_node.tagName
+		if validate_type == "dtd" :
+			self.dtd_elem = manager.get_dtd_elem(obj_type)
+			attr_list = self.dtd_elem.get_attr_list()
+			sub_obj_list = self.dtd_elem.get_content_model()[1]
+
+		if len(attr_list) > 0 :
+			has_attr = True
+		else :
+			has_attr = False
+		if len(sub_obj_list)  > 0 :
+			has_elem = True
+		else :
+			has_elem = False
+
+		if len(attr_list) > 7 :
+			obj_box = gtk.HBox()
+			self.vbox.pack_start(obj_box)
+		else :
+			obj_box = self.vbox
+
+		if has_attr :
+			if obj_type == "primitive" :
+				obj_attrs = Primitive(self.xml_node, is_newobj, self.change_call_back)
+			elif obj_type == "rsc_order" :
+				obj_attrs = RscOrder(self.xml_node, is_newobj, self.change_call_back)
+			elif obj_type == "rsc_colocation" :
+				obj_attrs = RscColocation(self.xml_node, is_newobj, self.change_call_back)
+			elif obj_type == "nvpair" :
+				if self.xml_node.parentNode.parentNode.tagName == "instance_attributes" and \
+						self.xml_node.parentNode.parentNode.parentNode.tagName == "primitive" :
+					obj_attrs = PrimInstAttrsNV(self.xml_node, is_newobj, self.change_call_back)
+				elif self.xml_node.parentNode.parentNode.tagName == "meta_attributes" :
+					obj_attrs = MetaAttrsNV(self.xml_node, is_newobj, self.change_call_back)
+				elif self.xml_node.parentNode.parentNode.tagName == "cluster_property_set" :
+					obj_attrs = CRMConfNV(self.xml_node, is_newobj, self.change_call_back)
+				else :
+					obj_attrs = ObjectAttrs(self.xml_node, is_newobj, self.change_call_back)
+			elif obj_type == "expression" :
+				obj_attrs = Expression(self.xml_node, is_newobj, self.change_call_back)
+			elif obj_type == "op" :
+				obj_attrs = OP(self.xml_node, is_newobj, self.change_call_back)
+			else :
+				obj_attrs = ObjectAttrs(self.xml_node, is_newobj, self.change_call_back)
+
+			obj_attrs.restore_status(attrs_status)
+			obj_box.pack_start(obj_attrs.attrs_vbox, False)
+			self.obj_attrs = obj_attrs
+			
+		if has_elem :
+			self.elem_notebook = ElementNotebook(self.xml_node, self.is_topview, self.change_call_back, self.show_mode)
+			if notebook_status != None :
+				self.elem_notebook.restore_status(notebook_status)
+			obj_box.pack_start(self.elem_notebook.widget, True, padding = 5)
+			self.vbox.pack_start(self.elem_notebook.bbox, False, padding = 2)
+
+		self.vbox.show_all()
+		self.on_after_show()
+
+		if not has_elem :
+			self.label.hide_all()
+			self.mode_combobox.hide_all()
+
+	def on_after_show(self) :
+		if self.obj_attrs != None :
+			self.obj_attrs.on_after_show()
+		if self.elem_notebook != None :
+			self.elem_notebook.on_after_show()
+
+	def on_changed(self, widget) :
+		show_mode = self.mode_combobox.get_active()
+		if show_mode != 2 :
+			self.show_mode = show_mode
+			self.update()
+			return
+
+		self.edit_xml()
+		self.mode_combobox.set_active(self.show_mode)
+
+	def edit_xml(self) :
+		xml_dlg = EditXMLDlg(self.xml_node)
+		while True :
+			new_xml_node = xml_dlg.run()
+			if new_xml_node == None :
+				break
+			if not self.is_topview :
+				xml_dlg.destroy()
+				self.xml_node.parentNode.replaceChild(new_xml_node, self.xml_node)
+				self.xml_node = new_xml_node
+				self.update()
+				if self.change_call_back != None :
+					self.change_call_back()
+				break
+			else :
+				xml_str = new_xml_node.toxml().replace("\n", "")
+				manager.cib_do_cmd("cib_replace\n%s\n%s"%(str(self.xml_node.tagName), str(xml_str)))
+				if manager.failed_reason != "" :
+					msgbox(manager.failed_reason)
+				else :
+					xml_dlg.destroy()
+					break
+
+	def validate(self) :
+		passed = True
+		if self.obj_attrs != None :
+			passed = self.obj_attrs.verify_values()
+		return passed
+
+	def reset(self) :
+		new_xml_node = self.init_xml_node.cloneNode(True)
+		try :
+			self.xml_node.parentNode.replaceChild(new_xml_node, self.xml_node)
+		except xml.dom.NotFoundErr :
+			msgbox(_("The object doesn't exist"))
+			return
+		self.xml_node = new_xml_node
+
+class EditXMLDlg:
+	def __init__(self, xml_node) :
+		global top_window
+		self.xml_node = xml_node
+
+		dialog = gtk.Dialog(_("Edit XML"), top_window, gtk.DIALOG_MODAL,
+			(gtk.STOCK_OK, gtk.RESPONSE_OK, str(_("Reset")), gtk.RESPONSE_APPLY, gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL))
+		dialog.set_size_request(700, 600)
+
+		actions = [
+			("import", gtk.STOCK_REVERT_TO_SAVED, _("Import"), "<control>O",
+				_("Import XML"), self.import_xml),
+			("export", gtk.STOCK_SAVE_AS, _("Export"), "<control>S",
+				_("Export XML"), self.export_xml)
+			 ]
+
+		action_group = gtk.ActionGroup("rw_xml_file")
+		action_group.add_actions(actions)
+
+		toolbar = gtk.Toolbar()
+		toolbar.set_orientation(gtk.ORIENTATION_HORIZONTAL)
+		toolbar.set_style(gtk.TOOLBAR_BOTH)
+		dialog.vbox.pack_start(toolbar, False)
+
+		tool_item = action_group.get_action("import").create_tool_item()
+		toolbar.insert(tool_item, -1)
+
+		tool_item = action_group.get_action("export").create_tool_item()
+		toolbar.insert(tool_item, -1)
+
+		sw = gtk.ScrolledWindow()
+		sw.set_shadow_type(gtk.SHADOW_IN)
+		sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+		self.xml_text = gtk.TextView()
+		self.xml_text.set_wrap_mode(gtk.WRAP_WORD)
+		self.xml_textbuffer = self.xml_text.get_buffer()
+		sw.add(self.xml_text)
+		dialog.vbox.pack_start(sw, padding=1)
+		dialog.set_response_sensitive(gtk.RESPONSE_APPLY, False)
+
+		self.statusbar = gtk.Statusbar()
+		dialog.vbox.pack_end(self.statusbar, False)
+
+		self.xml_str = xml_node.toxml()
+		self.xml_textbuffer.set_text(self.xml_str)
+		self.update_statusbar()
+		self.xml_textbuffer.connect("changed", self.on_changed)
+
+		self.xml_text.connect_after("move-cursor", self.update_statusbar)
+		self.xml_text.connect("event-after", self.on_click_text)
+		self.xml_text.connect_after("toggle-overwrite", self.update_statusbar)
+		dialog.show_all()
+		self.dialog = dialog
+		self.save_top_window = top_window
+
+	def on_changed(self, widget) :
+		self.dialog.set_response_sensitive(gtk.RESPONSE_APPLY, True)
+		self.update_statusbar()
+
+	def on_click_text(self, widget, event) :
+		if event.type == gtk.gdk.BUTTON_PRESS and event.button == 1 :
+			self.update_statusbar()
+
+	def update_statusbar(self, textview = None , step_size = None, count = None, extend_selection = None) :
+		iter = self.xml_textbuffer.get_iter_at_mark(self.xml_textbuffer.get_insert())
+		line = iter.get_line()
+		column = iter.get_line_offset()
+
+		if self.xml_text.get_overwrite() :
+			overwrite = _("OVR")
+		else :
+			overwrite = _("INS")
+
+		self.statusbar.pop(0)
+		self.statusbar.push(0, _("Ln %d, Col %d\t%s"%(line+1, column+1, overwrite)))
+
+	def run(self) :
+		while True :
+			ret = self.dialog.run()
+			if ret in [gtk.RESPONSE_CANCEL, gtk.RESPONSE_DELETE_EVENT] :
+				self.destroy()
+				return None
+			elif ret == gtk.RESPONSE_APPLY :
+				self.xml_textbuffer.set_text(self.xml_str)
+				self.dialog.set_response_sensitive(gtk.RESPONSE_APPLY, False)
+			else :
+				new_xml_str = self.xml_textbuffer.get_text(*self.xml_textbuffer.get_bounds())
+				try :
+					new_xml_node = parseString(new_xml_str).documentElement
+				except xml.parsers.expat.ExpatError, msg :
+					msgbox(_("Failed to parse the XML: ") + _(msg))
+					continue
+
+				return new_xml_node
+
+	def destroy(self) :
+		global top_window
+		self.dialog.destroy()
+		top_window = self.save_top_window
+
+	def import_xml(self, widget) :
+		global top_window
+		file_dialog = gtk.FileChooserDialog(_("Open File"), None, 
+				gtk.FILE_CHOOSER_ACTION_OPEN,
+				(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
+				gtk.STOCK_OPEN, gtk.RESPONSE_OK))
+		file_dialog.set_default_response(gtk.RESPONSE_OK)
+
+		save_top_window = top_window
+		top_window = file_dialog
+
+		filter = gtk.FileFilter()
+		filter.set_name(_("All files"))
+		filter.add_pattern("*")
+		file_dialog.add_filter(filter)
+
+		filter = gtk.FileFilter()
+		filter.set_name(_("XML files"))
+		filter.add_pattern("*.xml")
+		file_dialog.add_filter(filter)
+
+		ret = file_dialog.run()
+		if ret in [gtk.RESPONSE_CANCEL, gtk.RESPONSE_DELETE_EVENT] :
+			open_file = None
+		else :
+			open_file = file_dialog.get_filename()
+
+		top_window = save_top_window
+		file_dialog.destroy()
+
+		if open_file == None :
+			return
+
+		try :
+			file_obj = open(open_file)
+		except IOError, msg :
+			msgbox(_("IO error: ") + str(msg))
+			return
+		
+		try :
+			new_xml_str = file_obj.read()
+		except IOError, msg :
+			msgbox(_("IO error: ") + str(msg))
+			file_obj.close()
+			return
+		file_obj.close()
+
+		self.xml_textbuffer.set_text(new_xml_str)
+
+	def export_xml(self, widget) :
+		sfdlg = SelectFileDlg()
+		node_id = self.xml_node.getAttribute("id")
+		if node_id == "" :
+			default_name = self.xml_node.tagName +  ".xml"
+		else :
+			default_name = self.xml_node.tagName + "-" + self.xml_node.getAttribute("id") + ".xml"
+		save_file = sfdlg.select_file(default_name)
+		if save_file == None :
+			return
+
+		try :
+			fd = os.open(save_file, os.O_RDWR|os.O_CREAT|os.O_TRUNC, 0644)
+		except OSError, msg :
+			msgbox(_("System error: ") + str(msg))
+			return
+
+		new_xml_str = self.xml_textbuffer.get_text(*self.xml_textbuffer.get_bounds())
+
+		try :
+			os.write(fd, new_xml_str)
+		except OSError, msg :
+			msgbox(_("System error: ") + str(msg))
+			os.close(fd)
+			return
+		os.close(fd)
+
+class ElementNotebook :
+	notebook = None
+	def __init__(self, xml_node, is_topview = False, change_call_back = None, show_mode = 0) :
+		self.is_topview = is_topview
+		self.change_call_back = change_call_back
+		self.show_mode = show_mode
+		vbox = gtk.VBox()
+		self.widget = vbox
+
+		self.hbox = gtk.HBox()
+		vbox.pack_start(self.hbox)
+
+		self.sub_vbox = gtk.VBox()
+		vbox.pack_start(self.sub_vbox, False)
+
+		bbox = gtk.HButtonBox()
+		bbox.set_layout(gtk.BUTTONBOX_END)
+		bbox.set_spacing(5)
+		add_btn = gtk.Button(stock=gtk.STOCK_ADD)
+		bbox.add(add_btn)
+		edit_btn = gtk.Button(stock=gtk.STOCK_EDIT)
+		bbox.add(edit_btn)
+		del_btn = gtk.Button(stock=gtk.STOCK_REMOVE)
+		bbox.add(del_btn)
+		self.bbox = bbox
+
+		self.add_btn_handler = add_btn.connect("clicked", self.on_add)
+		self.edit_btn_handler = edit_btn.connect("clicked", self.on_edit)
+		self.del_btn_handler = del_btn.connect("clicked", self.on_del)
+
+		self.add_btn = add_btn
+		self.edit_btn = edit_btn
+		self.del_btn = del_btn
+		self.update(xml_node)
+
+	def update(self, xml_node = None) :
+		if xml_node != None :
+			self.xml_node = xml_node
+		self.elem_lists = []
+		self.obj_type = self.xml_node.tagName
+		for child in self.hbox.get_children() :
+			self.hbox.remove(child)
+
+		self.notebook = gtk.Notebook()
+		self.hbox.pack_start(self.notebook, True, padding=2)
+
+		if validate_type == "dtd" :
+			self.dtd_elem = manager.get_dtd_elem(self.obj_type)
+			for (name, mod) in self.dtd_elem.get_content_model()[1] :
+				elem_node_list = []
+				for elem_node in self.xml_node.getElementsByTagName(name) :
+					if elem_node in self.xml_node.childNodes :
+						elem_node_list.append(elem_node)
+				if len(elem_node_list) > 0 :
+					tab_label = gtk.Label(_(name_cap(name)))
+					sub_dtd_elem = manager.get_dtd_elem(name)
+					if len(sub_dtd_elem.get_attr_list()) == 0 :
+						(name, mod) =  sub_dtd_elem.get_content_model()[1][0]
+						sub_elem_node_list = []
+						for elem_node in elem_node_list :
+							for sub_elem_node in elem_node.getElementsByTagName(name) :
+								if sub_elem_node in elem_node.childNodes :
+									sub_elem_node_list.append(sub_elem_node)
+						elem_node_list = sub_elem_node_list
+					if self.show_mode == 0 :
+						elem_list = ElementList(name, elem_node_list)
+					else :
+						elem_list = ElementTree(name, elem_node_list)
+					self.notebook.append_page(elem_list.widget, tab_label)
+					self.elem_lists.append(elem_list)
+					elem_list.tree.connect("cursor-changed", self.on_cursor_changed)
+					elem_list.tree.connect("event-after", self.on_click)
+
+		if self.notebook.get_n_pages() > 0 :
+			bbox = gtk.VButtonBox()
+			bbox.set_layout(gtk.BUTTONBOX_SPREAD)
+			bbox.set_spacing(5)
+			up_btn = gtk.Button(stock=gtk.STOCK_GO_UP)
+			bbox.add(up_btn)
+			down_btn = gtk.Button(stock=gtk.STOCK_GO_DOWN)
+			bbox.add(down_btn)
+			self.hbox.pack_start(bbox, False, padding=2)
+
+			self.up_btn = up_btn
+			self.down_btn = down_btn
+
+			up_btn.connect("clicked", self.on_up)
+			down_btn.connect("clicked", self.on_down)
+
+			self.hbox.show_all()
+			self.notebook.set_size_request(320, 180)
+			self.notebook.connect("switch-page", self.on_switch_page)
+
+	def on_after_show(self, page_num = None) :
+		selected_node = self.get_selected_node(page_num)
+
+		self.edit_btn.set_sensitive(selected_node != None)
+		self.del_btn.set_sensitive(selected_node != None)
+
+		elem_list = self.get_elem_list(page_num)
+		if elem_list == None :
+			return
+
+		(model, iter) = elem_list.tree.get_selection().get_selected()
+
+		self.up_btn.set_sensitive(iter != None and model.get_path(iter)[-1] != 0)
+		self.down_btn.set_sensitive(iter != None and model.iter_next(iter) != None)
+		self.show_sub_attrs(selected_node)
+
+	def show_sub_attrs(self, selected_node) :
+		for child in self.sub_vbox.get_children() :
+			self.sub_vbox.remove(child)
+
+		if selected_node == None :
+			return
+
+		if validate_type == "dtd" :
+			dtd_elem = manager.get_dtd_elem(selected_node.tagName)
+			attr_list = dtd_elem.get_attr_list()
+
+		name_labels = []
+		name_label_max_len = 0
+		for attr_name in attr_list :
+			attr_value = selected_node.getAttribute(attr_name)
+			if attr_value == "" :
+				continue
+			hbox = gtk.HBox()
+			name_label = gtk.Label(_(name_cap(attr_name)+":"))
+			name_label.set_alignment(0, 0.5)
+
+			name_labels.append(name_label)
+			name_label_len = len(name_label.get_text())
+			if name_label_len > name_label_max_len :
+				name_label_max_len = name_label_len
+
+			value_label = gtk.Label(attr_value)
+			value_label.set_alignment(0, 0.5)
+
+			hbox.pack_start(name_label, False, padding=5)
+			hbox.pack_start(value_label, False, padding=5)
+			self.sub_vbox.pack_start(hbox, False, padding=2)
+
+		for name_label in name_labels :
+			name_label.set_width_chars(name_label_max_len)
+
+		self.sub_vbox.show_all()
+
+	def on_cursor_changed(self, treeview) : 
+		self.on_after_show()
+
+	def on_click(self, widget, event) :
+		if event.type == gtk.gdk._2BUTTON_PRESS and event.button == 1 :
+			self.on_edit(widget)
+
+	def on_switch_page(self, notebook, page, page_num) :
+		self.on_after_show(page_num)
+
+	def get_selected_node(self, page_num = None) :
+		if page_num == None :
+			page_num = self.notebook.get_current_page()
+		if page_num >= 0 :
+			selected_node = self.elem_lists[page_num].get_selected_node()
+		else :
+			selected_node = None
+		return selected_node
+
+	def get_elem_list(self, page_num = None) :
+		if page_num == None :
+			page_num = self.notebook.get_current_page()
+		if page_num >= 0 :
+			elem_list = self.elem_lists[page_num]
+		else :
+			elem_list = None
+		return elem_list
+
+	def on_add(self, widget) :
+		global top_window
+
+		dialog = gtk.Dialog("Add", top_window, gtk.DIALOG_MODAL,
+			(gtk.STOCK_OK, gtk.RESPONSE_OK, gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL))
+		dialog.set_border_width(5)
+
+		option_list = self.get_elem_options()
+
+		if len(option_list) == 0 :
+			return
+		elif len(option_list) == 1 :
+			obj_type = option_list[0]
+		else :
+			radio_btns = {}
+			radio_btn = None
+			for option in option_list :
+				radio_btn = gtk.RadioButton(radio_btn, _(name_cap(option)))	
+				dialog.vbox.pack_start(radio_btn, False, padding=2)
+				radio_btns[radio_btn] = option
+
+			save_top_window = top_window
+			top_window = dialog
+			dialog.vbox.show_all()
+
+			ret = dialog.run()
+			if ret == gtk.RESPONSE_OK :
+				for radio_btn in radio_btns :
+					if radio_btn.get_active() :
+						obj_type = radio_btns[radio_btn]
+						break
+			else :
+				obj_type = None
+
+			top_window = save_top_window
+			dialog.destroy()
+
+			if obj_type == None :
+				return
+
+		impl = getDOMImplementation()
+		dtd_elem = manager.get_dtd_elem(obj_type)
+		if len(dtd_elem.get_attr_list()) > 0 :
+			newdoc = impl.createDocument(None, obj_type, None)
+			new_elem = newdoc.documentElement
+			self.xml_node.appendChild(new_elem)
+		else :
+			elem_node_list = []
+			for elem_node in self.xml_node.getElementsByTagName(obj_type) :
+				if elem_node in self.xml_node.childNodes :
+					elem_node_list.append(elem_node)
+			if len(elem_node_list) == 0 :
+				newdoc = impl.createDocument(None, obj_type, None)
+				mid_elem = newdoc.documentElement
+				self.xml_node.appendChild(mid_elem)
+			else :
+				mid_elem = elem_node_list[0]
+
+			(sep,cont,mod) = dtd_elem.get_content_model()
+			if len(cont) >0 :
+				sub_obj_type = cont[0][0]
+			else :
+				return
+				
+			newdoc = impl.createDocument(None, sub_obj_type, None)
+			new_elem = newdoc.documentElement
+			mid_elem.appendChild(new_elem)
+
+		objdlg = ObjectViewDlg(new_elem, True)
+
+		while True :
+			new_xml_node = objdlg.run()
+			if new_xml_node == None :
+				tmp_elem = objdlg.obj_view.xml_node
+				tmp_elem.parentNode.removeChild(tmp_elem)
+				return
+			if not self.is_topview :
+				objdlg.destroy()
+				self.on_changed()
+				if self.change_call_back != None :
+					self.change_call_back()
+				return
+			else :
+				xml_str = new_xml_node.toxml().replace("\n", "")
+				manager.cib_do_cmd("cib_create\n%s\n%s"%(str(self.obj_type), str(xml_str)))
+				if manager.failed_reason != "" :
+					msgbox(manager.failed_reason)
+				else :
+					objdlg.destroy()
+					return
+
+	def get_elem_options(self) :
+		(sep,cont,mod) =  self.dtd_elem.get_content_model()
+		option_list = []
+		if mod == "*" :
+			for sub in cont :
+				if len(sub) == 2 :
+					option_list.append(sub[0])
+		else :
+			if sep != "|" :
+				for sub in cont :
+					if len(sub) == 2 :
+						if sub[1] == "*" or sub[1] == "+":
+							option_list.append(sub[0])
+						elif sub[1] == "" or sub[1] == "?" :
+							elem_node_list = []
+							for elem_node in self.xml_node.getElementsByTagName(sub[0]) :
+								if elem_node in self.xml_node.childNodes :
+									elem_node_list.append(elem_node)
+							if len(elem_node_list) < 1 or \
+									len(manager.get_dtd_elem(sub[0]).get_attr_list()) == 0 :
+								option_list.append(sub[0])
+
+		return option_list
+							
+
+	def on_edit(self, widget) :
+		selected_node = self.get_selected_node()
+		if selected_node == None :
+			return
+		objdlg = ObjectViewDlg(selected_node, False)
+		while True :
+			new_xml_node = objdlg.run()
+			if new_xml_node == None :
+				self.on_changed()
+				return
+			if not self.is_topview :
+				objdlg.destroy()
+				self.on_changed()
+				if self.change_call_back != None :
+					self.change_call_back()
+				return
+			else :
+				if new_xml_node.getAttribute("id") != "" :
+					xml_str = new_xml_node.toxml().replace("\n", "")
+				else :
+					xml_str = new_xml_node.parentNode.toxml().replace("\n", "")
+
+				manager.cib_do_cmd("cib_replace\n%s\n%s"%(str(self.obj_type), str(xml_str)))
+				if manager.failed_reason != "" :
+					msgbox(manager.failed_reason)
+				else :
+					objdlg.destroy()
+					return
+
+	def on_del(self, widget) :
+		selected_node = self.get_selected_node()
+		if selected_node == None :
+			return
+		ret = confirmbox(_("This will delete the %s \"%s\"")%(_(name_cap(selected_node.tagName)), selected_node.getAttribute("id")),
+				(gtk.STOCK_YES, gtk.RESPONSE_YES, gtk.STOCK_NO, gtk.RESPONSE_NO),
+				_("Delete the selected object?"))
+		if ret == gtk.RESPONSE_YES :
+			if not self.is_topview :
+				selected_node.parentNode.removeChild(selected_node)
+				self.on_changed()
+				if self.change_call_back != None :
+					 self.change_call_back()
+			else :
+				xml_str = selected_node.toxml().replace("\n", "")
+				manager.cib_do_cmd("cib_delete\n%s\n%s"%(str(self.obj_type), str(xml_str)))
+				if manager.failed_reason != "" :
+					msgbox(manager.failed_reason)
+
+	def on_up(self, widget) :
+		elem_list = self.get_elem_list()
+		if elem_list == None :
+			return
+
+		(model, iter) = elem_list.tree.get_selection().get_selected()
+		if iter == None or model.get_path(iter)[-1] == 0 :
+			return
+
+		(type, id) =  elem_list.get_node_key(model, iter)
+
+		path = model.get_path(iter)
+		if path[-1] < 1 :
+			return
+		prev_path_list = list(path[:])
+		prev_path_list[-1] = prev_path_list[-1] - 1
+		prev_path = tuple(prev_path_list)
+
+		prev_iter = model.get_iter(prev_path)
+		(prev_type, prev_id) = elem_list.get_node_key(model, prev_iter)
+
+		selected_node = elem_list.nodes[(type, id)]
+		prev_node = elem_list.nodes[(prev_type, prev_id)]
+
+		try :
+			selected_node.parentNode.insertBefore(selected_node.cloneNode(True), prev_node)
+		except :
+			return
+
+		selected_node.parentNode.removeChild(selected_node)
+
+		if self.is_topview :
+			xml_str = self.xml_node.toxml().replace("\n", "")
+			manager.cib_do_cmd("cib_replace\n%s\n%s"%(str(self.obj_type), str(xml_str)))
+			if manager.failed_reason != "" :
+				msgbox(manager.failed_reason)
+		else :
+			self.on_changed()
+
+	def on_down(self, widget) :
+		elem_list = self.get_elem_list()
+		if elem_list == None :
+			return
+
+		(model, iter) = elem_list.tree.get_selection().get_selected()
+		if iter == None or model.iter_next(iter) == None :
+			return
+
+		(type, id) =  elem_list.get_node_key(model, iter)
+		selected_node = elem_list.nodes[(type, id)]
+
+		n_iter = model.iter_next(iter)
+		nn_iter = model.iter_next(n_iter)
+
+		if nn_iter == None :
+			try :
+				selected_node.parentNode.appendChild(selected_node.cloneNode(True))
+			except :
+				return
+		else :
+			(nn_type, nn_id) = elem_list.get_node_key(model, nn_iter)
+			nn_node = elem_list.nodes[(nn_type, nn_id)]
+			try :
+				selected_node.parentNode.insertBefore(selected_node.cloneNode(True), nn_node)
+			except :
+				return
+		selected_node.parentNode.removeChild(selected_node)
+
+		if self.is_topview :
+			xml_str = self.xml_node.toxml().replace("\n", "")
+			manager.cib_do_cmd("cib_replace\n%s\n%s"%(str(self.obj_type), str(xml_str)))
+			if manager.failed_reason != "" :
+				msgbox(manager.failed_reason)
+		else :
+			self.on_changed()
+
+	def on_changed(self) :
+		notebook_status = self.save_status()
+		self.update()
+		if notebook_status != None :
+			self.restore_status(notebook_status)
+		self.on_after_show()
+
+	def save_status(self) :
+		elem_list =  self.get_elem_list()
+		if elem_list == None :
+			return None
+		page_type = elem_list.obj_type
+		tree_status =  elem_list.save_tree_status()
+		return (page_type, tree_status)
+
+	def restore_status(self, notebook_status) :
+		(page_type, tree_status) = notebook_status
+		for i in range(len(self.elem_lists)) :
+			if self.elem_lists[i].obj_type == page_type :
+				self.notebook.set_current_page(i)
+				self.elem_lists[i].restore_tree_status(tree_status)
+				break
+
+class CRMConfigView(View) :
 	name = "clusterview"
 	pengine_metadata = None
 	crmd_metadata = None
@@ -982,8 +2706,6 @@ class ClusterView(View) :
 			for key in self.cluster_info_labels.keys() :
 				make_label_active(self.cluster_info_labels[key],_(info_dict.get(key, key)+":"), target_site)
 			
-		name_cap = lambda name: name.replace("-"," ").replace("_"," ").title().replace("Crmd ","CRMD ").\
-						replace("Pe ", "PE ").replace("Dc ","DC ")
 
 		for widgets in (self.pengine_widgetgroup.widgets, self.crmd_widgetgroup.widgets):
 			if widgets != None:
@@ -1705,49 +3427,67 @@ class AddNativeDlg :
 					dialog.destroy()
 					return None
 		
-class AddObjectDlg :
+
+class ObjectViewDlg :
 	obj_type = None	
 	widgets = None
 	glade = None
+	def __init__(self, xml_node, is_newobj = False) :
+		self.xml_node = xml_node
 
-	def run(self, title, obj_type, meta = None, static_desc = None) :
 		global top_window
 
-		dialog = gtk.Dialog(title, top_window, gtk.DIALOG_MODAL,
-			(gtk.STOCK_OK, gtk.RESPONSE_OK, gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL))
-		dialog.set_border_width(5)
-		if obj_type == "rsc_order" :
-			obj_attrs = RscOrder(True, meta, static_desc)
-		elif obj_type == "rsc_colocation" :
-			obj_attrs = RscColocation(True, meta, static_desc)
-		elif obj_type == "nvpair" :
-			obj_attrs = InstAttrsNV(True, meta, static_desc)
-		elif obj_type == "expression" :
-			obj_attrs = Expression(True, meta, static_desc)
-		elif obj_type == "op" :
-			obj_attrs = OP(True, meta, static_desc)
+		if is_newobj :
+			title_prefix = "Add"
 		else :
-			obj_attrs = ObjectAttrs(obj_type, True, meta, static_desc)
+			title_prefix = "Edit"
 
-		dialog.vbox.pack_start(obj_attrs.attrs_vbox)
+		title = _(title_prefix) + " " + _(name_cap(xml_node.tagName))
+		dialog = gtk.Dialog(title, top_window, gtk.DIALOG_MODAL,
+			(gtk.STOCK_OK, gtk.RESPONSE_OK, str(_("Reset")), gtk.RESPONSE_APPLY, gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL))
+		dialog.set_border_width(5)
+		dialog.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_NORMAL)
+		self.dialog = dialog
+
+		obj_view = ObjectView(self.xml_node, is_newobj, self.on_changed)
+		self.obj_view = obj_view
+		dialog.vbox.pack_start(obj_view.widget)
 		dialog.vbox.show()
-		save_top_window = top_window
+		dialog.set_response_sensitive(gtk.RESPONSE_APPLY, False)
+
+		self.save_top_window = top_window
 		top_window = dialog
 
+	def run(self) :
 		while True :
-			ret = dialog.run()
+			ret = self.dialog.run()
 			if ret in [gtk.RESPONSE_CANCEL, gtk.RESPONSE_DELETE_EVENT] :
-				top_window = save_top_window
-				dialog.destroy()
+				self.obj_view.reset()
+				self.destroy()
 				return None
+			elif ret == gtk.RESPONSE_APPLY :
+				self.on_reset()
 			else :
-				passed = obj_attrs.verify_values()
+				passed = self.obj_view.validate()
 				if passed :
-					object = obj_attrs.get_values()
-					top_window = save_top_window
-					dialog.destroy()
-					return object
+					return self.obj_view.xml_node
 
+	def destroy(self) :
+		global top_window
+		self.dialog.destroy()
+		top_window = self.save_top_window
+
+	def on_changed(self) :
+		self.dialog.set_response_sensitive(gtk.RESPONSE_APPLY, True)
+
+	def on_reset(self) :
+		ret = confirmbox(_("This will reset the current object attributes and all sub-objects to the initial configurations."),
+				(gtk.STOCK_YES, gtk.RESPONSE_YES, gtk.STOCK_NO, gtk.RESPONSE_NO),
+				_("Reset the configurations?"))
+		if ret == gtk.RESPONSE_YES :
+			self.obj_view.reset()
+			self.obj_view.update()
+			self.dialog.set_response_sensitive(gtk.RESPONSE_APPLY, False)
 
 class ClusterReportDlg :
 	def set_params(self) :
@@ -2079,6 +3819,7 @@ class DesReportDlg:
 				dialog.vbox.pack_start(label, False, padding=1)
 
 				sw = gtk.ScrolledWindow()
+				sw.set_shadow_type(gtk.SHADOW_IN)
 				sw.set_border_width(5)
 				sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
 				des_text = gtk.TextView()
@@ -2145,7 +3886,7 @@ class MainWindow :
 	cur_status = None
 	cur_name = None
 	cur_view = None
-	view_widget = None
+	main_view = None
 	statusbar = None
 	tree = None
 	
@@ -2214,7 +3955,9 @@ class MainWindow :
 
 	# functions
 	def update(self) :
-		self.tree.update()
+		self.maintree.update()
+		if self.cur_view != None :
+			self.cur_view.update(manager.xml_nodes.get(self.cur_type))
 		self.statusbar.pop(2)
 		return False
 	
@@ -2232,16 +3975,21 @@ class MainWindow :
 			return True
 		return False
 	
-	def select_view(self, type, name, status) :
-		for child in self.view_widget.get_children() :
-			self.view_widget.remove(child)
+	def select_view(self, type, name = None, status = None) :
+		for child in self.mainview_sw.get_children() :
+			self.mainview_sw.remove(child)
 
 		self.cur_type, self.cur_name, self.cur_status = type, name, status
 		self.update_ui()
-		if type == "cluster" :
+		if type == "configuration" :
 			self.cur_view = ClusterView()
+		elif type in ["crm_config", "nodes", "resources", "constraints", "status"] \
+				and manager.xml_nodes.get(type) != None :
+			self.cur_view = ObjectView(manager.xml_nodes.get(type), is_topview = True)
 		elif type == "node" and status not in [_("never started"),_("ping node"),_("unknown type")]:
 			self.cur_view = NodeView(name)
+		elif type == "management" :
+			self.cur_view = ManageView()
 		elif type in [_("native")] :
 			self.cur_view = RscView(name)
 		elif type == _("location") :
@@ -2253,9 +4001,10 @@ class MainWindow :
 		elif type in [ _("clone"), _("group"), _("master")] :
 			self.cur_view = CompoundRscView((name,type))
 		else :
-			self.cur_view = View()
-		self.view_widget.add(self.cur_view.widget)
-		self.cur_view.on_after_show()
+			return
+			#self.cur_view = View()
+		self.mainview_sw.add_with_viewport(self.cur_view.widget)
+		#self.cur_view.on_after_show()
 			
 	# ui event handler	
 	def on_quit(self, action) :
@@ -2287,8 +4036,12 @@ class MainWindow :
 		if ret == gtk.RESPONSE_OK:
 			if not manager.login(server, user, password):
 				msgbox(manager.failed_reason)
+				return
 			else:
 				manager.save_login_info(server,user)
+				self.maintree = MainTree()
+				self.maintree_sw.add(self.maintree.widget)
+				self.maintree_sw.show_all()
 	
 		self.update_ui()
 
@@ -2786,17 +4539,10 @@ class MainWindow :
 		# add the icons to gtk stock
 		self.load_icon("ha-login","@HA_DATADIR@/heartbeat-gui/login.png")
 		self.load_icon("ha-logout","@HA_DATADIR@/heartbeat-gui/logout.png")
-		self.load_icon("ha-exit","@HA_DATADIR@/heartbeat-gui/exit.png")
 		self.load_icon("ha-standby-node","@HA_DATADIR@/heartbeat-gui/standby-node.png")
 		self.load_icon("ha-active-node","@HA_DATADIR@/heartbeat-gui/active-node.png")
-		self.load_icon("ha-add-resource","@HA_DATADIR@/heartbeat-gui/add-resource.png")
-		self.load_icon("ha-remove-resource","@HA_DATADIR@/heartbeat-gui/remove-resource.png")
 		self.load_icon("ha-start-resource","@HA_DATADIR@/heartbeat-gui/start-resource.png")
 		self.load_icon("ha-stop-resource","@HA_DATADIR@/heartbeat-gui/stop-resource.png")
-		self.load_icon("ha-cleanup-resource","@HA_DATADIR@/heartbeat-gui/cleanup-resource.png")
-		self.load_icon("ha-default-resource","@HA_DATADIR@/heartbeat-gui/default-resource.png")
-		self.load_icon("ha-up-resource","@HA_DATADIR@/heartbeat-gui/up-resource.png")
-		self.load_icon("ha-down-resource","@HA_DATADIR@/heartbeat-gui/down-resource.png")
 		self.load_icon("ha-master-resource","@HA_DATADIR@/heartbeat-gui/master-resource.png")
 		self.load_icon("ha-slave-resource","@HA_DATADIR@/heartbeat-gui/slave-resource.png")
 
@@ -2808,22 +4554,6 @@ class MainWindow :
 					<menuitem action="login"/>
 					<menuitem action="logout"/>
 					<menuitem action="quit"/>
-				</menu>
-				<menu action="resource">
-					<menuitem action="addrsc"/>
-					<menuitem action="delrsc"/>
-					<menuitem action="cleanuprsc"/>
-					<menuitem action="startrsc"/>
-					<menuitem action="stoprsc"/>
-					<menuitem action="defaultrsc"/>
-					<menuitem action="uprsc"/>
-					<menuitem action="downrsc"/>
-					<menuitem action="migratersc"/>
-					<menuitem action="unmigratersc"/>
-				</menu>
-				<menu action="node">
-					<menuitem action="standby"/>
-					<menuitem action="active"/>
 				</menu>
 				<menu action="tools">
 					<menuitem action="report"/>
@@ -2857,6 +4587,11 @@ class MainWindow :
 				<toolitem action="login"/>
 				<toolitem action="logout"/>
 				<separator/>
+				<toolitem action="report"/>
+				<separator/>
+				<toolitem action="quit"/>
+			</toolbar>
+			<toolbar name="resource_toolbar">
 				<toolitem action="addrsc"/>
 				<toolitem action="delrsc"/>
 				<toolitem action="cleanuprsc"/>
@@ -2867,13 +4602,10 @@ class MainWindow :
 				<toolitem action="downrsc"/>
 				<toolitem action="migratersc"/>
 				<toolitem action="unmigratersc"/>
-				<separator/>
+			</toolbar>
+			<toolbar name="node_toolbar">
 				<toolitem action="standby"/>
 				<toolitem action="active"/>
-				<separator/>
-				<toolitem action="report"/>
-				<separator/>
-				<toolitem action="quit"/>
 			</toolbar>
 		</ui>'''
 		uimanager = gtk.UIManager()
@@ -2930,10 +4662,33 @@ class MainWindow :
 		toolbar.set_style(gtk.TOOLBAR_ICONS)
 		vbox.pack_start(toolbar, False)
 		
-		glade = gtk.glade.XML(UI_FILE, "mainwin_main", "haclient")
-		main = glade.get_widget("mainwin_main")
-		vbox.pack_start(main, True)
+		hpaned = gtk.HPaned()
+		vbox.pack_start(hpaned)
+
 		
+		#maintree = MainTree("cib")
+		maintree_sw = gtk.ScrolledWindow()
+		maintree_sw.set_shadow_type(gtk.SHADOW_IN)
+				
+		
+		maintree_sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+		#maintree_sw.add(maintree)
+
+		#maintree_frame = gtk.Frame()
+		#maintree_frame.add(maintree_sw)
+		hpaned.add1(maintree_sw)
+
+		mainview_sw = gtk.ScrolledWindow()
+		mainview_sw.set_shadow_type(gtk.SHADOW_IN)
+		mainview_sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+
+		#mainview_frame = gtk.Frame()
+		#mainview_frame.add(mainview_sw)
+		hpaned.add2(mainview_sw)
+		#glade = gtk.glade.XML(UI_FILE, "mainwin_main", "haclient")
+		#main = glade.get_widget("mainwin_main")
+		#vbox.pack_start(main, True)
+			
 		self.statusbar = gtk.Statusbar()
 		vbox.pack_end(self.statusbar, False)
 		
@@ -2943,8 +4698,11 @@ class MainWindow :
 		self.win_widget = win_widget
 		self.actiongroup = actiongroup
 		self.uimanager = uimanager
-		self.tree = Tree(glade.get_widget("mainwin_tree"))
-		self.view_widget = glade.get_widget("mainwin_view")
+		#self.tree = Tree(glade.get_widget("mainwin_tree"))
+		#self.view_widget = glade.get_widget("mainwin_view")
+		#self.tree = Tree(maintree)
+		self.maintree_sw = maintree_sw
+		self.mainview_sw = mainview_sw
 		self.update_ui()
 		self.statusbar.push(0,_("Not Connected"))
 
@@ -2970,6 +4728,7 @@ class Manager :
 	session_lock = thread.allocate_lock()
 	async_ret_str = {}
 	async_ret_list = {} 
+	xml_nodes = {}
 		
 	# cache functions
 
@@ -3192,10 +4951,90 @@ class Manager :
 			self.process_event(event)
 			return False
 
+	def cib_do_cmd(self, command):
+		self.failed_reason = ""
+		ret_str = mgmt_sendmsg(command)
+		if ret_str == None:
+			debug(command + ":None")
+			self.failed_reason = "return None"
+			return None
+		ret_list = string.split(ret_str, "\n")
+		if ret_list[0] != "ok":
+			debug(str(string.split(command, "\n"))+":"+str(ret_list))
+			if len(ret_list) > 1:
+				self.failed_reason = string.join(ret_list[1:], ",")
+			return None
+		return string.join(ret_list[1:], "\n")
+
+	def update_cib_xml(self) :
+		self.xml_nodes = {}
+		xml_nodes = self.xml_nodes
+		cib_xml = self.cib_do_cmd("cib_query\ncib")
+		if self.failed_reason != "" :
+			msgbox(self.failed_reason)
+			return None
+
+		if cib_xml == None or cib_xml == "" :
+			return None
+
+		try :
+			xml_nodes["cib"] = parseString(cib_xml).documentElement
+		except xml.parsers.expat.ExpatError, msg :
+			msgbox(_("Failed to parse the CIB: ") + _(msg))
+			return None
+			
+		"""xml_status = self.cib_do_cmd("cib_query\nstatus")
+		xml_rscs = self.cib_do_cmd("cib_query\nresources")
+		xml_nodes = self.cib_do_cmd("cib_query\nnodes")
+		xml_constraints = self.cib_do_cmd("cib_query\nconstraints")
+		xml_crm_config = self.cib_do_cmd("cib_query\ncrm_config")"""
+
+		if xml_nodes.get("cib") == None :
+			return None
+
+		if validate_type == "dtd" :
+			dtd_elem = self.get_dtd_elem("cib")
+			for (name, mod) in dtd_elem.get_content_model()[1] :
+				if mod != '' :
+					continue
+				
+				xml_nodes[name] = xml_nodes["cib"].getElementsByTagName(name)[0]
+				if xml_nodes.get(name) == None :
+					continue
+				sub_dtd_elem = manager.get_dtd_elem(name)
+				for (sub_name, sub_mod) in sub_dtd_elem.get_content_model()[1] :
+					if sub_mod != '' :
+						continue
+					xml_nodes[sub_name] = xml_nodes[name].getElementsByTagName(sub_name)[0]
+
+		"""config_xml = self.cib_xml.getElementsByTagName("configuration")
+		self.crm_xml = config_xml.getElementsByTagName("crm_config")
+		self.nodes_xml = config_xml.getElementsByTagName("nodes")
+		self.rscs_xml = config_xml.getElementsByTagName("resources")
+		self.cns_xml = config_xml.getElementsByTagName("constraints")
+		self.status_xml =  self.cib_xml.getElementsByTagName("status")
+	
+		try:
+			self.cib_xml = parseString(xml_cib).documentElement
+			self.status_xml = parseString(xml_status)
+			self.rscs_xml = parseString(xml_rscs)
+			self.nodes_xml = parseString(xml_nodes)
+			self.cns_xml = parseString(xml_constraints)
+			self.crm_xml = parseString(xml_crm_config)
+		except xml.parsers.expat.ExpatError:
+			self.status_xml = None
+			self.rscs_xml = None
+			self.nodes_xml = None
+			self.crm_xml = None
+			self.cns_xml = None
+			debug("fail to parse xml info")
+			return None"""
+
 	def update(self) :
 		self.cache_clear()
+		self.update_cib_xml()
 		self.parent = {}
-		window.update()	
+		window.update()
 		gc.collect()
 		self.update_timer = -1
 
@@ -3227,8 +5066,8 @@ class Manager :
 
 		try :
 			doc_xml = parseString(meta_data).documentElement
-		except xml.parsers.expat.ExpatError:
-			log("Failed to parse the metadata of CRM: "+ crm_cmd)
+		except xml.parsers.expat.ExpatError, msg :
+			log("Failed to parse the metadata of %s: %s"%(crm_cmd, msg))
 			return None
 			
 		meta = RAMeta()
@@ -3339,7 +5178,11 @@ class Manager :
 		return self.all_nodes
 
 	def get_nodetype(self, node):
-		return self.query("node_type\n%s"%node)
+		node_type = self.query("node_type\n%s"%node)
+		if node_type != None and len(node_type) > 0 :
+			return node_type[0]
+		else :
+			return None
 	
 	def get_normal_nodes(self) :
 		nodes = self.query("all_nodes")
@@ -3348,7 +5191,7 @@ class Manager :
 
 		normal_nodes = []
 		for node in nodes :
-			if self.get_nodetype(node)[0] == "normal" :
+			if self.get_nodetype(node) == "normal" :
 				normal_nodes.append(node)
 		return normal_nodes
 
@@ -3450,6 +5293,8 @@ class Manager :
 		if sub_rscs != None :
 			for sub_rsc in sub_rscs :
 				self.parent[sub_rsc] = rsc_id
+		else :
+			return []
 		return sub_rscs
 
 	def get_all_subrsc(self, rsc_id) :
@@ -3582,8 +5427,11 @@ class Manager :
 		
 			
 	def get_rsc_meta(self, rsc_class, rsc_type, rsc_provider) :
-		if rsc_class == None or rsc_type == None :
+		if rsc_class == None or rsc_class == "" \
+				or rsc_type == None or rsc_type == "" \
+				or rsc_provider == None or rsc_provider == "" :
 			return None
+
 		lines = self.query("rsc_metadata\n%s\n%s\n%s"% \
 				(rsc_class, rsc_type, rsc_provider),True)
 		if lines == None :
@@ -3594,10 +5442,10 @@ class Manager :
 				meta_data = meta_data + line + "\n"
 		try :
 			doc_xml = parseString(meta_data).documentElement
-		except xml.parsers.expat.ExpatError:
-			err_msg = "Failed to parse the metadata of resource agent: "
-			log(err_msg + rsc_type)
-			msgbox(_(err_msg) + rsc_type)
+		except xml.parsers.expat.ExpatError, msg :
+			errmsg = "Failed to parse the metadata of %s: %s"
+			log(errmsg%(rsc_type, msg))
+			msgbox(_(errmsg)%(rsc_type, _(msg)))
 			return None
 			
 		meta = RAMeta()
@@ -3640,10 +5488,7 @@ class Manager :
 		return self.query("rsc_types\n"+rsc_class,True)
 	
 	def get_rsc_providers(self, rsc_class, rsc_type) :
-		provider = self.query("rsc_providers\n%s\n%s"%(rsc_class, rsc_type),True)
-		if provider == [] :
-			return ["heartbeat"]
-		return provider
+		return self.query("rsc_providers\n%s\n%s"%(rsc_class, rsc_type),True)
 
 	def rsc_exists(self, rsc_id) :
 		return rsc_id in self.get_all_rsc()
@@ -3883,68 +5728,102 @@ class WidgetGroup :
 class ObjectAttrs(WidgetGroup) :
 	dynamic_fill = None
 	dynamic_desc = None
+	static_desc = None
 
-	def __init__(self, obj_type, is_newobj = False, meta = None, static_desc = None) :
-		validate_type = "dtd"
-		self.obj_type = obj_type
+	def __init__(self, xml_node, is_newobj = False, change_call_back = None) :
+		self.obj_type = xml_node.tagName
 		self.is_newobj = is_newobj
-		self.meta = meta
-
-		self.dtd_elem = manager.get_dtd_elem(obj_type)
+		self.change_call_back = change_call_back
 		self.render_attrs_vbox()
+
 		if validate_type == "dtd" :
+			self.dtd_elem = manager.get_dtd_elem(self.obj_type)
 			self.render_widgets_dtd()
 			self.verify_values = self.verify_values_dtd
 			if self.dtd_elem.get_content_model()[1] == [] :
-				auto_id = True
+				self.auto_id = True
 			else :
-				auto_id = False
+				self.auto_id = False
 
-		if auto_id == True :
-			if self.widgets.has_key("name_labels") and self.widgets["name_labels"].has_key("id") :
-				self.widgets["name_labels"]["id"].hide_all()
-			if self.widgets.has_key("combo_entries") and self.widgets["combo_entries"].has_key("id") :
-				self.widgets["combo_entries"]["id"].child.set_text(uuid())
-				self.widgets["combo_entries"]["id"].hide_all()
+		for widget_type in ("combos", "bool_combos", "combo_entries") :
+			if self.widgets.has_key(widget_type) :
+				for widget in self.widgets[widget_type].values() :
+					widget.connect("changed", self.on_changed)
+
+		self.update(xml_node)
+
+	def on_after_show(self) :
+		if self.auto_id == True :
+			if self.is_newobj :
+				if self.widgets.has_key("combo_entries") and self.widgets["combo_entries"].has_key("id") :
+					self.widgets["combo_entries"]["id"].child.set_text(uuid())
+					self.widgets["combo_entries"]["id"].hide_all()
+			else :
+				if self.widgets.has_key("name_labels") and self.widgets["name_labels"].has_key("id") :
+					self.widgets["name_labels"]["id"].hide_all()
+					self.widgets["value_labels"]["id"].hide_all()
+
+			self.optional_expander.set_expanded(True)
 		else :
-			if self.widgets.has_key("combo_entries") and self.widgets["combo_entries"].has_key("id") :
-				self.widgets["combo_entries"]["id"].child.set_text(obj_type.split("_")[-1]+"_")
+			if self.is_newobj :
+				if self.widgets.has_key("combo_entries") and self.widgets["combo_entries"].has_key("id") :
+					parent_id = self.xml_node.parentNode.getAttribute("id")
+					if parent_id == "" :
+						id_prefix = self.obj_type + "_"
+					else :
+						id_prefix = parent_id + "_" + self.obj_type + "_"
+					self.widgets["combo_entries"]["id"].child.set_text(id_prefix)
 
 		self.auto_fill()
 
-		if self.dynamic_desc == None and static_desc == None :
+		if len(self.required_vbox.get_children()) < 2 :
+			self.required_vbox.hide()
+
+		if len(self.optional_vbox.get_children()) < 1 :
+			self.optional_expander.hide()
+
+		if self.dynamic_desc == None and self.static_desc == None :
+			self.vbox_labels["Description"].hide()
 			self.desc_vbox.hide()
 
-		if static_desc != None :
-			self.show_desc(static_desc)
+		if self.static_desc != None :
+			self.show_desc(self.static_desc)
 
-		if self.dynamic_fill != None or self.dynamic_desc != None :
-			for widget_type in ("combos", "bool_combos", "combo_entries") :
-				if self.widgets.has_key(widget_type) :
-					for widget in self.widgets[widget_type].values() :
-						widget.connect("changed", self.on_changed)
-
+		for widget_type in ("combos", "bool_combos", "combo_entries") :
+			if self.widgets.has_key(widget_type) :
+				for widget in self.widgets[widget_type].values() :
+					widget.disconnect_by_func(self.on_changed)
+					widget.connect("changed", self.on_changed_later)
 
 	def render_attrs_vbox(self) :
 		required_vbox = gtk.VBox()
 		optional_vbox = gtk.VBox()
+		optional_expander = gtk.Expander()
+		optional_expander.add(optional_vbox)
+
 		desc_vbox = gtk.VBox()
-		vbox_list = [(required_vbox, "Required"), 
-				(optional_vbox, "Optional"),
+		widget_list = [(required_vbox, "Required"), 
+				(optional_expander, "Optional"),
 				(desc_vbox, "Description")]
-		for (vbox, label_text) in vbox_list : 
+		self.vbox_labels = {}
+		for (widget, label_text) in widget_list : 
 			vbox_label = gtk.Label()
 			vbox_label.set_markup('<b>' + _(label_text) + '</b>')
 			vbox_label.set_alignment(0, 1)
-			vbox.pack_start(vbox_label, False, padding=2)
+			if label_text == "Optional" :
+				widget.set_label_widget(vbox_label)
+			else :
+				widget.pack_start(vbox_label, False, padding=2)
+			self.vbox_labels[label_text] = vbox_label
 
 		attrs_vbox = gtk.VBox()
-		for (vbox, label_text) in vbox_list :
-			attrs_vbox.pack_start(vbox, False)
+		for (widget, label_text) in widget_list :
+			attrs_vbox.pack_start(widget, False, padding = 2)
 
 		self.attrs_vbox = attrs_vbox
 		self.required_vbox = required_vbox
 		self.optional_vbox = optional_vbox
+		self.optional_expander = optional_expander
 		self.desc_vbox = desc_vbox
 
 	def render_widgets_dtd(self):
@@ -3966,10 +5845,11 @@ class ObjectAttrs(WidgetGroup) :
 		optional_row = 0
 		name_label_max_len = 0
 
-		name_cap = lambda name: name.replace("-"," ").replace("_"," ").title().replace("Id","ID")
-		for attr_name in dtd_elem.get_attr_list() :
+		self.attr_list = dtd_elem.get_attr_list()
+		for attr_name in self.attr_list :
 			attr = dtd_elem.get_attr(attr_name)
-			label = gtk.Label(_(name_cap(attr_name)+":"))
+			label_text = _(name_cap(attr_name)+":")
+			label = gtk.Label(label_text)
 			label.set_alignment(0, 0.5)
 			label_len = len(attr_name)
 			if label_len > name_label_max_len :
@@ -4055,8 +5935,7 @@ class ObjectAttrs(WidgetGroup) :
 		dtd_elem = self.dtd_elem
 		object = self.get_values()
 
-		name_cap = lambda name: name.replace("-"," ").replace("_"," ").title().replace("Id","ID")
-		for attr_name in dtd_elem.get_attr_list() :
+		for attr_name in self.attr_list :
 			attr = dtd_elem.get_attr(attr_name)
 			attr_decl = attr.get_decl()
 			
@@ -4118,12 +5997,24 @@ class ObjectAttrs(WidgetGroup) :
 
 
 	def on_changed(self, widget) :
+		self.save()
 		if self.dynamic_fill != None :
 			self.dynamic_fill(widget)
 		if self.dynamic_desc != None :
 			desc = self.dynamic_desc(widget)
 			if desc != None :
 				self.show_desc(desc)
+
+	def on_changed_later(self, widget) :
+		self.save()
+		if self.dynamic_fill != None :
+			self.dynamic_fill(widget)
+		if self.dynamic_desc != None :
+			desc = self.dynamic_desc(widget)
+			if desc != None :
+				self.show_desc(desc)
+		if self.change_call_back != None :
+			self.change_call_back()
 
 	def show_desc(self, desc) :
 		widgets = self.widgets
@@ -4135,6 +6026,7 @@ class ObjectAttrs(WidgetGroup) :
 				desc_label = gtk.Label(desc[row])
 				desc_label.set_alignment(0, 0.5)
 				desc_label.set_padding(5, 0)
+				desc_label.set_line_wrap(True)
 				desc_vbox.pack_start(desc_label, padding=2)
 				desc_labels.append(desc_label)
 			if desc_labels != [] :
@@ -4144,11 +6036,188 @@ class ObjectAttrs(WidgetGroup) :
 				widgets["desc_labels"][row].set_text(desc[row])
 		desc_vbox.show_all()
 
+	def update(self, xml_node = None) :
+		if xml_node != None :
+			self.xml_node = xml_node
+		object_attrs = {}
+		for attr_name in self.attr_list :
+			attr_value = self.xml_node.getAttribute(attr_name)
+			if attr_value != None :
+				object_attrs[attr_name] = attr_value
+		self.show_values(object_attrs)
 
-class InstAttrsNV(ObjectAttrs) :
-	def __init__(self, is_newobj = False, meta = None, static_desc = None) :
-		ObjectAttrs.__init__(self, "nvpair", is_newobj, meta, static_desc)
+	def save(self) :
+		object_attrs = self.get_values()
+		for attr_name in self.attr_list :
+			if object_attrs.has_key(attr_name) :
+				self.xml_node.setAttribute(attr_name, object_attrs.get(attr_name , ""))
+			elif self.xml_node.hasAttribute(attr_name) :
+				self.xml_node.removeAttribute(attr_name)
 
+	def save_status(self) :
+		return self.optional_expander.get_expanded()
+
+	def restore_status(self, saved_status) :
+		self.optional_expander.set_expanded(saved_status)
+
+class Primitive(ObjectAttrs) :
+	def dynamic_fill(self, widget) :
+		widgets = self.widgets
+
+		primitive = self.get_values()
+		primitive_class = primitive.get("class", "")
+		if primitive_class == "" :
+			return
+
+		if widgets.has_key("combos") and widgets["combos"].has_key("class") \
+				and widget == widgets["combos"]["class"] :
+			ra_list = manager.get_rsc_types(primitive_class)
+			if ra_list != None :
+				ra_list.sort()
+				type_store = [[ra, ""] for ra in ra_list]
+				if widgets.has_key("combo_entries") and widgets["combo_entries"].has_key("type") :
+					self.combobox_store_append(widgets["combo_entries"]["type"], type_store)
+
+			self.fill_provider(primitive)
+
+		elif widgets.has_key("combo_entries") and widgets["combo_entries"].has_key("type") \
+				and widget == widgets["combo_entries"]["type"] :
+			self.fill_provider(primitive)
+
+	def fill_provider(self, primitive) :
+		widgets = self.widgets
+		primitive_class = primitive.get("class", "")
+		primitive_type = primitive.get("type", "")
+		if primitive_class != "" and primitive_type != "" :
+			provider_list = manager.get_rsc_providers(primitive_class, primitive_type)
+		else :
+			provider_list = None
+		if provider_list == None :
+			providers_store = []
+		else :	
+			providers_store = [[provider, ""] for provider in provider_list]
+		if widgets.has_key("combo_entries") and widgets["combo_entries"].has_key("provider") :
+			self.combobox_store_append(widgets["combo_entries"]["provider"], providers_store)
+			if provider_list != None and len(provider_list) > 0 :
+				widgets["combo_entries"]["provider"].child.set_text(provider_list[0])
+
+	def dynamic_desc(self, widget) :
+		widgets = self.widgets
+		desc = None
+		if widgets.has_key("combos") and widgets["combos"].has_key("class") \
+				and widget == widgets["combos"]["class"] :
+			desc = self.get_meta_desc()
+
+		if widgets.has_key("combo_entries") and widgets["combo_entries"].has_key("type") \
+				and widget == widgets["combo_entries"]["type"] :
+			desc = self.get_meta_desc()
+
+		if widgets.has_key("combo_entries") and widgets["combo_entries"].has_key("provider") \
+				and widget == widgets["combo_entries"]["provider"] :
+			desc = self.get_meta_desc()
+
+		return desc
+
+	def get_meta_desc(self) :
+		primitive = self.get_values()
+		primitive_class = primitive.get("class", "")
+		primitive_type = primitive.get("type", "")
+		primitive_provider = primitive.get("provider", "")
+		meta = manager.get_rsc_meta(primitive_class, primitive_type, primitive_provider) 
+		if meta == None :
+			return [""]
+
+		longdesc = meta.longdesc
+		if longdesc == None :
+			longdesc = ""
+		else :
+			longdesc = longdesc.replace(_(".  "), _(".\n"))
+
+		shortdesc = meta.shortdesc
+		if shortdesc == None :
+			shortdesc = ""
+
+		if len(longdesc) == 0 :
+			desc = [shortdesc]
+		elif longdesc.find(shortdesc) > -1 :
+			desc = [longdesc]
+		else :
+			if shortdesc.endswith(_(".")) :
+				desc = [shortdesc + "\n" + longdesc]
+			else :
+				desc = [shortdesc + _(".") + "\n" + longdesc]
+		return desc
+
+class MetaAttrsNV(ObjectAttrs) :
+	def __init__(self, xml_node, is_newobj = False, change_call_back = None) :
+		self.target_node = xml_node.parentNode.parentNode.parentNode
+		if validate_type == "dtd" :
+			self.target_type = self.target_node.tagName
+			self.target_dtd_elem = manager.get_dtd_elem(self.target_type)
+			self.target_attrlist = self.target_dtd_elem.get_attr_list()
+			self.auto_fill = self.auto_fill_dtd
+			self.dynamic_fill = self.dynamic_fill_dtd
+		ObjectAttrs.__init__(self, xml_node, is_newobj, change_call_back)
+
+	def auto_fill_dtd(self) :
+		widgets = self.widgets
+		attr_store = []
+
+		if self.target_type in ["primitive", "group", "clone", "master_slave"] :
+			attr_store.append(["target_role", ""])
+
+		for attr_name in self.target_attrlist :
+			attr = self.target_dtd_elem.get_attr(attr_name)
+			if attr.get_decl() !=  "#REQUIRED" :
+				attr_store.append([attr_name, ""])
+
+		if self.target_type in ["clone", "master_slave"] :
+			attr_store.extend([attr_name, ""] for attr_name in ["clone_max", "clone_node_max"])
+
+		if self.target_type == "master_slave" :
+			attr_store.extend([attr_name, ""] for attr_name in ["master_max", "master_node_max"])
+
+
+		if widgets.has_key("combo_entries") and widgets["combo_entries"].has_key("name") :
+			self.combobox_store_append(widgets["combo_entries"]["name"], attr_store)
+
+	def dynamic_fill_dtd(self, widget) :
+		widgets = self.widgets
+		options_dict = {"target_role": ["started", "stopped", "default"]}
+
+		if widgets.has_key("combo_entries") and widgets["combo_entries"].has_key("name") \
+				and widget == widgets["combo_entries"]["name"] :
+			metaattr = self.get_values()
+			attr_name = metaattr.get("name", None)
+			if attr_name == None :
+				return
+			value_store = []
+			if attr_name in self.target_attrlist :
+				attr = self.target_dtd_elem.get_attr(attr_name)
+				attr_type = attr.get_type()
+				attr_default = attr.get_default()
+				if  type(attr_type) == list :
+					if attr_type.count("true") > 0 and attr_type.count("false") > 0 :
+						options = ("true", "false")
+					else :
+						options = attr_type
+					for option in options :
+						if attr_default != None and option == attr_default :
+							value_store.append([attr_default, "[ " + _("default") + " ]"])
+						else :
+							value_store.append([option, ""])
+				elif attr_default != None :
+					value_store.append([attr_default, "["+_("default")+"]"])
+			elif attr_name in options_dict.keys() :
+				value_store.extend([attr_value, ""] for attr_value in options_dict[attr_name])
+				if self.target_node.parentNode.tagName == "clone" :
+					value_store.extend([attr_value, ""] for attr_value in ["master", "slave"])
+
+			if widgets.has_key("combo_entries") and widgets["combo_entries"].has_key("value") :
+				self.combobox_store_append(widgets["combo_entries"]["value"], value_store)
+
+class MetaNV(ObjectAttrs) :
+	meta = None
 	def auto_fill(self) :
 		widgets = self.widgets
 		meta = self.meta
@@ -4156,9 +6225,9 @@ class InstAttrsNV(ObjectAttrs) :
 			instattr_store = []
 			for param in meta.parameters :
 				param_attr = ""
-				if param["required"] == "1" :
+				if param.get("required", None) == "1" :
 					param_attr =  param_attr + _("required")
-				if param["unique"] == "1" :
+				if param.get("unique", None) == "1" :
 					if param_attr != "" :
 						param_attr = param_attr + _(", ")
 					param_attr = param_attr + _("unique")
@@ -4180,9 +6249,21 @@ class InstAttrsNV(ObjectAttrs) :
 			if instattr.has_key("name") :
 				for param in meta.parameters :
 					if instattr["name"] == param["name"] :
+						param_type = param["content"].get("type")
+						options = []
 						default_value = param["content"]["default"]
-						if default_value != None and default_value != "" :
-							value_store.insert(0, [default_value, "[ "+ _("default") + " ]"])
+						if param_type == "boolean" :
+							options = ["true", "false"]
+						elif param_type == "enum" and param["content"].has_key("values"):
+							options =  param["content"]["values"]
+						elif default_value != None :
+							options = [default_value]
+
+						for option in options :
+							if default_value != None and option == default_value :
+								value_store.insert(0, [option, "[ "+ _("default") + " ]"])
+							else :
+								value_store.append([option, ""])
 						break
 			if widgets.has_key("combo_entries") and widgets["combo_entries"].has_key("value") :
 				self.combobox_store_append(widgets["combo_entries"]["value"], value_store)
@@ -4199,20 +6280,48 @@ class InstAttrsNV(ObjectAttrs) :
 		if instattr.has_key("name") :
 			for param in meta.parameters :
 				if instattr["name"] == param["name"] :		
-					longdesc = param["longdesc"]
-					shortdesc = param["shortdesc"]
-					if longdesc != None and longdesc != "" :
-						desc = [longdesc]
-					elif shortdesc != None and shortdesc != "" :
+					longdesc = param.get("longdesc", "").replace(_(".  "), _(".\n"))
+					shortdesc = param.get("shortdesc", "")
+
+					if len(longdesc) == 0 :
 						desc = [shortdesc]
+					elif longdesc.find(shortdesc) > -1 :
+						desc = [longdesc]
+					else :
+						if shortdesc.endswith(_(".")) :
+							desc = [shortdesc + "\n" + longdesc]
+						else :
+							desc = [shortdesc + _(".") + "\n" + longdesc]
 					break
 		else :
 			desc = [""]
 		return desc
 
+class CRMConfNV(MetaNV) :
+	meta = None
+	def __init__(self, xml_node, is_newobj = False, change_call_back = None) :
+		self.meta = manager.get_crm_metadata("pengine")
+		crmd_meta = manager.get_crm_metadata("crmd")
+		if self.meta != None :
+			if crmd_meta != None:
+				self.meta.parameters.extend(crmd_meta.parameters)
+		else :
+			self.meta = crmd_meta
+		MetaNV.__init__(self, xml_node, is_newobj, change_call_back)
+
+class PrimInstAttrsNV(MetaNV) :
+	meta = None
+	def __init__(self, xml_node, is_newobj = False, change_call_back = None) :
+		primitive_node = xml_node.parentNode.parentNode.parentNode
+		primitive_class = str(primitive_node.getAttribute("class"))
+		primitive_type = str(primitive_node.getAttribute("type"))
+		primitive_provider = str(primitive_node.getAttribute("provider"))
+		self.meta = manager.get_rsc_meta(primitive_class, primitive_type, primitive_provider)
+		MetaNV.__init__(self, xml_node, is_newobj, change_call_back)
+
 class Expression(ObjectAttrs) :
-	def __init__(self, is_newobj = False, meta = None, static_desc = None) :
-		ObjectAttrs.__init__(self, "expression", is_newobj, meta, static_desc)
+	def __init__(self, xml_node, is_newobj = False, change_call_back = None) :
+		ObjectAttrs.__init__(self, xml_node, is_newobj, change_call_back)
 
 	def auto_fill(self) :
 		widgets = self.widgets
@@ -4238,8 +6347,15 @@ class Expression(ObjectAttrs) :
 				self.combobox_store_append(widgets["combo_entries"]["value"], value_store)
 
 class OP(ObjectAttrs) :
-	def __init__(self, is_newobj = False, meta = None, static_desc = None) :
-		ObjectAttrs.__init__(self, "op", is_newobj, meta, static_desc)
+	def __init__(self, xml_node, is_newobj = False, change_call_back = None) :
+		primitive_node = xml_node.parentNode.parentNode
+		primitive_class = str(primitive_node.getAttribute("class"))
+		primitive_type = str(primitive_node.getAttribute("type"))
+		primitive_provider = str(primitive_node.getAttribute("provider"))
+		meta = manager.get_rsc_meta(primitive_class, primitive_type, primitive_provider)
+		self.meta = meta
+		ObjectAttrs.__init__(self, xml_node, is_newobj, change_call_back)
+		self.dynamic_fill = self.dynamic_fill_later
 
 	def auto_fill(self) :
 		widgets = self.widgets
@@ -4257,7 +6373,7 @@ class OP(ObjectAttrs) :
 		if widgets.has_key("combo_entries") and widgets["combo_entries"].has_key("name") :
 			self.combobox_store_append(widgets["combo_entries"]["name"], op_name_store)
 
-	def dynamic_fill(self, widget) :
+	def dynamic_fill_later(self, widget) :
 		widgets = self.widgets
 		meta = self.meta
 		if meta == None or not widgets.has_key("combo_entries") :
@@ -4294,8 +6410,8 @@ class OP(ObjectAttrs) :
 					widgets["combo_entries"][attr_name].child.set_text("")
 
 class RscOrder(ObjectAttrs) :
-	def __init__(self, is_newobj = False, meta = None, static_desc = None) :
-		ObjectAttrs.__init__(self, "rsc_order", is_newobj, meta, static_desc)
+	def __init__(self, xml_node, is_newobj = False, change_call_back = None) :
+		ObjectAttrs.__init__(self, xml_node, is_newobj, change_call_back)
 
 	def dynamic_fill(self, widget) :
 		widgets = self.widgets
@@ -4396,8 +6512,8 @@ class RscOrder(ObjectAttrs) :
 			return None
 
 class RscColocation(ObjectAttrs) :
-	def __init__(self, is_newobj = False, meta = None, static_desc = None) :
-		ObjectAttrs.__init__(self, "rsc_colocation", is_newobj, meta, static_desc)
+	def __init__(self, xml_node, is_newobj = False, change_call_back = None) :
+		ObjectAttrs.__init__(self, xml_node, is_newobj, change_call_back)
 
 	def dynamic_desc(self, widget) :
 		dtd_elem = self.dtd_elem

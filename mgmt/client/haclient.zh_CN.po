@@ -432,11 +432,14 @@ msgstr "值"
 msgid "Description"
 msgstr "描述"
 
-msgid "Failed to parse the metadata of CRM: "
-msgstr "解析集群资源管理服务的元数据失败： "
+msgid "Failed to parse the XML: "
+msgstr "解析 XML 失败： "
 
-msgid "Failed to parse the metadata of resource agent: "
-msgstr "解析资源代理的元数据失败： "
+msgid "Failed to parse the CIB: "
+msgstr "解析 CIB 失败: "
+
+msgid "Failed to parse the metadata of %s: %s"
+msgstr "解析 %s 的元数据失败： %s"
 
 #: haclient.py.in:1057 haclient.py.in:1487 haclient.py.in:1493
 msgid "The ID already exists"
@@ -1040,3 +1043,18 @@ msgstr "您想应用修改吗？"
 
 msgid "The data of current view have been changed."
 msgstr "当前视图中的数据已修改。"
+
+msgid "This will reset the current object attributes and all sub-objects to the initial configurations."
+msgstr "这会重置当前对象属性以及所有子对象为初始设置。"
+
+msgid "Reset the configurations?"
+msgstr "重置设置？"
+
+msgid "This will delete the %s \"%s\""
+msgstr "这会删除%s \"%s\""
+
+msgid "Delete the selected object?"
+msgstr "删除选定的对象？"
+
+msgid "Primitive"
+msgstr "普通资源"

@@ -300,6 +300,23 @@ or
 */
 #define MSG_STANDBY		"standby"
 
+/* new CRUD protocol */
+/*
+description:
+    accomplish the cib commands
+format:
+    MSG_CIB_XXXXXX LINE
+return:
+    MSG_OK LINE1 LINE2 ... LINEn
+or
+	MSG_FAIL
+*/
+#define MSG_CIB_CREATE		"cib_create"
+#define MSG_CIB_QUERY		"cib_query"
+#define MSG_CIB_UPDATE		"cib_update"
+#define MSG_CIB_REPLACE		"cib_replace"
+#define MSG_CIB_DELETE		"cib_delete"
+
 
 /*
 description:

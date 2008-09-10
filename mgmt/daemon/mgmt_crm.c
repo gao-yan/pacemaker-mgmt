@@ -103,6 +103,14 @@ static char* on_get_constraint(char* argv[], int argc);
 static char* on_update_constraint(char* argv[], int argc);
 static char* on_delete_constraint(char* argv[], int argc);
 
+/* new CRUD protocol */
+static char* on_cib_create(char* argv[], int argc);
+static char* on_cib_query(char* argv[], int argc);
+static char* on_cib_update(char* argv[], int argc);
+static char* on_cib_replace(char* argv[], int argc);
+static char* on_cib_delete(char* argv[], int argc);
+/* end new protocol */
+
 static char* on_gen_cluster_report(char* argv[], int argc);
 
 static void get_meta_attributes_id(const char* rsc_id, char* id);
@@ -540,6 +548,11 @@ init_crm(int cache_cib)
 
 	reg_msg(MSG_GEN_CLUSTER_REPORT, on_gen_cluster_report);
 	
+	reg_msg(MSG_CIB_CREATE, on_cib_create);
+	reg_msg(MSG_CIB_QUERY, on_cib_query);
+	reg_msg(MSG_CIB_UPDATE, on_cib_update);
+	reg_msg(MSG_CIB_REPLACE, on_cib_replace);
+	reg_msg(MSG_CIB_DELETE, on_cib_delete);
 	return 0;
 }	
 void
@@ -2435,6 +2448,195 @@ on_update_constraint(char* argv[], int argc)
 	free_xml(output);
 	return cl_strdup(MSG_OK);
 }
+
+char*
+on_cib_create(char* argv[], int argc)
+{
+	int rc;
+	crm_data_t* fragment = NULL;
+	crm_data_t* cib_object = NULL;
+	crm_data_t* output;
+	const char* type = NULL;
+	const char* xmls = NULL;
+	ARGC_CHECK(3)
+
+	type = argv[1];
+	xmls = argv[2];
+	cib_object = string2xml(xmls);
+	if (cib_object == NULL) {
+		return cl_strdup(MSG_FAIL);
+	}
+
+	mgmt_log(LOG_INFO, "CIB create: %s", type);
+		
+	fragment = create_cib_fragment(cib_object, type);
+	rc = cib_conn->cmds->create(cib_conn, type, fragment, &output, cib_sync_call);
+	free_xml(fragment);
+	free_xml(cib_object);
+	if (rc < 0) {
+		return crm_failed_msg(output, rc);
+	} else {
+		free_xml(output);
+		return cl_strdup(MSG_OK);
+	}
+}
+
+/*
+char*
+on_cib_query(char* argv[], int argc)
+{
+	const char* type = NULL;
+	char cmd[MAX_STRLEN];
+	char buf[MAX_STRLEN];	
+	char* ret = cl_strdup(MSG_OK);
+	FILE *fstream = NULL;
+	ARGC_CHECK(2)
+
+	type = argv[1];
+	mgmt_log(LOG_INFO, "CIB query: %s", type);
+		
+	snprintf(cmd, sizeof(cmd), "cibadmin -Q -o %s", type);
+	if ((fstream = popen(cmd, "r")) == NULL){
+		mgmt_log(LOG_ERR, "error on popen %s: %s",
+			 cmd, strerror(errno));
+		return cl_strdup(MSG_FAIL);
+	}
+
+	while (!feof(fstream)){
+		memset(buf, 0, sizeof(buf));
+		if (fgets(buf, sizeof(buf), fstream) != NULL){
+			ret = mgmt_msg_append(ret, buf);
+			ret[strlen(ret)-1] = '\0';
+		}
+		else{
+			sleep(1);
+		}
+	}
+
+	if (pclose(fstream) == -1)
+		mgmt_log(LOG_WARNING, "failed to close pipe");
+
+	return ret;
+}
+*/
+
+char*
+on_cib_query(char* argv[], int argc)
+{
+	int rc;
+	crm_data_t* output;
+	const char* type = NULL;
+	char* ret = NULL;
+	ARGC_CHECK(2)
+
+	type = argv[1];
+	mgmt_log(LOG_INFO, "CIB query: %s", type);
+		
+	rc = cib_conn->cmds->query(cib_conn, type, &output, cib_sync_call|cib_scope_local);
+	if (rc < 0) {
+		return crm_failed_msg(output, rc);
+	} else {
+		ret = cl_strdup(MSG_OK);
+		ret = mgmt_msg_append(ret, dump_xml_formatted(output));
+#if 0		
+		mgmt_log(LOG_INFO, "%s", dump_xml_formatted(output)); 
+#endif
+		free_xml(output);
+		return ret;
+	}
+}
+
+char*
+on_cib_update(char* argv[], int argc)
+{
+	int rc;
+	crm_data_t* fragment = NULL;
+	crm_data_t* cib_object = NULL;
+	crm_data_t* output;
+	const char* type = NULL;
+	const char* xmls = NULL;
+	ARGC_CHECK(3)
+
+	type = argv[1];
+	xmls = argv[2];
+	cib_object = string2xml(xmls);
+	if (cib_object == NULL) {
+		return cl_strdup(MSG_FAIL);
+	}
+
+	mgmt_log(LOG_INFO, "CIB update: %s", xmls);
+		
+	fragment = create_cib_fragment(cib_object, type);
+	rc = cib_conn->cmds->update(cib_conn, type, fragment, &output, cib_sync_call);
+	free_xml(fragment);
+	free_xml(cib_object);
+	if (rc < 0) {
+		return crm_failed_msg(output, rc);
+	} else {
+		free_xml(output);
+		return cl_strdup(MSG_OK);
+	}
+}
+
+char*
+on_cib_replace(char* argv[], int argc)
+{
+	int rc;
+	/*crm_data_t* fragment = NULL;*/
+	crm_data_t* cib_object = NULL;
+	crm_data_t* output;
+	const char* type = argv[0];
+	const char* xmls = argv[1];
+	ARGC_CHECK(3)
+
+	type = argv[1];
+	xmls = argv[2];
+	cib_object = string2xml(xmls);
+	if (cib_object == NULL) {
+		return cl_strdup(MSG_FAIL);
+	}
+
+	mgmt_log(LOG_INFO, "CIB replace: %s", type);
+		
+	/*fragment = create_cib_fragment(cib_object, type);*/
+	rc = cib_conn->cmds->replace(cib_conn, type, cib_object, &output, cib_sync_call);
+	/*free_xml(fragment);*/
+	free_xml(cib_object);
+	if (rc < 0) {
+		return crm_failed_msg(output, rc);
+	} else {
+		free_xml(output);
+		return cl_strdup(MSG_OK);
+	}
+}
+
+char*
+on_cib_delete(char* argv[], int argc)
+{
+	int rc;
+	crm_data_t* cib_object = NULL;
+	crm_data_t* output;
+	const char* type = argv[0];
+	const char* xmls = argv[1];	
+	ARGC_CHECK(3)
+	
+	type = argv[1];
+	xmls = argv[2];	
+	cib_object = string2xml(xmls);
+	if (cib_object == NULL) {
+		return cl_strdup(MSG_FAIL);
+	}
+	mgmt_log(LOG_INFO, "CIB delete: %s", type);
+
+	rc = cib_conn->cmds->delete(cib_conn, type, cib_object, &output, cib_sync_call);
+	free_xml(cib_object);	
+	if (rc < 0) {
+		return crm_failed_msg(output, rc);
+	} else {
+		free_xml(output);
+		return cl_strdup(MSG_OK);
+	}
+}		
 
 static char*
 on_gen_cluster_report(char* argv[], int argc)
