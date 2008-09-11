@@ -1166,6 +1166,10 @@ fi
 AC_SUBST(CURSESLIBS)
 
 dnl Variables needed for substitution
+DTD_DIRECTORY="${datadir}/pacemaker"
+AC_DEFINE_UNQUOTED(DTD_DIRECTORY,"$DTD_DIRECTORY", Location for the Pacemaker Relax-NG Schema)
+AC_SUBST(DTD_DIRECTORY)
+
 AC_CHECK_HEADERS(hb_config.h)
 if test "$ac_cv_header_hb_config_h" != "yes"; then
    AC_MSG_FAILURE(The heartbeat-common development headers were not found)
