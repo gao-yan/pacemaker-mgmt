@@ -1483,36 +1483,19 @@ class ManageTree() :
  			for rsc in running_rsc :
  				self.add_rsc(node_iter, rsc)
 
-class MainTree(Tree) :
+class MainTree(ElementList) :
 	def __init__(self) :
 		obj_type = "cib"
 		self.store = gtk.TreeStore(str, str)
-		treeiter = {}
-		if validate_type == "dtd" :
-			self.dtd_elem = manager.get_dtd_elem(obj_type)
-			for (name, mod) in self.dtd_elem.get_content_model()[1] :
-				if mod == '' :
-					treeiter[name] = self.store.append(None, [_(name_cap(name)), name])
-					sub_dtd_elem = manager.get_dtd_elem(name)
-					for (sub_name, sub_mod) in sub_dtd_elem.get_content_model()[1] :
-						if sub_mod == '' :
-							treeiter[sub_name] =  \
-								self.store.append(treeiter[name], [_(name_cap(sub_name)), sub_name])
-					
-
-			#(u',', [(u'configuration', ''), (u'status', '')], '')
-		treeiter["management"] = self.store.append(None, ["Management", "management"])
-		self.treeiter = treeiter
 
 		widget = gtk.TreeView(self.store)
 		widget.set_headers_visible(False)
 		add_column(widget, _(obj_type), 0, self.render_icon)
-		widget.expand_all()
 		widget.set_size_request(150, 100)
 		widget.connect("cursor-changed", self.on_cursor_changed, widget.get_selection())
-		widget.connect("event-after", self.on_right_click)
+		#widget.connect("event-after", self.on_right_click)
+		self.tree = widget
 		self.widget = widget
-
 
 	def on_cursor_changed(self, treeview, selection) :
 		(model, iter) = selection.get_selected()
@@ -1529,8 +1512,6 @@ class MainTree(Tree) :
 		#status = model.get_value(iter, 1)
 		window.select_view(type, name)
 		self.last_iter = iter
-		
-
 
 	def render_icon(self, tvcolumn, cell, model, iter):
 		name = model.get_value(iter, 1)
@@ -1595,6 +1576,32 @@ class MainTree(Tree) :
 		return iter_status
 		
 	def update(self) :
+		tree_status = self.save_tree_status()
+
+		self.store.clear()
+		window.select_view(None, None, None)
+		if not manager.connected :
+			return
+
+		treeiter = {}
+		if validate_type == "dtd" :
+			self.dtd_elem = manager.get_dtd_elem(obj_type)
+			for (name, mod) in self.dtd_elem.get_content_model()[1] :
+				if mod == '' :
+					treeiter[name] = self.store.append(None, [_(name_cap(name)), name])
+					sub_dtd_elem = manager.get_dtd_elem(name)
+					for (sub_name, sub_mod) in sub_dtd_elem.get_content_model()[1] :
+						if sub_mod == '' :
+							treeiter[sub_name] =  \
+								self.store.append(treeiter[name], [_(name_cap(sub_name)), sub_name])
+					
+
+			#(u',', [(u'configuration', ''), (u'status', '')], '')
+		treeiter["management"] = self.store.append(None, ["Management", "management"])
+		self.treeiter = treeiter
+
+		self.restore_tree_status(tree_status)
+
 		selection = self.widget.get_selection()
 		(model, iter) = selection.get_selected()
 		if iter == None :
@@ -4995,8 +5002,8 @@ class Manager :
 
 
 		validate_type = self.get_validate_type()
-		validate_name = self.get_validate_name()
-		print self.get_crm_schema(validate_name)
+		self.validate_name = self.get_validate_name()
+		print self.get_crm_schema(self.validate_name)
 
 		if validate_type == "dtd" :
 			dtd_elem = self.get_dtd_elem("cib")
@@ -5082,7 +5089,7 @@ class Manager :
 		
 	def get_dtd_elem(self, elem_name) :
 		if not self.dtd_elems.has_key(elem_name) :
-			dtd = self.get_crm_dtd()
+			dtd = self.get_crm_schema(self.validate_name)
 			complete_dtd = load_dtd_string(dtd)
 			self.dtd_elems[elem_name] = complete_dtd.get_elem(elem_name)
 		
