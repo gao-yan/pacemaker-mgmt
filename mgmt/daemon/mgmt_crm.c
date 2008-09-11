@@ -50,6 +50,7 @@ static void on_cib_diff(const char *event, crm_data_t *msg);
 
 static char* on_get_cluster_type(char* argv[], int argc);
 static char* on_get_cib_version(char* argv[], int argc);
+static char* on_get_crm_schema(char* argv[], int argc);
 static char* on_get_crm_dtd(char* argv[], int argc);
 
 static char* on_get_crm_metadata(char* argv[], int argc);
@@ -495,6 +496,7 @@ init_crm(int cache_cib)
 
 	reg_msg(MSG_CLUSTER_TYPE, on_get_cluster_type);
 	reg_msg(MSG_CIB_VERSION, on_get_cib_version);
+	reg_msg(MSG_CRM_SCHEMA, on_get_crm_schema);
 	reg_msg(MSG_CRM_DTD, on_get_crm_dtd);
 	reg_msg(MSG_CRM_METADATA, on_get_crm_metadata);
 	reg_msg(MSG_CRM_CONFIG, on_get_crm_config);
@@ -627,6 +629,62 @@ on_get_cib_version(char* argv[], int argc)
 		ret = cl_strdup(MSG_FAIL);
 	}	
 	free_data_set(data_set);
+	return ret;
+}
+
+static char*
+on_get_crm_schema(char* argv[], int argc)
+{
+	const char *schema_file = NULL;
+	const char *validate_type = NULL;
+	const char *file_name = NULL;
+	char buf[MAX_STRLEN];	
+	char* ret = cl_strdup(MSG_OK);
+	FILE *fstream = NULL;
+
+	ARGC_CHECK(3);
+	validate_type = argv[1];
+	file_name = argv[2];
+
+	if (STRNCMP_CONST(validate_type, "") == 0){
+		schema_file = HA_NOARCHDATAHBDIR"/crm.dtd";
+	}
+	else if (STRNCMP_CONST(validate_type, "pacemaker-0.6") == 0){
+		schema_file = DTD_DIRECTORY"/crm.dtd";
+	}
+	else if (STRNCMP_CONST(validate_type, "transitional-0.6") == 0){
+		schema_file = DTD_DIRECTORY"/crm-transitional.dtd";
+	}
+	else{
+		if (STRNCMP_CONST(file_name, "") == 0){
+			snprintf(buf, sizeof(buf), DTD_DIRECTORY"/%s.rng", validate_type);
+			schema_file = buf;
+		}
+		else{
+			snprintf(buf, sizeof(buf), DTD_DIRECTORY"/%s", file_name);
+			schema_file = buf;
+		}
+	}
+	if ((fstream = fopen(schema_file, "r")) == NULL){
+		mgmt_log(LOG_ERR, "error on fopen %s: %s",
+			 schema_file, strerror(errno));
+		return cl_strdup(MSG_FAIL);
+	}
+
+	while (!feof(fstream)){
+		memset(buf, 0, sizeof(buf));
+		if (fgets(buf, sizeof(buf), fstream) != NULL){
+			ret = mgmt_msg_append(ret, buf);
+			ret[strlen(ret)-1] = '\0';
+		}
+		else{
+			sleep(1);
+		}
+	}
+
+	if (fclose(fstream) == -1)
+		mgmt_log(LOG_WARNING, "failed to fclose stream");
+
 	return ret;
 }
 

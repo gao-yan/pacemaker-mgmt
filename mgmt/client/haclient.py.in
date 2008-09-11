@@ -4967,6 +4967,7 @@ class Manager :
 		return string.join(ret_list[1:], "\n")
 
 	def update_cib_xml(self) :
+		global validate_type
 		self.xml_nodes = {}
 		xml_nodes = self.xml_nodes
 		cib_xml = self.cib_do_cmd("cib_query\ncib")
@@ -4992,6 +4993,11 @@ class Manager :
 		if xml_nodes.get("cib") == None :
 			return None
 
+
+		validate_type = self.get_validate_type()
+		validate_name = self.get_validate_name()
+		print self.get_crm_schema(validate_name)
+
 		if validate_type == "dtd" :
 			dtd_elem = self.get_dtd_elem("cib")
 			for (name, mod) in dtd_elem.get_content_model()[1] :
@@ -5006,6 +5012,7 @@ class Manager :
 					if sub_mod != '' :
 						continue
 					xml_nodes[sub_name] = xml_nodes[name].getElementsByTagName(sub_name)[0]
+
 
 		"""config_xml = self.cib_xml.getElementsByTagName("configuration")
 		self.crm_xml = config_xml.getElementsByTagName("crm_config")
@@ -5037,6 +5044,33 @@ class Manager :
 		window.update()
 		gc.collect()
 		self.update_timer = -1
+
+	def get_validate_type(self) : 
+		validate_list = {
+			"": "dtd",
+			"pacemaker-0.6": "dtd",
+			"transitional-0.6": "dtd",
+			"pacemaker-0.7": "rng",
+			"pacemaker-1.0": "rng"
+		}
+		validate_name = self.get_validate_name()
+		if validate_name == None :
+			return None
+		else :
+			return validate_list.get(validate_name)
+
+	def get_validate_name(self) :
+		if self.xml_nodes.get("cib") != None :
+			return self.xml_nodes["cib"].getAttribute("validate-with")
+		else :
+			return None
+
+	def get_crm_schema(self, validate_name="", file="") :
+		lines = self.query("crm_schema\n%s\n%s"%(str(validate_name), str(file)))
+		if lines == None :
+			return None
+		schema = "\n".join(lines)
+		return schema
 
 	def get_crm_dtd(self):
 		lines = self.query("crm_dtd", True)
