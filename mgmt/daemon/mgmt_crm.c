@@ -826,7 +826,7 @@ on_update_crm_config(char* argv[], int argc)
 	else {
 		crm_data_t* fragment = NULL;
 		crm_data_t* cib_object = NULL;
-		crm_data_t* output;
+		crm_data_t* output = NULL;
 		char xml[MAX_STRLEN];
 		
 		snprintf(xml, MAX_STRLEN, 
@@ -996,7 +996,7 @@ on_set_node_standby(char* argv[], int argc)
 	const char* id = NULL;
 	crm_data_t* fragment = NULL;
 	crm_data_t* cib_object = NULL;
-	crm_data_t* output;
+	crm_data_t* output = NULL;
 	char xml[MAX_STRLEN];
 
 	ARGC_CHECK(3);
@@ -1040,7 +1040,7 @@ on_del_rsc(char* argv[], int argc)
 	int rc;
 	resource_t* rsc;
 	crm_data_t* cib_object = NULL;
-	crm_data_t* output;
+	crm_data_t* output = NULL;
 	char xml[MAX_STRLEN];
 	pe_working_set_t* data_set;
 	
@@ -1438,7 +1438,7 @@ on_add_grp(char* argv[], int argc)
 	int rc, i;
 	crm_data_t* fragment = NULL;
 	crm_data_t* cib_object = NULL;
-	crm_data_t* output;
+	crm_data_t* output = NULL;
 	char xml[MAX_STRLEN];
 	char buf[MAX_STRLEN];
 	
@@ -1750,7 +1750,7 @@ on_update_rsc_attr(char* argv[], int argc)
 	int rc;
 	crm_data_t* fragment = NULL;
 	crm_data_t* cib_object = NULL;
-	crm_data_t* output;
+	crm_data_t* output = NULL;
 	char xml[MAX_STRLEN];
 	char real_id[MAX_STRLEN];
 	char parent_tag[MAX_STRLEN];
@@ -1813,7 +1813,7 @@ on_update_rsc_metaattrs(char* argv[], int argc)
 	int rc, i;
 	crm_data_t* fragment = NULL;
 	crm_data_t* cib_object = NULL;
-	crm_data_t* output;
+	crm_data_t* output = NULL;
 	char xml[MAX_STRLEN];
 	char buf[MAX_STRLEN];
 	char prefix[MAX_STRLEN];
@@ -1863,7 +1863,7 @@ on_update_rsc_params(char* argv[], int argc)
 	int rc, i;
 	crm_data_t* fragment = NULL;
 	crm_data_t* cib_object = NULL;
-	crm_data_t* output;
+	crm_data_t* output = NULL;
 	char xml[MAX_STRLEN];
 	char buf[MAX_STRLEN];
 	char prefix[MAX_STRLEN];
@@ -1910,7 +1910,7 @@ on_update_rsc_params(char* argv[], int argc)
 char*
 on_delete_rsc_metaattr(char* argv[], int argc)
 {
-	crm_data_t * output;
+	crm_data_t * output = NULL;
 	int rc;
 	ARGC_CHECK(2)
 
@@ -1922,7 +1922,7 @@ on_delete_rsc_metaattr(char* argv[], int argc)
 char*
 on_delete_rsc_param(char* argv[], int argc)
 {
-	crm_data_t * output;
+	crm_data_t * output = NULL;
 	int rc;
 	ARGC_CHECK(2)
 
@@ -1938,7 +1938,7 @@ on_set_target_role(char* argv[], int argc)
 	int rc;
 	crm_data_t* fragment = NULL;
 	crm_data_t* cib_object = NULL;
-	crm_data_t* output;
+	crm_data_t* output = NULL;
 	char xml[MAX_STRLEN];
 	char buf[MAX_STRLEN];
 	char prefix[MAX_STRLEN];
@@ -2094,7 +2094,7 @@ on_update_rsc_full_ops(char* argv[], int argc)
 	int rc, i, attr_num;
 	crm_data_t* fragment = NULL;
 	crm_data_t* cib_object = NULL;
-	crm_data_t* output;
+	crm_data_t* output = NULL;
 	char xml[MAX_STRLEN];
 	char buf[MAX_STRLEN];
 	char prefix[MAX_STRLEN];
@@ -2149,7 +2149,7 @@ on_update_rsc_ops(char* argv[], int argc)
 	int rc, i;
 	crm_data_t* fragment = NULL;
 	crm_data_t* cib_object = NULL;
-	crm_data_t* output;
+	crm_data_t* output = NULL;
 	char xml[MAX_STRLEN];
 	char buf[MAX_STRLEN];
 	char prefix[MAX_STRLEN];
@@ -2193,7 +2193,7 @@ char*
 on_delete_rsc_op(char* argv[], int argc)
 {
 	int rc;
-	crm_data_t * output;
+	crm_data_t * output = NULL;
 	ARGC_CHECK(2)
 
 	if ((rc=delete_object("resources", "op", argv[1], &output)) < 0) {
@@ -2239,7 +2239,7 @@ on_update_clone(char* argv[], int argc)
 	int rc;
 	crm_data_t* fragment = NULL;
 	crm_data_t* cib_object = NULL;
-	crm_data_t* output;
+	crm_data_t* output = NULL;
 	char xml[MAX_STRLEN];
 	char meta_attrs_id[MAX_STRLEN];	
 
@@ -2320,7 +2320,7 @@ on_update_master(char* argv[], int argc)
 	int rc;
 	crm_data_t* fragment = NULL;
 	crm_data_t* cib_object = NULL;
-	crm_data_t* output;
+	crm_data_t* output = NULL;
 	char xml[MAX_STRLEN];
 	char meta_attrs_id[MAX_STRLEN];	
 
@@ -2446,7 +2446,7 @@ char*
 on_delete_constraint(char* argv[], int argc)
 {
 	int rc;
-	crm_data_t * output;
+	crm_data_t * output = NULL;
 	ARGC_CHECK(3)
 
 	if ((rc=delete_object("constraints", argv[1], argv[2], &output)) < 0) {
@@ -2461,7 +2461,7 @@ on_update_constraint(char* argv[], int argc)
 	int rc;
 	crm_data_t* fragment = NULL;
 	crm_data_t* cib_object = NULL;
-	crm_data_t* output;
+	crm_data_t* output = NULL;
 	int i;
 	char xml[MAX_STRLEN];
 	char buf[MAX_STRLEN];
@@ -2515,7 +2515,7 @@ on_cib_create(char* argv[], int argc)
 	int rc;
 	crm_data_t* fragment = NULL;
 	crm_data_t* cib_object = NULL;
-	crm_data_t* output;
+	crm_data_t* output = NULL;
 	const char* type = NULL;
 	const char* xmls = NULL;
 	ARGC_CHECK(3)
@@ -2584,7 +2584,7 @@ char*
 on_cib_query(char* argv[], int argc)
 {
 	int rc;
-	crm_data_t* output;
+	crm_data_t* output = NULL;
 	const char* type = NULL;
 	char* ret = NULL;
 	ARGC_CHECK(2)
@@ -2612,7 +2612,7 @@ on_cib_update(char* argv[], int argc)
 	int rc;
 	crm_data_t* fragment = NULL;
 	crm_data_t* cib_object = NULL;
-	crm_data_t* output;
+	crm_data_t* output = NULL;
 	const char* type = NULL;
 	const char* xmls = NULL;
 	ARGC_CHECK(3)
@@ -2644,7 +2644,7 @@ on_cib_replace(char* argv[], int argc)
 	int rc;
 	/*crm_data_t* fragment = NULL;*/
 	crm_data_t* cib_object = NULL;
-	crm_data_t* output;
+	crm_data_t* output = NULL;
 	const char* type = argv[0];
 	const char* xmls = argv[1];
 	ARGC_CHECK(3)
@@ -2675,7 +2675,7 @@ on_cib_delete(char* argv[], int argc)
 {
 	int rc;
 	crm_data_t* cib_object = NULL;
-	crm_data_t* output;
+	crm_data_t* output = NULL;
 	const char* type = argv[0];
 	const char* xmls = argv[1];	
 	ARGC_CHECK(3)
