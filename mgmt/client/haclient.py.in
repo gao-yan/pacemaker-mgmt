@@ -4008,6 +4008,7 @@ class MainWindow :
 		elif type in [ _("clone"), _("group"), _("master")] :
 			self.cur_view = CompoundRscView((name,type))
 		else :
+			self.cur_view = None
 			return
 			#self.cur_view = View()
 		self.mainview_sw.add_with_viewport(self.cur_view.widget)
@@ -5003,7 +5004,8 @@ class Manager :
 
 		validate_type = self.get_validate_type()
 		self.validate_name = self.get_validate_name()
-		print self.get_crm_schema(self.validate_name)
+
+		crm_schema = self.get_crm_schema(self.validate_name)
 
 		if validate_type == "dtd" :
 			dtd_elem = self.get_dtd_elem("cib")
