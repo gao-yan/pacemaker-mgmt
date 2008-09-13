@@ -1383,7 +1383,6 @@ class ManageTree() :
 		self.store.foreach(self.restore_iter_status, tree_status)
 		
 	def update(self) :
-		
 		tree_status = self.save_tree_status()		
 		
 		self.store.clear()
@@ -1579,8 +1578,8 @@ class MainTree(ElementList) :
 		tree_status = self.save_tree_status()
 
 		self.store.clear()
-		window.select_view(None, None, None)
 		if not manager.connected :
+			window.select_view(None, None, None)
 			return
 
 		treeiter = {}
@@ -1601,12 +1600,18 @@ class MainTree(ElementList) :
 		self.treeiter = treeiter
 
 		self.restore_tree_status(tree_status)
+		(type, id, path, expand_status) = tree_status
+		if expand_status == {} :
+			self.widget.expand_all()
 
 		selection = self.widget.get_selection()
 		(model, iter) = selection.get_selected()
-		if iter == None :
-			selection.select_iter(self.treeiter["management"])
-			window.select_view("management")
+		if iter != None and window.cur_view != None :
+			window.cur_view.update(manager.xml_nodes.get(window.cur_type))
+		else :
+			if iter == None :
+				selection.select_iter(self.treeiter["management"])
+			self.on_cursor_changed(self.widget, self.widget.get_selection())
 
 class View :
 	glade = None
@@ -3963,8 +3968,6 @@ class MainWindow :
 	# functions
 	def update(self) :
 		self.maintree.update()
-		if self.cur_view != None :
-			self.cur_view.update(manager.xml_nodes.get(self.cur_type))
 		self.statusbar.pop(2)
 		return False
 	
@@ -4047,9 +4050,6 @@ class MainWindow :
 				return
 			else:
 				manager.save_login_info(server,user)
-				self.maintree = MainTree()
-				self.maintree_sw.add(self.maintree.widget)
-				self.maintree_sw.show_all()
 	
 		self.update_ui()
 
@@ -4678,8 +4678,11 @@ class MainWindow :
 		maintree_sw = gtk.ScrolledWindow()
 		maintree_sw.set_shadow_type(gtk.SHADOW_IN)
 				
-		
 		maintree_sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+
+		self.maintree = MainTree()
+		maintree_sw.add(self.maintree.widget)
+
 		#maintree_sw.add(maintree)
 
 		#maintree_frame = gtk.Frame()
