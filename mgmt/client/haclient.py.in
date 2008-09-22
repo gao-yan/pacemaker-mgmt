@@ -1898,6 +1898,19 @@ class ObjectView :
 			self.dtd_elem = manager.get_dtd_elem(obj_type)
 			attr_list = self.dtd_elem.get_attr_list()
 			sub_obj_list = self.dtd_elem.get_content_model()[1]
+		else :
+			rng_node = manager.get_rng_elem(obj_type)	
+			if rng_node[1] == None :
+				msgbox(_("Cannot get %s in Relax-NG schema")%obj_type)
+				return
+			sub_rng_nodes = manager.get_sub_rng_nodes(*rng_node)
+			attr_list = []
+			sub_obj_list = []
+			for sub_rng_node in sub_rng_nodes :
+				if sub_rng_node.count("elem") > 0 :
+					sub_obj_list.append(sub_rng_node)
+				elif sub_rng_node.count("attr") > 0 :
+					attr_list.append(sub_rng_node)
 
 		if len(attr_list) > 0 :
 			has_attr = True
@@ -4017,8 +4030,8 @@ class MainWindow :
 		if type == "configuration" :
 			self.cur_view = ClusterView()
 		elif type in ["crm_config", "nodes", "resources", "constraints", "status"] \
-				and manager.xml_nodes.get(type) != None :
-			self.cur_view = ObjectView(manager.xml_nodes.get(type), is_topview = True)
+				and manager.xml_nodes["cib"].getElementsByTagName(type) != [] :
+			self.cur_view = ObjectView(manager.xml_nodes["cib"].getElementsByTagName(type)[0], is_topview = True)
 		elif type == "node" and status not in [_("never started"),_("ping node"),_("unknown type")]:
 			self.cur_view = NodeView(name)
 		elif type == "management" :
@@ -5116,6 +5129,7 @@ class Manager :
 			return (rng_doc, sub_start_node)
 
 	def get_rng_elem(self, elem_name) :
+		elem_node = None
 		for (rng_doc, start_node) in self.rng_docs.values() :
 			for elem_node in rng_doc.getElementsByTagName("element") :
 				if elem_node.getAttribute("name") == elem_name :
