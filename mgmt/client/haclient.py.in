@@ -1731,14 +1731,22 @@ class ClusterView(View) :
 			obj_type = xml_node.tagName
 			if validate_type == "dtd" :
 				dtd_elem = manager.get_dtd_elem(obj_type)
-				cib_attrs_labels = {}
-				for attr_name in dtd_elem.get_attr_list() :
-					attr_value = xml_node.getAttribute(attr_name)
-					if attr_value == "" :
-						continue
-					cib_attrs_labels[attr_name] = self.add_line(self.cib_attrs_vbox, attr_value)
-				self.cib_attrs_labels = cib_attrs_labels
-				self.widget.get_nth_page(1).show_all()
+				attr_names = dtd_elem.get_attr_list()
+			else :
+				attr_names = []
+				rng_nodes = manager.get_sub_rng_nodes(*manager.get_rng_elem("cib"))
+				for rng_node in rng_nodes :
+					if rng_node.count("attr") > 0 :
+						attr_names.append(rng_node[0][1].getAttribute("name"))
+
+			cib_attrs_labels = {}
+			for attr_name in attr_names :
+				attr_value = xml_node.getAttribute(attr_name)
+				if attr_value == "" :
+					continue
+				cib_attrs_labels[attr_name] = self.add_line(self.cib_attrs_vbox, attr_value)
+			self.cib_attrs_labels = cib_attrs_labels
+			self.widget.get_nth_page(1).show_all()
 
 		self.on_after_show()
 
@@ -5128,6 +5136,8 @@ class Manager :
 				sub_rng_nodes.extend(self.get_sub_rng_nodes(rng_doc, def_node))
 			elif child_node.tagName == "element" :
 				sub_rng_nodes.append([(rng_doc, child_node), "elem"])
+			elif child_node.tagName == "attribute" :
+				sub_rng_nodes.append([(rng_doc, child_node), "attr"])
 			elif child_node.tagName in ["interleave", "optional", "zeroOrMore"] :
 				nodes = self.get_sub_rng_nodes(rng_doc, child_node)
 				for node in nodes :
