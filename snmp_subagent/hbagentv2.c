@@ -48,7 +48,7 @@ extern const char *myid;
 extern const char *myuuid;
 
 /* for debug */
-void debugPrint(HA_Message *msg, int depth, FILE *fp);
+void debugPrint(crm_data_t *msg, int depth, FILE *fp);
 
 /**
  * Initialize of resource table v2.
@@ -269,7 +269,7 @@ free_resource_table_v2(void)
  *        that to the handler. (see: handle_cib_msg())
  */
 static void
-hbagentv2_update_diff(const char *event, HA_Message *msg)
+hbagentv2_update_diff(const char *event, crm_data_t *msg)
 {
 
     /*implement parsing the diff and send a trap */
@@ -395,12 +395,13 @@ hbagentv2_update_diff(const char *event, HA_Message *msg)
         if (t_magic != NULL) {
             int transition_num = -1;
             int action_id = -1;
+            int target_rc = 0;
             int status = -1;
             int rc = -1;
             char *uuid = NULL;
 
             if (!decode_transition_magic(
-                    t_magic, &uuid, &transition_num, &action_id, &status, &rc)) {
+                    t_magic, &uuid, &transition_num, &action_id, &status, &rc, &target_rc)) {
                 cl_log(LOG_ERR, "decode_transition_magic() is failed.");
                 free_xml(diff);
                 return;
@@ -528,37 +529,26 @@ get_cib_fd(void)
  * Handler of cib information message changes.
  * Set this function in the select loop to send a trap.
  */
+/* TODO: this prototype is not exported in any headers */
+
+/* Beekhof: Uh yeah, for a _reason_
+ * This code should be using gmainloop like everything else
+ */
+
+gboolean cib_native_dispatch(IPC_Channel *channel, gpointer user_data);
+
 int
 handle_cib_msg(void)
 {
-
-    /* TODO: this prototype is not exported in any headers */
-    gboolean cib_native_dispatch(IPC_Channel *channel, gpointer user_data);
-
-    if (cib_conn->cmds->msgready(cib_conn)) {
-        IPC_Channel * chan;
-
-        /* get IPC Channel. */
-        chan = cib_conn->cmds->channel(cib_conn);
-        if (!chan) {
-            cl_log(LOG_ERR, "CIB connection's channel is NULL.");
-            return HA_FAIL;
-        }
-        /* check CIB connection. */
-        if (chan->ch_status == IPC_DISCONNECT) {
-            cl_log(LOG_ERR, "Lost connection to the CIB.");
-            return HA_FAIL;
-        }
-        /* call callback function. */
-        if (!cib_native_dispatch(NULL, cib_conn)) {
-            cl_log(LOG_ERR, "cib_native_dispatch() failed.");
-            return HA_FAIL;
-        }
-        /* check if an error occurs in callback function. */
-        if (err_occurs) {
-            return HA_FAIL;
-        }
-
+    /* call callback function. */
+    if (!cib_native_dispatch(NULL, cib_conn)) {
+        cl_log(LOG_ERR, "cib_native_dispatch() failed.");
+        return HA_FAIL;
+    }
+    
+    /* check if an error occurs in callback function. */
+    if (err_occurs) {
+        return HA_FAIL;
     }
     return HA_OK;
 }
@@ -613,8 +603,10 @@ free_hbagentv2(void)
  * debug print for cib info.
  */
 void
-debugPrint(HA_Message *msg, int depth, FILE *fp)
+debugPrint(crm_data_t *msg, int depth, FILE *fp)
 {
+#if 0
+    /* non functional for crm_data_t == xmlNode */
     int i;
 
     if (msg == NULL) {
@@ -652,6 +644,7 @@ debugPrint(HA_Message *msg, int depth, FILE *fp)
             fflush(fp);
         }
     }
+#endif
 }
 
 /**
