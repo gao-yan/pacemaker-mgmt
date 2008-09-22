@@ -63,13 +63,13 @@ changes:
 	hg log -M --template "  + {desc|firstline|strip}\n" -r $(LAST_RELEASE):tip | grep -v Low: | sort -uf 
 	printf "\n -- Andrew Beekhof <abeekhof@suse.de>  `date +"%a, %d %b %Y %T %z"`\n"
 
-obs:	tgz
+stable:	tgz
 	make changes > .changes
-	scp .changes $(TARFILE) vmhost.beekhof.net:Development/obs/server:ha-clustering/pygui/
+	scp .changes $(TARFILE) c001n16.suse.de:Development/obs/server:ha-clustering/pygui/
 
-dev:	tgz
+unstable:	tgz
 	make changes > .changes
-	scp .changes $(TARFILE) vmhost.beekhof.net:Development/obs/server:ha-clustering:UNSTABLE/pygui/
+	scp .changes $(TARFILE) c001n16.suse.de:Development/obs/server:ha-clustering:UNSTABLE/pygui/
 
 install-exec-local:
 	-mkdir -p $(DESTDIR)$(bindir)
