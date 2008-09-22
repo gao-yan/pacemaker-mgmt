@@ -1519,6 +1519,8 @@ class MainTree(ElementList) :
 				"configuration": gtk.STOCK_HARDDISK,
 				"status": gtk.STOCK_FIND,
 				"crm_config": gtk.STOCK_PREFERENCES,
+				"op_defaults": gtk.STOCK_PREFERENCES,
+				"rsc_defaults": gtk.STOCK_PREFERENCES,
 				"nodes": gtk.STOCK_NETWORK,
 				"resources": gtk.STOCK_DIRECTORY,
 				"constraints": gtk.STOCK_PROPERTIES,
@@ -1591,6 +1593,19 @@ class MainTree(ElementList) :
 					sub_dtd_elem = manager.get_dtd_elem(name)
 					for (sub_name, sub_mod) in sub_dtd_elem.get_content_model()[1] :
 						if sub_mod == '' :
+							treeiter[sub_name] =  \
+								self.store.append(treeiter[name], [_(name_cap(sub_name)), sub_name])
+		else :
+			rng_doc = manager.rng_docs[manager.validate_name+".rng"][0]
+			rng_nodes = manager.get_sub_rng_nodes(*manager.get_rng_elem("cib"))
+			for rng_node in rng_nodes :
+				if rng_node.count("elem") > 0 :
+					name = rng_node[0][1].getAttribute("name")
+					treeiter[name] = self.store.append(None, [_(name_cap(name)), name])
+					sub_rng_nodes = manager.get_sub_rng_nodes(*rng_node[0])
+					for sub_rng_node in sub_rng_nodes :
+						if sub_rng_node.count("elem") > 0 :
+							sub_name = sub_rng_node[0][1].getAttribute("name")
 							treeiter[sub_name] =  \
 								self.store.append(treeiter[name], [_(name_cap(sub_name)), sub_name])
 					
@@ -4740,6 +4755,7 @@ class Manager :
 	async_ret_str = {}
 	async_ret_list = {} 
 	xml_nodes = {}
+	validate_name = None
 		
 	# cache functions
 
@@ -5004,11 +5020,9 @@ class Manager :
 		if xml_nodes.get("cib") == None :
 			return None
 
-
 		validate_type = self.get_validate_type()
+		saved_validate_name = self.validate_name
 		self.validate_name = self.get_validate_name()
-
-		crm_schema = self.get_crm_schema(self.validate_name)
 
 		if validate_type == "dtd" :
 			dtd_elem = self.get_dtd_elem("cib")
@@ -5024,7 +5038,10 @@ class Manager :
 					if sub_mod != '' :
 						continue
 					xml_nodes[sub_name] = xml_nodes[name].getElementsByTagName(sub_name)[0]
-
+		else :
+			self.rng_docs = {}
+			if self.validate_name != saved_validate_name :
+				self.update_rng_docs(self.validate_name, self.validate_name+".rng")
 
 		"""config_xml = self.cib_xml.getElementsByTagName("configuration")
 		self.crm_xml = config_xml.getElementsByTagName("crm_config")
@@ -5049,6 +5066,76 @@ class Manager :
 			debug("fail to parse xml info")
 			return None"""
 
+	def update_rng_docs(self, validate_name = "", file= "") :
+		self.rng_docs[file] = self.get_start_rng_node(validate_name, file)
+		if self.rng_docs[file] == None :
+			return
+		for extern_ref in self.rng_docs[file][0].getElementsByTagName("externalRef") :
+			href_value = extern_ref.getAttribute("href")
+			if self.rng_docs.get(href_value) == None :
+				self.update_rng_docs(validate_name, href_value)	
+
+	def get_start_rng_node(self, validate_name = "", file = "") :
+		schema_info = validate_name + " " + file
+		crm_schema = self.get_crm_schema(validate_name, file)
+		if crm_schema == None :
+			msgbox(_("Cannot get Relax-NG schema: ") + schema_info)
+
+		try :
+			rng_doc = parseString(crm_schema).documentElement
+		except xml.parsers.expat.ExpatError, msg :
+			msgbox(_("Failed to parse the Relax-NG schema: ") + _(msg) + schema_info)
+			return None
+
+		start_nodes = rng_doc.getElementsByTagName("start")
+		if len(start_nodes) > 0 :
+			start_node = start_nodes[0] 
+		else :
+			msgbox(_("Cannot get started on Relax-NG schema: ") + schema_info)
+			return None
+
+		sub_start_node = None
+		for sub_start_node in start_node.childNodes :
+			if sub_start_node.nodeType == xml.dom.Node.ELEMENT_NODE :
+				break
+			
+		#sub_start_nodes = self.get_sub_rng_nodes(start_node)["req_elem_nodes"]
+		#if sub_start_nodes == [] :
+		if sub_start_node == None :
+			msgbox(_("Cannot get the start element in Relax-NG schema: ") + schema_info)
+			return None
+		else :
+			return (rng_doc, sub_start_node)
+
+	def get_rng_elem(self, elem_name) :
+		for (rng_doc, start_node) in self.rng_docs.values() :
+			for elem_node in rng_doc.getElementsByTagName("element") :
+				if elem_node.getAttribute("name") == elem_name :
+					return (rng_doc, elem_node)
+
+	def get_sub_rng_nodes(self, rng_doc, rng_node) :
+		sub_rng_nodes = []
+		#sub_rng_nodes = {}
+		#req_elem_nodes = []
+		#attr_nodes = []
+		for child_node in rng_node.childNodes :
+			if child_node.nodeType != xml.dom.Node.ELEMENT_NODE :
+				continue
+			if child_node.tagName == "ref" :
+				for def_node in rng_doc.getElementsByTagName("define") :
+					if def_node.getAttribute("name") == child_node.getAttribute("name") :
+						break
+				sub_rng_nodes.extend(self.get_sub_rng_nodes(rng_doc, def_node))
+			elif child_node.tagName == "element" :
+				sub_rng_nodes.append([(rng_doc, child_node), "elem"])
+			elif child_node.tagName in ["interleave", "optional", "zeroOrMore"] :
+				nodes = self.get_sub_rng_nodes(rng_doc, child_node)
+				for node in nodes :
+					node.append(child_node.tagName)
+				sub_rng_nodes.extend(nodes)
+		#sub_rng_nodes["req_elem_nodes"] = req_elem_nodes
+		return sub_rng_nodes
+				
 	def update(self) :
 		self.cache_clear()
 		self.update_cib_xml()
@@ -5095,6 +5182,9 @@ class Manager :
 	def get_dtd_elem(self, elem_name) :
 		if not self.dtd_elems.has_key(elem_name) :
 			dtd = self.get_crm_schema(self.validate_name)
+			if crm_schema == None :
+				msgbox(_("Cannot get DTD: ") + self.validate_name)
+				return None
 			complete_dtd = load_dtd_string(dtd)
 			self.dtd_elems[elem_name] = complete_dtd.get_elem(elem_name)
 		
