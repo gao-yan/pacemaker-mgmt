@@ -559,18 +559,8 @@ class ElementList:
 			attr_list = self.dtd_elem.get_attr_list()
 			sub_obj_list = self.dtd_elem.get_content_model()[1]
 		else :
-			rng_node = manager.get_rng_elem(obj_type)
-			if rng_node[1] == None :
-				msgbox(_("Cannot get %s in Relax-NG schema")%obj_type)
-				return
-			sub_rng_nodes = manager.get_sub_rng_nodes(*rng_node)
-			attr_list = []
-			sub_obj_list = []
-			for sub_rng_node in sub_rng_nodes :
-				if sub_rng_node.count("elem") > 0 :
-					sub_obj_list.append(sub_rng_node)
-				elif sub_rng_node.count("attr") > 0 :
-					attr_list.append(sub_rng_node[0][1].getAttribute("name"))
+			(attr_node_list, sub_obj_list) = manager.sorted_sub_rng_nodes(obj_type)
+			attr_list = [attr_node[0][1].getAttribute("name") for attr_node in attr_node_list]
 
 		if len(sub_obj_list)  > 0 :
 			has_elem = True
@@ -697,6 +687,8 @@ class ElementList:
 	def get_node_key(self, model, iter) :
 		type = model.get_value(iter, 0)
 		id = model.get_value(iter, 1)
+		if id == "" :
+			id = model.get_value(iter, 2)
 		if id == "" :
 			id = model.get_value(model.iter_parent(iter), 1)
 		return (type, id)
@@ -1509,7 +1501,7 @@ class MainTree(ElementList) :
 
 		widget = gtk.TreeView(self.store)
 		widget.set_headers_visible(False)
-		add_column(widget, _(obj_type), 0, self.render_icon)
+		add_column(widget, _("Type"), 0, self.render_icon)
 		widget.set_size_request(150, 100)
 		widget.connect("cursor-changed", self.on_cursor_changed, widget.get_selection())
 		#widget.connect("event-after", self.on_right_click)
@@ -1918,18 +1910,7 @@ class ObjectView :
 			attr_list = self.dtd_elem.get_attr_list()
 			sub_obj_list = self.dtd_elem.get_content_model()[1]
 		else :
-			rng_node = manager.get_rng_elem(obj_type)	
-			if rng_node[1] == None :
-				msgbox(_("Cannot get %s in Relax-NG schema")%obj_type)
-				return
-			sub_rng_nodes = manager.get_sub_rng_nodes(*rng_node)
-			attr_list = []
-			sub_obj_list = []
-			for sub_rng_node in sub_rng_nodes :
-				if sub_rng_node.count("elem") > 0 :
-					sub_obj_list.append(sub_rng_node)
-				elif sub_rng_node.count("attr") > 0 :
-					attr_list.append(sub_rng_node)
+			(attr_list, sub_obj_list) = manager.sorted_sub_rng_nodes(obj_type)
 
 		if len(attr_list) > 0 :
 			has_attr = True
@@ -2291,15 +2272,8 @@ class ElementNotebook :
 					elem_list.tree.connect("cursor-changed", self.on_cursor_changed)
 					elem_list.tree.connect("event-after", self.on_click)
 		else :
-			rng_node = manager.get_rng_elem(self.obj_type)
-			if rng_node[1] == None :
-				msgbox(_("Cannot get %s in Relax-NG schema")%obj_type)
-				return
-			rng_nodes = manager.get_sub_rng_nodes(*rng_node)
-			for rng_node in rng_nodes :
-				if rng_node.count("elem") == 0 :
-					continue
-
+			(attr_list, sub_obj_list) = manager.sorted_sub_rng_nodes(self.obj_type)
+			for rng_node in sub_obj_list :
 				name = rng_node[0][1].getAttribute("name")
 				elem_node_list = []
 				for elem_node in self.xml_node.getElementsByTagName(name) :
@@ -2379,6 +2353,9 @@ class ElementNotebook :
 		if validate_type == "dtd" :
 			dtd_elem = manager.get_dtd_elem(selected_node.tagName)
 			attr_list = dtd_elem.get_attr_list()
+		else :
+			(attr_node_list, sub_obj_list) = manager.sorted_sub_rng_nodes(selected_node.tagName)
+			attr_list = [attr_node[0][1].getAttribute("name") for attr_node in attr_node_list]
 
 		name_labels = []
 		name_label_max_len = 0
@@ -5224,6 +5201,21 @@ class Manager :
 				sub_rng_nodes.extend(nodes)
 		#sub_rng_nodes["req_elem_nodes"] = req_elem_nodes
 		return sub_rng_nodes
+
+	def sorted_sub_rng_nodes(self, obj_type) :
+		rng_node = self.get_rng_elem(obj_type)	
+		if rng_node[1] == None :
+			msgbox(_("Cannot get %s in Relax-NG schema")%obj_type)
+			return
+		sub_rng_nodes = manager.get_sub_rng_nodes(*rng_node)
+		attr_list = []
+		sub_obj_list = []
+		for sub_rng_node in sub_rng_nodes :
+			if sub_rng_node.count("elem") > 0 :
+				sub_obj_list.append(sub_rng_node)
+			elif sub_rng_node.count("attr") > 0 :
+				attr_list.append(sub_rng_node)
+		return (attr_list, sub_obj_list)
 				
 	def update(self) :
 		self.cache_clear()
