@@ -1596,15 +1596,14 @@ class MainTree(ElementList) :
 							treeiter[sub_name] =  \
 								self.store.append(treeiter[name], [_(name_cap(sub_name)), sub_name])
 		else :
-			rng_doc = manager.rng_docs[manager.validate_name+".rng"][0]
 			rng_nodes = manager.get_sub_rng_nodes(*manager.get_rng_elem("cib"))
 			for rng_node in rng_nodes :
-				if rng_node.count("elem") > 0 :
+				if rng_node.count("elem") > 0 and rng_node.count("zeroOrMore") == 0 :
 					name = rng_node[0][1].getAttribute("name")
 					treeiter[name] = self.store.append(None, [_(name_cap(name)), name])
 					sub_rng_nodes = manager.get_sub_rng_nodes(*rng_node[0])
 					for sub_rng_node in sub_rng_nodes :
-						if sub_rng_node.count("elem") > 0 :
+						if sub_rng_node.count("elem") > 0 and sub_rng_node.count("zeroOrMore") == 0 :
 							sub_name = sub_rng_node[0][1].getAttribute("name")
 							treeiter[sub_name] =  \
 								self.store.append(treeiter[name], [_(name_cap(sub_name)), sub_name])
@@ -2258,6 +2257,48 @@ class ElementNotebook :
 					if len(sub_dtd_elem.get_attr_list()) == 0 :
 						(name, mod) =  sub_dtd_elem.get_content_model()[1][0]
 						sub_elem_node_list = []
+						for elem_node in elem_node_list :
+							for sub_elem_node in elem_node.getElementsByTagName(name) :
+								if sub_elem_node in elem_node.childNodes :
+									sub_elem_node_list.append(sub_elem_node)
+						elem_node_list = sub_elem_node_list
+					if self.show_mode == 0 :
+						elem_list = ElementList(name, elem_node_list)
+					else :
+						elem_list = ElementTree(name, elem_node_list)
+					self.notebook.append_page(elem_list.widget, tab_label)
+					self.elem_lists.append(elem_list)
+					elem_list.tree.connect("cursor-changed", self.on_cursor_changed)
+					elem_list.tree.connect("event-after", self.on_click)
+		else :
+			rng_node = manager.get_rng_elem(self.obj_type)
+			if rng_node[1] == None :
+				msgbox(_("Cannot get %s in Relax-NG schema")%obj_type)
+				return
+			rng_nodes = manager.get_sub_rng_nodes(*rng_node)
+			for rng_node in rng_nodes :
+				if rng_node.count("elem") == 0 :
+					continue
+
+				name = rng_node[0][1].getAttribute("name")
+				elem_node_list = []
+				for elem_node in self.xml_node.getElementsByTagName(name) :
+					if elem_node in self.xml_node.childNodes :
+						elem_node_list.append(elem_node)
+				if len(elem_node_list) > 0 :
+					tab_label = gtk.Label(_(name_cap(name)))
+					sub_rng_nodes = manager.get_sub_rng_nodes(*rng_node[0])
+					attr_list = []
+					sub_obj_list = []
+					for sub_rng_node in sub_rng_nodes :
+						if sub_rng_node.count("attr") > 0 :
+							attr_list.append(sub_rng_node)
+						elif sub_rng_node.count("elem") > 0 :
+							sub_obj_list.append(sub_rng_node)
+
+					if len(attr_list) == 0 :
+						sub_elem_node_list = []
+						name = sub_obj_list[0][0][1].getAttribute("name")
 						for elem_node in elem_node_list :
 							for sub_elem_node in elem_node.getElementsByTagName(name) :
 								if sub_elem_node in elem_node.childNodes :
@@ -5111,22 +5152,23 @@ class Manager :
 		start_nodes = rng_doc.getElementsByTagName("start")
 		if len(start_nodes) > 0 :
 			start_node = start_nodes[0] 
+			return (rng_doc, start_node)
 		else :
-			msgbox(_("Cannot get started on Relax-NG schema: ") + schema_info)
+			msgbox(_("Cannot get started in Relax-NG schema: ") + schema_info)
 			return None
 
-		sub_start_node = None
-		for sub_start_node in start_node.childNodes :
-			if sub_start_node.nodeType == xml.dom.Node.ELEMENT_NODE :
-				break
+		#sub_start_node = None
+		#for sub_start_node in start_node.childNodes :
+		#	if sub_start_node.nodeType == xml.dom.Node.ELEMENT_NODE :
+		#		break
 			
-		#sub_start_nodes = self.get_sub_rng_nodes(start_node)["req_elem_nodes"]
-		#if sub_start_nodes == [] :
-		if sub_start_node == None :
-			msgbox(_("Cannot get the start element in Relax-NG schema: ") + schema_info)
-			return None
-		else :
-			return (rng_doc, sub_start_node)
+		##sub_start_nodes = self.get_sub_rng_nodes(start_node)["req_elem_nodes"]
+		##if sub_start_nodes == [] :
+		#if sub_start_node == None :
+		#	msgbox(_("Cannot get the start element in Relax-NG schema: ") + schema_info)
+		#	return None
+		#else :
+		#	return (rng_doc, sub_start_node)
 
 	def get_rng_elem(self, elem_name) :
 		elem_node = None
@@ -5148,11 +5190,14 @@ class Manager :
 					if def_node.getAttribute("name") == child_node.getAttribute("name") :
 						break
 				sub_rng_nodes.extend(self.get_sub_rng_nodes(rng_doc, def_node))
+			elif child_node.tagName == "externalRef" :
+				nodes = self.get_sub_rng_nodes(*self.rng_docs[child_node.getAttribute("href")])
+				sub_rng_nodes.extend(nodes)
 			elif child_node.tagName == "element" :
 				sub_rng_nodes.append([(rng_doc, child_node), "elem"])
 			elif child_node.tagName == "attribute" :
 				sub_rng_nodes.append([(rng_doc, child_node), "attr"])
-			elif child_node.tagName in ["interleave", "optional", "zeroOrMore"] :
+			elif child_node.tagName in ["interleave", "optional", "zeroOrMore", "choice", "group"] :
 				nodes = self.get_sub_rng_nodes(rng_doc, child_node)
 				for node in nodes :
 					node.append(child_node.tagName)
