@@ -1610,12 +1610,12 @@ class MainTree(ElementList) :
 		else :
 			rng_nodes = manager.get_sub_rng_nodes(*manager.get_rng_elem("cib"))
 			for rng_node in rng_nodes :
-				if rng_node.count("elem") > 0 and rng_node.count("zeroOrMore") == 0 :
+				if rng_node.count("element") > 0 and rng_node.count("zeroOrMore") == 0 :
 					name = rng_node[0][1].getAttribute("name")
 					treeiter[name] = self.store.append(None, [_(name_cap(name)), name])
 					sub_rng_nodes = manager.get_sub_rng_nodes(*rng_node[0])
 					for sub_rng_node in sub_rng_nodes :
-						if sub_rng_node.count("elem") > 0 and sub_rng_node.count("zeroOrMore") == 0 :
+						if sub_rng_node.count("element") > 0 and sub_rng_node.count("zeroOrMore") == 0 :
 							sub_name = sub_rng_node[0][1].getAttribute("name")
 							treeiter[sub_name] =  \
 								self.store.append(treeiter[name], [_(name_cap(sub_name)), sub_name])
@@ -1747,7 +1747,7 @@ class ClusterView(View) :
 				attr_names = []
 				rng_nodes = manager.get_sub_rng_nodes(*manager.get_rng_elem("cib"))
 				for rng_node in rng_nodes :
-					if rng_node.count("attr") > 0 :
+					if rng_node.count("attribute") > 0 :
 						attr_names.append(rng_node[0][1].getAttribute("name"))
 
 			cib_attrs_labels = {}
@@ -2285,9 +2285,9 @@ class ElementNotebook :
 					attr_list = []
 					sub_obj_list = []
 					for sub_rng_node in sub_rng_nodes :
-						if sub_rng_node.count("attr") > 0 :
+						if sub_rng_node.count("attribute") > 0 :
 							attr_list.append(sub_rng_node)
-						elif sub_rng_node.count("elem") > 0 :
+						elif sub_rng_node.count("element") > 0 :
 							sub_obj_list.append(sub_rng_node)
 
 					if len(attr_list) == 0 :
@@ -5190,10 +5190,8 @@ class Manager :
 			elif child_node.tagName == "externalRef" :
 				nodes = self.get_sub_rng_nodes(*self.rng_docs[child_node.getAttribute("href")])
 				sub_rng_nodes.extend(nodes)
-			elif child_node.tagName == "element" :
-				sub_rng_nodes.append([(rng_doc, child_node), "elem"])
-			elif child_node.tagName == "attribute" :
-				sub_rng_nodes.append([(rng_doc, child_node), "attr"])
+			elif child_node.tagName in ["element", "attribute", "value", "data", "text"] :
+				sub_rng_nodes.append([(rng_doc, child_node), child_node.tagName])
 			elif child_node.tagName in ["interleave", "optional", "zeroOrMore", "choice", "group"] :
 				nodes = self.get_sub_rng_nodes(rng_doc, child_node)
 				for node in nodes :
@@ -5211,9 +5209,9 @@ class Manager :
 		attr_list = []
 		sub_obj_list = []
 		for sub_rng_node in sub_rng_nodes :
-			if sub_rng_node.count("elem") > 0 :
+			if sub_rng_node.count("element") > 0 :
 				sub_obj_list.append(sub_rng_node)
-			elif sub_rng_node.count("attr") > 0 :
+			elif sub_rng_node.count("attribute") > 0 :
 				attr_list.append(sub_rng_node)
 		return (attr_list, sub_obj_list)
 				
@@ -5263,7 +5261,7 @@ class Manager :
 	def get_dtd_elem(self, elem_name) :
 		if not self.dtd_elems.has_key(elem_name) :
 			dtd = self.get_crm_schema(self.validate_name)
-			if crm_schema == None :
+			if dtd == None :
 				msgbox(_("Cannot get DTD: ") + self.validate_name)
 				return None
 			complete_dtd = load_dtd_string(dtd)
@@ -5961,6 +5959,14 @@ class ObjectAttrs(WidgetGroup) :
 				self.auto_id = True
 			else :
 				self.auto_id = False
+		else :
+			self.render_widgets_rng()
+			self.verify_values = self.verify_values_rng
+			(attr_node_list, sub_obj_list) = manager.sorted_sub_rng_nodes(self.obj_type)
+			if sub_obj_list == [] :
+				self.auto_id = True
+			else :
+				self.auto_id = False
 
 		for widget_type in ("combos", "bool_combos", "combo_entries") :
 			if self.widgets.has_key(widget_type) :
@@ -6161,6 +6167,149 @@ class ObjectAttrs(WidgetGroup) :
 				passed =False
 		return passed
 
+	def render_widgets_rng(self):
+		obj_type = self.obj_type
+		is_newobj = self.is_newobj
+		required_vbox = self.required_vbox
+		optional_vbox = self.optional_vbox
+		attrs_vbox = self.attrs_vbox
+
+		widgets = {}
+		name_labels = {}
+		value_labels = {}
+		combos = {}
+		bool_combos = {}
+		combo_entries = {}
+		required_row = 0
+		optional_row = 0
+		name_label_max_len = 0
+
+		(self.attr_node_list, sub_obj_list) = manager.sorted_sub_rng_nodes(obj_type)
+		self.attr_list = []
+		for attr_node in self.attr_node_list :
+			attr_name = attr_node[0][1].getAttribute("name")
+			self.attr_list.append(attr_name)
+			label_text = _(name_cap(attr_name)+":")
+			label = gtk.Label(label_text)
+			label.set_alignment(0, 0.5)
+			label_len = len(attr_name)
+			if label_len > name_label_max_len :
+				name_label_max_len = label_len
+			eventbox = gtk.EventBox()
+			eventbox.add(label)
+			name_labels[attr_name] = label
+
+			sub_rng_nodes = manager.get_sub_rng_nodes(*attr_node[0])
+			value_node_list = []
+			data_node_list = []
+			text_node_list = []
+			for sub_rng_node in sub_rng_nodes :
+				if sub_rng_node.count("value") > 0 :
+					value_node_list.append(sub_rng_node)
+				elif sub_rng_node.count("data") > 0 :
+					data_node_list.append(sub_rng_node)
+				elif sub_rng_node.count("text") > 0 :
+					text_node_list.append(sub_rng_node)
+
+			if attr_name == "id" and is_newobj == False :
+				widget = gtk.Label()
+				widget.set_alignment(0, 0.5)
+				value_labels[attr_name] = widget
+			elif len(value_node_list) > 0 and len(data_node_list) == 0 :
+				store = gtk.ListStore(str, str)
+				if attr_node.count("optional") > 0 :
+					store.append(["", ""])
+
+				for value_node in value_node_list :
+					store.append([value_node[0][1].childNodes[0].data, ""])
+
+				#for option in options:
+				#	if attr_default != None and option == attr_default :
+				#		store.append([option, "["+_("default")+"]"])
+				#	else :
+				#		store.append([option, ""])
+
+				widget = gtk.ComboBox(store)
+				cell0 = gtk.CellRendererText()
+				cell1 = gtk.CellRendererText()
+				widget.pack_start(cell0, True)
+				widget.pack_start(cell1, True)
+				widget.add_attribute(cell0, 'text', 0)
+				widget.add_attribute(cell1, 'text', 1)
+				combos[attr_name] = widget
+
+			elif len(data_node_list) > 0 and data_node_list[0][0][1].getAttribute("type") == "boolean"  :
+				store = gtk.ListStore(str, str)
+				if attr_node.count("optional") > 0 :
+					store.append(["", ""])
+
+				for option in ("true", "false") :
+					store.append([option, ""])
+
+				if len(value_node_list) > 0 :
+					for value_node in value_node_list :
+						store.append([value_node[0][1].childNodes[0].data, ""])
+
+				widget = gtk.ComboBox(store)
+				cell0 = gtk.CellRendererText()
+				cell1 = gtk.CellRendererText()
+				widget.pack_start(cell0, True)
+				widget.pack_start(cell1, True)
+				widget.add_attribute(cell0, 'text', 0)
+				widget.add_attribute(cell1, 'text', 1)
+				bool_combos[attr_name] = widget
+
+			else :
+				store = gtk.ListStore(str, str)
+				if attr_node.count("optional") > 0 :
+					store.append(["", ""])
+				#if attr_default != None :
+				#	store.append([attr_default, "["+_("default")+"]"])
+				if len(value_node_list) > 0 :
+					for value_node in value_node_list :
+						store.append([value_node[0][1].childNodes[0].data, ""])
+
+				widget = gtk.ComboBoxEntry(store)
+				cell = gtk.CellRendererText()
+				widget.pack_start(cell, True)
+				widget.add_attribute(cell, 'text', 1)
+				combo_entries[attr_name] = widget
+			
+			hbox = gtk.HBox()
+			hbox.pack_start(eventbox, False, padding=5)
+			hbox.pack_start(widget, padding=5)
+
+			if attr_node.count("optional") == 0 :
+				required_vbox.pack_start(hbox, False, padding=2)
+			else:
+				optional_vbox.pack_start(hbox, False, padding=2)
+
+		attrs_vbox.show_all()
+
+		for name_label in name_labels.values() :
+			name_label.set_width_chars(name_label_max_len)
+		
+		widgets["name_labels"] = name_labels
+		widgets["value_labels"] = value_labels
+		widgets["combos"] = combos
+		widgets["bool_combos"] = bool_combos
+		widgets["combo_entries"] = combo_entries
+
+		self.widgets = widgets
+
+	def verify_values_rng(self) :
+		widgets = self.widgets
+		obj_type = self.obj_type
+		passed = True
+		object = self.get_values()
+
+		for attr_node in self.attr_node_list :
+			attr_name = attr_node[0][1].getAttribute("name")
+			if attr_node.count("optional") == 0 and not object.has_key(attr_name) :
+				msgbox(_(name_cap(attr_name)+":")+_(" can't be empty"))
+				passed =False
+		return passed
+
 	def combobox_store_append(self, combo, append_options) :
 		current_store = combo.get_model()
 		retained_store = []
@@ -6188,6 +6337,9 @@ class ObjectAttrs(WidgetGroup) :
 			for key in ["rsc", "from", "to"] :
 				if widgets["combo_entries"].has_key(key) :
 					self.combobox_store_append(widgets["combo_entries"][key], rsc_store)
+
+		if validate_type != "dtd" :
+			return
 
 		try :
 			op_dtd_elem = manager.get_dtd_elem("op")
