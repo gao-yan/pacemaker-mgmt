@@ -5098,8 +5098,8 @@ class Manager :
 						continue
 					xml_nodes[sub_name] = xml_nodes[name].getElementsByTagName(sub_name)[0]
 		else :
-			self.rng_docs = {}
 			if self.validate_name != saved_validate_name :
+				self.rng_docs = {}
 				self.update_rng_docs(self.validate_name, self.validate_name+".rng")
 
 		"""config_xml = self.cib_xml.getElementsByTagName("configuration")
