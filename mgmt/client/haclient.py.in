@@ -6312,11 +6312,18 @@ class ObjectAttrs(WidgetGroup) :
 		passed = True
 		object = self.get_values()
 
+		choice_attrs = []
 		for attr_node in self.attr_node_list :
 			attr_name = attr_node[0][1].getAttribute("name")
-			if attr_node.count("optional") == 0 and not object.has_key(attr_name) :
+			if object.has_key(attr_name) or manager.find_decl(attr_node, "optional") != 0 :
+				continue
+
+			if manager.find_decl(attr_node, "choice") == 0  :
 				msgbox(_(name_cap(attr_name)+":")+_(" can't be empty"))
 				passed =False
+			else :
+				choice_attrs.append(attr_node)
+
 		return passed
 
 	def combobox_store_append(self, combo, append_options) :
