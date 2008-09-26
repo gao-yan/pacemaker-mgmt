@@ -1250,11 +1250,15 @@ class ManageView :
 		(cur_type, cur_name) = self.manage_tree.get_selected_node()
 		if confirmbox(_("Make") +" " +cur_name + " " +_("standby")+"?") == gtk.RESPONSE_YES:
 			manager.do_cmd("standby\n"+cur_name + "\n" + "on")
+			if manager.failed_reason != "" :
+				msgbox(manager.failed_reason)
 
 	def on_active(self, action) :
 		(cur_type, cur_name) = self.manage_tree.get_selected_node()
 		if confirmbox(_("Make") +" " +cur_name + " " + _("active")+"?") == gtk.RESPONSE_YES :
 			manager.do_cmd("standby\n"+cur_name + "\n" + "off")
+			if manager.failed_reason != "" :
+				msgbox(manager.failed_reason)
 
 
 class ManageTree() :
@@ -1635,7 +1639,12 @@ class MainTree(ElementList) :
 		selection = self.widget.get_selection()
 		(model, iter) = selection.get_selected()
 		if iter != None and window.cur_view != None :
-			window.cur_view.update(manager.xml_nodes["cib"].getElementsByTagName(window.cur_type)[0])
+			cur_xml_nodes = manager.xml_nodes["cib"].getElementsByTagName(window.cur_type)
+			if len(cur_xml_nodes) > 0 :
+				cur_xml_node = cur_xml_nodes[0] 
+			else :
+				cur_xml_node = None
+			window.cur_view.update(cur_xml_node)
 		else :
 			if iter == None :
 				selection.select_iter(self.treeiter["management"])

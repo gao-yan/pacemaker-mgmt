@@ -989,6 +989,38 @@ on_get_running_rsc(char* argv[], int argc)
 	free_data_set(data_set);
 	return cl_strdup(MSG_FAIL);
 }
+
+char*
+on_set_node_standby(char* argv[], int argc)
+{
+	int rc;
+	const char* id = NULL;
+	const char* attr_value = NULL;
+
+	ARGC_CHECK(3);
+	id = uname2id(argv[1]);
+	if (id == NULL) {
+		return cl_strdup(MSG_FAIL"\nNo such node");
+	}
+
+	if (STRNCMP_CONST(argv[2], "on") == 0 || STRNCMP_CONST(argv[2], "true") == 0){
+		attr_value = "true";
+	}
+	else if (STRNCMP_CONST(argv[2], "off") == 0 || STRNCMP_CONST(argv[2], "false") == 0){
+		attr_value = "false";
+	}
+	else{
+		return cl_strdup(MSG_FAIL"\nInvalid attribute value");
+	}
+
+	rc = set_standby(cib_conn, id, NULL, attr_value);
+	if (rc < 0) {
+		return crm_failed_msg(NULL, rc);
+	}
+	return cl_strdup(MSG_OK);
+}
+
+/*
 char*
 on_set_node_standby(char* argv[], int argc)
 {
@@ -1032,6 +1064,7 @@ on_set_node_standby(char* argv[], int argc)
 	return cl_strdup(MSG_OK);
 
 }
+*/
 /* resource functions */
 /* add/delete resource */
 char*
