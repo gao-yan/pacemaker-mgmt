@@ -1937,15 +1937,27 @@ class ObjectView :
 			elif obj_type == "rsc_colocation" :
 				obj_attrs = RscColocation(self.xml_node, is_newobj, self.change_call_back)
 			elif obj_type == "nvpair" :
-				if self.xml_node.parentNode.parentNode.tagName == "instance_attributes" and \
-						self.xml_node.parentNode.parentNode.parentNode.tagName == "primitive" :
-					obj_attrs = PrimInstAttrsNV(self.xml_node, is_newobj, self.change_call_back)
-				elif self.xml_node.parentNode.parentNode.tagName == "meta_attributes" :
-					obj_attrs = MetaAttrsNV(self.xml_node, is_newobj, self.change_call_back)
-				elif self.xml_node.parentNode.parentNode.tagName == "cluster_property_set" :
-					obj_attrs = CRMConfNV(self.xml_node, is_newobj, self.change_call_back)
+				if validate_type == "dtd" :
+					if self.xml_node.parentNode.parentNode.tagName == "instance_attributes" and \
+							self.xml_node.parentNode.parentNode.parentNode.tagName == "primitive" :
+						obj_attrs = PrimInstAttrsNV(self.xml_node, is_newobj, self.change_call_back)
+					elif self.xml_node.parentNode.parentNode.tagName == "meta_attributes" :
+						obj_attrs = MetaAttrsNV(self.xml_node, is_newobj, self.change_call_back)
+					elif self.xml_node.parentNode.parentNode.tagName == "cluster_property_set" :
+						obj_attrs = CRMConfNV(self.xml_node, is_newobj, self.change_call_back)
+					else :
+						obj_attrs = ObjectAttrs(self.xml_node, is_newobj, self.change_call_back)
 				else :
-					obj_attrs = ObjectAttrs(self.xml_node, is_newobj, self.change_call_back)
+					if self.xml_node.parentNode.tagName == "instance_attributes" and \
+							self.xml_node.parentNode.parentNode.tagName == "primitive" :
+						obj_attrs = PrimInstAttrsNV(self.xml_node, is_newobj, self.change_call_back)
+					elif self.xml_node.parentNode.tagName == "meta_attributes" :
+						obj_attrs = MetaAttrsNV(self.xml_node, is_newobj, self.change_call_back)
+					elif self.xml_node.parentNode.tagName == "cluster_property_set" :
+						obj_attrs = CRMConfNV(self.xml_node, is_newobj, self.change_call_back)
+					else :
+						obj_attrs = ObjectAttrs(self.xml_node, is_newobj, self.change_call_back)
+
 			elif obj_type == "expression" :
 				obj_attrs = Expression(self.xml_node, is_newobj, self.change_call_back)
 			elif obj_type == "op" :
@@ -6588,13 +6600,17 @@ class Primitive(ObjectAttrs) :
 
 class MetaAttrsNV(ObjectAttrs) :
 	def __init__(self, xml_node, is_newobj = False, change_call_back = None) :
-		self.target_node = xml_node.parentNode.parentNode.parentNode
 		if validate_type == "dtd" :
+			self.target_node = xml_node.parentNode.parentNode.parentNode
 			self.target_type = self.target_node.tagName
 			self.target_dtd_elem = manager.get_dtd_elem(self.target_type)
 			self.target_attrlist = self.target_dtd_elem.get_attr_list()
 			self.auto_fill = self.auto_fill_dtd
 			self.dynamic_fill = self.dynamic_fill_dtd
+		else :
+			self.target_node = xml_node.parentNode.parentNode
+			self.target_type = self.target_node.tagName
+			
 		ObjectAttrs.__init__(self, xml_node, is_newobj, change_call_back)
 
 	def auto_fill_dtd(self) :
@@ -6750,7 +6766,10 @@ class CRMConfNV(MetaNV) :
 class PrimInstAttrsNV(MetaNV) :
 	meta = None
 	def __init__(self, xml_node, is_newobj = False, change_call_back = None) :
-		primitive_node = xml_node.parentNode.parentNode.parentNode
+		if validate_type == "dtd" :
+			primitive_node = xml_node.parentNode.parentNode.parentNode
+		else :
+			primitive_node = xml_node.parentNode.parentNode
 		primitive_class = str(primitive_node.getAttribute("class"))
 		primitive_type = str(primitive_node.getAttribute("type"))
 		primitive_provider = str(primitive_node.getAttribute("provider"))
@@ -6824,7 +6843,10 @@ class OP(ObjectAttrs) :
 
 		op = self.get_values()
 		if op.has_key("name") :
-			default_role = manager.get_dtd_elem("op").get_attr("role").get_default()
+			if validate_type == "dtd" :
+				default_role = manager.get_dtd_elem("op").get_attr("role").get_default()
+			else :
+				default_role = None
 
 			for action in meta.actions :
 				if action["name"] == op["name"] :
