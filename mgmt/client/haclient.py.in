@@ -2499,7 +2499,7 @@ class ElementNotebook :
 			else :
 				mid_elem = elem_node_list[0]
 
-			if validate == "dtd" :
+			if validate_type == "dtd" :
 				(sep,cont,mod) = dtd_elem.get_content_model()
 				if len(cont) > 0 :
 					sub_obj_type = cont[0][0]
@@ -6871,9 +6871,12 @@ class OP(ObjectAttrs) :
 
 class RscOrder(ObjectAttrs) :
 	def __init__(self, xml_node, is_newobj = False, change_call_back = None) :
+		if validate_type == "dtd" :
+			self.dynamic_fill = self.dynamic_fill_dtd
+			self.dynamic_desc = self.dynamic_desc_dtd
 		ObjectAttrs.__init__(self, xml_node, is_newobj, change_call_back)
 
-	def dynamic_fill(self, widget) :
+	def dynamic_fill_dtd(self, widget) :
 		widgets = self.widgets
 		if widgets.has_key("combo_entries") and widgets["combo_entries"].has_key("from") \
 				and widget == widgets["combo_entries"]["from"] :
@@ -6905,7 +6908,7 @@ class RscOrder(ObjectAttrs) :
 		if widgets.has_key("combo_entries") and widgets["combo_entries"].has_key(key_pair[1]) :
 			self.combobox_store_append(widgets["combo_entries"][key_pair[1]], action_store)
 
-	def dynamic_desc(self, widget) :
+	def dynamic_desc_dtd(self, widget) :
 		dtd_elem = self.dtd_elem
 		order = self.get_values()
 		for attr_name in dtd_elem.get_attr_list() :
@@ -6973,9 +6976,11 @@ class RscOrder(ObjectAttrs) :
 
 class RscColocation(ObjectAttrs) :
 	def __init__(self, xml_node, is_newobj = False, change_call_back = None) :
+		if validate_type == "dtd" :
+			self.dynamic_desc = self.dynamic_desc_dtd
 		ObjectAttrs.__init__(self, xml_node, is_newobj, change_call_back)
 
-	def dynamic_desc(self, widget) :
+	def dynamic_desc_dtd(self, widget) :
 		dtd_elem = self.dtd_elem
 		colocation = self.get_values()
 		for attr_name in dtd_elem.get_attr_list() :
