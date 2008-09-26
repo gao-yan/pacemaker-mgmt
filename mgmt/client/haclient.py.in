@@ -1635,7 +1635,7 @@ class MainTree(ElementList) :
 		selection = self.widget.get_selection()
 		(model, iter) = selection.get_selected()
 		if iter != None and window.cur_view != None :
-			window.cur_view.update(manager.xml_nodes.get(window.cur_type))
+			window.cur_view.update(manager.xml_nodes["cib"].getElementsByTagName(window.cur_type)[0])
 		else :
 			if iter == None :
 				selection.select_iter(self.treeiter["management"])
