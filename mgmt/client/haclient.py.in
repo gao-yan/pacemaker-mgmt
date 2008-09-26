@@ -48,7 +48,7 @@ name_cap = lambda name: name.replace("-"," ").replace("_"," ").title().replace("
 				replace("Crm","CRM").replace("Pe ", "PE ").replace("Dc ","DC ").\
 				replace("Cib", "CIB").replace("Ccm", "CCM").replace("Ha", "HA").\
 				replace("Id", "ID").replace("Dtd", "DTD").replace("Uuid", "UUID").\
-				replace("HAve", "Have").replace("Rsc ", "").replace("Rsc", "Resource").\
+				replace("HAve", "Have").replace("Op ", "Operation ").replace("Rsc", "Resource").\
 				replace("Lrm", "LRM")
 
 window = None
@@ -1504,7 +1504,7 @@ class MainTree(ElementList) :
 		widget = gtk.TreeView(self.store)
 		widget.set_headers_visible(False)
 		add_column(widget, _("Type"), 0, self.render_icon)
-		widget.set_size_request(150, 100)
+		widget.set_size_request(180, 200)
 		widget.connect("cursor-changed", self.on_cursor_changed, widget.get_selection())
 		#widget.connect("event-after", self.on_right_click)
 		self.tree = widget
