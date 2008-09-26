@@ -2275,9 +2275,9 @@ class ElementNotebook :
 					elem_list.tree.connect("event-after", self.on_click)
 		else :
 			sorted_rng_nodes = manager.sorted_sub_rng_nodes_by_name(self.obj_type)
-			sub_obj_list = sorted_rng_nodes.get("element", [])
+			self.sub_obj_list = sorted_rng_nodes.get("element", [])
 
-			for rng_node in sub_obj_list :
+			for rng_node in self.sub_obj_list :
 				name = rng_node[0][1].getAttribute("name")
 				elem_node_list = []
 				for elem_node in self.xml_node.getElementsByTagName(name) :
@@ -2420,7 +2420,10 @@ class ElementNotebook :
 			(gtk.STOCK_OK, gtk.RESPONSE_OK, gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL))
 		dialog.set_border_width(5)
 
-		option_list = self.get_elem_options()
+		if validate_type == "dtd" :
+			option_list = self.get_elem_options_dtd()
+		else :
+			option_list = self.get_elem_options_rng()
 
 		if len(option_list) == 0 :
 			return
@@ -2430,7 +2433,11 @@ class ElementNotebook :
 			radio_btns = {}
 			radio_btn = None
 			for option in option_list :
-				radio_btn = gtk.RadioButton(radio_btn, _(name_cap(option)))	
+				if validate_type == "dtd" :
+					opt_name = option
+				else :
+					opt_name = option[0][1].getAttribute("name")
+				radio_btn = gtk.RadioButton(radio_btn, _(name_cap(opt_name)))	
 				dialog.vbox.pack_start(radio_btn, False, padding=2)
 				radio_btns[radio_btn] = option
 
@@ -2454,28 +2461,43 @@ class ElementNotebook :
 				return
 
 		impl = getDOMImplementation()
-		dtd_elem = manager.get_dtd_elem(obj_type)
-		if len(dtd_elem.get_attr_list()) > 0 :
-			newdoc = impl.createDocument(None, obj_type, None)
+		if validate_type == "dtd" :
+			dtd_elem = manager.get_dtd_elem(obj_type)
+			attr_list = dtd_elem.get_attr_list()
+			obj_type_name = obj_type
+		else :
+			sorted_rng_nodes = manager.sorted_sub_rng_nodes_by_node(*obj_type[0])
+			attr_list = sorted_rng_nodes.get("attribute", [])
+			sub_obj_list = sorted_rng_nodes.get("element", [])
+			obj_type_name = obj_type[0][1].getAttribute("name")
+			
+		if len(attr_list) > 0 :
+			newdoc = impl.createDocument(None, obj_type_name, None)
 			new_elem = newdoc.documentElement
 			self.xml_node.appendChild(new_elem)
 		else :
 			elem_node_list = []
-			for elem_node in self.xml_node.getElementsByTagName(obj_type) :
+			for elem_node in self.xml_node.getElementsByTagName(obj_type_name) :
 				if elem_node in self.xml_node.childNodes :
 					elem_node_list.append(elem_node)
 			if len(elem_node_list) == 0 :
-				newdoc = impl.createDocument(None, obj_type, None)
+				newdoc = impl.createDocument(None, obj_type_name, None)
 				mid_elem = newdoc.documentElement
 				self.xml_node.appendChild(mid_elem)
 			else :
 				mid_elem = elem_node_list[0]
 
-			(sep,cont,mod) = dtd_elem.get_content_model()
-			if len(cont) >0 :
-				sub_obj_type = cont[0][0]
-			else :
-				return
+			if validate == "dtd" :
+				(sep,cont,mod) = dtd_elem.get_content_model()
+				if len(cont) > 0 :
+					sub_obj_type = cont[0][0]
+				else :
+					return
+			else:
+				if len(sub_obj_list) > 0 :		
+					sub_obj_type = sub_obj_list[0][0][1].getAttribute("name")
+				else :
+					return
 				
 			newdoc = impl.createDocument(None, sub_obj_type, None)
 			new_elem = newdoc.documentElement
@@ -2504,7 +2526,7 @@ class ElementNotebook :
 					objdlg.destroy()
 					return
 
-	def get_elem_options(self) :
+	def get_elem_options_dtd(self) :
 		(sep,cont,mod) =  self.dtd_elem.get_content_model()
 		option_list = []
 		if mod == "*" :
@@ -2526,6 +2548,23 @@ class ElementNotebook :
 									len(manager.get_dtd_elem(sub[0]).get_attr_list()) == 0 :
 								option_list.append(sub[0])
 
+		return option_list
+
+	def get_elem_options_rng(self) :
+		option_list = []
+		for rng_node in self.sub_obj_list :
+			name = rng_node[0][1].getAttribute("name")
+			if manager.find_decl(rng_node, "zeroOrMore") != 0 or manager.find_decl(rng_node, "oneOrMore") != 0 :
+				option_list.append(rng_node)
+			else :
+				elem_node_list = []
+				for elem_node in self.xml_node.getElementsByTagName(name) :
+					if elem_node in self.xml_node.childNodes :
+						elem_node_list.append(elem_node)
+				sub_rng_nodes = manager.sorted_sub_rng_nodes_by_node(*rng_node[0])
+				if len(elem_node_list) < 1 or \
+						len(sub_rng_nodes.get("attribute", [])) == 0 :
+					option_list.append(rng_node)
 		return option_list
 							
 
@@ -5193,7 +5232,7 @@ class Manager :
 				sub_rng_nodes.extend(nodes)
 			elif child_node.tagName in ["element", "attribute", "value", "data", "text"] :
 				sub_rng_nodes.append([(rng_doc, child_node)])
-			elif child_node.tagName in ["interleave", "optional", "zeroOrMore", "choice", "group"] :
+			elif child_node.tagName in ["interleave", "optional", "zeroOrMore", "choice", "group", "oneOrMore"] :
 				nodes = self.get_sub_rng_nodes(rng_doc, child_node)
 				for node in nodes :
 					node.append(child_node)
