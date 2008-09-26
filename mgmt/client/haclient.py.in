@@ -6235,8 +6235,21 @@ class ObjectAttrs(WidgetGroup) :
 		name_label_max_len = 0
 
 		self.attr_list = []
+		store_list = {}
 		for attr_node in self.attr_node_list :
 			attr_name = attr_node[0][1].getAttribute("name")
+
+			sub_rng_nodes = manager.sorted_sub_rng_nodes_by_node(*attr_node[0])
+			if store_list.get(attr_name) != None :
+				if len(sub_rng_nodes.get("value",[])) > 0 :
+					for value_node in sub_rng_nodes["value"] :
+						store_list[attr_name].append([value_node[0][1].childNodes[0].data, ""])
+				for sub_rng_node in sub_rng_nodes.get("data", []) :
+					if sub_rng_nodes["data"][0][0][1].getAttribute("type") == "boolean"  :
+						for option in ("true", "false") :
+							store_list[attr_name].append([option, ""])
+				continue
+
 			self.attr_list.append(attr_name)
 			label_text = _(name_cap(attr_name)+":")
 			label = gtk.Label(label_text)
@@ -6248,8 +6261,6 @@ class ObjectAttrs(WidgetGroup) :
 			eventbox.add(label)
 			name_labels[attr_name] = label
 
-			sub_rng_nodes = manager.sorted_sub_rng_nodes_by_node(*attr_node[0])
-
 			if attr_name == "id" and is_newobj == False :
 				widget = gtk.Label()
 				widget.set_alignment(0, 0.5)
@@ -6258,6 +6269,7 @@ class ObjectAttrs(WidgetGroup) :
 					and len(sub_rng_nodes.get("data", [])) == 0 \
 					and len(sub_rng_nodes.get("text", [])) == 0 :
 				store = gtk.ListStore(str, str)
+				store_list[attr_name] = store
 				if manager.find_decl(attr_node, "optional") != 0 :
 					store.append(["", ""])
 
@@ -6283,6 +6295,7 @@ class ObjectAttrs(WidgetGroup) :
 					and sub_rng_nodes["data"][0][0][1].getAttribute("type") == "boolean" \
 					and len(sub_rng_nodes.get("text", [])) == 0 :
 				store = gtk.ListStore(str, str)
+				store_list[attr_name] = store
 				if manager.find_decl(attr_node, "optional") != 0 :
 					store.append(["", ""])
 
@@ -6304,6 +6317,7 @@ class ObjectAttrs(WidgetGroup) :
 
 			else :
 				store = gtk.ListStore(str, str)
+				store_list[attr_name] = store
 				if manager.find_decl(attr_node, "optional") != 0 :
 					store.append(["", ""])
 				#if attr_default != None :
