@@ -33,7 +33,6 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
-#include <clplumbing/cl_malloc.h>
 #include <clplumbing/cl_log.h>
 #include <clplumbing/GSource.h>
 #include <clplumbing/cl_pidfile.h>
@@ -162,7 +161,7 @@ start_heartbeat(const char* node)
 			,	__FUNCTION__, cmd);
 		}
 	}
-	cl_free(ssh_path);
+	free(ssh_path);
 }
 
 
@@ -185,7 +184,7 @@ stop_heartbeat(const char* node)
 			,	cmd);
 		}
 	}
-	cl_free(ssh_path);
+	free(ssh_path);
 }
 
 
@@ -249,7 +248,7 @@ process_cmnd_external(const char *cmd)
 	buf = run_shell_cmnd(cmd_buf, &rc, &len); 
 	if ( buf ) {
 		strncpy(result, buf, 4096);	
-		cl_free(buf);
+		free(buf);
 	}
 	return result;
 }

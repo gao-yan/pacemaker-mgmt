@@ -348,7 +348,7 @@ free_hbconfig(void)
     for (attr_no = LHA_CONF_HBVERSION; attr_no < LHA_CONF_END; ++attr_no) {
 
         if (hbconfig[attr_no] != NULL)
-            cl_free(hbconfig[attr_no]);
+            free(hbconfig[attr_no]);
 
     }
 }
@@ -360,7 +360,7 @@ hbconfig_get_str(lha_hbconfig_t attr_no, char * * value)
 
     if (hbconfig[attr_no] != NULL) {
 
-        *value = cl_strdup(hbconfig[attr_no]);
+        *value = strdup(hbconfig[attr_no]);
 
     } else {
 
@@ -368,7 +368,7 @@ hbconfig_get_str(lha_hbconfig_t attr_no, char * * value)
                                                                 != HA_OK) {
             cl_log(LOG_INFO, "LHAHeartbeatConfigInfo getting parameter error.  "
                              "maybe get_parameter returned NULL.");
-            *value  = cl_strdup(err);
+            *value  = strdup(err);
         }
 
     }
@@ -391,7 +391,7 @@ hbconfig_get_str_value(const char * attr, char * * value)
 
 	/* we have to return HA_OK here otherwise the 
 	   agent code would not progress */
-	*value  = cl_strdup(err);
+	*value  = strdup(err);
 	return HA_OK;
     };
 
@@ -474,7 +474,7 @@ free_nodetable(void)
 		node = (struct hb_nodeinfo *) g_ptr_array_remove_index_fast(gNodeTable, 0);
 
 		free(node->name);
-		cl_free(node);
+		free(node);
 	}
 
 	return;
@@ -493,7 +493,7 @@ free_iftable(void)
 
 		free(interface->name);
 		free(interface->node);
-		cl_free(interface);
+		free(interface);
 	}
 
 	return;
@@ -512,7 +512,7 @@ free_resourcetable(void)
 		resource = (struct hb_rsinfo *) g_ptr_array_remove_index_fast(gResourceTable, 0);
 
 		free(resource->resource);
-		cl_free(resource);
+		free(resource);
 
 	}
 
@@ -585,11 +585,11 @@ init_heartbeat(void)
 	parameter = hb->llc_ops->get_parameter(hb, KEY_COREROOTDIR);
 	if (parameter) {
 		cl_set_corerootdir(parameter);
-		cl_free(parameter);
+		free(parameter);
 	}
 	cl_cdtocoredir();
 
-	if (NULL == (myid = cl_strdup(hb->llc_ops->get_mynodeid(hb)))) {
+	if (NULL == (myid = strdup(hb->llc_ops->get_mynodeid(hb)))) {
 		cl_log(LOG_ERR, "Cannot get mynodeid");
 		cl_log(LOG_ERR, "REASON: %s", hb->llc_ops->errmsg(hb));
 		return HA_FAIL;
@@ -604,7 +604,7 @@ init_heartbeat(void)
 		cl_log(LOG_ERR, "REASON: %s", hb->llc_ops->errmsg(hb));
 		return HA_FAIL;
 	}
-	myuuid = cl_malloc(UU_UNPARSE_SIZEOF);
+	myuuid = malloc(UU_UNPARSE_SIZEOF);
 	cl_uuid_unparse(&uuid, myuuid);
 
 	if (hb->llc_ops->set_nstatus_callback(hb, NodeStatus, NULL) !=HA_OK){
@@ -674,7 +674,7 @@ walk_nodetable(void)
 		cl_log(LOG_INFO, "node %ld: %s, type: %s, status: %s", (unsigned long)id, name 
 		,	type, status);
 
-		node = (struct hb_nodeinfo *) cl_malloc(sizeof(struct hb_nodeinfo));
+		node = (struct hb_nodeinfo *) malloc(sizeof(struct hb_nodeinfo));
 		if (!node) {
 			cl_log(LOG_CRIT, "malloc failed for node info.");
 			return HA_FAIL;
@@ -737,7 +737,7 @@ walk_iftable(void)
 			cl_log(LOG_INFO, "node: %s, interface: %s, status: %s",
 					node->name, name, status);
 
-			interface = (struct hb_ifinfo *) cl_malloc(sizeof(struct hb_ifinfo));
+			interface = (struct hb_ifinfo *) malloc(sizeof(struct hb_ifinfo));
 			if (!interface) {
 				cl_log(LOG_CRIT, "malloc failed for if info.");
 				return HA_FAIL;
@@ -864,20 +864,20 @@ init_membership(void)
 	}
 
 	if (nbuf) {
-		cl_free(nbuf);
+		free(nbuf);
 	}
 
-        nbuf = (SaClmClusterNotificationT *) cl_malloc(gNodeTable->len *
+        nbuf = (SaClmClusterNotificationT *) malloc(gNodeTable->len *
                                 sizeof (SaClmClusterNotificationT));
 	if (!nbuf) {
-		cl_log(LOG_ERR, "%s: cl_malloc failed for SaClmClusterNotificationT.", __FUNCTION__);
+		cl_log(LOG_ERR, "%s: malloc failed for SaClmClusterNotificationT.", __FUNCTION__);
 		return HA_FAIL;
 	}
 
         if (saClmClusterTrackStart(&handle, SA_TRACK_CURRENT, nbuf,
                 gNodeTable->len) != SA_OK) {
                 cl_log(LOG_ERR, "SA_TRACK_CURRENT error, errno [%d]", ret);
-                cl_free(nbuf);
+                free(nbuf);
                 return HA_FAIL;
         }
 
@@ -885,7 +885,7 @@ init_membership(void)
         if (saClmClusterTrackStart(&handle, SA_TRACK_CHANGES, nbuf,
                 gNodeTable->len) != SA_OK) {
                 cl_log(LOG_ERR, "SA_TRACK_CURRENT error, errno [%d]", ret);
-                cl_free(nbuf);
+                free(nbuf);
                 return HA_FAIL;
         }
 
@@ -1010,7 +1010,7 @@ init_resource_table(void)
 		if (!found)
 		    continue;
 
-		resource = (struct hb_rsinfo *) cl_malloc(sizeof(struct hb_rsinfo));
+		resource = (struct hb_rsinfo *) malloc(sizeof(struct hb_rsinfo));
 		if (!resource) {
 			cl_log(LOG_CRIT, "malloc resource info failed.");
 			fclose(rcsf);
@@ -1570,8 +1570,8 @@ process_pending:
 
 	free_hbagentv2();
  	free_hbconfig();
-	cl_free(myid);
-	cl_free(myuuid);
+	free(myid);
+	free(myuuid);
 	free_storage();
 
         if (!hb_already_dead && hb->llc_ops->signoff(hb, TRUE) != HA_OK) {

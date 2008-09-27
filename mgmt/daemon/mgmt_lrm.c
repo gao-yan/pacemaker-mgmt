@@ -22,12 +22,12 @@
 #include <pygui_internal.h>
 
 #include <unistd.h>
+#include <string.h>
 #include <glib.h>
 
 #include <hb_config.h>
 #include <clplumbing/cl_log.h>
 #include <clplumbing/cl_syslog.h>
-#include <clplumbing/cl_malloc.h>
 
 #include "mgmt_internal.h"
 #include <lrm/lrm_api.h>
@@ -89,7 +89,7 @@ on_rsc_class(char* argv[], int argc)
 {
 	GList* classes;
 	GList* cur;
-	char* ret = cl_strdup(MSG_OK);
+	char* ret = strdup(MSG_OK);
 	classes = lrm->lrm_ops->get_rsc_class_supported(lrm);
 	cur = classes;
 	while (cur != NULL) {
@@ -110,7 +110,7 @@ on_rsc_type(char* argv[], int argc)
 
 	ARGC_CHECK(2)
 	
-	ret = cl_strdup(MSG_OK);
+	ret = strdup(MSG_OK);
 	types = lrm->lrm_ops->get_rsc_type_supported(lrm, argv[1]);
 	cur = types;
 	while (cur != NULL) {
@@ -126,7 +126,7 @@ on_rsc_provider(char* argv[], int argc)
 {
 	GList* providers;
 	GList* cur;
-	char* ret = cl_strdup(MSG_OK);
+	char* ret = strdup(MSG_OK);
 	providers = lrm->lrm_ops->get_rsc_provider_supported(lrm, argv[1], argv[2]);
 	cur = providers;
 	while (cur != NULL) {
@@ -142,10 +142,10 @@ on_rsc_metadata(char* argv[], int argc)
 	char* ret;
 	char* metadata = lrm->lrm_ops->get_rsc_type_metadata(lrm, argv[1], argv[2], argv[3]);
 	if (metadata != NULL) {
-		ret = cl_strdup(MSG_OK);
+		ret = strdup(MSG_OK);
 		ret = mgmt_msg_append(ret, metadata);
 		g_free(metadata);
 		return ret;
 	}
-	return cl_strdup(MSG_FAIL);
+	return strdup(MSG_FAIL);
 }

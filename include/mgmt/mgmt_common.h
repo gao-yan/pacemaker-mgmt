@@ -870,7 +870,7 @@ format:
 /*************************FUNTIONS*******************************************/
 /*
 mgmt_set_mem_funcs:
-	set user own memory functions, like cl_malloc/cl_realloc/cl_free
+	set user own memory functions, like malloc/realloc/free
  	for linux-ha 2
 parameters:
 	the three memory functions

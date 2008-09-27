@@ -37,7 +37,6 @@
 
 #include <hb_config.h>
 #include <clplumbing/GSource.h>
-#include <clplumbing/cl_malloc.h>
 #include <clplumbing/cl_log.h>
 #include <clplumbing/cl_syslog.h>
 #include <clplumbing/cl_signal.h>
@@ -72,11 +71,11 @@ int
 init_mgmt_lib(const char* client, int enable_components)
 {
 	/* create the internal data structures */
-	msg_map = g_hash_table_new_full(g_str_hash, g_str_equal, cl_free, NULL);
-	event_map = g_hash_table_new_full(g_str_hash, g_str_equal, cl_free, NULL);
+	msg_map = g_hash_table_new_full(g_str_hash, g_str_equal, free, NULL);
+	event_map = g_hash_table_new_full(g_str_hash, g_str_equal, free, NULL);
 	client_name = client?client:"unknown";
 	components = enable_components;
-	mgmt_set_mem_funcs(cl_malloc, cl_realloc, cl_free);
+	mgmt_set_mem_funcs(malloc, realloc, free);
 	
 	/* init modules */
 #if SUPPORT_HEARTBEAT
@@ -128,7 +127,7 @@ reg_msg(const char* type, msg_handler fun)
 	if (g_hash_table_lookup(msg_map, type) != NULL) {
 		return -1;
 	}
-	g_hash_table_insert(msg_map, cl_strdup(type),(gpointer)fun);
+	g_hash_table_insert(msg_map, strdup(type),(gpointer)fun);
 	return 0;
 }
 
@@ -172,6 +171,6 @@ process_msg(const char* msg)
 int
 reg_event(const char* type, event_handler func)
 {
-	g_hash_table_replace(event_map, cl_strdup(type), (gpointer)func);
+	g_hash_table_replace(event_map, strdup(type), (gpointer)func);
 	return 0;
 }
