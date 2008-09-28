@@ -6033,9 +6033,9 @@ class ObjectAttrs(WidgetGroup) :
 				if self.widgets.has_key("combo_entries") and self.widgets["combo_entries"].has_key("id") :
 					parent_id = self.xml_node.parentNode.getAttribute("id")
 					if parent_id == "" :
-						id_prefix = self.obj_type + "_"
+						id_prefix = self.obj_type
 					else :
-						id_prefix = parent_id + "_" + self.obj_type + "_"
+						id_prefix = parent_id + "-" + self.obj_type
 					self.widgets["combo_entries"]["id"].child.set_text(id_prefix)
 
 		self.auto_fill()

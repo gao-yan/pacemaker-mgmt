@@ -59,8 +59,6 @@ static char* on_get_activenodes(char* argv[], int argc);
 static char* on_get_crmnodes(char* argv[], int argc);
 static char* on_get_dc(char* argv[], int argc);
 
-
-
 static char* on_migrate_rsc(char* argv[], int argc);
 static char* on_set_node_standby(char* argv[], int argc);
 static char* on_get_node_config(char* argv[], int argc);
