@@ -602,6 +602,7 @@ class ElementList:
 				"primitive": gtk.STOCK_DND,
 				"group": gtk.STOCK_DND_MULTIPLE,
 				"clone": gtk.STOCK_COPY,
+				"master": gtk.STOCK_COPY,
 				"master_slave": gtk.STOCK_COPY,
 				"rsc_order": gtk.STOCK_PROPERTIES,
 				"rsc_location": gtk.STOCK_PROPERTIES,
@@ -747,7 +748,7 @@ class Tree :
 			menu = None
 			if window.cur_type in ["node"] :
 				menu = window.uimanager.get_widget("/node_popup")
-			elif window.cur_type in ["primitive", "group", "clone", "master_slave"] :
+			elif window.cur_type in ["primitive", "group", "clone", "master"] :
 				menu = window.uimanager.get_widget("/resource_popup")
 			else :
 				menu = window.uimanager.get_widget("/tools_popup")
@@ -1239,7 +1240,7 @@ class ManageTree() :
 			menu = None
 			if window.cur_type in ["node"] :
 				menu = window.uimanager.get_widget("/node_popup")
-			elif window.cur_type in ["primitive", "group", "clone", "master_slave"] :
+			elif window.cur_type in ["primitive", "group", "clone", "master"] :
 				menu = window.uimanager.get_widget("/resource_popup")
 			else :
 				menu = window.uimanager.get_widget("/tools_popup")
