@@ -2642,8 +2642,7 @@ class ElementNotebook :
 			manager.cib_do_cmd("cib_replace\n%s\n%s"%(str(self.obj_type), str(xml_str)))
 			if manager.failed_reason != "" :
 				msgbox(manager.failed_reason)
-		else :
-			self.on_changed()
+		self.on_changed()
 
 	def on_down(self, widget) :
 		elem_list = self.get_elem_list()
@@ -2679,8 +2678,7 @@ class ElementNotebook :
 			manager.cib_do_cmd("cib_replace\n%s\n%s"%(str(self.obj_type), str(xml_str)))
 			if manager.failed_reason != "" :
 				msgbox(manager.failed_reason)
-		else :
-			self.on_changed()
+		self.on_changed()
 
 	def on_changed(self) :
 		notebook_status = self.save_status()
