@@ -59,6 +59,9 @@ static char* on_get_activenodes(char* argv[], int argc);
 static char* on_get_crmnodes(char* argv[], int argc);
 static char* on_get_dc(char* argv[], int argc);
 
+
+
+static char* on_migrate_rsc(char* argv[], int argc);
 static char* on_set_node_standby(char* argv[], int argc);
 static char* on_get_node_config(char* argv[], int argc);
 static char* on_get_running_rsc(char* argv[], int argc);
@@ -256,6 +259,7 @@ uname2id(const char* uname)
 	while (cur != NULL) {
 		node = (node_t*) cur->data;
 		if (strncmp(uname,node->details->uname,MAX_STRLEN) == 0) {
+			free_data_set(data_set);
 			return node->details->id;
 		}
 		cur = g_list_next(cur);
@@ -506,6 +510,8 @@ init_crm(int cache_cib)
 	reg_msg(MSG_CRMNODES, on_get_crmnodes);
 	reg_msg(MSG_NODE_CONFIG, on_get_node_config);
 	reg_msg(MSG_RUNNING_RSC, on_get_running_rsc);
+
+	reg_msg(MSG_MIGRATE, on_migrate_rsc);
 	reg_msg(MSG_STANDBY, on_set_node_standby);
 	
 	reg_msg(MSG_DEL_RSC, on_del_rsc);
@@ -597,12 +603,14 @@ on_cib_connection_destroy(gpointer user_data)
 char* 
 on_get_cluster_type(char* argv[], int argc)
 {
-	char* ret = strdup(MSG_OK);
+	char* ret = NULL;
 
 	if (is_openais_cluster()) {
+		ret = strdup(MSG_OK);
 		ret = mgmt_msg_append(ret, "openais");
 	}
 	else if (is_heartbeat_cluster()) {
+		ret = strdup(MSG_OK);
 		ret = mgmt_msg_append(ret, "heartbeat");
 	}
 	else {
@@ -638,7 +646,7 @@ on_get_crm_schema(char* argv[], int argc)
 	const char *validate_type = NULL;
 	const char *file_name = NULL;
 	char buf[MAX_STRLEN];	
-	char* ret = strdup(MSG_OK);
+	char* ret = NULL;
 	FILE *fstream = NULL;
 
 	ARGC_CHECK(3);
@@ -670,6 +678,7 @@ on_get_crm_schema(char* argv[], int argc)
 		return strdup(MSG_FAIL);
 	}
 
+	ret = strdup(MSG_OK);
 	while (!feof(fstream)){
 		memset(buf, 0, sizeof(buf));
 		if (fgets(buf, sizeof(buf), fstream) != NULL){
@@ -692,7 +701,7 @@ on_get_crm_dtd(char* argv[], int argc)
 {
 	const char *dtd_file = HA_NOARCHDATAHBDIR"/crm.dtd";
 	char buf[MAX_STRLEN];	
-	char* ret = strdup(MSG_OK);
+	char* ret = NULL;
 	FILE *fstream = NULL;
 
 	ARGC_CHECK(1);
@@ -703,6 +712,7 @@ on_get_crm_dtd(char* argv[], int argc)
 		return strdup(MSG_FAIL);
 	}
 
+	ret = strdup(MSG_OK);
 	while (!feof(fstream)){
 		memset(buf, 0, sizeof(buf));
 		if (fgets(buf, sizeof(buf), fstream) != NULL){
@@ -725,7 +735,7 @@ on_get_crm_metadata(char* argv[], int argc)
 {
 	char cmd[MAX_STRLEN];
 	char buf[MAX_STRLEN];	
-	char* ret = strdup(MSG_OK);
+	char* ret = NULL;
 	FILE *fstream = NULL;
 
 	ARGC_CHECK(2);
@@ -742,6 +752,7 @@ on_get_crm_metadata(char* argv[], int argc)
 		return strdup(MSG_FAIL);
 	}
 
+	ret = strdup(MSG_OK);
 	while (!feof(fstream)){
 		memset(buf, 0, sizeof(buf));
 		if (fgets(buf, sizeof(buf), fstream) != NULL){
@@ -763,7 +774,7 @@ on_get_crm_config(char* argv[], int argc)
 {
 	const char* value = NULL;
 	pe_working_set_t* data_set;
-	char* ret = strdup(MSG_OK);
+	char* ret = NULL;
 	data_set = get_data_set();
 
 	ARGC_CHECK(2);
@@ -773,6 +784,7 @@ on_get_crm_config(char* argv[], int argc)
 	}
 
 	if (STRNCMP_CONST(argv[1], "have_quorum") == 0){
+		ret = strdup(MSG_OK);
 		ret = mgmt_msg_append(ret, is_set(data_set->flags, pe_flag_have_quorum)?"true":"false");
 		free_data_set(data_set);
 		return ret;
@@ -784,6 +796,7 @@ on_get_crm_config(char* argv[], int argc)
 	}
 	value = g_hash_table_lookup(data_set->config_hash, argv[1]);
 
+	ret = strdup(MSG_OK);
 	if (value == NULL){
 		ret = mgmt_msg_append(ret, "");
 	}
@@ -836,6 +849,7 @@ on_update_crm_config(char* argv[], int argc)
 
 		cib_object = string2xml(xml);
 		if(cib_object == NULL) {
+			free_data_set(data_set);
 			return strdup(MSG_FAIL);
 		}
 
@@ -987,6 +1001,80 @@ on_get_running_rsc(char* argv[], int argc)
 	}
 	free_data_set(data_set);
 	return strdup(MSG_FAIL);
+}
+
+char*
+on_migrate_rsc(char* argv[], int argc)
+{
+	const char* id = NULL;
+	char cmd[MAX_STRLEN];
+	char buf[MAX_STRLEN];
+	pe_working_set_t* data_set;
+	resource_t* rsc;
+	char* ret = NULL;
+	const char* duration_regex = "^[A-Za-z0-9:-]+$";
+	FILE *fstream = NULL;
+
+	ARGC_CHECK(5)
+	data_set = get_data_set();
+	GET_RESOURCE()
+	free_data_set(data_set);
+
+	snprintf(cmd, sizeof(cmd), "crm_resource -M -r %s", argv[1]);
+
+	if (STRNCMP_CONST(argv[2], "") != 0){
+		id = uname2id(argv[2]);
+		if (id == NULL) {
+			return strdup(MSG_FAIL"\nNo such node");
+		}
+		else{
+			strncat(cmd, " -H ", sizeof(cmd)-strlen(cmd)-1);
+			strncat(cmd, argv[2], sizeof(cmd)-strlen(cmd)-1);
+		}
+	}
+
+	if (STRNCMP_CONST(argv[3], "True") == 0){
+		strncat(cmd, " -f", sizeof(cmd)-strlen(cmd)-1);
+	}
+
+	if (STRNCMP_CONST(argv[4], "") != 0){
+		if (regex_match(duration_regex, argv[4])) {
+			strncat(cmd, " -u \"", sizeof(cmd)-strlen(cmd)-1);
+			strncat(cmd, argv[4], sizeof(cmd)-strlen(cmd)-1);
+			strncat(cmd, "\"", sizeof(cmd)-strlen(cmd)-1);
+		}
+		else {
+			mgmt_log(LOG_ERR, "invalid duration specified: \"%s\"", argv[1]);
+			return strdup(MSG_FAIL"\nInvalid duration.\nPlease refer to "
+					"http://en.wikipedia.org/wiki/ISO_8601#Duration for examples of valid durations");
+		}
+	}
+
+	strncat(cmd, " 2>&1", sizeof(cmd)-strlen(cmd)-1);
+
+	if ((fstream = popen(cmd, "r")) == NULL){
+		mgmt_log(LOG_ERR, "error on popen %s: %s",
+			 cmd, strerror(errno));
+		return strdup(MSG_FAIL"\nMigrate failed");
+	}
+
+	ret = strdup(MSG_FAIL);
+	while (!feof(fstream)){
+		memset(buf, 0, sizeof(buf));
+		if (fgets(buf, sizeof(buf), fstream) != NULL){
+			ret = mgmt_msg_append(ret, buf);
+			ret[strlen(ret)-1] = '\0';
+		}
+		else{
+			sleep(1);
+		}
+	}
+
+	if (pclose(fstream) == -1)
+		mgmt_log(LOG_WARNING, "failed to close pipe");
+
+	return ret;
+
 }
 
 char*
@@ -1822,6 +1910,7 @@ on_update_rsc_attr(char* argv[], int argc)
 
 	cib_object = string2xml(xml);
 	if(cib_object == NULL) {
+		free_data_set(data_set);
 		return strdup(MSG_FAIL);
 	}
 	mgmt_log(LOG_INFO, "on_update_rsc_attr:%s",xml);
@@ -1832,6 +1921,7 @@ on_update_rsc_attr(char* argv[], int argc)
 
 	free_xml(fragment);
 	free_xml(cib_object);
+	free_data_set(data_set);
 	if (rc < 0) {
 		return crm_failed_msg(output, rc);
 	}
@@ -2737,10 +2827,10 @@ on_gen_cluster_report(char* argv[], int argc)
 	char buf[MAX_STRLEN];
 	char filename[MAX_STRLEN];
 	char *dest = tempnam("/tmp", "clrp.");
-	char* ret = strdup(MSG_OK);
+	char* ret = NULL;
 	FILE *fstream = NULL;
 	const char* date_regex = \
-		"[0-9]{4}-[0-1][0-9]-[0-3][0-9] [0-2][0-9]:[0-5][0-9]:[0-5][0-9]";
+		"^[0-9]{4}-[0-1][0-9]-[0-3][0-9] [0-2][0-9]:[0-5][0-9]:[0-5][0-9]$";
 
 	ARGC_CHECK(3);
 
@@ -2785,6 +2875,7 @@ on_gen_cluster_report(char* argv[], int argc)
 		return strdup(MSG_FAIL);
 	 }
 
+	ret = strdup(MSG_OK);
 	ret = mgmt_msg_append(ret, filename);
 	while (!feof(fstream)) {
 		memset(buf, 0, sizeof(buf));

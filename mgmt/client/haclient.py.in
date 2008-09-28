@@ -146,6 +146,7 @@ def msgbox(msg) :
 	hb.pack_start(im)
 	label = gtk.Label(msg)
 	label.set_selectable(True)
+	label.set_line_wrap(True)
 	hb.pack_start(label)
 	dialog.vbox.pack_start(hb)
 	dialog.show_all()
@@ -1172,50 +1173,18 @@ class ManageView :
 		migrate = kvbox(_("Migrate Resource"),
 				[Field("rsc", _("Resource"), cur_name, manager.get_all_rsc(), False, entry_editable = False),
 				Field("to_node", _("To Node"), "", node_list, True, entry_editable = False),
-				Field("force", _("Force"), "", ["", "True", "False"], True, entry_editable = False)])
+				Field("force", _("Force"), "", ["", "True", "False"], True, entry_editable = False),
+				Field("duration", _("Duration"), "", ["", "P1M", "P1W", "P1D", "T8H", "T30M", "T30S"],
+					True, entry_editable = True)])
 
-		if migrate != None :
-			running_on = manager.query("rsc_running_on\n%s"%migrate["rsc"])
-			if running_on == None or running_on == [] :
-				if migrate["to_node"] == "" :
-					msgbox(migrate["rsc"]+_(" not migrated: not-active and no prefered node specified."))
-					return
+		if migrate == None :
+			return
 
-			if migrate["to_node"] in running_on :
-				msgbox(migrate["rsc"]+_(" is already running on ")+migrate["to_node"])
-				return
-
-			if migrate["to_node"] != None and len(migrate["to_node"]) > 0 :
-				location = {}
-				location["id"] = "cli-prefer-" + migrate["rsc"]
-				location["rsc"] = migrate["rsc"]
-				location["score"] = "INFINITY"
-				location["boolean_op"] = ""
-				location["exprs"] = []
-				expr = {}
-				expr["id"] = uuid() 
-				expr["attribute"] = "#uname"
-				expr["operation"] = "eq"
-				expr["value"] = migrate["to_node"]
-				location["exprs"].append(expr)
-
-				manager.update_constraint("rsc_location", location)
-
-			if running_on != None and len(running_on) > 0 :
-				if migrate["force"] == "True" or migrate["to_node"] == "" :
-					location = {}
-					location["id"] = "cli-standby-" + migrate["rsc"]
-					location["rsc"] = migrate["rsc"]
-					location["score"] = "-INFINITY"
-					location["boolean_op"] = ""
-					location["exprs"] = []
-					expr = {}
-					expr["id"] = uuid() 
-					expr["attribute"] = "#uname"
-					expr["operation"] = "eq"
-					expr["value"] = running_on[0]
-					location["exprs"].append(expr)
-					manager.update_constraint("rsc_location", location)
+		manager.do_cmd("migrate\n%s\n%s\n\%s\n%s"
+				%(migrate["rsc"], migrate["to_node"], migrate["force"], migrate["duration"]))
+		if manager.failed_reason != "" :
+			msgbox(manager.failed_reason.replace("This message can be disabled with -Q", "").replace
+				("using the 'crm_resource -U' command or manually with cibadmin", "by \"Clear Migrate Constraints\""))
 
 	def on_unmigrate_rsc(self, action) :
 		location_ids = manager.query("get_cos\nrsc_location")
@@ -5016,7 +4985,7 @@ class Manager :
 		if ret_list[0] != "ok" :
 			debug(str(string.split(command, "\n"))+":"+ str(ret_list))
 			if len(ret_list) > 1 :
-				self.failed_reason = string.join(ret_list[1:],",")
+				self.failed_reason = string.join(ret_list[1:],"\n")
 			return None
 		debug(str(string.split(command, "\n"))+":"+ str(ret_list))
 		return ret_list[1:]
@@ -5109,7 +5078,7 @@ class Manager :
 		if ret_list[0] != "ok":
 			debug(str(string.split(command, "\n"))+":"+str(ret_list))
 			if len(ret_list) > 1:
-				self.failed_reason = string.join(ret_list[1:], ",")
+				self.failed_reason = string.join(ret_list[1:], "\n")
 			return None
 		return string.join(ret_list[1:], "\n")
 

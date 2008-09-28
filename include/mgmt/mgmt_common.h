@@ -302,6 +302,18 @@ or
 
 /*
 description:
+	migrate a resource
+format:
+	MSG_MIGRATE rsc_id to_node force duration
+return:
+	MSG_OK 
+or
+	MSG_FAIL reason
+*/
+#define MSG_MIGRATE		"migrate"
+
+/*
+description:
 	set standby on a node
 format:
 	MSG_STANDBY node on|off
