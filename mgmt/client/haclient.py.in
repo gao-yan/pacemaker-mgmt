@@ -1272,7 +1272,7 @@ class ManageTree() :
 
 	def get_selected_node(self):
 		(model, iter) = self.tree.get_selection().get_selected()
-		name = model.get_value(iter, 0)
+		type = model.get_value(iter, 0)
 		name = model.get_value(iter, 1)
 		return (type, name)
 	
@@ -1299,7 +1299,7 @@ class ManageTree() :
 		type = model.get_value(iter, 0)
 		status = model.get_value(iter, 2)
 		iter_status = 0
-		if type == _("native") :
+		if type == _("primitive") :
 			if string.find(status, _("not running")) != -1 :
 				iter_status = 1
 			elif string.find(status, _("running")) != -1 :
@@ -1424,8 +1424,8 @@ class ManageTree() :
 		type = manager.get_rsc_type(rsc)
 		status = ""
 		label = ""
-		if type == "native" :
-			label = _("native")
+		if type == "primitive" :
+			label = _("primitive")
 			status = manager.get_rsc_status(rsc)
 			nodes = manager.get_rsc_running_on(rsc)
 			if nodes != None and len(nodes)>0:
@@ -1531,7 +1531,7 @@ class MainTree(ElementList) :
 		type = model.get_value(iter, 2)
 		status = model.get_value(iter, 1)
 		iter_status = 0
-		if type == _("native") :
+		if type == _("primitive") :
 			if string.find(status, _("not running")) != -1 :
 				iter_status = 1
 			elif string.find(status, _("running")) != -1 :
@@ -5533,7 +5533,11 @@ class Manager :
 		return self.query("all_rsc")
 
 	def get_rsc_type(self, rsc_id) :
-		return self.query("rsc_type\n"+rsc_id)[0]
+		rsc_type = self.query("rsc_type\n"+rsc_id)[0]
+		if rsc_type == "native" :
+			return "primitive"
+		else :
+			return rsc_type
 	
 	def get_rsc_status(self, rsc_id) :
 		return self.query("rsc_status\n"+rsc_id)[0]
