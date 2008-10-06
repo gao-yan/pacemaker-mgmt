@@ -4644,7 +4644,7 @@ class MainWindow :
 		win_widget = gtk.Window()
 		win_widget.connect("delete_event", self.on_delete_event)
 		win_widget.set_title(_("Linux HA Management Client"))
-		win_widget.set_size_request(750, 600)
+		win_widget.set_size_request(800, 600)
 		win_widget.set_icon_from_file("@HA_DATADIR@/heartbeat-gui/ha.png")
 
 		# add the icons to gtk stock
