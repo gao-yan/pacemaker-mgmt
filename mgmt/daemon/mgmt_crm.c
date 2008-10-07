@@ -84,6 +84,10 @@ static char* on_update_rsc_attr(char* argv[], int argc);
 static char* on_get_rsc_running_on(char* argv[], int argc);
 static char* on_get_rsc_status(char* argv[], int argc);
 
+static char* on_set_rsc_attr(char* argv[], int argc);
+static char* on_get_rsc_attr(char* argv[], int argc);
+static char* on_del_rsc_attr(char* argv[], int argc);
+
 static char* on_get_rsc_metaattrs(char* argv[], int argc);
 static char* on_update_rsc_metaattrs(char* argv[], int argc);
 static char* on_delete_rsc_metaattr(char* argv[], int argc);
@@ -525,6 +529,10 @@ init_crm(int cache_cib)
 	reg_msg(MSG_RSC_STATUS, on_get_rsc_status);
 	reg_msg(MSG_RSC_TYPE, on_get_rsc_type);
 	reg_msg(MSG_UP_RSC_ATTR, on_update_rsc_attr);
+
+	reg_msg(MSG_SET_RSC_ATTR, on_set_rsc_attr);
+	reg_msg(MSG_GET_RSC_ATTR, on_get_rsc_attr);
+	reg_msg(MSG_DEL_RSC_ATTR, on_del_rsc_attr);
 		
 	reg_msg(MSG_RSC_METAATTRS, on_get_rsc_metaattrs);
 	reg_msg(MSG_UP_RSC_METAATTRS, on_update_rsc_metaattrs);
@@ -1798,6 +1806,190 @@ on_get_sub_rsc(char* argv[], int argc)
 	return ret;
 }
 
+char*
+on_set_rsc_attr(char* argv[], int argc)
+{
+	char cmd[MAX_STRLEN];
+	char buf[MAX_STRLEN];
+	pe_working_set_t* data_set;
+	resource_t* rsc;
+	char* ret = NULL;
+	const char* nv_regex = "^[A-Za-z0-9_-]+$";
+	FILE *fstream = NULL;
+
+	ARGC_CHECK(5)
+	data_set = get_data_set();
+	GET_RESOURCE()
+	free_data_set(data_set);
+
+	if (STRNCMP_CONST(argv[2], "meta") == 0){
+		snprintf(cmd, sizeof(cmd), "crm_resource --meta -r %s", argv[1]);
+	}
+	else{
+		snprintf(cmd, sizeof(cmd), "crm_resource -r %s", argv[1]);
+	}
+	
+	if (regex_match(nv_regex, argv[3])) {
+		strncat(cmd, " -p \"", sizeof(cmd)-strlen(cmd)-1);
+		strncat(cmd, argv[3], sizeof(cmd)-strlen(cmd)-1);
+		strncat(cmd, "\"", sizeof(cmd)-strlen(cmd)-1);
+	}
+	else {
+		mgmt_log(LOG_ERR, "invalid attribute name specified: \"%s\"", argv[3]);
+		return strdup(MSG_FAIL"\nInvalid attribute name");
+	}
+
+	if (regex_match(nv_regex, argv[4])) {
+		strncat(cmd, " -v \"", sizeof(cmd)-strlen(cmd)-1);
+		strncat(cmd, argv[4], sizeof(cmd)-strlen(cmd)-1);
+		strncat(cmd, "\"", sizeof(cmd)-strlen(cmd)-1);
+	}
+	else {
+		mgmt_log(LOG_ERR, "invalid attribute value specified: \"%s\"", argv[4]);
+		return strdup(MSG_FAIL"\nInvalid attribute value");
+	}
+
+	strncat(cmd, " 2>&1", sizeof(cmd)-strlen(cmd)-1);
+
+	if ((fstream = popen(cmd, "r")) == NULL){
+		mgmt_log(LOG_ERR, "error on popen %s: %s",
+			 cmd, strerror(errno));
+		return strdup(MSG_FAIL"\nSet the named attribute failed");
+	}
+
+	ret = strdup(MSG_FAIL);
+	while (!feof(fstream)){
+		memset(buf, 0, sizeof(buf));
+		if (fgets(buf, sizeof(buf), fstream) != NULL){
+			ret = mgmt_msg_append(ret, buf);
+			ret[strlen(ret)-1] = '\0';
+		}
+		else{
+			sleep(1);
+		}
+	}
+
+	if (pclose(fstream) == -1)
+		mgmt_log(LOG_WARNING, "failed to close pipe");
+
+	return ret;
+}
+
+char*
+on_get_rsc_attr(char* argv[], int argc)
+{
+	char cmd[MAX_STRLEN];
+	char buf[MAX_STRLEN];
+	pe_working_set_t* data_set;
+	resource_t* rsc;
+	char* ret = NULL;
+	const char* nv_regex = "^[A-Za-z0-9_-]+$";
+	FILE *fstream = NULL;
+
+	ARGC_CHECK(4)
+	data_set = get_data_set();
+	GET_RESOURCE()
+	free_data_set(data_set);
+
+	if (STRNCMP_CONST(argv[2], "meta") == 0){
+		snprintf(cmd, sizeof(cmd), "crm_resource --meta -r %s", argv[1]);
+	}
+	else{
+		snprintf(cmd, sizeof(cmd), "crm_resource -r %s", argv[1]);
+	}
+	
+	if (regex_match(nv_regex, argv[3])) {
+		strncat(cmd, " -g \"", sizeof(cmd)-strlen(cmd)-1);
+		strncat(cmd, argv[3], sizeof(cmd)-strlen(cmd)-1);
+		strncat(cmd, "\"", sizeof(cmd)-strlen(cmd)-1);
+	}
+	else {
+		mgmt_log(LOG_ERR, "invalid attribute name specified: \"%s\"", argv[3]);
+		return strdup(MSG_FAIL"\nInvalid attribute name");
+	}
+
+	if ((fstream = popen(cmd, "r")) == NULL){
+		mgmt_log(LOG_ERR, "error on popen %s: %s",
+			 cmd, strerror(errno));
+		return strdup(MSG_FAIL"\nGet the named attribute failed");
+	}
+
+	ret = strdup(MSG_OK);
+	while (!feof(fstream)){
+		memset(buf, 0, sizeof(buf));
+		if (fgets(buf, sizeof(buf), fstream) != NULL){
+			ret = mgmt_msg_append(ret, buf);
+			ret[strlen(ret)-1] = '\0';
+		}
+		else{
+			sleep(1);
+		}
+	}
+
+	if (pclose(fstream) == -1)
+		mgmt_log(LOG_WARNING, "failed to close pipe");
+
+	return ret;
+}
+
+char*
+on_del_rsc_attr(char* argv[], int argc)
+{
+	char cmd[MAX_STRLEN];
+	char buf[MAX_STRLEN];
+	pe_working_set_t* data_set;
+	resource_t* rsc;
+	char* ret = NULL;
+	const char* nv_regex = "^[A-Za-z0-9_-]+$";
+	FILE *fstream = NULL;
+
+	ARGC_CHECK(4)
+	data_set = get_data_set();
+	GET_RESOURCE()
+	free_data_set(data_set);
+
+	if (STRNCMP_CONST(argv[2], "meta") == 0){
+		snprintf(cmd, sizeof(cmd), "crm_resource --meta -r %s", argv[1]);
+	}
+	else{
+		snprintf(cmd, sizeof(cmd), "crm_resource -r %s", argv[1]);
+	}
+	
+	if (regex_match(nv_regex, argv[3])) {
+		strncat(cmd, " -d \"", sizeof(cmd)-strlen(cmd)-1);
+		strncat(cmd, argv[3], sizeof(cmd)-strlen(cmd)-1);
+		strncat(cmd, "\"", sizeof(cmd)-strlen(cmd)-1);
+	}
+	else {
+		mgmt_log(LOG_ERR, "invalid attribute name specified: \"%s\"", argv[3]);
+		return strdup(MSG_FAIL"\nInvalid attribute name");
+	}
+
+	strncat(cmd, " 2>&1", sizeof(cmd)-strlen(cmd)-1);
+
+	if ((fstream = popen(cmd, "r")) == NULL){
+		mgmt_log(LOG_ERR, "error on popen %s: %s",
+			 cmd, strerror(errno));
+		return strdup(MSG_FAIL"\nGet the named attribute failed");
+	}
+
+	ret = strdup(MSG_FAIL);
+	while (!feof(fstream)){
+		memset(buf, 0, sizeof(buf));
+		if (fgets(buf, sizeof(buf), fstream) != NULL){
+			ret = mgmt_msg_append(ret, buf);
+			ret[strlen(ret)-1] = '\0';
+		}
+		else{
+			sleep(1);
+		}
+	}
+
+	if (pclose(fstream) == -1)
+		mgmt_log(LOG_WARNING, "failed to close pipe");
+
+	return ret;
+}
 
 char*
 on_get_rsc_metaattrs(char* argv[], int argc)

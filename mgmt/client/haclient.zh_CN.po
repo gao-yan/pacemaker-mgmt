@@ -1005,14 +1005,14 @@ msgstr "您之前的操作将此属性设置为“"
 msgid "\"."
 msgstr "”。"
 
-msgid "The sub-resource will inherit this attribute from current resource."
-msgstr "子资源将从当前资源继承此属性。"
+msgid "The sub-resource will inherit this attribute from its parent."
+msgstr "子资源将从其父资源继承此属性。"
 
-msgid "Do you want to retain the \"target_role\" set for sub-resource \""
-msgstr "您想要保留对子资源“"
+msgid "Retain the \"%s\" set for sub-resource \""
+msgstr "保留对子资源的 \"%s\" 设置：“"
 
 msgid "\"?"
-msgstr "”的 “target_role” 设置？"
+msgstr "”？"
 
 msgid "Advanced"
 msgstr "高级"

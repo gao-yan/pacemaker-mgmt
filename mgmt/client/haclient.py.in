@@ -1091,37 +1091,41 @@ class ManageView :
 			target_role = "stopped"
 		else :
 			target_role = "#default"
-				
-		(attrs, running_on, metaattrs, params, ops) = \
-			manager.get_rsc_info(cur_name)
-		for param in params :
-			if param["name"] == "target_role" and param["value"] == target_role :
-				return
 
-		for subrsc in manager.get_sub_rsc(cur_name) :
-			(attrs, running_on, metaattrs, params, ops) = \
-				manager.get_rsc_info(subrsc)
-			for metaattr in metaattrs :
-				if metaattr["name"] == "target_role":
-					retval = confirmbox(_("Caused by your previous action, this attribute has been set to \"")
-								+metaattr["value"]
-								+_("\".")+"\n\n"
-								+_("Recommended:")+"\n"
-								+_("Select \"Clear\" to remove the set.")+"\n"
-								+_("The sub-resource will inherit this attribute from current resource."),
-								(gtk.STOCK_CLEAR, gtk.RESPONSE_NO,
-								gtk.STOCK_YES, gtk.RESPONSE_YES,
-								gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL),
-								_("Do you want to retain the \"target_role\" set for sub-resource \"")
-								+subrsc+_("\"?"))
-					if retval in [gtk.RESPONSE_CANCEL, gtk.RESPONSE_DELETE_EVENT] :
-						return	
-					if retval == gtk.RESPONSE_NO:
-						new_metaattrs = metaattrs[:]
-						new_metaattrs.remove(metaattr)
-						manager.update_attrs("up_rsc_metaattrs\n"+subrsc ,"del_rsc_metaattr",
-							metaattrs, new_metaattrs, ["id","name","value"]);
-		manager.do_cmd("set_target_role\n%s\n%s"%(cur_name,target_role))
+		if validate_type == "dtd" :
+			metaattr_name = "target_role"
+		else :
+			metaattr_name = "target-role"
+
+		for subrsc in manager.get_all_subrsc(cur_name) :
+			value = manager.do_cmd("get_rsc_attr\n%s\nmeta\n%s"%(subrsc, metaattr_name))
+			if len(value) == 0 :
+				continue
+			retval = confirmbox(_("Caused by your previous action, this attribute has been set to \"")
+						+value[0]
+						+_("\".")+"\n\n"
+						+_("Recommended:")+"\n"
+						+_("Select \"Clear\" to remove the set.")+"\n"
+						+_("The sub-resource will inherit this attribute from its parent."),
+						(gtk.STOCK_CLEAR, gtk.RESPONSE_NO,
+						gtk.STOCK_YES, gtk.RESPONSE_YES,
+						gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL),
+						_("Retain the \"%s\" set for sub-resource \"")%metaattr_name
+						+subrsc+_("\"?"))
+			if retval in [gtk.RESPONSE_CANCEL, gtk.RESPONSE_DELETE_EVENT] :
+				return	
+			if retval == gtk.RESPONSE_NO:
+				manager.do_cmd("del_rsc_attr\n%s\nmeta\n%s"%(subrsc, metaattr_name))
+
+		if target_role == "#default" :
+			manager.do_cmd("del_rsc_attr\n%s\nmeta\n%s"%(cur_name, metaattr_name))
+		else :
+			manager.do_cmd("set_rsc_attr\n%s\nmeta\n%s\n%s"%(cur_name, metaattr_name, target_role))
+			if manager.failed_reason != "" :
+				msgbox(manager.failed_reason)
+
+	def true_obj_id(self, obj_id) :
+		return obj_id.split(":")[0]
 
 	def on_rsc_cleanup(self, action) :
 		(cur_type, cur_name) = self.manage_tree.get_selected_node()
@@ -1145,14 +1149,14 @@ class ManageView :
 			cleanup_rscs = []
 			if cleanup["rsc"] == _("all resources") :
 				for rsc in rsc_list :
-					if manager.get_rsc_type(rsc) == "native" :
+					if manager.get_rsc_type(rsc) == "primitive" :
 						cleanup_rscs.append(rsc)
-			elif manager.get_rsc_type(cleanup["rsc"]) != "native" :
+			elif manager.get_rsc_type(cleanup["rsc"]) != "primitive" :
 				all_subrscs = manager.get_all_subrsc(cleanup["rsc"])
 				if all_subrscs == None :
 					return
 				for rsc in all_subrscs :
-					if manager.get_rsc_type(rsc) == "native" :
+					if manager.get_rsc_type(rsc) == "primitive" :
 						cleanup_rscs.append(rsc)
 			else :
 				cleanup_rscs.append(cleanup["rsc"])
@@ -2023,6 +2027,7 @@ class EditXMLDlg:
 
 		dialog = gtk.Dialog(_("Edit XML"), top_window, gtk.DIALOG_MODAL,
 			(gtk.STOCK_OK, gtk.RESPONSE_OK, str(_("Reset")), gtk.RESPONSE_APPLY, gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL))
+		dialog.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_NORMAL)
 		dialog.set_size_request(700, 600)
 
 		actions = [
@@ -5130,6 +5135,7 @@ class Manager :
 			if self.validate_name != saved_validate_name :
 				self.rng_docs = {}
 				self.update_rng_docs(self.validate_name, self.validate_name+".rng")
+				self.supported_rsc_types = self.get_supported_rsc_types()
 
 		"""config_xml = self.cib_xml.getElementsByTagName("configuration")
 		self.crm_xml = config_xml.getElementsByTagName("crm_config")
@@ -5153,6 +5159,25 @@ class Manager :
 			self.cns_xml = None
 			debug("fail to parse xml info")
 			return None"""
+
+	def get_supported_rsc_types(self) :
+		rsc_types = []
+		if validate_type == "dtd" :
+			dtd_elem = manager.get_dtd_elem("resources")
+			for (name, mod) in dtd_elem.get_content_model()[1] :
+				rsc_types.append(name)
+		else :
+			sorted_rng_nodes = manager.sorted_sub_rng_nodes_by_name("resources")
+			for rng_node in sorted_rng_nodes.get("element", []) :
+				rsc_types.append(rng_node[0][1].getAttribute("name"))
+
+		return rsc_types
+
+	def find_xml_node(self, obj_type, obj_name) :
+		for xml_node in self.xml_nodes["cib"].getElementsByTagName(obj_type) :
+			if xml_node.getAttribute("id") == obj_name :
+				return xml_node
+		return None
 
 	def update_rng_docs(self, validate_name = "", file= "") :
 		self.rng_docs[file] = self.get_start_rng_node(validate_name, file)

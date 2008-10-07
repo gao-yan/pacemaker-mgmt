@@ -514,6 +514,42 @@ or
 
 /*
 description:
+	set the named attribute for a given resource
+format:
+	MSG_SET_RSC_ATTR rsc_id <instance|meta> name value
+return:
+	MSG_OK
+or
+	MSG_FAIL
+*/
+#define MSG_SET_RSC_ATTR	"set_rsc_attr"
+
+/*
+description:
+	get the named attribute for a given resource
+format:
+	MSG_GET_RSC_ATTR rsc_id <instance|meta> name
+return:
+	MSG_OK value
+or
+	MSG_FAIL
+*/
+#define MSG_GET_RSC_ATTR	"get_rsc_attr"
+
+/*
+description:
+	delete the named attribute for a given resource
+format:
+	MSG_DEL_RSC_ATTR rsc_id <instance|meta> name
+return:
+	MSG_OK
+or
+	MSG_FAIL
+*/
+#define MSG_DEL_RSC_ATTR	"del_rsc_attr"
+
+/*
+description:
 	update attribute of a given resource
 format:
 	MSG_UP_RSC_ATTR resource name value
