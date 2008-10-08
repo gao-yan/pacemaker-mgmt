@@ -1035,6 +1035,7 @@ class ManageView :
 
 		rsc_action_group = gtk.ActionGroup("rsc_mgmt")
 		rsc_action_group.add_actions(rsc_actions)
+		self.rsc_action_group = rsc_action_group
 
 		for action in rsc_actions :
 			action_name = action[0]
@@ -1046,6 +1047,7 @@ class ManageView :
 
 		node_action_group = gtk.ActionGroup("node_mgmt")
 		node_action_group.add_actions(node_actions)
+		self.node_action_group = node_action_group
 
 		for action in node_actions :
 			action_name = action[0]
@@ -1054,6 +1056,7 @@ class ManageView :
 
 		self.manage_tree = ManageTree()
 		self.vbox.pack_start(self.manage_tree.widget)
+		self.manage_tree.tree.connect("cursor-changed", self.on_after_show)
 
 		"""notebook =  gtk.Notebook()
 		self.notebook = notebook
@@ -1074,9 +1077,53 @@ class ManageView :
 
 		self.update()
 
+	def on_after_show(self, treeview = None) :
+		(model, iter) = self.manage_tree.tree.get_selection().get_selected()
+		if iter == None :
+			self.update_ui(None, None)
+
+		cur_type = model.get_value(iter, 0)
+		cur_status = model.get_value(iter, 2)
+		self.update_ui(cur_type, cur_status)
+
+	def set_action_sensitive(self, action, sensitive) :
+		if self.rsc_action_group.get_action(action) != None :
+			self.rsc_action_group.get_action(action).set_property("sensitive", sensitive)
+		elif self.node_action_group.get_action(action) != None :
+			self.node_action_group.get_action(action).set_property("sensitive", sensitive)
+
+	def update_ui(self, cur_type = None, cur_status = None) :
+		all_rsc_type = [_(rsc_type) for rsc_type in manager.supported_rsc_types]
+
+		self.set_action_sensitive('standby',
+			cur_type in [_("node")]
+			and string.find(cur_status, _("standby")) == -1
+			and string.find(cur_status, _("never started")) == -1)
+
+		self.set_action_sensitive('active',
+			cur_type in [_("node")]
+			and string.find(cur_status, _("standby")) != -1
+			and string.find(cur_status, _("never started")) == -1)
+
+		self.set_action_sensitive('cleanuprsc',
+			cur_type in all_rsc_type)
+
+		self.set_action_sensitive('startrsc',
+			cur_type in all_rsc_type)
+		
+		self.set_action_sensitive('stoprsc',
+			cur_type in all_rsc_type)
+
+		self.set_action_sensitive('defaultrsc',
+			cur_type in all_rsc_type)
+
+		self.set_action_sensitive('migratersc',
+			cur_type in all_rsc_type)
+
 	def update(self, xml_node = None) :
 		self.manage_tree.update()
 		self.vbox.show_all()
+		self.on_after_show()
 
 	def load_icon(self, name, file) :
 		icons = gtk.IconFactory()
