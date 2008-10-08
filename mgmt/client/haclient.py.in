@@ -1028,6 +1028,10 @@ class ManageView :
 			('active', "ha-active-node", _('Active'), None,_('make the node active'), self.on_active)
 			]
 
+		toggle_tool_actions = [
+			('group-by-node', gtk.STOCK_SORT_DESCENDING, _('Group By Node'), None, _('Group resources by node'), self.change_group_mode),
+			]
+
 		toolbar = gtk.Toolbar()
 		toolbar.set_orientation(gtk.ORIENTATION_HORIZONTAL)
 		toolbar.set_style(gtk.TOOLBAR_ICONS)
@@ -1054,6 +1058,17 @@ class ManageView :
 			tool_item = node_action_group.get_action(action_name).create_tool_item()
 			toolbar.insert(tool_item, -1)
 
+		separator = gtk.SeparatorToolItem()
+		toolbar.insert(separator, -1)
+
+		self.toggle_tool_action_group = gtk.ActionGroup("toggle_tools")
+		self.toggle_tool_action_group.add_toggle_actions(toggle_tool_actions)
+
+		for action in toggle_tool_actions :
+			action_name = action[0]
+			tool_item = self.toggle_tool_action_group.get_action(action_name).create_tool_item()
+			toolbar.insert(tool_item, -1)
+
 		self.manage_tree = ManageTree()
 		self.vbox.pack_start(self.manage_tree.widget)
 		self.manage_tree.tree.connect("cursor-changed", self.on_after_show)
@@ -1077,10 +1092,14 @@ class ManageView :
 
 		self.update()
 
+	def change_group_mode(self, action) :
+		self.update()
+
 	def on_after_show(self, treeview = None) :
 		(model, iter) = self.manage_tree.tree.get_selection().get_selected()
 		if iter == None :
 			self.update_ui(None, None)
+			return
 
 		cur_type = model.get_value(iter, 0)
 		cur_status = model.get_value(iter, 2)
@@ -1121,7 +1140,8 @@ class ManageView :
 			cur_type in all_rsc_type)
 
 	def update(self, xml_node = None) :
-		self.manage_tree.update()
+		group_by_node = self.toggle_tool_action_group.get_action("group-by-node").get_active()
+		self.manage_tree.update(group_by_node)
 		self.vbox.show_all()
 		self.on_after_show()
 
@@ -1421,7 +1441,7 @@ class ManageTree() :
 	def restore_tree_status(self, tree_status) :
 		self.store.foreach(self.restore_iter_status, tree_status)
 		
-	def update(self) :
+	def update(self, group_by_node = False) :
 		tree_status = self.save_tree_status()		
 		
 		self.store.clear()
@@ -1446,31 +1466,44 @@ class ManageTree() :
 		else :
 			status = _("without quorum")
 		
-		cluster_type = manager.get_cluster_type().capitalize()
-		if len(cluster_type) > 0 :
-			cluster_type += " & Pacemaker"
-		else :
-			cluster_type += "Pacemkaer"
+		#cluster_type = manager.get_cluster_type().capitalize()
+		#if len(cluster_type) > 0 :
+		#	cluster_type += " & Pacemaker"
+		#else :
+		#	cluster_type += "Pacemkaer"
 
-		root = self.store.append(None, ["cluster", cluster_type, status, ""])
+		#root = self.store.append(None, ["cluster", cluster_type, status, ""])
 		
-		nodes_root = self.store.append(root, ["nodes", _("Nodes"),"", ""])
-
-		for node in nodes :
-			self.add_node(nodes_root, node, node in active_nodes, node in crm_nodes)
-
-		rscs_root = self.store.append(root, ["resources", _("Resources"),"", ""])
-		rscs = manager.get_top_rsc()
-		for rsc in rscs :
-			self.add_rsc(rscs_root, rsc)
+		if group_by_node :
+			for node in nodes :
+				self.add_node(None, node, node in active_nodes, node in crm_nodes)
+			inactive_root = self.store.append(None, [_("Inactive resources"), "", "", ""])
+			rscs = manager.get_all_rsc()
+			for rsc in rscs :
+				rsc_type = manager.get_rsc_type(rsc)
+				if rsc_type != "primitive" :
+					continue
+				status = manager.get_rsc_status(rsc)
+				nodes = manager.get_rsc_running_on(rsc)
+				if nodes != None and len(nodes) > 0 :
+					continue 
+				else :
+					self.store.append(inactive_root,[_(rsc_type), rsc, _(status), ""]) 
+		else :
+			nodes_root = self.store.append(None, [_("Nodes"), "", "", ""])
+			for node in nodes :
+				self.add_node(nodes_root, node, node in active_nodes, node in crm_nodes, False)
+			rscs_root = self.store.append(None, [_("Resources"), "", "", ""])
+			rscs = manager.get_top_rsc()
+			for rsc in rscs :
+				self.add_rsc(rscs_root, rsc)
 		
 		self.restore_tree_status(tree_status)
 		(name, type, path, expand_status) = tree_status
 		if  name == None :
-			self.tree.get_selection().select_iter(root)
+			#self.tree.get_selection().select_iter(root)
 			self.tree.expand_all()
  		#self.on_cursor_changed(self.widget, self.widget.get_selection())
-		
 		
 	def add_rsc(self, parent, rsc) :
 		type = manager.get_rsc_type(rsc)
@@ -1492,7 +1525,7 @@ class ManageTree() :
 			for subrsc in manager.get_sub_rsc(rsc) :
 				self.add_rsc(iter, subrsc)
 					
-	def add_node(self, nodes_root, node, active, started):
+	def add_node(self, nodes_root, node, active, started, add_rscs = True):
 		status = _("unknown")
 		if not started :
 			node_type = manager.get_nodetype(node)
@@ -1516,7 +1549,7 @@ class ManageTree() :
 
 		node_iter = self.store.append(nodes_root,["node", node, status, ""])
 
-		if active :
+		if add_rscs and active :
 	 		running_rsc = manager.get_running_rsc(node)
  			for rsc in running_rsc :
  				self.add_rsc(node_iter, rsc)
