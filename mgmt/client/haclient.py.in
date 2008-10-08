@@ -1322,8 +1322,8 @@ class ManageTree() :
 		self.store = gtk.TreeStore(str, str, str, str)
 
 		tree = gtk.TreeView(self.store)
-		add_column(tree, _("Type"), 0, self.render_icon)
-		add_column(tree, _("Name"), 1)
+		add_column(tree, _("Type"), 0, self.render_icon, visible=False)
+		add_column(tree, _("Name"), 1, self.render_icon)
 		add_column(tree, _("Status"), 2)
 		add_column(tree, _("Details"), 3)
 		#tree.connect("cursor-changed", self.on_cursor_changed, tree.get_selection())
@@ -1475,9 +1475,10 @@ class ManageTree() :
 		#root = self.store.append(None, ["cluster", cluster_type, status, ""])
 		
 		if group_by_node :
+			nodes_root = self.store.append(None, ["nodes", _("Nodes"), "", ""])
 			for node in nodes :
-				self.add_node(None, node, node in active_nodes, node in crm_nodes)
-			inactive_root = self.store.append(None, [_("Inactive resources"), "", "", ""])
+				self.add_node(nodes_root, node, node in active_nodes, node in crm_nodes)
+			inactive_root = self.store.append(None, ["inactive resources", _("Inactive resources"), "", ""])
 			rscs = manager.get_all_rsc()
 			for rsc in rscs :
 				rsc_type = manager.get_rsc_type(rsc)
@@ -1490,10 +1491,10 @@ class ManageTree() :
 				else :
 					self.store.append(inactive_root,[_(rsc_type), rsc, _(status), ""]) 
 		else :
-			nodes_root = self.store.append(None, [_("Nodes"), "", "", ""])
+			nodes_root = self.store.append(None, ["nodes", _("Nodes"), "", ""])
 			for node in nodes :
 				self.add_node(nodes_root, node, node in active_nodes, node in crm_nodes, False)
-			rscs_root = self.store.append(None, [_("Resources"), "", "", ""])
+			rscs_root = self.store.append(None, ["reources", _("Resources"), "", ""])
 			rscs = manager.get_top_rsc()
 			for rsc in rscs :
 				self.add_rsc(rscs_root, rsc)
