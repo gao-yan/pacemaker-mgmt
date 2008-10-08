@@ -1302,7 +1302,7 @@ class ManageView :
 				msgbox(manager.failed_reason)
 
 
-class ManageTree() :
+class ManageTree :
 	store = None
 	tree = None
 	last_iter = None
