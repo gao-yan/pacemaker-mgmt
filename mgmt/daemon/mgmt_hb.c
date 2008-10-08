@@ -22,8 +22,8 @@
 #include <pygui_internal.h>
 
 #include <unistd.h>
+#include <string.h>
 #include <glib.h>
-
 
 #include <heartbeat.h>
 #include <clplumbing/cl_log.h>
