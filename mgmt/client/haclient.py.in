@@ -1041,10 +1041,12 @@ class ManageView :
 		rsc_action_group.add_actions(rsc_actions)
 		self.rsc_action_group = rsc_action_group
 
-		for action in rsc_actions :
-			action_name = action[0]
-			tool_item = rsc_action_group.get_action(action_name).create_tool_item()
+		for action_entry in rsc_actions :
+			action_name = action_entry[0]
+			action = rsc_action_group.get_action(action_name)
+			tool_item = action.create_tool_item()
 			toolbar.insert(tool_item, -1)
+			action.set_accel_group(window.accelgroup)
 
 		separator = gtk.SeparatorToolItem()
 		toolbar.insert(separator, -1)
@@ -1053,10 +1055,12 @@ class ManageView :
 		node_action_group.add_actions(node_actions)
 		self.node_action_group = node_action_group
 
-		for action in node_actions :
-			action_name = action[0]
-			tool_item = node_action_group.get_action(action_name).create_tool_item()
+		for action_entry in node_actions :
+			action_name = action_entry[0]
+			action = node_action_group.get_action(action_name)
+			tool_item = action.create_tool_item()
 			toolbar.insert(tool_item, -1)
+			action.set_accel_group(window.accelgroup)
 
 		separator = gtk.SeparatorToolItem()
 		toolbar.insert(separator, -1)
@@ -1064,10 +1068,12 @@ class ManageView :
 		self.toggle_tool_action_group = gtk.ActionGroup("toggle_tools")
 		self.toggle_tool_action_group.add_toggle_actions(toggle_tool_actions)
 
-		for action in toggle_tool_actions :
-			action_name = action[0]
-			tool_item = self.toggle_tool_action_group.get_action(action_name).create_tool_item()
+		for action_entry in toggle_tool_actions :
+			action_name = action_entry[0]
+			action = self.toggle_tool_action_group.get_action(action_name)
+			tool_item = action.create_tool_item()
 			toolbar.insert(tool_item, -1)
+			action.set_accel_group(window.accelgroup)
 
 		self.manage_tree = ManageTree()
 		self.vbox.pack_start(self.manage_tree.widget)
@@ -4819,6 +4825,10 @@ class MainWindow :
 			</toolbar>
 		</ui>'''
 		uimanager = gtk.UIManager()
+
+		self.accelgroup = gtk.AccelGroup()
+		win_widget.add_accel_group(self.accelgroup)
+
 		actiongroup = gtk.ActionGroup('haclient')
 		
 		if pygtk_2_6_newer() :
