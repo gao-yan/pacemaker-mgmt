@@ -1112,15 +1112,15 @@ class ManageView :
 			self.node_action_group.get_action(action).set_property("sensitive", sensitive)
 
 	def update_ui(self, cur_type = None, cur_status = None) :
-		all_rsc_type = [_(rsc_type) for rsc_type in manager.supported_rsc_types]
+		all_rsc_type = ["primitive", "group", "clone", "master"]
 
 		self.set_action_sensitive('standby',
-			cur_type in [_("node")]
+			cur_type in ["node"]
 			and string.find(cur_status, _("standby")) == -1
 			and string.find(cur_status, _("never started")) == -1)
 
 		self.set_action_sensitive('active',
-			cur_type in [_("node")]
+			cur_type in ["node"]
 			and string.find(cur_status, _("standby")) != -1
 			and string.find(cur_status, _("never started")) == -1)
 
@@ -1322,9 +1322,9 @@ class ManageTree :
 		self.store = gtk.TreeStore(str, str, str, str)
 
 		tree = gtk.TreeView(self.store)
-		add_column(tree, _("Type"), 0, self.render_icon, visible=False)
-		add_column(tree, _("Name"), 1, self.render_icon)
-		add_column(tree, _("Status"), 2)
+		add_column(tree, _("Type"), 0, self.render_type_icon, visible=False)
+		add_column(tree, _("Name"), 1, self.render_type_icon)
+		add_column(tree, _("Status"), 2, self.render_status_icon)
 		add_column(tree, _("Details"), 3)
 		#tree.connect("cursor-changed", self.on_cursor_changed, tree.get_selection())
 		#tree.connect("event-after", self.on_right_click)
@@ -1347,8 +1347,25 @@ class ManageTree :
 		type = model.get_value(iter, 0)
 		name = model.get_value(iter, 1)
 		return (type, name)
+
+	def render_type_icon(self, tvcolumn, cell, model, iter) :
+		icons = {
+			"nodes": gtk.STOCK_NETWORK,
+			"resources": gtk.STOCK_DIRECTORY,
+			"inactive resources": gtk.STOCK_DIRECTORY,
+			"node": gtk.STOCK_ORIENTATION_PORTRAIT,
+			"primitive": gtk.STOCK_DND,
+			"group": gtk.STOCK_DND_MULTIPLE,
+			"clone": gtk.STOCK_COPY,
+			"master": gtk.STOCK_COPY,
+			"master_slave": gtk.STOCK_COPY,
+			}
+		pb = self.tree.render_icon(icons.get(model.get_value(iter, 0), gtk.STOCK_MEDIA_STOP),
+			gtk.ICON_SIZE_BUTTON, None)
+		cell.set_property('pixbuf', pb)
+		return
 	
-	def render_icon(self, tvcolumn, cell, model, iter):
+	def render_status_icon(self, tvcolumn, cell, model, iter):
  		icons = {-2:"stopped",
 			 -1:gtk.STOCK_PREFERENCES,
 			  0:"running",
@@ -1371,7 +1388,7 @@ class ManageTree :
 		type = model.get_value(iter, 0)
 		status = model.get_value(iter, 2)
 		iter_status = 0
-		if type == _("primitive") :
+		if type == "primitive" :
 			if string.find(status, _("not running")) != -1 :
 				iter_status = 1
 			elif string.find(status, _("running")) != -1 :
@@ -1388,10 +1405,8 @@ class ManageTree :
 				iter_status = 0
 			else :
 				iter_status = 1
-		elif type in [_("group"),_("resources"),_("clone"),_("master")]:
+		elif type in ["group","resources","clone","master"]:
 			iter_status = 0
-		elif type in [_("Orders"),_("Locations"), _("Colocations")] :
-			iter_status = -1
 		else :
 			iter_status = -2
 		if model.iter_has_child(iter) :
@@ -1489,12 +1504,12 @@ class ManageTree :
 				if nodes != None and len(nodes) > 0 :
 					continue 
 				else :
-					self.store.append(inactive_root,[_(rsc_type), rsc, _(status), ""]) 
+					self.store.append(inactive_root,[rsc_type, rsc, _(status), ""]) 
 		else :
 			nodes_root = self.store.append(None, ["nodes", _("Nodes"), "", ""])
 			for node in nodes :
 				self.add_node(nodes_root, node, node in active_nodes, node in crm_nodes, False)
-			rscs_root = self.store.append(None, ["reources", _("Resources"), "", ""])
+			rscs_root = self.store.append(None, ["resources", _("Resources"), "", ""])
 			rscs = manager.get_top_rsc()
 			for rsc in rscs :
 				self.add_rsc(rscs_root, rsc)
@@ -1511,18 +1526,16 @@ class ManageTree :
 		status = ""
 		label = ""
 		if type == "primitive" :
-			label = _("primitive")
 			status = manager.get_rsc_status(rsc)
 			nodes = manager.get_rsc_running_on(rsc)
 			if nodes != None and len(nodes)>0:
-				self.store.append(parent,[_(label), rsc, _(status) + _(" on ")+str(nodes), ""])
+				self.store.append(parent,[type, rsc, _(status) + _(" on ")+str(nodes), ""])
 			else :
-				self.store.append(parent,[_(label), rsc, _(status), ""])
+				self.store.append(parent,[type, rsc, _(status), ""])
 				
 		elif type in ["group","clone","master"] :
-			label = type
 			status = type
-			iter = self.store.append(parent,[_(label), rsc, _(status), ""])
+			iter = self.store.append(parent,[type, rsc, _(status), ""])
 			for subrsc in manager.get_sub_rsc(rsc) :
 				self.add_rsc(iter, subrsc)
 					
