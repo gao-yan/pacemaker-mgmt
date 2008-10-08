@@ -4856,7 +4856,7 @@ class MainWindow :
 			('standby', "ha-standby-node", _('Standby'), None,_('make the node standby'), self.on_standby),
 			('active', "ha-active-node", _('Active'), None,_('make the node active'), self.on_active),
 			('tools', None, _('Tools')),
-			('report', gtk.STOCK_DND, _('Cluster Report'), None, _('generate a cluster report'), self.on_cluster_report)
+			('report', gtk.STOCK_FIND_AND_REPLACE, _('Cluster Report'), None, _('generate a cluster report'), self.on_cluster_report)
 			])
 		uimanager.insert_action_group(actiongroup, 0)
 		uimanager.add_ui_from_string(ui_xml)
