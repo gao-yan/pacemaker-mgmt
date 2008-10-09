@@ -19,8 +19,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <pygui_internal.h>
-
 #include <unistd.h>
 #include <glib.h>
 #include <regex.h>
@@ -30,11 +28,21 @@
 #include <clplumbing/cl_syslog.h>
 #include <clplumbing/lsb_exitcodes.h>
 
-#include "mgmt_internal.h"
-
 #include <crm/cib.h>
 #include <crm/msg_xml.h>
 #include <crm/pengine/status.h>
+
+#ifdef SUPPORT_AIS
+#undef SUPPORT_AIS
+#endif
+
+#ifdef SUPPORT_HEARTBEAT
+#undef SUPPORT_HEARTBEAT
+#endif
+
+#include <pygui_internal.h>
+
+#include "mgmt_internal.h"
 
 extern resource_t *group_find_child(resource_t *rsc, const char *id);
 extern crm_data_t * do_calculations(

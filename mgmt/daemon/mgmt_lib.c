@@ -19,8 +19,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <pygui_internal.h>
-
 #include <unistd.h>
 #include <stdarg.h>
 #include <errno.h>
@@ -34,7 +32,6 @@
 #endif
 #include <glib.h>
 
-
 #include <hb_config.h>
 #include <clplumbing/GSource.h>
 #include <clplumbing/cl_log.h>
@@ -44,10 +41,21 @@
 #include <clplumbing/coredumps.h>
 #include <clplumbing/cl_pidfile.h>
 
+#include <crm/crm.h>
+
+#ifdef SUPPORT_AIS
+#undef SUPPORT_AIS
+#endif
+
+#ifdef SUPPORT_HEARTBEAT
+#undef SUPPORT_HEARTBEAT
+#endif
+
+#include <pygui_internal.h>
+
 #include <mgmt/mgmt.h>
 #include "mgmt_internal.h"
 
-#include <crm/crm.h>
 
 /* common daemon and debug functions */
 
