@@ -1252,7 +1252,7 @@ class ManageView :
 				[Field("rsc", _("Resource"), cur_name, manager.get_all_rsc(), False, entry_editable = False),
 				Field("to_node", _("To Node"), "", node_list, True, entry_editable = False),
 				Field("force", _("Force"), "", ["", "True", "False"], True, entry_editable = False),
-				Field("duration", _("Duration"), "", ["", "P1M", "P1W", "P1D", "T8H", "T30M", "T30S"],
+				Field("duration", _("Duration"), "", ["", "P1M", "P1W", "P1D", "PT8H", "PT30M", "PT30S"],
 					True, entry_editable = True)])
 
 		if migrate == None :
