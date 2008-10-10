@@ -1717,7 +1717,7 @@ class MainTree(ElementList) :
 			if len(cur_xml_nodes) > 0 :
 				cur_xml_node = cur_xml_nodes[0] 
 			else :
-				cur_xml_node = None
+				cur_xml_node = window.cur_type
 			window.cur_view.update(cur_xml_node)
 		else :
 			if iter == None :
@@ -1944,9 +1944,10 @@ class ObjectView :
 	elem_notebook = None
 	show_mode = 0
 	
-	def __init__(self, xml_node, is_newobj = False, change_call_back = None, is_topview = False) :
+	def __init__(self, xml_node, is_newobj = False, change_call_back = None, is_topview = False, missing_opt_obj_parent_type = None) :
 		self.is_newobj = is_newobj
 		self.is_topview = is_topview
+		self.missing_opt_obj_parent_type = missing_opt_obj_parent_type
 		self.change_call_back = change_call_back
 		vbox = gtk.VBox()
 		self.vbox = vbox
@@ -1971,9 +1972,16 @@ class ObjectView :
 
 	def update(self, xml_node = None) :
 		is_newobj = self.is_newobj
-		if xml_node != None :
+		if type(xml_node) == str:
+			impl = getDOMImplementation()
+			newdoc = impl.createDocument(None, xml_node, None)
+			self.xml_node = newdoc.documentElement
+			self.init_xml_node = self.xml_node.cloneNode(True)
+			self.is_fake_xml_node = True
+		elif xml_node != None :
 			self.xml_node = xml_node
-			self.init_xml_node = xml_node.cloneNode(True)
+			self.init_xml_node = self.xml_node.cloneNode(True)
+			self.is_fake_xml_node = False
 
 		attrs_status = False
 		if self.obj_attrs != None :
@@ -2053,7 +2061,8 @@ class ObjectView :
 			self.obj_attrs = obj_attrs
 			
 		if has_elem :
-			self.elem_notebook = ElementNotebook(self.xml_node, self.is_topview, self.change_call_back, self.show_mode)
+			self.elem_notebook = ElementNotebook(self.xml_node, self.is_topview, self.change_call_back,
+						self.show_mode, self.is_fake_xml_node, self.missing_opt_obj_parent_type)
 			if notebook_status != None :
 				self.elem_notebook.restore_status(notebook_status)
 			obj_box.pack_start(self.elem_notebook.widget, True, padding = 5)
@@ -2098,7 +2107,11 @@ class ObjectView :
 				break
 			else :
 				xml_str = new_xml_node.toxml().replace("\n", "")
-				manager.cib_do_cmd("cib_replace\n%s\n%s"%(str(self.xml_node.tagName), str(xml_str)))
+				if self.is_fake_xml_node :
+					manager.cib_do_cmd("cib_create\n%s\n%s"
+							%(str(self.missing_opt_obj_parent_type), str(xml_str)))
+				else :
+					manager.cib_do_cmd("cib_replace\n%s\n%s"%(str(self.xml_node.tagName), str(xml_str)))
 				if manager.failed_reason != "" :
 					msgbox(manager.failed_reason)
 				else :
@@ -2299,10 +2312,13 @@ class EditXMLDlg:
 
 class ElementNotebook :
 	notebook = None
-	def __init__(self, xml_node, is_topview = False, change_call_back = None, show_mode = 0) :
+	def __init__(self, xml_node, is_topview = False, change_call_back = None, show_mode = 0,
+				is_fake_xml_node = False, missing_opt_obj_parent_type = None) :
 		self.is_topview = is_topview
 		self.change_call_back = change_call_back
 		self.show_mode = show_mode
+		self.is_fake_xml_node = is_fake_xml_node
+		self.missing_opt_obj_parent_type = missing_opt_obj_parent_type
 		vbox = gtk.VBox()
 		self.widget = vbox
 
@@ -2614,8 +2630,16 @@ class ElementNotebook :
 					self.change_call_back()
 				return
 			else :
-				xml_str = new_xml_node.toxml().replace("\n", "")
-				manager.cib_do_cmd("cib_create\n%s\n%s"%(str(self.obj_type), str(xml_str)))
+				if self.is_fake_xml_node :
+					parent_xml_node = self.xml_node.cloneNode(True)
+					parent_xml_node.appendChild(new_xml_node)
+					xml_str = parent_xml_node.toxml().replace("\n", "")
+					parent_type = self.missing_opt_obj_parent_type
+				else :
+					xml_str = new_xml_node.toxml().replace("\n", "")
+					parent_type = self.obj_type
+					
+				manager.cib_do_cmd("cib_create\n%s\n%s"%(str(parent_type), str(xml_str)))
 				if manager.failed_reason != "" :
 					msgbox(manager.failed_reason)
 				else :
@@ -4201,9 +4225,12 @@ class MainWindow :
 		self.update_ui()
 		if type == "configuration" :
 			self.cur_view = ClusterView()
-		elif type in ["crm_config", "nodes", "resources", "constraints", "status"] \
+		elif type in ["crm_config", "nodes", "resources", "constraints", "status", "rsc_defaults", "op_defaults"] \
 				and manager.xml_nodes["cib"].getElementsByTagName(type) != [] :
 			self.cur_view = ObjectView(manager.xml_nodes["cib"].getElementsByTagName(type)[0], is_topview = True)
+		elif type in ["rsc_defaults", "op_defaults"] \
+				and manager.xml_nodes["cib"].getElementsByTagName(type) == [] :
+			self.cur_view = ObjectView(type, is_topview = True, missing_opt_obj_parent_type = "configuration")
 		elif type == "node" and status not in [_("never started"),_("ping node"),_("unknown type")]:
 			self.cur_view = NodeView(name)
 		elif type == "management" :

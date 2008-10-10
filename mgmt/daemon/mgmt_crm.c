@@ -2833,7 +2833,6 @@ char*
 on_cib_create(char* argv[], int argc)
 {
 	int rc;
-	crm_data_t* fragment = NULL;
 	crm_data_t* cib_object = NULL;
 	crm_data_t* output = NULL;
 	const char* type = NULL;
@@ -2849,9 +2848,7 @@ on_cib_create(char* argv[], int argc)
 
 	mgmt_log(LOG_INFO, "CIB create: %s", type);
 		
-	fragment = create_cib_fragment(cib_object, type);
-	rc = cib_conn->cmds->create(cib_conn, type, fragment, cib_sync_call);
-	free_xml(fragment);
+	rc = cib_conn->cmds->create(cib_conn, type, cib_object, cib_sync_call);
 	free_xml(cib_object);
 	if (rc < 0) {
 		return crm_failed_msg(output, rc);
