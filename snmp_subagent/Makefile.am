@@ -74,7 +74,7 @@ hbagent_SOURCES		= $(hbagent_srces)
 
 
 hbagent_LDADD	 	= \
-			-lplumb -lcrmcommon -lcib -lpe_status -lccmclient -lclm \
+			-lplumb -lcrmcommon -lcib -lpe_status -lclm \
 			$(CLUSTERLIBS) $(CURSESLIBS) $(GLIBLIB)
 
 hbagent_LDFLAGS		= @SNMPAGENTLIB@ 
