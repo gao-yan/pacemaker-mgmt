@@ -1382,7 +1382,7 @@ fi
 CLUSTERLIBS=""
 if test $SUPPORT_HEARTBEAT = 1; then
    AC_MSG_RESULT(heartbeat)
-   CLUSTERLIBS="$CLUSTERLIBS -lhbclient -lccmclient"
+   CLUSTERLIBS="$CLUSTERLIBS -lhbclient -lccmclient -lclm"
 fi
 
 if test $SUPPORT_AIS = 1; then
