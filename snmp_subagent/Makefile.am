@@ -67,11 +67,10 @@ INCLUDES                = -I$(top_builddir)/include -I$(top_srcdir)/include \
 halibdir		= $(libdir)/@HB_PKG@
 
 # binary programs
+if BUILD_HEARTBEAT_SUPPORT
 halib_PROGRAMS		= hbagent 
 
 hbagent_SOURCES		= $(hbagent_srces)
-
-
 
 hbagent_LDADD	 	= \
 			-lplumb -lcrmcommon -lcib -lpe_status \
@@ -82,6 +81,7 @@ hbagent_LDFLAGS		= @SNMPAGENTLIB@
 # test cases
 testdir			= $(HA_NOARCHDATAHBDIR)
 test_SCRIPTS		= $(test_scrs)
+endif
 
 hadir                   = $(sysconfdir)/ha.d
 
