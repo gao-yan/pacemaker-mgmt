@@ -27,7 +27,7 @@ coredir = 		@HA_COREDIR@
 hauser = 		@HA_CCMUSER@
 
 TARFILE			= pygui.tar.gz
-LAST_RELEASE		= pygui-1.2
+LAST_RELEASE		= pygui-1.3
 
 if CIM_PROVIDER_BUILD
 CIM_PROVIDER_DIR = cim

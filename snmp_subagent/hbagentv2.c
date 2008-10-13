@@ -87,13 +87,13 @@ update_resources_recursively(GListPtr reslist, GListPtr nodelist, int index)
             struct hb_rsinfov2 *rsinfo;
             enum rsc_role_e rsstate;
 
-            rsinfo = (struct hb_rsinfov2 *) cl_malloc(sizeof(struct hb_rsinfov2));
+            rsinfo = (struct hb_rsinfov2 *) malloc(sizeof(struct hb_rsinfov2));
             if (!rsinfo) {
                 cl_log(LOG_CRIT, "malloc resource info v2 failed.");
                 return HA_FAIL;
             }
 
-            rsinfo->resourceid = cl_strdup(rsc->id);
+            rsinfo->resourceid = strdup(rsc->id);
             rsinfo->type = PE_OBJ_TYPES2AGENTTYPE(rsc->variant);
 
             /* using a temp var to suppress casting warning of the compiler */
@@ -113,7 +113,7 @@ update_resources_recursively(GListPtr reslist, GListPtr nodelist, int index)
                g_list_free(running_on_nodes);
             }
             rsinfo->status = RSC_ROLE_E2AGENTSTATUS(rsstate);
-            rsinfo->node = cl_strdup(node->details->uname);
+            rsinfo->node = strdup(node->details->uname);
 
             if (is_not_set(rsc->flags, pe_rsc_managed)) {
                 rsinfo->is_managed = LHARESOURCEISMANAGED_UNMANAGED;
@@ -136,9 +136,9 @@ update_resources_recursively(GListPtr reslist, GListPtr nodelist, int index)
              }
 
             if (rsc->parent != NULL) {
-                rsinfo->parent = cl_strdup(rsc->parent->id);
+                rsinfo->parent = strdup(rsc->parent->id);
             } else {
-                rsinfo->parent = cl_strdup("");
+                rsinfo->parent = strdup("");
             }
 
             /*
@@ -150,10 +150,10 @@ update_resources_recursively(GListPtr reslist, GListPtr nodelist, int index)
                 rsinfo->index = index++;
                 g_ptr_array_add(gResourceTableV2, (gpointer *)rsinfo);
             } else {
-                cl_free(rsinfo->resourceid);
-                cl_free(rsinfo->node);
-                cl_free(rsinfo->parent);
-                cl_free(rsinfo);
+                free(rsinfo->resourceid);
+                free(rsinfo->node);
+                free(rsinfo->parent);
+                free(rsinfo);
             }
 
         }); /* end slist_iter(node) */
@@ -249,10 +249,10 @@ free_resource_table_v2(void)
     cl_log(LOG_DEBUG, "Freeing %d resources.", gResourceTableV2->len);
     while (gResourceTableV2->len) {
         resource = (struct hb_rsinfov2 *) g_ptr_array_remove_index_fast(gResourceTableV2, 0);
-        cl_free(resource->resourceid);
-        cl_free(resource->node);
-        cl_free(resource->parent);
-        cl_free(resource);
+        free(resource->resourceid);
+        free(resource->node);
+        free(resource->parent);
+        free(resource);
     }
     
     return;
@@ -393,21 +393,22 @@ hbagentv2_update_diff(const char *event, crm_data_t *msg)
     /* get rc_code from transition magic number */
     if (!rc_code) {
         if (t_magic != NULL) {
-            int transition_num = -1;
+            int transition_id = -1;
             int action_id = -1;
-            int target_rc = 0;
             int status = -1;
-            int rc = -1;
+            int op_rc = -1;
+            int target_rc = -1;
             char *uuid = NULL;
 
             if (!decode_transition_magic(
-                    t_magic, &uuid, &transition_num, &action_id, &status, &rc, &target_rc)) {
+                    t_magic, &uuid, &transition_id, &action_id,
+                    &status, &op_rc, &target_rc)) {
                 cl_log(LOG_ERR, "decode_transition_magic() is failed.");
                 free_xml(diff);
                 return;
             }
             crm_free(uuid);
-            sprintf(tmp_rc_str, "%d\n", rc);
+            sprintf(tmp_rc_str, "%d\n", op_rc);
             rc_code = tmp_rc_str;
         }
     }
@@ -417,8 +418,8 @@ hbagentv2_update_diff(const char *event, crm_data_t *msg)
         if (atoi(rc_code) == EXECRA_OK) {
             struct hb_rsinfov2 resource;
 
-            resource.resourceid = cl_strdup(rsc_id);
-            resource.node = cl_strdup(myid);
+            resource.resourceid = strdup(rsc_id);
+            resource.node = strdup(myid);
 
             /* LHAResourceStatus is ... */
             if (safe_str_eq(operation, CRMD_ACTION_STOP)) {
@@ -435,15 +436,15 @@ hbagentv2_update_diff(const char *event, crm_data_t *msg)
                 resource.status = LHARESOURCESTATUS_MASTER;
             } else {
                 /* other action. send no trap. */
-                cl_free(resource.resourceid);
-                cl_free(resource.node);
+                free(resource.resourceid);
+                free(resource.node);
                 free_xml(diff);
                 return;
             }
     
             send_LHAResourceStatusUpdate_trap(&resource);
-            cl_free(resource.resourceid);
-            cl_free(resource.node);
+            free(resource.resourceid);
+            free(resource.node);
         } else {
             /* operation does not succeed.  */
             /* do nothing (for the present) */
@@ -530,10 +531,7 @@ get_cib_fd(void)
  * Set this function in the select loop to send a trap.
  */
 /* TODO: this prototype is not exported in any headers */
-
-/* Beekhof: Uh yeah, for a _reason_
- * This code should be using gmainloop like everything else
- */
+/* Beekhof: Uh yeah, for a _reason_ */
 
 gboolean cib_native_dispatch(IPC_Channel *channel, gpointer user_data);
 

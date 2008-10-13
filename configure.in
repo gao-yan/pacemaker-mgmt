@@ -41,7 +41,7 @@ AC_ARG_WITH(hapkgversion,
 )
 
 if test -z "$HAPKGVERSION" ; then
-   HAPKGVERSION="1.3"
+   HAPKGVERSION="1.3.1"
 fi
 
 HB_PKG=heartbeat
@@ -186,6 +186,32 @@ AC_ARG_WITH([cmpiprovider],
 AC_ARG_ENABLE([tsa-plugin],
 [  --enable-tsa-plugin Enable TSA plugin.  [default=no]],
 		[], [enable_tsa_plugin=no])
+
+AC_ARG_WITH(ais-support,
+    [  --with-ais-support     
+       Support the OpenAIS-based stack ],
+    [ SUPPORT_AIS=$withval ],
+    [ SUPPORT_AIS=try ],
+)
+
+AC_ARG_WITH(heartbeat-support,
+    [  --with-heartbeat-support     
+       Support the Heartbeat-based stack ],
+    [ SUPPORT_HEARTBEAT=$withval ],
+    [ SUPPORT_HEARTBEAT=try ],
+)
+
+AISPREFIX=""
+AC_ARG_WITH(ais-prefix,
+    [  --with-ais-prefix=DIR  Prefix used when OpenAIS was installed [$prefix]],
+    [ AISPREFIX=$withval ], 
+    [ AISPREFIX=$prefix ])
+
+LCRSODIR=""
+AC_ARG_WITH(lcrso-dir, 
+    [  --with-lcrso-dir=DIR   OpenAIS lcrso files. ],
+    [ LCRSODIR="$withval" ])
+
 AC_ARG_WITH([JAVA_HOME],
  [  --with-java-home        JAVA_HOME dir], [], [])
 
@@ -252,35 +278,62 @@ INIT_EXT=""
 echo Our Host OS: $host_os/$host
 
 
-AC_MSG_RESULT(Sanitizing prefix: ${prefix})
+AC_MSG_NOTICE(Sanitizing prefix: ${prefix})
 case $prefix in
-  NONE)	prefix=/usr/local;;
+  NONE)	prefix=/usr;;
 esac
 
-AC_MSG_RESULT(Sanitizing exec_prefix: ${exec_prefix})
+AC_MSG_NOTICE(Sanitizing exec_prefix: ${exec_prefix})
 case $exec_prefix in
   dnl For consistency with Heartbeat, map NONE->$prefix
   NONE)	  exec_prefix=$prefix;;
   prefix) exec_prefix=$prefix;;
 esac
 
-AC_MSG_RESULT(Sanitizing INITDIR: ${INITDIR})
-case $INITDIR in
-  prefix) INITDIR=$prefix;;
+AC_MSG_NOTICE(Sanitizing ais_prefix: ${AISPREFIX})
+case $AISPREFIX in
+  dnl For consistency with Heartbeat, map NONE->$prefix
+  NONE)   AISPREFIX=$prefix;;
+  prefix) AISPREFIX=$prefix;;
 esac
 
-AC_MSG_CHECKING(which init (rc) directory to use)
-for initdir in /etc/init.d /etc/rc.d/init.d /sbin/init.d	\
-	 /usr/local/etc/rc.d /etc/rc.d
-do
-  if
-    test -d $initdir
-  then
-    INITDIR=$initdir
-    AC_MSG_RESULT($INITDIR);
-    break
-  fi
-done
+AC_MSG_NOTICE(Sanitizing INITDIR: ${INITDIR})
+case $INITDIR in
+  prefix) INITDIR=$prefix;;
+  "")
+    AC_MSG_CHECKING(which init (rc) directory to use)
+      for initdir in /etc/init.d /etc/rc.d/init.d /sbin/init.d	\
+	   /usr/local/etc/rc.d /etc/rc.d
+      do
+        if
+          test -d $initdir
+        then
+          INITDIR=$initdir
+          break
+        fi
+      done
+      AC_MSG_RESULT($INITDIR);;
+esac
+
+AC_MSG_NOTICE(Sanitizing libdir: ${libdir})
+case $AISPREFIX in
+  dnl For consistency with Heartbeat, map NONE->$prefix
+  prefix|NONE)
+    AC_MSG_CHECKING(which lib directory to use)
+    for suffix in lib64 lib
+    do
+      trydir="${exec_prefix}/${suffix}"
+      if
+        test -d ${trydir}
+      then
+        libdir=${trydir}
+        break
+      fi
+    done
+    AC_MSG_RESULT($libdir);
+    ;;
+esac
+
 
 dnl Expand autoconf variables so that we dont end up with '${prefix}' 
 dnl in #defines and python scripts
@@ -289,7 +342,7 @@ dnl    make exec_prefix=/foo install
 dnl No longer being able to do this seems like no great loss to me...
 
 eval prefix="`eval echo ${prefix}`"
-eval exec_prefix="`eval echo ${prefix}`"
+eval exec_prefix="`eval echo ${exec_prefix}`"
 eval bindir="`eval echo ${bindir}`"
 eval sbindir="`eval echo ${sbindir}`"
 eval libexecdir="`eval echo ${libexecdir}`"
@@ -342,6 +395,7 @@ darwin*)
 		;;
 esac
 
+CFLAGS="$CFLAGS -I${prefix}/include/heartbeat -I${prefix}/include/pacemaker"
 
 AC_SUBST(INIT_EXT)
 AC_DEFINE_UNQUOTED(HA_LOG_FACILITY, LOG_DAEMON, Default logging facility)
@@ -1111,8 +1165,239 @@ fi
 
 AC_SUBST(CURSESLIBS)
 
-dnl ************ curses **********************
+dnl Variables needed for substitution
+DTD_DIRECTORY="${datadir}/pacemaker"
+AC_DEFINE_UNQUOTED(DTD_DIRECTORY,"$DTD_DIRECTORY", Location for the Pacemaker Relax-NG Schema)
+AC_SUBST(DTD_DIRECTORY)
 
+AC_CHECK_HEADERS(hb_config.h)
+if test "$ac_cv_header_hb_config_h" != "yes"; then
+   AC_MSG_FAILURE(The heartbeat-common development headers were not found)
+fi
+
+HA_HBCONF_DIR=`extract_heartbeat_define hb_config.h HA_HBCONF_DIR`
+AC_SUBST(HA_HBCONF_DIR)
+
+HB_RA_DIR=`extract_heartbeat_define hb_config.h HB_RA_DIR`
+AC_SUBST(HB_RA_DIR)
+
+HA_LIBDIR=`extract_heartbeat_define hb_config.h HA_LIBDIR`
+AC_SUBST(HA_LIBDIR)
+
+hb_libdir=`extract_heartbeat_define hb_config.h HA_LIBHBDIR`
+AC_SUBST(hb_libdir)
+
+HA_VARRUNDIR=`extract_heartbeat_define hb_config.h HA_VARRUNDIR`
+AC_DEFINE_UNQUOTED(HA_VARRUNDIR,"$HA_VARRUNDIR", Location for sockets)
+AC_SUBST(HA_VARRUNDIR)
+
+HA_VARLIBDIR=`extract_heartbeat_define hb_config.h HA_VARLIBDIR`
+AC_SUBST(HA_VARLIBDIR)
+
+OCF_ROOT_DIR=`extract_heartbeat_define hb_config.h OCF_ROOT_DIR`
+AC_DEFINE_UNQUOTED(OCF_ROOT_DIR,"$OCF_ROOT_DIR", OCF root directory - specified by the OCF standard)
+AC_SUBST(OCF_ROOT_DIR)
+
+OCF_RA_DIR=`extract_heartbeat_define hb_config.h OCF_RA_DIR`
+AC_DEFINE_UNQUOTED(OCF_RA_DIR,"$OCF_RA_DIR", Location for OCF RAs)
+AC_SUBST(OCF_RA_DIR)
+
+HA_APIGROUP=`extract_heartbeat_define hb_config.h HA_APIGROUP`
+AC_SUBST(HA_APIGROUP)
+
+HA_CCMUSER=`extract_heartbeat_define hb_config.h HA_CCMUSER`
+AC_SUBST(HA_CCMUSER)
+
+HA_DATADIR="${datadir}"
+AC_SUBST(HA_DATADIR)
+AC_DEFINE_UNQUOTED(HA_DATADIR,"$HA_DATADIR", data (arch-independent) directory)
+
+HA_NOARCHDATAHBDIR="${datadir}/heartbeat"
+AC_DEFINE_UNQUOTED(HA_NOARCHDATAHBDIR,"$HA_NOARCHDATAHBDIR", Heartbeat noarch data directory)
+AC_SUBST(HA_NOARCHDATAHBDIR)
+
+dnl
+dnl    Cluster infrastructure - Heartbeat
+dnl
+
+AC_CHECK_LIB(plumb, G_main_add_IPC_Channel)
+
+dnl Compatability checks
+AC_CHECK_FUNCS(msgfromIPC_timeout)
+
+HAVE_ASYNC_FAIL=0
+if check_for_type_member "struct lrm_ops" "fail_rsc" "#include <lrm/lrm_api.h>"; then
+   HAVE_ASYNC_FAIL=1
+fi
+AC_DEFINE_UNQUOTED(HAVE_LRM_ASYNC_FAIL, $HAVE_ASYNC_FAIL, LRM Supports asynchronous resource failures)
+
+
+dnl
+dnl    Cluster stack - Heartbeat
+dnl
+
+case $SUPPORT_HEARTBEAT in
+     1|yes|true) 
+        AC_CHECK_LIB(hbclient, ll_cluster_new, 
+   		[SUPPORT_HEARTBEAT=1], [AC_MSG_FAILURE(Unable to support Heartbeat: client libraries not found)]);;
+     try)
+        AC_CHECK_LIB(hbclient, ll_cluster_new, 
+   		[SUPPORT_HEARTBEAT=1], [SUPPORT_HEARTBEAT=0]);;
+     *) SUPPORT_HEARTBEAT=0;;
+esac
+
+AM_CONDITIONAL(BUILD_HEARTBEAT_SUPPORT, test $SUPPORT_HEARTBEAT = 1)
+AC_DEFINE_UNQUOTED(SUPPORT_HEARTBEAT, $SUPPORT_HEARTBEAT, Support the Heartbeat messaging and membership layer)
+
+
+dnl
+dnl    Cluster stack - OpenAIS
+dnl
+
+AISLIB=""
+
+dnl Normalize the values
+case $SUPPORT_AIS in
+     1|yes|true) missingisfatal=1; SUPPORT_AIS=yes;;
+     try)        missingisfatal=0; SUPPORT_AIS=try;;
+     *) SUPPORT_AIS=no;;
+esac
+
+AC_MSG_CHECKING(for native AIS)
+AISMSGLIB=""
+AIS_VERSION=""
+
+if test $SUPPORT_AIS = no; then
+   AC_MSG_RESULT(no... not requested.)
+   SUPPORT_AIS=0
+
+else
+   AC_MSG_RESULT($SUPPORT_AIS '$AISPREFIX')
+   SUPPORT_AIS=1
+
+   dnl headers...
+   AC_CHECK_HEADERS(openais/saAis.h)
+   if test "$ac_cv_header_openais_saAis_h" != "yes"; then
+       aisreason="Headers not found: $ac_cv_header_openais_saAis_h"
+       SUPPORT_AIS=0
+   fi  
+fi
+
+dnl continue?
+if test $SUPPORT_AIS = 1; then
+   dnl Find it in lib, lib64, or wherever it wants to live...
+   AC_MSG_CHECKING(location of OpenAIS libraries)
+   alib=`ls ${AISPREFIX}/*/openais/libSaMsg.so | head -n 1`
+   AISLIB=`dirname $alib`
+   AC_MSG_RESULT($AISLIB)
+   if test "x$AISLIB" = "x"; then
+     AC_MSG_WARN(Use --with-ais-prefix to specify the prefix OpenAIS was installed with)
+     aisreason="library directory not found"
+     SUPPORT_AIS=0
+
+   elif test ! -d "$AISLIB"; then
+     AC_MSG_WARN(Use --with-ais-prefix to specify the prefix OpenAIS was installed with)
+     aisreason="specified library directory does not exist"
+     SUPPORT_AIS=0
+   fi
+fi
+
+dnl continue?
+if test $SUPPORT_AIS = 1; then
+   AC_MSG_CHECKING(location of OpenAIS plugins)
+   if test -z "$LCRSODIR"; then
+      LCRSODIR="$libexecdir/lcrso"
+      alib=`ls ${AISPREFIX}/*/lcrso/objdb.lcrso | head -n 1`
+      LCRSODIR=`dirname $alib`
+   fi
+   AC_MSG_RESULT($LCRSODIR)
+
+   if test "x$LCRSODIR" = "x"; then
+     AC_MSG_RESULT(Invalid.  Please specify the correct location with --with-lcrso-dir)
+     aisreason="plugin directory not found"
+     SUPPORT_AIS=0
+
+   elif test ! -d "$LCRSODIR"; then
+     AC_MSG_RESULT(Invalid.  Please specify the correct location with --with-lcrso-dir)
+     aisreason="specified plugin directory does not exist"
+     SUPPORT_AIS=0
+   fi
+fi
+
+dnl continue?
+if test $SUPPORT_AIS = 1; then
+     saveLIBS="$LIBS"
+     LIBS="$LIBS -L${AISLIB} -R${AISLIB}"
+
+     dnl libs...
+     AIS_VERSION="none"
+     AC_CHECK_LIB(aisutil, saSendReceiveReply, [AIS_VERSION=trunk])
+     AC_CHECK_LIB(SaMsg, saSendReceiveReply, [AIS_VERSION=whitetank])
+
+     AC_MSG_CHECKING(for OpenAIS branch)
+     AC_MSG_RESULT($AIS_VERSION)
+
+     case $AIS_VERSION in
+     	  trunk)
+	  	AC_DEFINE_UNQUOTED(AIS_TRUNK, 1, "AIS target is the trunk series")
+		AISMSGLIB=-laisutil
+		;;
+	  whitetank) 
+	     	AC_DEFINE_UNQUOTED(AIS_WHITETANK, 1, "AIS target is the whitetank series")
+	  	AISMSGLIB=-lSaMsg
+		;;
+	  none)
+	        aisreason="requred libraries not found)"
+     	  	SUPPORT_AIS=0
+		;;
+	  *) AC_MSG_FAILURE(Unknown OpenAIS branch: $AIS_VERSION);;
+     esac
+
+     LIBS="$saveLIBS"
+fi
+
+if test $SUPPORT_AIS = 0; then
+  if test "x$aisreason" != x; then
+     if test $missingisfatal = 0; then
+	AC_MSG_WARN(Unable to support OpenAIS: $aisreason) 
+	SUPPORT_AIS=0
+     else
+	AC_MSG_FAILURE(Unable to support OpenAIS: $aisreason) 
+     fi
+  fi
+fi
+
+AC_DEFINE_UNQUOTED(SUPPORT_AIS, $SUPPORT_AIS, Support the OpenAIS messaging and membership layer)
+AM_CONDITIONAL(BUILD_AIS_SUPPORT, test $SUPPORT_AIS = 1)
+
+dnl
+dnl    Cluster stack - Sanity
+dnl
+
+AC_MSG_CHECKING(for supported stacks)
+if test $SUPPORT_AIS = 0 -a $SUPPORT_HEARTBEAT = 0; then
+   AC_MSG_FAILURE(You must choose at least one cluster stack to support)
+fi
+
+CLUSTERLIBS=""
+if test $SUPPORT_HEARTBEAT = 1; then
+   AC_MSG_RESULT(heartbeat)
+   CLUSTERLIBS="$CLUSTERLIBS -lhbclient -lccmclient"
+fi
+
+if test $SUPPORT_AIS = 1; then
+   AC_MSG_RESULT(openais)
+   CLUSTERLIBS="$CLUSTERLIBS ${AISMSGLIB}"
+   LIBS="$LIBS -L${AISLIB} -R${AISLIB}"
+else
+   AISPREFIX=""
+   LCRSODIR=""
+fi
+
+AC_SUBST(CLUSTERLIBS)
+AC_SUBST(AISPREFIX)
+AC_SUBST(LCRSODIR)
+AC_SUBST(AISLIBS)
 
 dnl
 dnl    SNMP checks
@@ -1221,11 +1506,6 @@ AC_SUBST(SNMPLIB)
 AC_SUBST(SNMPAGENTLIB)
 AM_CONDITIONAL(USE_APC_SNMP, test "$ENABLE_SNMP" = "yes")
 AM_CONDITIONAL(SNMP_SUBAGENT_BUILD, test "x${enable_snmp_subagent}" = "xyes")
-
-AC_CHECK_LIB(hbclient, ll_cluster_new, 
-   		[SUPPORT_HEARTBEAT=1], [SUPPORT_HEARTBEAT=0])
-CLUSTERLIBS="$CLUSTERLIBS -lhbclient -lccmclient -lstonithd"
-
 
 if test "$GCC" = yes; then
 
@@ -1788,6 +2068,7 @@ AC_SUBST(JAVA_HOME)
 AC_SUBST(TSA_DIR)
 AM_CONDITIONAL(TSA_PLUGIN_BUILD, test "x${enable_tsa_plugin}" != "xno")
 
+
 dnl *** "echo" adjustments (begin) ***
 dnl Some run-time scripts require options to "echo".
 dnl This configure is already determining and using "ac_n" and "ac_c"
@@ -1813,41 +2094,6 @@ then
   ECHO_N="-n"
   ECHO_E="-e"
 fi
-
-AC_CHECK_LIB(plumb, G_main_add_IPC_Channel)	dnl -lplubm
-AC_CHECK_HEADERS(hb_config.h)
-
-CFLAGS="$CFLAGS -I${prefix}/include/heartbeat -I${prefix}/include/pacemaker"
-
-HA_VARRUNDIR=`extract_heartbeat_define hb_config.h HA_VARRUNDIR`
-AC_SUBST(HA_VARRUNDIR)
-
-HA_VARLIBDIR=`extract_heartbeat_define hb_config.h HA_VARLIBDIR`
-AC_SUBST(HA_VARLIBDIR)
-
-HB_RA_DIR=`extract_heartbeat_define hb_config.h HB_RA_DIR`
-AC_SUBST(HB_RA_DIR)
-
-HA_LIBDIR=`extract_heartbeat_define hb_config.h HA_LIBDIR`
-AC_SUBST(HA_LIBDIR)
-
-OCF_ROOT_DIR=`extract_heartbeat_define hb_config.h OCF_ROOT_DIR`
-AC_SUBST(OCF_ROOT_DIR)
-
-OCF_RA_DIR=`extract_heartbeat_define hb_config.h OCF_RA_DIR`
-AC_SUBST(OCF_RA_DIR)
-
-hb_libdir="${libdir}/${HB_PKG}"
-AC_SUBST(hb_libdir)
-
-HA_DATADIR="${datadir}"
-AC_SUBST(HA_DATADIR)
-AC_DEFINE_UNQUOTED(HA_DATADIR,"$HA_DATADIR", data (arch-independent) directory)
-
-HA_NOARCHDATAHBDIR="$HA_DATADIR/${HB_PKG}"
-AC_SUBST(HA_NOARCHDATAHBDIR)
-AC_DEFINE_UNQUOTED(HA_NOARCHDATAHBDIR,"$HA_NOARCHDATAHBDIR", $HB_PKG noarch data directory)
-
 
 AC_SUBST(ECHO_N)
 AC_SUBST(ECHO_C)
@@ -1915,7 +2161,7 @@ fi
 AC_MSG_RESULT([  SNMP libraries           = ${SNMPLIB}])
 
 AC_MSG_RESULT([  With Heartbeat support   = ${SUPPORT_HEARTBEAT}])
-AC_MSG_RESULT([  With AIS support         = ${SUPPORT_AIS}])
+AC_MSG_RESULT([  With AIS support         = ${SUPPORT_AIS} ${AIS_VERSION}])
 AC_MSG_RESULT([  With AIS prefix          = ${AISPREFIX}])
 
 AC_MSG_RESULT([  CC_WARNINGS              = ${CC_WARNINGS}])

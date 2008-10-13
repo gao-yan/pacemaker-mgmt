@@ -22,8 +22,8 @@
 #include <pygui_internal.h>
 
 #include <unistd.h>
+#include <string.h>
 #include <glib.h>
-
 
 #include <heartbeat.h>
 #include <clplumbing/cl_log.h>
@@ -47,6 +47,9 @@ static void on_hb_quit(gpointer);
 char* hb_config = NULL;
 
 const char* param_name[] = {
+	"quorum_server",
+	"use_logd",
+	"autojoin",
 	"apiauth",
 	"auto_failback",
 	"baud",
@@ -75,12 +78,12 @@ char*
 on_get_allnodes(char* argv[], int argc)
 {
 	const char* name = NULL;
-	char* ret = cl_strdup(MSG_OK);
+	char* ret = strdup(MSG_OK);
 	if (hb->llc_ops->init_nodewalk(hb) != HA_OK) {
 		mgmt_log(LOG_ERR, "Cannot start node walk");
 		mgmt_log(LOG_ERR, "REASON: %s", hb->llc_ops->errmsg(hb));
-		cl_free(ret);
-		return cl_strdup(MSG_FAIL);
+		free(ret);
+		return strdup(MSG_FAIL);
 	}
 	while((name = hb->llc_ops->nextnode(hb))!= NULL) {
 		ret = mgmt_msg_append(ret, name);
@@ -88,8 +91,8 @@ on_get_allnodes(char* argv[], int argc)
 	if (hb->llc_ops->end_nodewalk(hb) != HA_OK) {
 		mgmt_log(LOG_ERR, "Cannot end node walk");
 		mgmt_log(LOG_ERR, "REASON: %s", hb->llc_ops->errmsg(hb));
-		cl_free(ret);
-		return cl_strdup(MSG_FAIL);
+		free(ret);
+		return strdup(MSG_FAIL);
 	}
 	
 	return ret;
@@ -101,16 +104,17 @@ on_get_hb_config(char* argv[], int argc)
 	int i;
 	char* value = NULL;
 	if (hb_config == NULL) {
-		hb_config = cl_strdup(MSG_OK);
+		hb_config = strdup(MSG_OK);
 		for (i = 0; i < sizeof(param_name)/sizeof(param_name[0]); i++) {
 			value = hb->llc_ops->get_parameter(hb, param_name[i]);
+			hb_config = mgmt_msg_append(hb_config, param_name[i]);
 			hb_config = mgmt_msg_append(hb_config, value!=NULL?value:""); 
 			if (value != NULL) {
-				cl_free(value);
+				free(value);
 			}	
 		}	
 	}
-	return cl_strdup(hb_config);
+	return strdup(hb_config);
 }
 
 char*
@@ -120,11 +124,11 @@ on_get_nodetype(char* argv[], int argc)
 	char* ret;
 	type = hb->llc_ops->node_type(hb,argv[1]);
 	if (type != NULL) {
-		ret = cl_strdup(MSG_OK);
+		ret = strdup(MSG_OK);
 		ret = mgmt_msg_append(ret, type);
 	}
 	else {
-		ret = cl_strdup(MSG_FAIL);
+		ret = strdup(MSG_FAIL);
 	}
 	return ret;
 }
@@ -191,7 +195,7 @@ on_hb_quit(gpointer user_data)
 char* 
 on_echo(char* argv[], int argc)
 {
-	char* ret = cl_strdup(MSG_OK);
+	char* ret = strdup(MSG_OK);
 	ret = mgmt_msg_append(ret, argv[1]);
 
 	return ret;

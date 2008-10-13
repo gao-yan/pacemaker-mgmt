@@ -59,7 +59,7 @@ mclient_new (void)
 
         /* lib must be init before every thing,
 		otherwise mgmt_malloc ... will not be
-		set to cl_malloc... */
+		set to malloc... */
         mgmt_lib_initialize();
         client = (MClient *)cim_malloc(sizeof(MClient));
         if ( client == NULL ) { 

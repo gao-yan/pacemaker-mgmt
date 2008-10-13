@@ -34,7 +34,6 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
-#include <clplumbing/cl_malloc.h>
 #include <clplumbing/cl_log.h>
 #include <clplumbing/GSource.h>
 #include <clplumbing/cl_pidfile.h>
@@ -103,7 +102,7 @@ process_mgmt_msg(const char *arg)
         	final_mgmt_lib(); 
 		return NULL;
 	}
-	buf = cl_strdup(result);
+	buf = strdup(result);
 	mgmt_del_msg(result);
 	free_array((void**)cmd, len);
 
@@ -179,7 +178,7 @@ on_channel_connect (IPC_Channel* ch, gpointer user_data)
 	cl_log(LOG_INFO, "%s: client with farside_pid %u signon",
 			__FUNCTION__, ch->farside_pid);
 
-	if ( (client = cl_malloc(sizeof(eventd_client_t))) == NULL ) {
+	if ( (client = malloc(sizeof(eventd_client_t))) == NULL ) {
 		cl_log(LOG_ERR, "%s: create client failed.", __FUNCTION__);
 		return TRUE; 
 	}
@@ -209,7 +208,7 @@ on_channel_remove(gpointer user_data)
 		G_main_del_IPC_Channel(client->gsrc);
 	}
 
-	cl_free(client);
+	free(client);
 }
 
 
@@ -263,7 +262,7 @@ on_receive_cmnd(IPC_Channel *ch, gpointer user_data)
 			cl_log(LOG_ERR, "%s: send msg to client failed.", __FUNCTION__);
 		}
 		if ( buf ) {
-			cl_free(buf);
+			free(buf);
 		}
 		ha_msg_del(result);
 	}

@@ -47,9 +47,9 @@
 #endif
 #include <glib.h>
 
-#include <heartbeat.h>
+#include <hb_config.h>
+#include <netinet/in.h>
 #include <clplumbing/GSource.h>
-#include <clplumbing/cl_malloc.h>
 #include <clplumbing/cl_log.h>
 #include <clplumbing/cl_syslog.h>
 #include <clplumbing/cl_signal.h>
@@ -127,7 +127,6 @@ main(int argc, char ** argv)
 	int flag;
 	char * inherit_debuglevel;
 
-	cl_malloc_forced_for_glib();
 	while ((flag = getopt(argc, argv, OPTARGS)) != EOF) {
 		switch(flag) {
 			case 'h':		/* Help message */
@@ -357,7 +356,7 @@ init_start ()
 		
 	/* create the internal data structures */
 	clients = g_hash_table_new(g_int_hash, g_int_equal);
-	evt_map = g_hash_table_new_full(g_str_hash, g_str_equal, cl_free, NULL);
+	evt_map = g_hash_table_new_full(g_str_hash, g_str_equal, free, NULL);
 
 	/* create the mainloop */
 	mainloop = g_main_new(FALSE);
@@ -372,7 +371,7 @@ init_start ()
 	reg_event(EVT_DISCONNECTED, on_event);
 	/* init ham & gnutls lib */
 	tls_init_server();
-	mgmt_set_mem_funcs(cl_malloc, cl_realloc, cl_free);
+	mgmt_set_mem_funcs(malloc, realloc, free);
 
 	/* create server socket */
 	ssock = socket(AF_INET, SOCK_STREAM, 0);
@@ -537,9 +536,9 @@ int
 new_client(int sock, void* session)
 {
 	static int id = 1;
-	client_t* client = cl_malloc(sizeof(client_t));
+	client_t* client = malloc(sizeof(client_t));
 	if (client == NULL) {
-		mgmt_log(LOG_ERR, "cl_malloc failed for new client");
+		mgmt_log(LOG_ERR, "malloc failed for new client");
 		return -1;
 	}
 	client->id = id;
@@ -569,7 +568,7 @@ del_client(int id)
 	tls_detach(client->session);
 	g_io_channel_unref(client->ch);
 	g_hash_table_remove(clients, (gpointer)&client->id);
-	cl_free(client);
+	free(client);
 	return 0;
 }
 
@@ -670,7 +669,7 @@ on_event(const char* event)
 		node = g_list_next(node);
 	}
 	if (list_changed == 1) {
-		g_hash_table_replace(evt_map, cl_strdup(args[0]), (gpointer)id_list);
+		g_hash_table_replace(evt_map, strdup(args[0]), (gpointer)id_list);
 	}	
 	if (STRNCMP_CONST(args[0],EVT_DISCONNECTED) == 0) {
 		mgmt_log(LOG_ERR,"Connection to the CIB terminated... exiting");
@@ -694,9 +693,9 @@ dispatch_msg(const char* msg, int client_id)
 	if (strncmp(args[0], MSG_REGEVT, strlen(MSG_REGEVT)) == 0) {
 		GList* id_list = g_hash_table_lookup(evt_map, args[1]);
 		id_list = g_list_append(id_list, GINT_TO_POINTER(client_id));
-		g_hash_table_replace(evt_map, cl_strdup(args[1]), (gpointer)id_list);
+		g_hash_table_replace(evt_map, strdup(args[1]), (gpointer)id_list);
 		reg_event(args[1], on_event);
-		ret = cl_strdup(MSG_OK);
+		ret = strdup(MSG_OK);
 	}
 	else  {
 		ret = process_msg(msg);
