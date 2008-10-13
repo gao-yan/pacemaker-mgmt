@@ -60,7 +60,4 @@ libhbmgmt_la_CFLAGS = $(INCLUDES)
 libhbmgmt_la_LDFLAGS = $(GNUTLSLIBS)
 libhbmgmt_la_LIBADD = $(top_builddir)/lib/mgmt/libhbmgmttls.la 			\
 		  	-lcib -lcrmcommon -lapphb -lpe_status	\
-			$(COMMONLIBS) $(CURSESLIBS)
-if BUILD_HEARTBEAT_SUPPORT
-libhbmgmt_la_LIBADD += -lhbclient
-endif
+			$(COMMONLIBS) $(CLUSTERLIBS) $(CURSESLIBS)
