@@ -254,6 +254,13 @@ LHANodeTable_handler(
                to be dealt with here */
             case MODE_GET:
                 switch(table_info->colnum) {
+		    case COLUMN_LHANODEINDEX:
+			snmp_set_var_typed_value(var,
+				ASN_INTEGER,
+				(u_char*)&entry->id,
+				sizeof(entry->id));
+			break;
+
                     case COLUMN_LHANODENAME:
                         snmp_set_var_typed_value(var, 
 				ASN_OCTET_STR, 

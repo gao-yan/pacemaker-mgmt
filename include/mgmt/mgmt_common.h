@@ -90,6 +90,20 @@ or
 */
 #define MSG_REGEVT		"regevt"
 
+
+/*
+description:
+	return the cluster type
+format:
+	MSG_CLUSTER_TYPE
+return:
+	MSG_OK cluster_type
+or
+	MSG_FAIL
+
+*/
+#define MSG_CLUSTER_TYPE	"cluster_type"
+
 /*
 description:
 	return CIB version
@@ -101,6 +115,18 @@ or
 	MSG_FAIL
 */
 #define MSG_CIB_VERSION		"cib_version"
+
+/*
+description:
+	return the dtd of crm
+format:
+	MSG_CRM_SCHEMA VALIDATE_TYPE FILE
+return:
+	MSG_OK LINE1 LINE2 ... LINEn
+or
+	MSG_FAIL
+*/
+#define MSG_CRM_SCHEMA	"crm_schema"
 
 /*
 description:
@@ -164,10 +190,7 @@ description:
 format:
 	MSG_HB_CONFIG
 return:
-	MSG_OK apiauth auto_failback baud debug debugfile deadping deadtime
-	  hbversion hopfudge initdead keepalive logfacility logfile msgfmt
-	  nice_failback node normalpoll stonith udpport warntime watchdog
-or
+	MSG_OK name1 value1 name2 value2 ... namen valuen
 	MSG_FAIL
 */
 #define MSG_HB_CONFIG		"hb_config"
@@ -279,6 +302,18 @@ or
 
 /*
 description:
+	migrate a resource
+format:
+	MSG_MIGRATE rsc_id to_node force duration
+return:
+	MSG_OK 
+or
+	MSG_FAIL reason
+*/
+#define MSG_MIGRATE		"migrate"
+
+/*
+description:
 	set standby on a node
 format:
 	MSG_STANDBY node on|off
@@ -288,6 +323,23 @@ or
 	MSG_FAIL reason
 */
 #define MSG_STANDBY		"standby"
+
+/* new CRUD protocol */
+/*
+description:
+    accomplish the cib commands
+format:
+    MSG_CIB_XXXXXX LINE
+return:
+    MSG_OK LINE1 LINE2 ... LINEn
+or
+	MSG_FAIL
+*/
+#define MSG_CIB_CREATE		"cib_create"
+#define MSG_CIB_QUERY		"cib_query"
+#define MSG_CIB_UPDATE		"cib_update"
+#define MSG_CIB_REPLACE		"cib_replace"
+#define MSG_CIB_DELETE		"cib_delete"
 
 
 /*
@@ -459,6 +511,42 @@ or
 	MSG_FAIL
 */
 #define MSG_MOVE_RSC		"move_rsc"
+
+/*
+description:
+	set the named attribute for a given resource
+format:
+	MSG_SET_RSC_ATTR rsc_id <instance|meta> name value
+return:
+	MSG_OK
+or
+	MSG_FAIL
+*/
+#define MSG_SET_RSC_ATTR	"set_rsc_attr"
+
+/*
+description:
+	get the named attribute for a given resource
+format:
+	MSG_GET_RSC_ATTR rsc_id <instance|meta> name
+return:
+	MSG_OK value
+or
+	MSG_FAIL
+*/
+#define MSG_GET_RSC_ATTR	"get_rsc_attr"
+
+/*
+description:
+	delete the named attribute for a given resource
+format:
+	MSG_DEL_RSC_ATTR rsc_id <instance|meta> name
+return:
+	MSG_OK
+or
+	MSG_FAIL
+*/
+#define MSG_DEL_RSC_ATTR	"del_rsc_attr"
 
 /*
 description:
@@ -793,6 +881,17 @@ or
 */
 #define MSG_RSC_METADATA	"rsc_metadata"
 
+/*
+description:
+	generate cluster report and return the list of files
+format:
+	MSG_GEN_CLUSTER_REPORT ftime ttime
+return:
+	MSG_OK filename base64_str1 base64_str2 ... base64_strn
+or
+	MSG_FAIL
+*/
+#define MSG_GEN_CLUSTER_REPORT	"gen_cluster_report"
 
 /*************************EVENTS*********************************************/
 
@@ -819,7 +918,7 @@ format:
 /*************************FUNTIONS*******************************************/
 /*
 mgmt_set_mem_funcs:
-	set user own memory functions, like cl_malloc/cl_realloc/cl_free
+	set user own memory functions, like malloc/realloc/free
  	for linux-ha 2
 parameters:
 	the three memory functions

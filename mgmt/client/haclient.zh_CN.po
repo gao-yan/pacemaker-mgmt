@@ -268,15 +268,11 @@ msgstr "目标角色："
 msgid "Node Attribute:"
 msgstr "节点属性："
 
-msgid "<b>Required</b>"
-msgstr "<b>必填</b>"
+msgid "Required"
+msgstr "必填"
 
-msgid "<b>Optional</b>"
-msgstr "<b>选填</b>"
-
-msgid "<b>Description</b>"
-msgstr "<b>描述</b>"
-
+msgid "Optional"
+msgstr "选填"
 
 #: haclient.glade.h:32
 msgid "User Name:"
@@ -339,6 +335,9 @@ msgstr "节点"
 #: haclient.py.in:443
 msgid "Resources"
 msgstr "资源"
+
+msgid "Tools"
+msgstr "工具"
 
 #: haclient.py.in:448
 msgid "Constraints"
@@ -432,6 +431,15 @@ msgstr "值"
 #: haclient.py.in:915
 msgid "Description"
 msgstr "描述"
+
+msgid "Failed to parse the XML: "
+msgstr "解析 XML 失败： "
+
+msgid "Failed to parse the CIB: "
+msgstr "解析 CIB 失败: "
+
+msgid "Failed to parse the metadata of %s: %s"
+msgstr "解析 %s 的元数据失败： %s"
 
 #: haclient.py.in:1057 haclient.py.in:1487 haclient.py.in:1493
 msgid "The ID already exists"
@@ -590,7 +598,7 @@ msgid "Keep Alive:"
 msgstr "心跳间隔："
 
 #: haclient.py.in:616
-msgid "Warning Alive:"
+msgid "Warning Time:"
 msgstr "警报时间："
 
 #: haclient.py.in:617
@@ -600,6 +608,63 @@ msgstr "认定宕机时间："
 #: haclient.py.in:618
 msgid "Initial Dead Time:"
 msgstr "启动时认定宕机时间："
+
+msgid "Quorum Server:"
+msgstr "Quorum 服务器："
+
+msgid "Use Logd:"
+msgstr "使用 Logd："
+
+msgid "Auto Join:"
+msgstr "自动加入节点："
+
+msgid "API Authentication:"
+msgstr "API 认证："
+
+msgid "Auto Failback:"
+msgstr "自动回迁："
+
+msgid "Baud Rate:"
+msgstr "波特率："
+
+msgid "Debug File:"
+msgstr "调试文件："
+
+msgid "Dead Ping:"
+msgstr "认定 Ping 节点宕机时间："
+
+msgid "Heartbeat Version:"
+msgstr "Heartbeat 版本："
+
+msgid "Hop Fudge:"
+msgstr "Hop Fudge："
+
+msgid "Log Facility:"
+msgstr "日志机制："
+
+msgid "Log File:"
+msgstr "日志文件："
+
+msgid "Message Format:"
+msgstr "消息格式："
+
+msgid "Nice Failback:"
+msgstr "回迁："
+
+msgid "Node:"
+msgstr "节点："
+
+msgid "Normal Poll:"
+msgstr "Normal Poll："
+
+msgid "Stonith:"
+msgstr "Stonith："
+
+msgid "Watchdog:"
+msgstr "Watchdog："
+
+msgid "Cluster:"
+msgstr "集群："
 
 #: haclient.py.in:619
 msgid "Default Action Timeout:"
@@ -760,6 +825,60 @@ msgstr "清理迁移时所创建的限制条件"
 msgid "all migrated resources"
 msgstr "所有被迁移的资源"
 
+msgid "Cluster Report"
+msgstr "集群报告"
+
+msgid "generate a cluster report"
+msgstr "生成集群报告"
+
+msgid "The \"From\" time should before the \"To\" one"
+msgstr "\"起始\"时间应早于\"目标\"时间"
+
+msgid "Generating the cluster report may take a while,"
+msgstr "生成集群报告需要一段时间，"
+
+msgid "depending on the size of logs..."
+msgstr "取决于日志的大小..."
+
+msgid "Save as ..."
+msgstr "保存为..."
+
+msgid "Failed to generate the cluster report"
+msgstr "生成集群报告失败"
+
+msgid "Incomplete data: "
+msgstr "不完整的数据： "
+
+msgid "System error"
+msgstr "系统错误"
+
+msgid "Permission denied: "
+msgstr "权限不够： "
+
+msgid "A file with the same name already exists: "
+msgstr "同名文件已经存在： "
+
+msgid "Do you want to overwrite it?"
+msgstr "您想要覆盖该文件吗？"
+
+msgid "Replace it?"
+msgstr "替换？"
+
+msgid "Description of Cluster Report"
+msgstr "集群报告描述"
+
+msgid "I/O error: "
+msgstr "输入输出错误： "
+
+msgid "Tar error: "
+msgstr "归档错误： "
+
+msgid "System error: "
+msgstr "系统错误： "
+
+msgid "Do not delete the root directory"
+msgstr "请不要删除根目录"
+
 msgid "Resource ID:"
 msgstr "资源 ID："
 
@@ -886,14 +1005,14 @@ msgstr "您之前的操作将此属性设置为“"
 msgid "\"."
 msgstr "”。"
 
-msgid "The sub-resource will inherit this attribute from current resource."
-msgstr "子资源将从当前资源继承此属性。"
+msgid "The sub-resource will inherit this attribute from its parent."
+msgstr "子资源将从其父资源继承此属性。"
 
-msgid "Do you want to retain the \"target_role\" set for sub-resource \""
-msgstr "您想要保留对子资源“"
+msgid "Retain the \"%s\" set for sub-resource \""
+msgstr "保留对子资源的 \"%s\" 设置：“"
 
 msgid "\"?"
-msgstr "”的 “target_role” 设置？"
+msgstr "”？"
 
 msgid "Advanced"
 msgstr "高级"
@@ -924,3 +1043,18 @@ msgstr "您想应用修改吗？"
 
 msgid "The data of current view have been changed."
 msgstr "当前视图中的数据已修改。"
+
+msgid "This will reset the current object attributes and all sub-objects to the initial configurations."
+msgstr "这会重置当前对象属性以及所有子对象为初始设置。"
+
+msgid "Reset the configurations?"
+msgstr "重置设置？"
+
+msgid "This will delete the %s \"%s\""
+msgstr "这会删除%s \"%s\""
+
+msgid "Delete the selected object?"
+msgstr "删除选定的对象？"
+
+msgid "Primitive"
+msgstr "普通资源"

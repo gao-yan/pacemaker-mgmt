@@ -19,22 +19,30 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <pygui_internal.h>
-
 #include <unistd.h>
 #include <glib.h>
+#include <regex.h>
 
-#include <heartbeat.h>
-#include <clplumbing/cl_malloc.h>
+#include <hb_config.h>
 #include <clplumbing/cl_log.h>
 #include <clplumbing/cl_syslog.h>
 #include <clplumbing/lsb_exitcodes.h>
 
-#include "mgmt_internal.h"
-
 #include <crm/cib.h>
 #include <crm/msg_xml.h>
 #include <crm/pengine/status.h>
+
+#ifdef SUPPORT_AIS
+#undef SUPPORT_AIS
+#endif
+
+#ifdef SUPPORT_HEARTBEAT
+#undef SUPPORT_HEARTBEAT
+#endif
+
+#include <pygui_internal.h>
+
+#include "mgmt_internal.h"
 
 extern resource_t *group_find_child(resource_t *rsc, const char *id);
 extern crm_data_t * do_calculations(
@@ -47,7 +55,9 @@ void final_crm(void);
 
 static void on_cib_diff(const char *event, crm_data_t *msg);
 
+static char* on_get_cluster_type(char* argv[], int argc);
 static char* on_get_cib_version(char* argv[], int argc);
+static char* on_get_crm_schema(char* argv[], int argc);
 static char* on_get_crm_dtd(char* argv[], int argc);
 
 static char* on_get_crm_metadata(char* argv[], int argc);
@@ -57,6 +67,7 @@ static char* on_get_activenodes(char* argv[], int argc);
 static char* on_get_crmnodes(char* argv[], int argc);
 static char* on_get_dc(char* argv[], int argc);
 
+static char* on_migrate_rsc(char* argv[], int argc);
 static char* on_set_node_standby(char* argv[], int argc);
 static char* on_get_node_config(char* argv[], int argc);
 static char* on_get_running_rsc(char* argv[], int argc);
@@ -81,6 +92,10 @@ static char* on_update_rsc_attr(char* argv[], int argc);
 static char* on_get_rsc_running_on(char* argv[], int argc);
 static char* on_get_rsc_status(char* argv[], int argc);
 
+static char* on_set_rsc_attr(char* argv[], int argc);
+static char* on_get_rsc_attr(char* argv[], int argc);
+static char* on_del_rsc_attr(char* argv[], int argc);
+
 static char* on_get_rsc_metaattrs(char* argv[], int argc);
 static char* on_update_rsc_metaattrs(char* argv[], int argc);
 static char* on_delete_rsc_metaattr(char* argv[], int argc);
@@ -101,6 +116,16 @@ static char* on_get_constraint(char* argv[], int argc);
 static char* on_update_constraint(char* argv[], int argc);
 static char* on_delete_constraint(char* argv[], int argc);
 
+/* new CRUD protocol */
+static char* on_cib_create(char* argv[], int argc);
+static char* on_cib_query(char* argv[], int argc);
+static char* on_cib_update(char* argv[], int argc);
+static char* on_cib_replace(char* argv[], int argc);
+static char* on_cib_delete(char* argv[], int argc);
+/* end new protocol */
+
+static char* on_gen_cluster_report(char* argv[], int argc);
+
 static void get_meta_attributes_id(const char* rsc_id, char* id);
 static void get_instance_attributes_id(const char* rsc_id, char* id);
 static void get_attr_id(const char* rsc_id, const char* attr_type, const char* attr, char* id);
@@ -117,6 +142,7 @@ static resource_t* get_parent(resource_t* child);
 static int get_fix(const char* rsc_id, char* prefix, char* suffix, char* real_id);
 static const char* get_rsc_tag(resource_t* rsc);
 static int cl_msg_swap_offset(crm_data_t* msg, int offset1, int offset2);
+int regex_match(const char *regex, const char *str);
 
 pe_working_set_t* cib_cached = NULL;
 int cib_cache_enable = FALSE;
@@ -124,7 +150,7 @@ int cib_cache_enable = FALSE;
 #define GET_RESOURCE()	rsc = pe_find_resource(data_set->resources, argv[1]);	\
 	if (rsc == NULL) {						\
 		free_data_set(data_set);				\
-		return cl_strdup(MSG_FAIL"\nno such resource");		\
+		return strdup(MSG_FAIL"\nno such resource");		\
 	}
 
 /* internal functions */
@@ -153,7 +179,7 @@ delete_object(const char* type, const char* entry, const char* id, crm_data_t** 
 	mgmt_log(LOG_INFO, "(delete)xml:%s",xml);
 
 	rc = cib_conn->cmds->delete(
-			cib_conn, type, cib_object, output, cib_sync_call);
+			cib_conn, type, cib_object, cib_sync_call);
 	free_xml(cib_object);
 	return rc;
 }
@@ -169,7 +195,7 @@ get_data_set(void)
 		}
 	}
 	
-	data_set = (pe_working_set_t*)cl_malloc(sizeof(pe_working_set_t));
+	data_set = (pe_working_set_t*)malloc(sizeof(pe_working_set_t));
 	if (data_set == NULL) {
 		mgmt_log(LOG_ERR, "%s:Can't alloc memory for data set.",__FUNCTION__);
 		return NULL;
@@ -193,7 +219,7 @@ free_data_set(pe_working_set_t* data_set)
 	   the cached cib will be released in on_cib_diff() */
 	if (!cib_cache_enable) {
 		cleanup_calculations(data_set);
-		cl_free(data_set);
+		free(data_set);
 	}
 }	
 char* 
@@ -210,10 +236,10 @@ crm_failed_msg(crm_data_t* output, int rc)
 		if (output != NULL) {
 			free_xml(output);
 		}
-		return cl_strdup(MSG_OK);
+		return strdup(MSG_OK);
 	}
 	
-	ret = cl_strdup(MSG_FAIL);
+	ret = strdup(MSG_FAIL);
 	ret = mgmt_msg_append(ret, cib_error2string((enum cib_errors)rc));
 	
 	if (output == NULL) {
@@ -243,6 +269,7 @@ uname2id(const char* uname)
 	while (cur != NULL) {
 		node = (node_t*) cur->data;
 		if (strncmp(uname,node->details->uname,MAX_STRLEN) == 0) {
+			free_data_set(data_set);
 			return node->details->id;
 		}
 		cur = g_list_next(cur);
@@ -480,7 +507,9 @@ init_crm(int cache_cib)
 	ret = cib_conn->cmds->set_connection_dnotify(cib_conn
 			, on_cib_connection_destroy);
 
+	reg_msg(MSG_CLUSTER_TYPE, on_get_cluster_type);
 	reg_msg(MSG_CIB_VERSION, on_get_cib_version);
+	reg_msg(MSG_CRM_SCHEMA, on_get_crm_schema);
 	reg_msg(MSG_CRM_DTD, on_get_crm_dtd);
 	reg_msg(MSG_CRM_METADATA, on_get_crm_metadata);
 	reg_msg(MSG_CRM_CONFIG, on_get_crm_config);
@@ -491,6 +520,8 @@ init_crm(int cache_cib)
 	reg_msg(MSG_CRMNODES, on_get_crmnodes);
 	reg_msg(MSG_NODE_CONFIG, on_get_node_config);
 	reg_msg(MSG_RUNNING_RSC, on_get_running_rsc);
+
+	reg_msg(MSG_MIGRATE, on_migrate_rsc);
 	reg_msg(MSG_STANDBY, on_set_node_standby);
 	
 	reg_msg(MSG_DEL_RSC, on_del_rsc);
@@ -506,6 +537,10 @@ init_crm(int cache_cib)
 	reg_msg(MSG_RSC_STATUS, on_get_rsc_status);
 	reg_msg(MSG_RSC_TYPE, on_get_rsc_type);
 	reg_msg(MSG_UP_RSC_ATTR, on_update_rsc_attr);
+
+	reg_msg(MSG_SET_RSC_ATTR, on_set_rsc_attr);
+	reg_msg(MSG_GET_RSC_ATTR, on_get_rsc_attr);
+	reg_msg(MSG_DEL_RSC_ATTR, on_del_rsc_attr);
 		
 	reg_msg(MSG_RSC_METAATTRS, on_get_rsc_metaattrs);
 	reg_msg(MSG_UP_RSC_METAATTRS, on_update_rsc_metaattrs);
@@ -531,7 +566,14 @@ init_crm(int cache_cib)
 	reg_msg(MSG_GET_CONSTRAINT, on_get_constraint);
 	reg_msg(MSG_DEL_CONSTRAINT, on_delete_constraint);
 	reg_msg(MSG_UP_CONSTRAINT, on_update_constraint);
+
+	reg_msg(MSG_GEN_CLUSTER_REPORT, on_gen_cluster_report);
 	
+	reg_msg(MSG_CIB_CREATE, on_cib_create);
+	reg_msg(MSG_CIB_QUERY, on_cib_query);
+	reg_msg(MSG_CIB_UPDATE, on_cib_update);
+	reg_msg(MSG_CIB_REPLACE, on_cib_replace);
+	reg_msg(MSG_CIB_DELETE, on_cib_delete);
 	return 0;
 }	
 void
@@ -554,7 +596,7 @@ on_cib_diff(const char *event, crm_data_t *msg)
 	if (cib_cache_enable) {
 		if (cib_cached != NULL) {
 			cleanup_calculations(cib_cached);
-			cl_free(cib_cached);
+			free(cib_cached);
 			cib_cached = NULL;
 		}
 	}
@@ -573,6 +615,25 @@ on_cib_connection_destroy(gpointer user_data)
 
 /* cluster  functions */
 char* 
+on_get_cluster_type(char* argv[], int argc)
+{
+	char* ret = NULL;
+
+	if (is_openais_cluster()) {
+		ret = strdup(MSG_OK);
+		ret = mgmt_msg_append(ret, "openais");
+	}
+	else if (is_heartbeat_cluster()) {
+		ret = strdup(MSG_OK);
+		ret = mgmt_msg_append(ret, "heartbeat");
+	}
+	else {
+		ret = strdup(MSG_FAIL);
+	}
+	return ret;
+}
+
+char* 
 on_get_cib_version(char* argv[], int argc)
 {
 	const char* version = NULL;
@@ -582,13 +643,70 @@ on_get_cib_version(char* argv[], int argc)
 	data_set = get_data_set();
 	version = crm_element_value(data_set->input, "num_updates");
 	if (version != NULL) {
-		ret = cl_strdup(MSG_OK);
+		ret = strdup(MSG_OK);
 		ret = mgmt_msg_append(ret, version);
 	}
 	else {
-		ret = cl_strdup(MSG_FAIL);
+		ret = strdup(MSG_FAIL);
 	}	
 	free_data_set(data_set);
+	return ret;
+}
+
+static char*
+on_get_crm_schema(char* argv[], int argc)
+{
+	const char *schema_file = NULL;
+	const char *validate_type = NULL;
+	const char *file_name = NULL;
+	char buf[MAX_STRLEN];	
+	char* ret = NULL;
+	FILE *fstream = NULL;
+
+	ARGC_CHECK(3);
+	validate_type = argv[1];
+	file_name = argv[2];
+
+	if (STRNCMP_CONST(validate_type, "") == 0){
+		schema_file = HA_NOARCHDATAHBDIR"/crm.dtd";
+	}
+	else if (STRNCMP_CONST(validate_type, "pacemaker-0.6") == 0){
+		schema_file = DTD_DIRECTORY"/crm.dtd";
+	}
+	else if (STRNCMP_CONST(validate_type, "transitional-0.6") == 0){
+		schema_file = DTD_DIRECTORY"/crm-transitional.dtd";
+	}
+	else{
+		if (STRNCMP_CONST(file_name, "") == 0){
+			snprintf(buf, sizeof(buf), DTD_DIRECTORY"/%s.rng", validate_type);
+			schema_file = buf;
+		}
+		else{
+			snprintf(buf, sizeof(buf), DTD_DIRECTORY"/%s", file_name);
+			schema_file = buf;
+		}
+	}
+	if ((fstream = fopen(schema_file, "r")) == NULL){
+		mgmt_log(LOG_ERR, "error on fopen %s: %s",
+			 schema_file, strerror(errno));
+		return strdup(MSG_FAIL);
+	}
+
+	ret = strdup(MSG_OK);
+	while (!feof(fstream)){
+		memset(buf, 0, sizeof(buf));
+		if (fgets(buf, sizeof(buf), fstream) != NULL){
+			ret = mgmt_msg_append(ret, buf);
+			ret[strlen(ret)-1] = '\0';
+		}
+		else{
+			sleep(1);
+		}
+	}
+
+	if (fclose(fstream) == -1)
+		mgmt_log(LOG_WARNING, "failed to fclose stream");
+
 	return ret;
 }
 
@@ -597,7 +715,7 @@ on_get_crm_dtd(char* argv[], int argc)
 {
 	const char *dtd_file = HA_NOARCHDATAHBDIR"/crm.dtd";
 	char buf[MAX_STRLEN];	
-	char* ret = cl_strdup(MSG_OK);
+	char* ret = NULL;
 	FILE *fstream = NULL;
 
 	ARGC_CHECK(1);
@@ -605,9 +723,10 @@ on_get_crm_dtd(char* argv[], int argc)
 	if ((fstream = fopen(dtd_file, "r")) == NULL){
 		mgmt_log(LOG_ERR, "error on fopen %s: %s",
 			 dtd_file, strerror(errno));
-		return cl_strdup(MSG_FAIL);
+		return strdup(MSG_FAIL);
 	}
 
+	ret = strdup(MSG_OK);
 	while (!feof(fstream)){
 		memset(buf, 0, sizeof(buf));
 		if (fgets(buf, sizeof(buf), fstream) != NULL){
@@ -630,18 +749,24 @@ on_get_crm_metadata(char* argv[], int argc)
 {
 	char cmd[MAX_STRLEN];
 	char buf[MAX_STRLEN];	
-	char* ret = cl_strdup(MSG_OK);
+	char* ret = NULL;
 	FILE *fstream = NULL;
 
 	ARGC_CHECK(2);
+
+	if (STRNCMP_CONST(argv[1], "pengine") != 0 &&
+			STRNCMP_CONST(argv[1], "crmd") != 0) {
+		return strdup(MSG_FAIL);
+	}
 
 	snprintf(cmd, sizeof(cmd), BIN_DIR"/%s metadata", argv[1]);
 	if ((fstream = popen(cmd, "r")) == NULL){
 		mgmt_log(LOG_ERR, "error on popen %s: %s",
 			 cmd, strerror(errno));
-		return cl_strdup(MSG_FAIL);
+		return strdup(MSG_FAIL);
 	}
 
+	ret = strdup(MSG_OK);
 	while (!feof(fstream)){
 		memset(buf, 0, sizeof(buf));
 		if (fgets(buf, sizeof(buf), fstream) != NULL){
@@ -663,27 +788,29 @@ on_get_crm_config(char* argv[], int argc)
 {
 	const char* value = NULL;
 	pe_working_set_t* data_set;
-	char* ret = cl_strdup(MSG_OK);
+	char* ret = NULL;
 	data_set = get_data_set();
 
 	ARGC_CHECK(2);
 
 	if (data_set == NULL){
-		return cl_strdup(MSG_FAIL);
+		return strdup(MSG_FAIL);
 	}
 
 	if (STRNCMP_CONST(argv[1], "have_quorum") == 0){
-		ret = mgmt_msg_append(ret, data_set->have_quorum?"true":"false");
+		ret = strdup(MSG_OK);
+		ret = mgmt_msg_append(ret, is_set(data_set->flags, pe_flag_have_quorum)?"true":"false");
 		free_data_set(data_set);
 		return ret;
 	}
 	
  	if ( data_set->config_hash == NULL){
 		free_data_set(data_set);
-		return cl_strdup(MSG_FAIL);
+		return strdup(MSG_FAIL);
 	}
 	value = g_hash_table_lookup(data_set->config_hash, argv[1]);
 
+	ret = strdup(MSG_OK);
 	if (value == NULL){
 		ret = mgmt_msg_append(ret, "");
 	}
@@ -704,11 +831,10 @@ on_update_crm_config(char* argv[], int argc)
 	crm_data_t* attrs;
 	const char* id = NULL;
 	pe_working_set_t* data_set;
-	const char* path[] = {"configuration","crm_config","cluster_property_set", "attributes"};
 	
 	ARGC_CHECK(3);
 	data_set = get_data_set();
-	attrs = find_xml_node_nested(data_set->input, path, 4);
+	attrs = get_xpath_object("//configuration/crm_config/cluster_property_set/attributes", data_set->input, LOG_DEBUG);
 
 	if (attrs != NULL) {
 		cur = find_xml_node_list(attrs, "nvpair");
@@ -726,7 +852,7 @@ on_update_crm_config(char* argv[], int argc)
 	else {
 		crm_data_t* fragment = NULL;
 		crm_data_t* cib_object = NULL;
-		crm_data_t* output;
+		crm_data_t* output = NULL;
 		char xml[MAX_STRLEN];
 		
 		snprintf(xml, MAX_STRLEN, 
@@ -737,7 +863,8 @@ on_update_crm_config(char* argv[], int argc)
 
 		cib_object = string2xml(xml);
 		if(cib_object == NULL) {
-			return cl_strdup(MSG_FAIL);
+			free_data_set(data_set);
+			return strdup(MSG_FAIL);
 		}
 
 		fragment = create_cib_fragment(cib_object, "crm_config");
@@ -745,7 +872,7 @@ on_update_crm_config(char* argv[], int argc)
 		mgmt_log(LOG_INFO, "(update)xml:%s",xml);
 
 		rc = cib_conn->cmds->update(
-				cib_conn, "crm_config", fragment, &output, cib_sync_call);
+				cib_conn, "crm_config", fragment, cib_sync_call);
 
 		free_xml(fragment);
 		free_xml(cib_object);
@@ -760,10 +887,10 @@ on_update_crm_config(char* argv[], int argc)
 	
 	free_data_set(data_set);
 	if (rc == cib_ok) {
-		return cl_strdup(MSG_OK);
+		return strdup(MSG_OK);
 	}
 	else {
-		return cl_strdup(MSG_FAIL);
+		return strdup(MSG_FAIL);
 	}
 }
 
@@ -778,7 +905,7 @@ on_get_activenodes(char* argv[], int argc)
 	
 	data_set = get_data_set();
 	cur = data_set->nodes;
-	ret = cl_strdup(MSG_OK);
+	ret = strdup(MSG_OK);
 	while (cur != NULL) {
 		node = (node_t*) cur->data;
 		if (node->details->online) {
@@ -800,7 +927,7 @@ on_get_crmnodes(char* argv[], int argc)
 	
 	data_set = get_data_set();
 	cur = data_set->nodes;
-	ret = cl_strdup(MSG_OK);
+	ret = strdup(MSG_OK);
 	while (cur != NULL) {
 		node = (node_t*) cur->data;
 		ret = mgmt_msg_append(ret, node->details->uname);
@@ -817,13 +944,13 @@ on_get_dc(char* argv[], int argc)
 	
 	data_set = get_data_set();
 	if (data_set->dc_node != NULL) {
-		char* ret = cl_strdup(MSG_OK);
+		char* ret = strdup(MSG_OK);
 		ret = mgmt_msg_append(ret, data_set->dc_node->details->uname);
 		free_data_set(data_set);
 		return ret;
 	}
 	free_data_set(data_set);
-	return cl_strdup(MSG_FAIL);
+	return strdup(MSG_FAIL);
 }
 
 
@@ -840,7 +967,7 @@ on_get_node_config(char* argv[], int argc)
 	while (cur != NULL) {
 		node = (node_t*) cur->data;
 		if (strncmp(argv[1],node->details->uname,MAX_STRLEN) == 0) {
-			char* ret = cl_strdup(MSG_OK);
+			char* ret = strdup(MSG_OK);
 			ret = mgmt_msg_append(ret, node->details->uname);
 			ret = mgmt_msg_append(ret, node->details->online?"True":"False");
 			ret = mgmt_msg_append(ret, node->details->standby?"True":"False");
@@ -855,7 +982,7 @@ on_get_node_config(char* argv[], int argc)
 		cur = g_list_next(cur);
 	}
 	free_data_set(data_set);
-	return cl_strdup(MSG_FAIL);
+	return strdup(MSG_FAIL);
 }
 
 char*
@@ -873,7 +1000,7 @@ on_get_running_rsc(char* argv[], int argc)
 		if (node->details->online) {
 			if (strncmp(argv[1],node->details->uname,MAX_STRLEN) == 0) {
 				GList* cur_rsc;
-				char* ret = cl_strdup(MSG_OK);
+				char* ret = strdup(MSG_OK);
 				cur_rsc = node->details->running_rsc;
 				while(cur_rsc != NULL) {
 					resource_t* rsc = (resource_t*)cur_rsc->data;
@@ -887,8 +1014,114 @@ on_get_running_rsc(char* argv[], int argc)
 		cur = g_list_next(cur);
 	}
 	free_data_set(data_set);
-	return cl_strdup(MSG_FAIL);
+	return strdup(MSG_FAIL);
 }
+
+char*
+on_migrate_rsc(char* argv[], int argc)
+{
+	const char* id = NULL;
+	char cmd[MAX_STRLEN];
+	char buf[MAX_STRLEN];
+	pe_working_set_t* data_set;
+	resource_t* rsc;
+	char* ret = NULL;
+	const char* duration_regex = "^[A-Za-z0-9:-]+$";
+	FILE *fstream = NULL;
+
+	ARGC_CHECK(5)
+	data_set = get_data_set();
+	GET_RESOURCE()
+	free_data_set(data_set);
+
+	snprintf(cmd, sizeof(cmd), "crm_resource -M -r %s", argv[1]);
+
+	if (STRNCMP_CONST(argv[2], "") != 0){
+		id = uname2id(argv[2]);
+		if (id == NULL) {
+			return strdup(MSG_FAIL"\nNo such node");
+		}
+		else{
+			strncat(cmd, " -H ", sizeof(cmd)-strlen(cmd)-1);
+			strncat(cmd, argv[2], sizeof(cmd)-strlen(cmd)-1);
+		}
+	}
+
+	if (STRNCMP_CONST(argv[3], "True") == 0){
+		strncat(cmd, " -f", sizeof(cmd)-strlen(cmd)-1);
+	}
+
+	if (STRNCMP_CONST(argv[4], "") != 0){
+		if (regex_match(duration_regex, argv[4])) {
+			strncat(cmd, " -u \"", sizeof(cmd)-strlen(cmd)-1);
+			strncat(cmd, argv[4], sizeof(cmd)-strlen(cmd)-1);
+			strncat(cmd, "\"", sizeof(cmd)-strlen(cmd)-1);
+		}
+		else {
+			mgmt_log(LOG_ERR, "invalid duration specified: \"%s\"", argv[1]);
+			return strdup(MSG_FAIL"\nInvalid duration.\nPlease refer to "
+					"http://en.wikipedia.org/wiki/ISO_8601#Duration for examples of valid durations");
+		}
+	}
+
+	strncat(cmd, " 2>&1", sizeof(cmd)-strlen(cmd)-1);
+
+	if ((fstream = popen(cmd, "r")) == NULL){
+		mgmt_log(LOG_ERR, "error on popen %s: %s",
+			 cmd, strerror(errno));
+		return strdup(MSG_FAIL"\nMigrate failed");
+	}
+
+	ret = strdup(MSG_FAIL);
+	while (!feof(fstream)){
+		memset(buf, 0, sizeof(buf));
+		if (fgets(buf, sizeof(buf), fstream) != NULL){
+			ret = mgmt_msg_append(ret, buf);
+			ret[strlen(ret)-1] = '\0';
+		}
+		else{
+			sleep(1);
+		}
+	}
+
+	if (pclose(fstream) == -1)
+		mgmt_log(LOG_WARNING, "failed to close pipe");
+
+	return ret;
+
+}
+
+char*
+on_set_node_standby(char* argv[], int argc)
+{
+	int rc;
+	const char* id = NULL;
+	const char* attr_value = NULL;
+
+	ARGC_CHECK(3);
+	id = uname2id(argv[1]);
+	if (id == NULL) {
+		return strdup(MSG_FAIL"\nNo such node");
+	}
+
+	if (STRNCMP_CONST(argv[2], "on") == 0 || STRNCMP_CONST(argv[2], "true") == 0){
+		attr_value = "true";
+	}
+	else if (STRNCMP_CONST(argv[2], "off") == 0 || STRNCMP_CONST(argv[2], "false") == 0){
+		attr_value = "false";
+	}
+	else{
+		return strdup(MSG_FAIL"\nInvalid attribute value");
+	}
+
+	rc = set_standby(cib_conn, id, NULL, attr_value);
+	if (rc < 0) {
+		return crm_failed_msg(NULL, rc);
+	}
+	return strdup(MSG_OK);
+}
+
+/*
 char*
 on_set_node_standby(char* argv[], int argc)
 {
@@ -896,13 +1129,13 @@ on_set_node_standby(char* argv[], int argc)
 	const char* id = NULL;
 	crm_data_t* fragment = NULL;
 	crm_data_t* cib_object = NULL;
-	crm_data_t* output;
+	crm_data_t* output = NULL;
 	char xml[MAX_STRLEN];
 
 	ARGC_CHECK(3);
 	id = uname2id(argv[1]);
 	if (id == NULL) {
-		return cl_strdup(MSG_FAIL"\nno such node");
+		return strdup(MSG_FAIL"\nno such node");
 	}
 	
 	snprintf(xml, MAX_STRLEN, 
@@ -913,7 +1146,7 @@ on_set_node_standby(char* argv[], int argc)
 
 	cib_object = string2xml(xml);
 	if(cib_object == NULL) {
-		return cl_strdup(MSG_FAIL);
+		return strdup(MSG_FAIL);
 	}
 
 	fragment = create_cib_fragment(cib_object, "nodes");
@@ -921,7 +1154,7 @@ on_set_node_standby(char* argv[], int argc)
 	mgmt_log(LOG_INFO, "(update)xml:%s",xml);
 
 	rc = cib_conn->cmds->update(
-			cib_conn, "nodes", fragment, &output, cib_sync_call);
+			cib_conn, "nodes", fragment, cib_sync_call);
 
 	free_xml(fragment);
 	free_xml(cib_object);
@@ -929,9 +1162,10 @@ on_set_node_standby(char* argv[], int argc)
 		return crm_failed_msg(output, rc);
 	}
 	free_xml(output);
-	return cl_strdup(MSG_OK);
+	return strdup(MSG_OK);
 
 }
+*/
 /* resource functions */
 /* add/delete resource */
 char*
@@ -940,7 +1174,7 @@ on_del_rsc(char* argv[], int argc)
 	int rc;
 	resource_t* rsc;
 	crm_data_t* cib_object = NULL;
-	crm_data_t* output;
+	crm_data_t* output = NULL;
 	char xml[MAX_STRLEN];
 	pe_working_set_t* data_set;
 	
@@ -952,19 +1186,19 @@ on_del_rsc(char* argv[], int argc)
 
 	cib_object = string2xml(xml);
 	if(cib_object == NULL) {
-		return cl_strdup(MSG_FAIL);
+		return strdup(MSG_FAIL);
 	}
 
 	mgmt_log(LOG_INFO, "(delete resources)xml:%s",xml);
 	rc = cib_conn->cmds->delete(
-			cib_conn, "resources", cib_object, &output, cib_sync_call);
+			cib_conn, "resources", cib_object, cib_sync_call);
 	
 	free_xml(cib_object);
 	if (rc < 0) {
 		return crm_failed_msg(output, rc);
 	}
 	free_xml(output);
-	return cl_strdup(MSG_OK);
+	return strdup(MSG_OK);
 }
 static int
 delete_lrm_rsc(IPC_Channel *crmd_channel, const char *host_uname, const char *rsc_id)
@@ -1061,7 +1295,7 @@ on_cleanup_rsc(char* argv[], int argc)
 	crm_free(now_s);
 
 	
-	return cl_strdup(MSG_OK);
+	return strdup(MSG_OK);
 }
 
 /*
@@ -1096,7 +1330,7 @@ on_add_rsc(char* argv[], int argc)
 	int clone, master, has_param;
 		
 	if (argc < 13) {
-		return cl_strdup(MSG_FAIL);
+		return strdup(MSG_FAIL);
 	}
 	xml[0]=0;
 	in_group = (strlen(argv[5]) != 0);
@@ -1203,18 +1437,18 @@ on_add_rsc(char* argv[], int argc)
 	
 	cib_object = string2xml(xml);
 	if(cib_object == NULL) {
-		return cl_strdup(MSG_FAIL);
+		return strdup(MSG_FAIL);
 	}
 	mgmt_log(LOG_INFO, "on_add_rsc:%s",xml);
 	fragment = create_cib_fragment(cib_object, "resources");
 
 	if (in_group || clone || master) {
 		rc = cib_conn->cmds->update(
-			cib_conn, "resources", fragment, &output, cib_sync_call);
+			cib_conn, "resources", fragment, cib_sync_call);
 	}
 	else {
 		rc = cib_conn->cmds->create(
-			cib_conn, "resources", fragment, &output, cib_sync_call);
+			cib_conn, "resources", fragment, cib_sync_call);
 	}
 	
 	free_xml(fragment);
@@ -1223,13 +1457,15 @@ on_add_rsc(char* argv[], int argc)
 		return crm_failed_msg(output, rc);
 	}
 	free_xml(output);
-	return cl_strdup(MSG_OK);
+	return strdup(MSG_OK);
 
 }
 
 int
 cl_msg_swap_offset(crm_data_t* msg, int offset1, int offset2)
 {
+#if 0
+    /* this code doesn't work when crm_data_t is an alias for xmlNode */
 	char* name;
 	int nlen;
 	void* value;
@@ -1255,6 +1491,9 @@ cl_msg_swap_offset(crm_data_t* msg, int offset1, int offset2)
 	msg->types[offset2] = type;
 	
 	return HA_OK;
+#else
+	return HA_FAIL;;
+#endif
 }
 
 char*
@@ -1274,7 +1513,7 @@ on_move_rsc(char* argv[], int argc)
 	parent = get_parent(rsc);
 	if (parent == NULL || parent->variant != pe_group) {
 		free_data_set(data_set);
-		return cl_strdup(MSG_FAIL);
+		return strdup(MSG_FAIL);
 	}
 	xml_child_iter(
 		parent->xml, child,
@@ -1296,20 +1535,20 @@ on_move_rsc(char* argv[], int argc)
 	if (STRNCMP_CONST(argv[2],"up")==0) {
 		if (pos-1<first_child) {
 			free_data_set(data_set);
-			return cl_strdup(MSG_FAIL);
+			return strdup(MSG_FAIL);
 		}
 		cl_msg_swap_offset(parent->xml, pos-1, pos);
 	}
 	else if (STRNCMP_CONST(argv[2],"down")==0) {
 		if (pos+1>last_child) {
 			free_data_set(data_set);
-			return cl_strdup(MSG_FAIL);
+			return strdup(MSG_FAIL);
 		}
 		cl_msg_swap_offset(parent->xml, pos, pos+1);
 	}
 	else {
 		free_data_set(data_set);
-		return cl_strdup(MSG_FAIL);
+		return strdup(MSG_FAIL);
 	}
 	mgmt_log(LOG_INFO, "on_move_rsc:%s", dump_xml_formatted(parent->xml)); /* Memory leak! */
 	
@@ -1324,7 +1563,7 @@ on_move_rsc(char* argv[], int argc)
 	}
 	free_xml(output);
 	
-	return cl_strdup(MSG_OK);
+	return strdup(MSG_OK);
 }
 
 char*
@@ -1333,7 +1572,7 @@ on_add_grp(char* argv[], int argc)
 	int rc, i;
 	crm_data_t* fragment = NULL;
 	crm_data_t* cib_object = NULL;
-	crm_data_t* output;
+	crm_data_t* output = NULL;
 	char xml[MAX_STRLEN];
 	char buf[MAX_STRLEN];
 	
@@ -1351,11 +1590,11 @@ on_add_grp(char* argv[], int argc)
 	strncat(xml,"</group>", sizeof(xml)-strlen(xml)-1);
 	cib_object = string2xml(xml);
 	if(cib_object == NULL) {
-		return cl_strdup(MSG_FAIL);
+		return strdup(MSG_FAIL);
 	}
 	mgmt_log(LOG_INFO, "on_add_grp:%s",xml);
 	fragment = create_cib_fragment(cib_object, "resources");
-	rc = cib_conn->cmds->create(cib_conn, "resources", fragment, &output, cib_sync_call);
+	rc = cib_conn->cmds->create(cib_conn, "resources", fragment, cib_sync_call);
 	
 	free_xml(fragment);
 	free_xml(cib_object);
@@ -1363,7 +1602,7 @@ on_add_grp(char* argv[], int argc)
 		return crm_failed_msg(output, rc);
 	}
 	free_xml(output);
-	return cl_strdup(MSG_OK);
+	return strdup(MSG_OK);
 }
 /* get all resources*/
 char*
@@ -1374,7 +1613,7 @@ on_get_all_rsc(char* argv[], int argc)
 	pe_working_set_t* data_set;
 	
 	data_set = get_data_set();
-	ret = cl_strdup(MSG_OK);
+	ret = strdup(MSG_OK);
 	cur = data_set->resources;
 	while (cur != NULL) {
 		resource_t* rsc = (resource_t*)cur->data;
@@ -1399,7 +1638,7 @@ on_get_rsc_attrs(char* argv[], int argc)
 	data_set = get_data_set();
 	GET_RESOURCE()
 
-	ret = cl_strdup(MSG_OK);
+	ret = strdup(MSG_OK);
 	attrs = rsc->xml;
 	ret = mgmt_msg_append(ret, crm_element_value(attrs, "id"));
 	ret = mgmt_msg_append(ret, crm_element_value(attrs, "description"));
@@ -1454,7 +1693,7 @@ on_get_rsc_running_on(char* argv[], int argc)
 	data_set = get_data_set();
 	GET_RESOURCE()
 
-	ret = cl_strdup(MSG_OK);
+	ret = strdup(MSG_OK);
 	cur = rsc->running_on;
 	while (cur != NULL) {
 		node_t* node = (node_t*)cur->data;
@@ -1473,7 +1712,7 @@ on_get_rsc_status(char* argv[], int argc)
 	
 	data_set = get_data_set();
 	GET_RESOURCE()
-	ret = cl_strdup(MSG_OK);
+	ret = strdup(MSG_OK);
 	switch (rsc->variant) {
 		case pe_unknown:
 			ret = mgmt_msg_append(ret, "unknown");
@@ -1529,7 +1768,7 @@ on_get_rsc_type(char* argv[], int argc)
 	data_set = get_data_set();
 	GET_RESOURCE()
 
-	ret = cl_strdup(MSG_OK);
+	ret = strdup(MSG_OK);
 
 	switch (rsc->variant) {
 		case pe_unknown:
@@ -1565,7 +1804,7 @@ on_get_sub_rsc(char* argv[], int argc)
 		
 	cur = rsc->fns->children(rsc);
 	
-	ret = cl_strdup(MSG_OK);
+	ret = strdup(MSG_OK);
 	while (cur != NULL) {
 		resource_t* rsc = (resource_t*)cur->data;
 		ret = mgmt_msg_append(ret, rsc->id);
@@ -1575,6 +1814,190 @@ on_get_sub_rsc(char* argv[], int argc)
 	return ret;
 }
 
+char*
+on_set_rsc_attr(char* argv[], int argc)
+{
+	char cmd[MAX_STRLEN];
+	char buf[MAX_STRLEN];
+	pe_working_set_t* data_set;
+	resource_t* rsc;
+	char* ret = NULL;
+	const char* nv_regex = "^[A-Za-z0-9_-]+$";
+	FILE *fstream = NULL;
+
+	ARGC_CHECK(5)
+	data_set = get_data_set();
+	GET_RESOURCE()
+	free_data_set(data_set);
+
+	if (STRNCMP_CONST(argv[2], "meta") == 0){
+		snprintf(cmd, sizeof(cmd), "crm_resource --meta -r %s", argv[1]);
+	}
+	else{
+		snprintf(cmd, sizeof(cmd), "crm_resource -r %s", argv[1]);
+	}
+	
+	if (regex_match(nv_regex, argv[3])) {
+		strncat(cmd, " -p \"", sizeof(cmd)-strlen(cmd)-1);
+		strncat(cmd, argv[3], sizeof(cmd)-strlen(cmd)-1);
+		strncat(cmd, "\"", sizeof(cmd)-strlen(cmd)-1);
+	}
+	else {
+		mgmt_log(LOG_ERR, "invalid attribute name specified: \"%s\"", argv[3]);
+		return strdup(MSG_FAIL"\nInvalid attribute name");
+	}
+
+	if (regex_match(nv_regex, argv[4])) {
+		strncat(cmd, " -v \"", sizeof(cmd)-strlen(cmd)-1);
+		strncat(cmd, argv[4], sizeof(cmd)-strlen(cmd)-1);
+		strncat(cmd, "\"", sizeof(cmd)-strlen(cmd)-1);
+	}
+	else {
+		mgmt_log(LOG_ERR, "invalid attribute value specified: \"%s\"", argv[4]);
+		return strdup(MSG_FAIL"\nInvalid attribute value");
+	}
+
+	strncat(cmd, " 2>&1", sizeof(cmd)-strlen(cmd)-1);
+
+	if ((fstream = popen(cmd, "r")) == NULL){
+		mgmt_log(LOG_ERR, "error on popen %s: %s",
+			 cmd, strerror(errno));
+		return strdup(MSG_FAIL"\nSet the named attribute failed");
+	}
+
+	ret = strdup(MSG_FAIL);
+	while (!feof(fstream)){
+		memset(buf, 0, sizeof(buf));
+		if (fgets(buf, sizeof(buf), fstream) != NULL){
+			ret = mgmt_msg_append(ret, buf);
+			ret[strlen(ret)-1] = '\0';
+		}
+		else{
+			sleep(1);
+		}
+	}
+
+	if (pclose(fstream) == -1)
+		mgmt_log(LOG_WARNING, "failed to close pipe");
+
+	return ret;
+}
+
+char*
+on_get_rsc_attr(char* argv[], int argc)
+{
+	char cmd[MAX_STRLEN];
+	char buf[MAX_STRLEN];
+	pe_working_set_t* data_set;
+	resource_t* rsc;
+	char* ret = NULL;
+	const char* nv_regex = "^[A-Za-z0-9_-]+$";
+	FILE *fstream = NULL;
+
+	ARGC_CHECK(4)
+	data_set = get_data_set();
+	GET_RESOURCE()
+	free_data_set(data_set);
+
+	if (STRNCMP_CONST(argv[2], "meta") == 0){
+		snprintf(cmd, sizeof(cmd), "crm_resource --meta -r %s", argv[1]);
+	}
+	else{
+		snprintf(cmd, sizeof(cmd), "crm_resource -r %s", argv[1]);
+	}
+	
+	if (regex_match(nv_regex, argv[3])) {
+		strncat(cmd, " -g \"", sizeof(cmd)-strlen(cmd)-1);
+		strncat(cmd, argv[3], sizeof(cmd)-strlen(cmd)-1);
+		strncat(cmd, "\"", sizeof(cmd)-strlen(cmd)-1);
+	}
+	else {
+		mgmt_log(LOG_ERR, "invalid attribute name specified: \"%s\"", argv[3]);
+		return strdup(MSG_FAIL"\nInvalid attribute name");
+	}
+
+	if ((fstream = popen(cmd, "r")) == NULL){
+		mgmt_log(LOG_ERR, "error on popen %s: %s",
+			 cmd, strerror(errno));
+		return strdup(MSG_FAIL"\nGet the named attribute failed");
+	}
+
+	ret = strdup(MSG_OK);
+	while (!feof(fstream)){
+		memset(buf, 0, sizeof(buf));
+		if (fgets(buf, sizeof(buf), fstream) != NULL){
+			ret = mgmt_msg_append(ret, buf);
+			ret[strlen(ret)-1] = '\0';
+		}
+		else{
+			sleep(1);
+		}
+	}
+
+	if (pclose(fstream) == -1)
+		mgmt_log(LOG_WARNING, "failed to close pipe");
+
+	return ret;
+}
+
+char*
+on_del_rsc_attr(char* argv[], int argc)
+{
+	char cmd[MAX_STRLEN];
+	char buf[MAX_STRLEN];
+	pe_working_set_t* data_set;
+	resource_t* rsc;
+	char* ret = NULL;
+	const char* nv_regex = "^[A-Za-z0-9_-]+$";
+	FILE *fstream = NULL;
+
+	ARGC_CHECK(4)
+	data_set = get_data_set();
+	GET_RESOURCE()
+	free_data_set(data_set);
+
+	if (STRNCMP_CONST(argv[2], "meta") == 0){
+		snprintf(cmd, sizeof(cmd), "crm_resource --meta -r %s", argv[1]);
+	}
+	else{
+		snprintf(cmd, sizeof(cmd), "crm_resource -r %s", argv[1]);
+	}
+	
+	if (regex_match(nv_regex, argv[3])) {
+		strncat(cmd, " -d \"", sizeof(cmd)-strlen(cmd)-1);
+		strncat(cmd, argv[3], sizeof(cmd)-strlen(cmd)-1);
+		strncat(cmd, "\"", sizeof(cmd)-strlen(cmd)-1);
+	}
+	else {
+		mgmt_log(LOG_ERR, "invalid attribute name specified: \"%s\"", argv[3]);
+		return strdup(MSG_FAIL"\nInvalid attribute name");
+	}
+
+	strncat(cmd, " 2>&1", sizeof(cmd)-strlen(cmd)-1);
+
+	if ((fstream = popen(cmd, "r")) == NULL){
+		mgmt_log(LOG_ERR, "error on popen %s: %s",
+			 cmd, strerror(errno));
+		return strdup(MSG_FAIL"\nGet the named attribute failed");
+	}
+
+	ret = strdup(MSG_FAIL);
+	while (!feof(fstream)){
+		memset(buf, 0, sizeof(buf));
+		if (fgets(buf, sizeof(buf), fstream) != NULL){
+			ret = mgmt_msg_append(ret, buf);
+			ret[strlen(ret)-1] = '\0';
+		}
+		else{
+			sleep(1);
+		}
+	}
+
+	if (pclose(fstream) == -1)
+		mgmt_log(LOG_WARNING, "failed to close pipe");
+
+	return ret;
+}
 
 char*
 on_get_rsc_metaattrs(char* argv[], int argc)
@@ -1587,7 +2010,7 @@ on_get_rsc_metaattrs(char* argv[], int argc)
 	data_set = get_data_set();
 	GET_RESOURCE()
 
-	ret = cl_strdup(MSG_OK);
+	ret = strdup(MSG_OK);
 	attrs = find_entity(rsc->xml, "meta_attributes", NULL);
 	if(attrs == NULL) {
 		free_data_set(data_set);
@@ -1620,7 +2043,7 @@ on_get_rsc_params(char* argv[], int argc)
 	data_set = get_data_set();
 	GET_RESOURCE()
 
-	ret = cl_strdup(MSG_OK);
+	ret = strdup(MSG_OK);
 	attrs = find_entity(rsc->xml, "instance_attributes", NULL);
 	if(attrs == NULL) {
 		free_data_set(data_set);
@@ -1645,7 +2068,7 @@ on_update_rsc_attr(char* argv[], int argc)
 	int rc;
 	crm_data_t* fragment = NULL;
 	crm_data_t* cib_object = NULL;
-	crm_data_t* output;
+	crm_data_t* output = NULL;
 	char xml[MAX_STRLEN];
 	char real_id[MAX_STRLEN];
 	char parent_tag[MAX_STRLEN];
@@ -1658,7 +2081,7 @@ on_update_rsc_attr(char* argv[], int argc)
 	rsc = pe_find_resource(data_set->resources, argv[1]);	
 	if (rsc == NULL) {
 		free_data_set(data_set);
-		return cl_strdup(MSG_FAIL);;
+		return strdup(MSG_FAIL);;
 	}
 	parent = get_parent(rsc);
 	
@@ -1685,21 +2108,23 @@ on_update_rsc_attr(char* argv[], int argc)
 
 	cib_object = string2xml(xml);
 	if(cib_object == NULL) {
-		return cl_strdup(MSG_FAIL);
+		free_data_set(data_set);
+		return strdup(MSG_FAIL);
 	}
 	mgmt_log(LOG_INFO, "on_update_rsc_attr:%s",xml);
 	fragment = create_cib_fragment(cib_object, "resources");
 
 	rc = cib_conn->cmds->update(
-			cib_conn, "resources", fragment, &output, cib_sync_call);
+			cib_conn, "resources", fragment, cib_sync_call);
 
 	free_xml(fragment);
 	free_xml(cib_object);
+	free_data_set(data_set);
 	if (rc < 0) {
 		return crm_failed_msg(output, rc);
 	}
 	free_xml(output);
-	return cl_strdup(MSG_OK);
+	return strdup(MSG_OK);
 }
 
 char*
@@ -1708,7 +2133,7 @@ on_update_rsc_metaattrs(char* argv[], int argc)
 	int rc, i;
 	crm_data_t* fragment = NULL;
 	crm_data_t* cib_object = NULL;
-	crm_data_t* output;
+	crm_data_t* output = NULL;
 	char xml[MAX_STRLEN];
 	char buf[MAX_STRLEN];
 	char prefix[MAX_STRLEN];
@@ -1717,7 +2142,7 @@ on_update_rsc_metaattrs(char* argv[], int argc)
 	char meta_attrs_id[MAX_STRLEN];	
 	
 	if(get_fix(argv[1], prefix, suffix, real_id) == -1) {
-		return cl_strdup(MSG_FAIL);
+		return strdup(MSG_FAIL);
 	}
 	get_meta_attributes_id(argv[1],meta_attrs_id);
 	snprintf(xml, MAX_STRLEN,
@@ -1735,13 +2160,13 @@ on_update_rsc_metaattrs(char* argv[], int argc)
 
 	cib_object = string2xml(xml);
 	if(cib_object == NULL) {
-		return cl_strdup(MSG_FAIL);
+		return strdup(MSG_FAIL);
 	}
 	mgmt_log(LOG_INFO, "on_update_rsc_metaattrs:%s",xml);
 	fragment = create_cib_fragment(cib_object, "resources");
 
 	rc = cib_conn->cmds->update(
-			cib_conn, "resources", fragment, &output, cib_sync_call);
+			cib_conn, "resources", fragment, cib_sync_call);
 
 	free_xml(fragment);
 	free_xml(cib_object);
@@ -1749,7 +2174,7 @@ on_update_rsc_metaattrs(char* argv[], int argc)
 		return crm_failed_msg(output, rc);
 	}
 	free_xml(output);
-	return cl_strdup(MSG_OK);
+	return strdup(MSG_OK);
 }
 
 char*
@@ -1758,7 +2183,7 @@ on_update_rsc_params(char* argv[], int argc)
 	int rc, i;
 	crm_data_t* fragment = NULL;
 	crm_data_t* cib_object = NULL;
-	crm_data_t* output;
+	crm_data_t* output = NULL;
 	char xml[MAX_STRLEN];
 	char buf[MAX_STRLEN];
 	char prefix[MAX_STRLEN];
@@ -1767,7 +2192,7 @@ on_update_rsc_params(char* argv[], int argc)
 	char inst_attrs_id[MAX_STRLEN];	
 	
 	if(get_fix(argv[1], prefix, suffix, real_id) == -1) {
-		return cl_strdup(MSG_FAIL);
+		return strdup(MSG_FAIL);
 	}
 	get_instance_attributes_id(argv[1],inst_attrs_id);
 	snprintf(xml, MAX_STRLEN,
@@ -1785,13 +2210,13 @@ on_update_rsc_params(char* argv[], int argc)
 
 	cib_object = string2xml(xml);
 	if(cib_object == NULL) {
-		return cl_strdup(MSG_FAIL);
+		return strdup(MSG_FAIL);
 	}
 	mgmt_log(LOG_INFO, "on_update_rsc_params:%s",xml);
 	fragment = create_cib_fragment(cib_object, "resources");
 
 	rc = cib_conn->cmds->update(
-			cib_conn, "resources", fragment, &output, cib_sync_call);
+			cib_conn, "resources", fragment, cib_sync_call);
 
 	free_xml(fragment);
 	free_xml(cib_object);
@@ -1799,32 +2224,32 @@ on_update_rsc_params(char* argv[], int argc)
 		return crm_failed_msg(output, rc);
 	}
 	free_xml(output);
-	return cl_strdup(MSG_OK);
+	return strdup(MSG_OK);
 }
 
 char*
 on_delete_rsc_metaattr(char* argv[], int argc)
 {
-	crm_data_t * output;
+	crm_data_t * output = NULL;
 	int rc;
 	ARGC_CHECK(2)
 
 	if ((rc=delete_object("resources", "nvpair", argv[1], &output)) < 0) {
 		return crm_failed_msg(output, rc);
 	}
-	return cl_strdup(MSG_OK);
+	return strdup(MSG_OK);
 }
 char*
 on_delete_rsc_param(char* argv[], int argc)
 {
-	crm_data_t * output;
+	crm_data_t * output = NULL;
 	int rc;
 	ARGC_CHECK(2)
 
 	if ((rc=delete_object("resources", "nvpair", argv[1], &output)) < 0) {
 		return crm_failed_msg(output, rc);
 	}
-	return cl_strdup(MSG_OK);
+	return strdup(MSG_OK);
 }
 
 char*
@@ -1833,7 +2258,7 @@ on_set_target_role(char* argv[], int argc)
 	int rc;
 	crm_data_t* fragment = NULL;
 	crm_data_t* cib_object = NULL;
-	crm_data_t* output;
+	crm_data_t* output = NULL;
 	char xml[MAX_STRLEN];
 	char buf[MAX_STRLEN];
 	char prefix[MAX_STRLEN];
@@ -1843,7 +2268,7 @@ on_set_target_role(char* argv[], int argc)
 	char target_role_id[MAX_STRLEN];	
 	
 	if(get_fix(argv[1], prefix, suffix, real_id) == -1) {
-		return cl_strdup(MSG_FAIL);
+		return strdup(MSG_FAIL);
 	}
 
 	get_attr_id(argv[1], "instance_attributes", "target_role", target_role_id);
@@ -1862,7 +2287,7 @@ on_set_target_role(char* argv[], int argc)
 		if (rc < 0) {
 			return crm_failed_msg(output, rc);
 		}
-		return cl_strdup(MSG_OK);
+		return strdup(MSG_OK);
 	}
 		
 
@@ -1881,13 +2306,13 @@ on_set_target_role(char* argv[], int argc)
 
 	cib_object = string2xml(xml);
 	if(cib_object == NULL) {
-		return cl_strdup(MSG_FAIL);
+		return strdup(MSG_FAIL);
 	}
 	mgmt_log(LOG_INFO, "on_set_target_role:%s",xml);
 	fragment = create_cib_fragment(cib_object, "resources");
 
 	rc = cib_conn->cmds->update(
-			cib_conn, "resources", fragment, &output, cib_sync_call);
+			cib_conn, "resources", fragment, cib_sync_call);
 
 	free_xml(fragment);
 	free_xml(cib_object);
@@ -1895,7 +2320,7 @@ on_set_target_role(char* argv[], int argc)
 		return crm_failed_msg(output, rc);
 	}
 	free_xml(output);
-	return cl_strdup(MSG_OK);
+	return strdup(MSG_OK);
 }
 
 /* resource operations */
@@ -1910,7 +2335,7 @@ on_get_rsc_ops(char* argv[], int argc)
 	data_set = get_data_set();
 	GET_RESOURCE()
 
-	ret = cl_strdup(MSG_OK);
+	ret = strdup(MSG_OK);
 	ops = find_entity(rsc->xml, "operations", NULL);
 	if (ops == NULL) {
 		free_data_set(data_set);
@@ -1951,7 +2376,7 @@ on_get_rsc_full_ops(char* argv[], int argc)
 	data_set = get_data_set();
 	GET_RESOURCE()
 
-	ret = cl_strdup(MSG_OK);
+	ret = strdup(MSG_OK);
 	ret = mgmt_msg_append(ret, "10");
 	ops = find_entity(rsc->xml, "operations", NULL);
 	if (ops == NULL) {
@@ -1989,7 +2414,7 @@ on_update_rsc_full_ops(char* argv[], int argc)
 	int rc, i, attr_num;
 	crm_data_t* fragment = NULL;
 	crm_data_t* cib_object = NULL;
-	crm_data_t* output;
+	crm_data_t* output = NULL;
 	char xml[MAX_STRLEN];
 	char buf[MAX_STRLEN];
 	char prefix[MAX_STRLEN];
@@ -1998,7 +2423,7 @@ on_update_rsc_full_ops(char* argv[], int argc)
 		
  	attr_num = atoi(argv[1]);	 
 	if(get_fix(argv[2], prefix, suffix,real_id) == -1) {
-		return cl_strdup(MSG_FAIL);
+		return strdup(MSG_FAIL);
 	}
 	
 	snprintf(xml, MAX_STRLEN, "%s<operations>", prefix);
@@ -2022,13 +2447,13 @@ on_update_rsc_full_ops(char* argv[], int argc)
 	mgmt_log(LOG_INFO, "on_update_rsc_ops:xml:%s",xml);	
 	cib_object = string2xml(xml);
 	if(cib_object == NULL) {
-		return cl_strdup(MSG_FAIL);
+		return strdup(MSG_FAIL);
 	}
 	mgmt_log(LOG_INFO, "on_update_rsc_ops:%s",xml);
 	fragment = create_cib_fragment(cib_object, "resources");
 
 	rc = cib_conn->cmds->update(
-			cib_conn, "resources", fragment, &output, cib_sync_call);
+			cib_conn, "resources", fragment, cib_sync_call);
 
 	free_xml(fragment);
 	free_xml(cib_object);
@@ -2036,7 +2461,7 @@ on_update_rsc_full_ops(char* argv[], int argc)
 		return crm_failed_msg(output, rc);
 	}
 	free_xml(output);
-	return cl_strdup(MSG_OK);
+	return strdup(MSG_OK);
 }
 char*
 on_update_rsc_ops(char* argv[], int argc)
@@ -2044,7 +2469,7 @@ on_update_rsc_ops(char* argv[], int argc)
 	int rc, i;
 	crm_data_t* fragment = NULL;
 	crm_data_t* cib_object = NULL;
-	crm_data_t* output;
+	crm_data_t* output = NULL;
 	char xml[MAX_STRLEN];
 	char buf[MAX_STRLEN];
 	char prefix[MAX_STRLEN];
@@ -2052,7 +2477,7 @@ on_update_rsc_ops(char* argv[], int argc)
 	char real_id[MAX_STRLEN];
 	
 	if(get_fix(argv[1], prefix, suffix,real_id) == -1) {
-		return cl_strdup(MSG_FAIL);
+		return strdup(MSG_FAIL);
 	}
 	
 	snprintf(xml, MAX_STRLEN,
@@ -2068,13 +2493,13 @@ on_update_rsc_ops(char* argv[], int argc)
 
 	cib_object = string2xml(xml);
 	if(cib_object == NULL) {
-		return cl_strdup(MSG_FAIL);
+		return strdup(MSG_FAIL);
 	}
 	mgmt_log(LOG_INFO, "on_update_rsc_ops:%s",xml);
 	fragment = create_cib_fragment(cib_object, "resources");
 
 	rc = cib_conn->cmds->update(
-			cib_conn, "resources", fragment, &output, cib_sync_call);
+			cib_conn, "resources", fragment, cib_sync_call);
 
 	free_xml(fragment);
 	free_xml(cib_object);
@@ -2082,19 +2507,19 @@ on_update_rsc_ops(char* argv[], int argc)
 		return crm_failed_msg(output, rc);
 	}
 	free_xml(output);
-	return cl_strdup(MSG_OK);
+	return strdup(MSG_OK);
 }
 char*
 on_delete_rsc_op(char* argv[], int argc)
 {
 	int rc;
-	crm_data_t * output;
+	crm_data_t * output = NULL;
 	ARGC_CHECK(2)
 
 	if ((rc=delete_object("resources", "op", argv[1], &output)) < 0) {
 		return crm_failed_msg(output, rc);
 	}
-	return cl_strdup(MSG_OK);
+	return strdup(MSG_OK);
 }
 /* clone functions */
 char*
@@ -2108,21 +2533,21 @@ on_get_clone(char* argv[], int argc)
 	data_set = get_data_set();
 	GET_RESOURCE()
 
-	ret = cl_strdup(MSG_OK);
+	ret = strdup(MSG_OK);
 	ret = mgmt_msg_append(ret, rsc->id);
 	
 	parameter = rsc->fns->parameter(rsc, NULL, FALSE
 	,	XML_RSC_ATTR_INCARNATION_MAX, data_set);
 	ret = mgmt_msg_append(ret, parameter);
 	if (parameter != NULL) {
-		cl_free(parameter);
+		free(parameter);
 	}
 	
 	parameter = rsc->fns->parameter(rsc, NULL, FALSE
 	,	XML_RSC_ATTR_INCARNATION_NODEMAX, data_set);
 	ret = mgmt_msg_append(ret, parameter);
 	if (parameter != NULL) {
-		cl_free(parameter);
+		free(parameter);
 	}
 
 	free_data_set(data_set);
@@ -2134,7 +2559,7 @@ on_update_clone(char* argv[], int argc)
 	int rc;
 	crm_data_t* fragment = NULL;
 	crm_data_t* cib_object = NULL;
-	crm_data_t* output;
+	crm_data_t* output = NULL;
 	char xml[MAX_STRLEN];
 	char meta_attrs_id[MAX_STRLEN];	
 
@@ -2150,18 +2575,18 @@ on_update_clone(char* argv[], int argc)
 
 	cib_object = string2xml(xml);
 	if(cib_object == NULL) {
-		return cl_strdup(MSG_FAIL);
+		return strdup(MSG_FAIL);
 	}
 	mgmt_log(LOG_INFO, "on_update_clone:%s",xml);
 	fragment = create_cib_fragment(cib_object, "resources");
-	rc = cib_conn->cmds->update(cib_conn, "resources", fragment, &output, cib_sync_call);
+	rc = cib_conn->cmds->update(cib_conn, "resources", fragment, cib_sync_call);
 	free_xml(fragment);
 	free_xml(cib_object);
 	if (rc < 0) {
 		return crm_failed_msg(output, rc);
 	}
 	free_xml(output);
-	return cl_strdup(MSG_OK);
+	return strdup(MSG_OK);
 }
 /* master functions */
 char*
@@ -2175,35 +2600,35 @@ on_get_master(char* argv[], int argc)
 	data_set = get_data_set();
 	GET_RESOURCE()
 	
-	ret = cl_strdup(MSG_OK);
+	ret = strdup(MSG_OK);
 	ret = mgmt_msg_append(ret, rsc->id);
 	
 	parameter = rsc->fns->parameter(rsc, NULL, FALSE
 	,	XML_RSC_ATTR_INCARNATION_MAX, data_set);
 	ret = mgmt_msg_append(ret, parameter);
 	if (parameter != NULL) {
-		cl_free(parameter);
+		free(parameter);
 	}
 
 	parameter = rsc->fns->parameter(rsc, NULL, FALSE
 	,	XML_RSC_ATTR_INCARNATION_NODEMAX, data_set);
 	ret = mgmt_msg_append(ret, parameter);
 	if (parameter != NULL) {
-		cl_free(parameter);
+		free(parameter);
 	}
 
 	parameter = rsc->fns->parameter(rsc, NULL, FALSE
 	,	XML_RSC_ATTR_MASTER_MAX, data_set);
 	ret = mgmt_msg_append(ret, parameter);
 	if (parameter != NULL) {
-		cl_free(parameter);
+		free(parameter);
 	}
 
 	parameter = rsc->fns->parameter(rsc, NULL, FALSE
 	,	XML_RSC_ATTR_MASTER_NODEMAX, data_set);
 	ret = mgmt_msg_append(ret, parameter);
 	if (parameter != NULL) {
-		cl_free(parameter);
+		free(parameter);
 	}
 
 	free_data_set(data_set);
@@ -2215,7 +2640,7 @@ on_update_master(char* argv[], int argc)
 	int rc;
 	crm_data_t* fragment = NULL;
 	crm_data_t* cib_object = NULL;
-	crm_data_t* output;
+	crm_data_t* output = NULL;
 	char xml[MAX_STRLEN];
 	char meta_attrs_id[MAX_STRLEN];	
 
@@ -2233,18 +2658,18 @@ on_update_master(char* argv[], int argc)
 
 	cib_object = string2xml(xml);
 	if(cib_object == NULL) {
-		return cl_strdup(MSG_FAIL);
+		return strdup(MSG_FAIL);
 	}
 	mgmt_log(LOG_INFO, "on_update_master:%s",xml);
 	fragment = create_cib_fragment(cib_object, "resources");
-	rc = cib_conn->cmds->update(cib_conn, "resources", fragment, &output, cib_sync_call);
+	rc = cib_conn->cmds->update(cib_conn, "resources", fragment, cib_sync_call);
 	free_xml(fragment);
 	free_xml(cib_object);
 	if (rc < 0) {
 		return crm_failed_msg(output, rc);
 	}
 	free_xml(output);
-	return cl_strdup(MSG_OK);
+	return strdup(MSG_OK);
 
 }
 
@@ -2257,17 +2682,16 @@ on_get_constraints(char* argv[], int argc)
 	GList* cur;
 	crm_data_t* cos = NULL;
 	pe_working_set_t* data_set;
-	const char* path[] = {"configuration","constraints"};
 	
 	ARGC_CHECK(2);
 	
 	data_set = get_data_set();
-	cos = find_xml_node_nested(data_set->input, path, 2);
+	cos = get_xpath_object("//configuration/constraints", data_set->input, LOG_DEBUG);
 	if (cos == NULL) {
 		free_data_set(data_set);
-		return  cl_strdup(MSG_FAIL);
+		return  strdup(MSG_FAIL);
 	}
-	ret = cl_strdup(MSG_OK);
+	ret = strdup(MSG_OK);
 	list = find_xml_node_list(cos, argv[1]);
 	cur = list;
 	while (cur != NULL) {
@@ -2292,16 +2716,15 @@ on_get_constraint(char* argv[], int argc)
 	GList* expr_list, *expr_cur;
 	crm_data_t* cos = NULL;
 	pe_working_set_t* data_set;
-	const char* path[] = {"configuration","constraints"};
 	int i;
 	
 	data_set = get_data_set();
-	cos = find_xml_node_nested(data_set->input, path, 2);
+	cos = get_xpath_object("//configuration/constraints", data_set->input, LOG_DEBUG);
 	if (cos == NULL) {
 		free_data_set(data_set);
-		return  cl_strdup(MSG_FAIL);
+		return  strdup(MSG_FAIL);
 	}
-	ret = cl_strdup(MSG_OK);
+	ret = strdup(MSG_OK);
 	list = find_xml_node_list(cos, argv[1]);
 	cur = list;
 	while (cur != NULL) {
@@ -2343,13 +2766,13 @@ char*
 on_delete_constraint(char* argv[], int argc)
 {
 	int rc;
-	crm_data_t * output;
+	crm_data_t * output = NULL;
 	ARGC_CHECK(3)
 
 	if ((rc=delete_object("constraints", argv[1], argv[2], &output)) < 0) {
 		return crm_failed_msg(output, rc);
 	}
-	return cl_strdup(MSG_OK);
+	return strdup(MSG_OK);
 }
 
 char*
@@ -2358,7 +2781,7 @@ on_update_constraint(char* argv[], int argc)
 	int rc;
 	crm_data_t* fragment = NULL;
 	crm_data_t* cib_object = NULL;
-	crm_data_t* output;
+	crm_data_t* output = NULL;
 	int i;
 	char xml[MAX_STRLEN];
 	char buf[MAX_STRLEN];
@@ -2389,13 +2812,13 @@ on_update_constraint(char* argv[], int argc)
 	}
 	cib_object = string2xml(xml);
 	if(cib_object == NULL) {
-		return cl_strdup(MSG_FAIL);
+		return strdup(MSG_FAIL);
 	}
 	mgmt_log(LOG_INFO, "on_update_constraint:%s",xml);
 	fragment = create_cib_fragment(cib_object, "constraints");
 
 	rc = cib_conn->cmds->update(
-			cib_conn, "constraints", fragment, &output, cib_sync_call);
+			cib_conn, "constraints", fragment, cib_sync_call);
 
 	free_xml(fragment);
 	free_xml(cib_object);
@@ -2403,6 +2826,286 @@ on_update_constraint(char* argv[], int argc)
 		return crm_failed_msg(output, rc);
 	}
 	free_xml(output);
-	return cl_strdup(MSG_OK);
+	return strdup(MSG_OK);
 }
 
+char*
+on_cib_create(char* argv[], int argc)
+{
+	int rc;
+	crm_data_t* cib_object = NULL;
+	crm_data_t* output = NULL;
+	const char* type = NULL;
+	const char* xmls = NULL;
+	ARGC_CHECK(3)
+
+	type = argv[1];
+	xmls = argv[2];
+	cib_object = string2xml(xmls);
+	if (cib_object == NULL) {
+		return strdup(MSG_FAIL);
+	}
+
+	mgmt_log(LOG_INFO, "CIB create: %s", type);
+		
+	rc = cib_conn->cmds->create(cib_conn, type, cib_object, cib_sync_call);
+	free_xml(cib_object);
+	if (rc < 0) {
+		return crm_failed_msg(output, rc);
+	} else {
+		free_xml(output);
+		return strdup(MSG_OK);
+	}
+}
+
+/*
+char*
+on_cib_query(char* argv[], int argc)
+{
+	const char* type = NULL;
+	char cmd[MAX_STRLEN];
+	char buf[MAX_STRLEN];	
+	char* ret = strdup(MSG_OK);
+	FILE *fstream = NULL;
+	ARGC_CHECK(2)
+
+	type = argv[1];
+	mgmt_log(LOG_INFO, "CIB query: %s", type);
+		
+	snprintf(cmd, sizeof(cmd), "cibadmin -Q -o %s", type);
+	if ((fstream = popen(cmd, "r")) == NULL){
+		mgmt_log(LOG_ERR, "error on popen %s: %s",
+			 cmd, strerror(errno));
+		return strdup(MSG_FAIL);
+	}
+
+	while (!feof(fstream)){
+		memset(buf, 0, sizeof(buf));
+		if (fgets(buf, sizeof(buf), fstream) != NULL){
+			ret = mgmt_msg_append(ret, buf);
+			ret[strlen(ret)-1] = '\0';
+		}
+		else{
+			sleep(1);
+		}
+	}
+
+	if (pclose(fstream) == -1)
+		mgmt_log(LOG_WARNING, "failed to close pipe");
+
+	return ret;
+}
+*/
+
+char*
+on_cib_query(char* argv[], int argc)
+{
+	int rc;
+	crm_data_t* output = NULL;
+	const char* type = NULL;
+	char* ret = NULL;
+	ARGC_CHECK(2)
+
+	type = argv[1];
+	mgmt_log(LOG_INFO, "CIB query: %s", type);
+		
+	rc = cib_conn->cmds->query(cib_conn, type, &output, cib_sync_call|cib_scope_local);
+	if (rc < 0) {
+		return crm_failed_msg(output, rc);
+	} else {
+		ret = strdup(MSG_OK);
+		ret = mgmt_msg_append(ret, dump_xml_formatted(output));
+#if 0		
+		mgmt_log(LOG_INFO, "%s", dump_xml_formatted(output)); 
+#endif
+		free_xml(output);
+		return ret;
+	}
+}
+
+char*
+on_cib_update(char* argv[], int argc)
+{
+	int rc;
+	crm_data_t* fragment = NULL;
+	crm_data_t* cib_object = NULL;
+	crm_data_t* output = NULL;
+	const char* type = NULL;
+	const char* xmls = NULL;
+	ARGC_CHECK(3)
+
+	type = argv[1];
+	xmls = argv[2];
+	cib_object = string2xml(xmls);
+	if (cib_object == NULL) {
+		return strdup(MSG_FAIL);
+	}
+
+	mgmt_log(LOG_INFO, "CIB update: %s", xmls);
+		
+	fragment = create_cib_fragment(cib_object, type);
+	rc = cib_conn->cmds->update(cib_conn, type, fragment, cib_sync_call);
+	free_xml(fragment);
+	free_xml(cib_object);
+	if (rc < 0) {
+		return crm_failed_msg(output, rc);
+	} else {
+		free_xml(output);
+		return strdup(MSG_OK);
+	}
+}
+
+char*
+on_cib_replace(char* argv[], int argc)
+{
+	int rc;
+	/*crm_data_t* fragment = NULL;*/
+	crm_data_t* cib_object = NULL;
+	crm_data_t* output = NULL;
+	const char* type = argv[0];
+	const char* xmls = argv[1];
+	ARGC_CHECK(3)
+
+	type = argv[1];
+	xmls = argv[2];
+	cib_object = string2xml(xmls);
+	if (cib_object == NULL) {
+		return strdup(MSG_FAIL);
+	}
+
+	mgmt_log(LOG_INFO, "CIB replace: %s", type);
+		
+	/*fragment = create_cib_fragment(cib_object, type);*/
+	rc = cib_conn->cmds->replace(cib_conn, type, cib_object, cib_sync_call);
+	/*free_xml(fragment);*/
+	free_xml(cib_object);
+	if (rc < 0) {
+		return crm_failed_msg(output, rc);
+	} else {
+		free_xml(output);
+		return strdup(MSG_OK);
+	}
+}
+
+char*
+on_cib_delete(char* argv[], int argc)
+{
+	int rc;
+	crm_data_t* cib_object = NULL;
+	crm_data_t* output = NULL;
+	const char* type = argv[0];
+	const char* xmls = argv[1];	
+	ARGC_CHECK(3)
+	
+	type = argv[1];
+	xmls = argv[2];	
+	cib_object = string2xml(xmls);
+	if (cib_object == NULL) {
+		return strdup(MSG_FAIL);
+	}
+	mgmt_log(LOG_INFO, "CIB delete: %s", type);
+
+	rc = cib_conn->cmds->delete(cib_conn, type, cib_object, cib_sync_call);
+	free_xml(cib_object);	
+	if (rc < 0) {
+		return crm_failed_msg(output, rc);
+	} else {
+		free_xml(output);
+		return strdup(MSG_OK);
+	}
+}		
+
+static char*
+on_gen_cluster_report(char* argv[], int argc)
+{
+	char cmd[MAX_STRLEN];
+	char buf[MAX_STRLEN];
+	char filename[MAX_STRLEN];
+	char *dest = tempnam("/tmp", "clrp.");
+	char* ret = NULL;
+	FILE *fstream = NULL;
+	const char* date_regex = \
+		"^[0-9]{4}-[0-1][0-9]-[0-3][0-9] [0-2][0-9]:[0-5][0-9]:[0-5][0-9]$";
+
+	ARGC_CHECK(3);
+
+	if (regex_match(date_regex, argv[1])) {
+		snprintf(buf, sizeof(buf), "-f \"%s\"", argv[1]);
+	}
+	else {
+		mgmt_log(LOG_ERR, "invalid \"from\" date expression: \"%s\"", argv[1]);
+		free(dest);
+		return strdup(MSG_FAIL);
+	}
+
+	if (strnlen(argv[2], MAX_STRLEN) != 0) {
+		if (regex_match(date_regex, argv[2])) {
+			strncat(buf, " -t \"", sizeof(buf)-strlen(buf)-1);
+			strncat(buf, argv[2], sizeof(buf)-strlen(buf)-1);
+			strncat(buf, "\"", sizeof(buf)-strlen(buf)-1);
+		}
+		else {
+			mgmt_log(LOG_ERR, "invalid \"to\" date expression: \"%s\"", argv[2]);
+			free(dest);
+			return strdup(MSG_FAIL);
+		}
+	}
+
+	snprintf(cmd, sizeof(cmd), "hb_report -DC %s %s", buf, dest);
+	mgmt_log(LOG_INFO, "cluster_report: %s", cmd);
+	if (system(cmd) < 0) {
+		mgmt_log(LOG_ERR, "error on system %s: %s",
+			 cmd, strerror(errno));
+		free(dest);
+		return strdup(MSG_FAIL);
+	}
+
+	snprintf(filename, sizeof(filename), "%s.tar.gz", dest);
+	snprintf(cmd, sizeof(cmd), "base64 %s", filename);
+	if ((fstream = popen(cmd, "r")) == NULL) {
+		mgmt_log(LOG_ERR, "error on popen %s: %s",
+			 cmd, strerror(errno));
+		unlink(filename);
+		free(dest);
+		return strdup(MSG_FAIL);
+	 }
+
+	ret = strdup(MSG_OK);
+	ret = mgmt_msg_append(ret, filename);
+	while (!feof(fstream)) {
+		memset(buf, 0, sizeof(buf));
+		if (fgets(buf, sizeof(buf), fstream) != NULL) {
+			ret = mgmt_msg_append(ret, buf);
+			ret[strlen(ret)-1] = '\0';
+		}
+		else {
+			sleep(1);
+		}
+	}
+	if (pclose(fstream) == -1)
+		mgmt_log(LOG_WARNING, "failed to close pipe");
+
+	unlink(filename);
+	free(dest);
+	return ret;
+}
+
+int
+regex_match(const char *regex, const char *str)
+{
+	regex_t preg;
+	int ret;
+
+	if (regcomp(&preg, regex, REG_EXTENDED|REG_NOSUB) != 0){
+		mgmt_log(LOG_ERR, "error regcomp regular expression: \"%s\"", regex);
+		return 0;
+	}
+
+	ret = regexec(&preg, str, 0, NULL, 0);
+	if (ret != 0) {
+		mgmt_log(LOG_WARNING, "no match or error regexec: \"%s\" \"%s\"", regex, str);
+	}
+
+	regfree(&preg);
+	return (ret == 0);
+}

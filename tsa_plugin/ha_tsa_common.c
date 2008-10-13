@@ -33,7 +33,6 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
-#include <clplumbing/cl_malloc.h>
 #include <clplumbing/cl_log.h>
 #include <clplumbing/GSource.h>
 #include <clplumbing/cl_pidfile.h>
@@ -78,14 +77,14 @@ split_string(const char* string, int *len, const char *delim)
 		}
 		
 		/* copy string~(p-1) to token */
-		token = cl_malloc(p-string+1);
+		token = malloc(p-string+1);
 		if ( token == NULL ) {
 			return strings;
 		}
 		memcpy(token, string, p - string); 
 		token[p-string] = EOS;
 
-		strings = cl_realloc(strings, (*len+1) * sizeof(char *));
+		strings = realloc(strings, (*len+1) * sizeof(char *));
 		if ( strings == NULL ) {
 			return NULL;
 		}
@@ -102,10 +101,10 @@ free_array(void** array, int len)
 	int i;
 	for (i=0; i<len; i++){
 		if (array[i]) {
-			cl_free(array[i]);
+			free(array[i]);
 		}
 	}
-	cl_free(array);
+	free(array);
 }
 
 
@@ -126,7 +125,7 @@ run_shell_cmnd(const char *cmnd, int *rc, int *len)
 	offset = 0;
 	while (!feof(fstream)) {
 		int bytes = 0;
-		if ( (buffer = cl_realloc(buffer, 1024) ) == NULL ) {
+		if ( (buffer = realloc(buffer, 1024) ) == NULL ) {
 			cl_log(LOG_ERR, "run_shell_cmnd: malloc failed.");
 			*len = 0;
 			goto out;

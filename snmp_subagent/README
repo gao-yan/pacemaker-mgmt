@@ -11,9 +11,6 @@ remotely.
 parameters can be viewed through SNMP command.  In addition, SNMP traps
 will be sent for node, link, and membership events.  
 
-    Cluster Resources are not well supported.  It only displays 
-the resources defined in the /etc/ha.d/haresource file for now.  It 
-does not integrate with the CRM yet.  The work is being planned. 
 
 2. Build 
 
@@ -37,7 +34,10 @@ This should be taken care of by the 'make install' though.
     Here's what it normally takes in your snmpd.conf file:
 
     # create a SNMPv1/SNMPv2 community
-    rwcommunity  public
+    rocommunity  public 
+    # if you want to limit access to a host you can use
+    # rocommunity  public xxx.xxx.xxx.xxx/24
+    # For more complex setups consult the snmpd.conf man page
 
     # this makes the snmpd a master snmp agent, which can
     # support AgentX subagents.
@@ -47,9 +47,43 @@ This should be taken care of by the 'make install' though.
     # or rather the SNMPv2 informs, will be sent to localhost.  
     trap2sink localhost
 
-4. Demo Output
+4. Test the setup
+   a) (re)start your master SNMP daemon (e.g. net-snmpd)
+      /etc/init.d/snmpd restart
+   b) start the HB agent 
+      /usr/lib/heartbeat/hbagent -d
+   c) run snmpwalk (while hbagent is running)
+      snmpwalk -c public <YOUR.NODE.NAME> -v2c \
+        -mLINUX-HA-MIB enterprises.4682
 
-    [yzou@matrix mibs]$ snmpwalk -v2c localhost -c public LinuxHA
+      (if you get a error message you may have to copy 
+       /usr/share/snmp/mibs/LINUX-HA-MIB.mib from one of
+       the cluster machines to your management station 
+       to /usr/share/snmp/mibs/)
+
+   You shoud see a output like the one shown in step (7).
+
+   d) end the hbagent process (CRTL+C)
+
+5. Make the snmp subagent started by heartbeat
+
+   # /etc/ha.d/ha.cf
+   #[...]
+   respawn root /usr/lib/heartbeat/hbagent
+
+   (note: also make sure that the snmp master daemon 
+    is startet before heartbeat during system boot)
+
+6. Restart Heartbeat
+
+   note: Watch out on production systems. Restarting heartbeat
+         without proper handling will cause downtime. 
+   hint: You can use is-managed-default=false on heartbeatv2 
+         clusters
+
+7. Demo Output
+
+    yourshell# snmpwalk -c public <YOUR.HOST.NAME> -v2c -mLINUX-HA-MIB enterprises.4682
 
     LINUX-HA-MIB::LHATotalNodeCount.0 = Counter32: 2
     LINUX-HA-MIB::LHALiveNodeCount.0 = Counter32: 2
@@ -97,6 +131,7 @@ This should be taken care of by the 'make install' though.
     LINUX-HA-MIB::LHADebugFile.0 = STRING: /var/log/ha-debug
     LINUX-HA-MIB::LHALogFacility.0 = STRING: local0
 
-5. Bugs
+8. Bugs
  
     Please forward all bug report to Linux-HA dev mailing list.
+

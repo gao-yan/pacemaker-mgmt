@@ -30,14 +30,12 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
-#include <clplumbing/cl_malloc.h>
 #include <clplumbing/cl_log.h>
 #include <clplumbing/GSource.h>
 #include <clplumbing/cl_pidfile.h>
 #include <clplumbing/cl_signal.h>
 #include <clplumbing/coredumps.h>
 #include <ha_msg.h>
-#include <clplumbing/cl_malloc.h>
 #include <clplumbing/cl_log.h>
 #include <mgmt/mgmt.h>
 #include "ha_mgmt_client.h"
