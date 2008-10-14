@@ -2493,6 +2493,7 @@ class ElementNotebook :
 				self.elem_rng_nodes = []
 				is_any_name = True
 
+			self.is_any_name = is_any_name
 			other_elem_types = []
 			if is_any_name :
 				for name in elem_node_dict.keys() :
@@ -2690,39 +2691,81 @@ class ElementNotebook :
 			(gtk.STOCK_OK, gtk.RESPONSE_OK, gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL))
 		dialog.set_border_width(5)
 
+		elem_rng_nodes = []
 		if validate_type == "dtd" :
 			option_list = self.get_elem_options_dtd()
 		else :
-			option_list = self.get_elem_options_rng()
+			option_list = []
+			elem_is_any_name = False
+			elem_rng_nodes = self.get_elem_options_rng()
+			if elem_rng_nodes == [] :
+				elem_is_any_name = self.is_any_name
+			for rng_node in elem_rng_nodes :
+				name = rng_node[0][1].getAttribute("name")
+				if name == "" :
+					elem_is_any_name = True
+				else :
+					option_list.append(rng_node)
 
-		if len(option_list) == 0 :
+			if elem_is_any_name :
+				for elem_node in self.xml_node.childNodes :
+					if elem_node.nodeType != xml.dom.Node.ELEMENT_NODE :
+						continue
+					elem_name = elem_node.tagName
+					if option_list.count(elem_name) == 0 :
+						option_list.append(elem_name)
+
+		if len(option_list) == 0 and not elem_is_any_name :
 			return
-		elif len(option_list) == 1 :
+		elif len(option_list) == 1 and not elem_is_any_name :
 			obj_type = option_list[0]
 		else :
 			radio_btns = {}
 			radio_btn = None
 			for option in option_list :
-				if validate_type == "dtd" :
+				if type(option) == str or type(option) == unicode :
 					opt_name = option
 				else :
 					opt_name = option[0][1].getAttribute("name")
-				radio_btn = gtk.RadioButton(radio_btn, _(name_cap(opt_name)))	
+
+				if opt_name == "" :
+					continue
+
+				radio_btn = gtk.RadioButton(radio_btn, _(name_cap(opt_name)))
 				dialog.vbox.pack_start(radio_btn, False, padding=2)
 				radio_btns[radio_btn] = option
+
+			if elem_is_any_name :
+				radio_btn = gtk.RadioButton(radio_btn, _("Other:"))
+				entry = gtk.Entry()
+
+				hbox = gtk.HBox()
+				hbox.pack_start(radio_btn, False, padding=2)
+				hbox.pack_start(entry, False, padding=2)
+
+				dialog.vbox.pack_start(hbox, False, padding=2)
+				radio_btns[radio_btn] = entry
 
 			save_top_window = top_window
 			top_window = dialog
 			dialog.vbox.show_all()
 
-			ret = dialog.run()
-			if ret == gtk.RESPONSE_OK :
-				for radio_btn in radio_btns :
-					if radio_btn.get_active() :
-						obj_type = radio_btns[radio_btn]
+			while True :
+				ret = dialog.run()
+				if ret == gtk.RESPONSE_OK :
+					passed = True
+					for radio_btn in radio_btns :
+						if radio_btn.get_active() :
+							obj_type = radio_btns[radio_btn]
+							if type(obj_type) == gtk.Entry and obj_type.get_text() == "" :
+								msgbox(_("Please specify the type of object you want to add"))
+								passed = False
+							break
+					if passed :
 						break
-			else :
-				obj_type = None
+				else :
+					obj_type = None
+					break
 
 			top_window = save_top_window
 			dialog.destroy()
@@ -2733,15 +2776,43 @@ class ElementNotebook :
 		impl = getDOMImplementation()
 		if validate_type == "dtd" :
 			dtd_elem = manager.get_dtd_elem(obj_type)
-			attr_list = dtd_elem.get_attr_list()
+			sub_attr_list = dtd_elem.get_attr_list()
 			obj_type_name = obj_type
 		else :
-			sorted_rng_nodes = manager.sorted_sub_rng_nodes_by_node(*obj_type[0])
-			attr_list = sorted_rng_nodes.get("attribute", [])
-			sub_obj_list = sorted_rng_nodes.get("element", [])
-			obj_type_name = obj_type[0][1].getAttribute("name")
-			
-		if len(attr_list) > 0 :
+			if type(obj_type) == str or type(obj_type) == unicode :
+				obj_type_name = obj_type
+				sorted_rng_nodes = manager.sorted_sub_rng_nodes_by_name(obj_type_name)
+			elif type(obj_type) == gtk.Entry :
+				obj_type_name = obj_type.get_text()
+				sorted_rng_nodes = manager.sorted_sub_rng_nodes_by_name(obj_type_name)
+			else :
+				obj_type_name = obj_type[0][1].getAttribute("name")
+				sorted_rng_nodes = manager.sorted_sub_rng_nodes_by_node(*obj_type[0])
+
+			sub_attr_list = []
+			sub_elem_type_list = []
+			sub_attr_is_any_name = False 
+			sub_elem_is_any_name = False
+			if sorted_rng_nodes != None :
+				sub_attr_rng_nodes = sorted_rng_nodes.get("attribute", [])
+				sub_elem_rng_nodes = sorted_rng_nodes.get("element", [])
+				for rng_node in sub_attr_rng_nodes :
+					name = rng_node[0][1].getAttribute("name")
+					if name == "" :
+						sub_attr_is_any_name = True
+					elif sub_attr_list.count(name) == 0 :
+						sub_attr_list.append(name)
+				for rng_node in sub_elem_rng_nodes :
+					name = rng_node[0][1].getAttribute("name")
+					if name == "" :
+						sub_elem_is_any_name = True
+					elif sub_elem_type_list.count(name) == 0 :
+						sub_elem_type_list.append(name)
+			else :
+				sub_attr_is_any_name = True
+				sub_elem_is_any_name = True
+					
+		if len(sub_attr_list) > 0 or sub_attr_is_any_name :
 			newdoc = impl.createDocument(None, obj_type_name, None)
 			new_elem = newdoc.documentElement
 			self.xml_node.appendChild(new_elem)
@@ -2764,8 +2835,8 @@ class ElementNotebook :
 				else :
 					return
 			else:
-				if len(sub_obj_list) > 0 :		
-					sub_obj_type = sub_obj_list[0][0][1].getAttribute("name")
+				if len(sub_elem_type_list) > 0 :		
+					sub_obj_type = sub_elem_type_list[0]
 				else :
 					return
 				
