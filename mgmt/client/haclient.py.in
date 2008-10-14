@@ -1245,9 +1245,6 @@ class ManageView :
 			if manager.failed_reason != "" :
 				msgbox(manager.failed_reason)
 
-	def true_obj_id(self, obj_id) :
-		return obj_id.split(":")[0]
-
 	def on_rsc_cleanup(self, action) :
 		(cur_type, cur_name) = self.manage_tree.get_selected_node()
 		rsc_list = manager.get_all_rsc()
@@ -5961,6 +5958,18 @@ class Manager :
 					all_rscs.extend(all_subrscs)
 		return all_rscs
 
+	def get_all_true_rsc(self) :
+		all_rscs = self.get_all_rsc()
+		all_true_rsc = []
+		for rsc in all_rscs :
+			true_rsc_id = self.true_obj_id(rsc)
+			if all_true_rsc.count(true_rsc_id) == 0 :
+				all_true_rsc.append(true_rsc_id)
+		return all_true_rsc
+
+	def true_obj_id(self, obj_id) :
+		return obj_id.split(":")[0]
+
 	def get_rsc_info(self, rsc) :
 		rsc_attr_names = ["id", "description", "class", "provider", 
 				"type", "is_managed","restart_type",
@@ -6901,10 +6910,10 @@ class ObjectAttrs(WidgetGroup) :
 	def auto_fill(self) :
 		widgets = self.widgets
 		rsc_store = gtk.ListStore(str, str)
-		for rsc in manager.get_all_rsc() :
+		for rsc in manager.get_all_true_rsc() :
 			rsc_store.append([rsc, ""])
 		if widgets.has_key("combo_entries") :
-			for key in ["rsc", "from", "to"] :
+			for key in ["rsc", "with-rsc", "first", "then", "from", "to"] :
 				if widgets["combo_entries"].has_key(key) :
 					self.combobox_store_append(widgets["combo_entries"][key], rsc_store)
 
