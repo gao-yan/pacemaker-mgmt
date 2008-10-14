@@ -551,39 +551,75 @@ class ListWithAddDel :
 class ElementList:
 	store = None
 	widget = None
+	id_index = None
+	idref_index = None
 
 	def __init__(self, obj_type, elem_node_list) :
 		self.obj_type = obj_type
 		treeiter = {}
+		attr_is_any_name = False
+		elem_is_any_name = False
 		if validate_type == "dtd" :
 			self.dtd_elem = manager.get_dtd_elem(obj_type)
 			attr_list = self.dtd_elem.get_attr_list()
 			sub_obj_list = self.dtd_elem.get_content_model()[1]
 		else :
 			sorted_rng_nodes = manager.sorted_sub_rng_nodes_by_name(obj_type)
-			attr_node_list = sorted_rng_nodes.get("attribute", [])
-			sub_obj_list = sorted_rng_nodes.get("element", [])
-			attr_list = [attr_node[0][1].getAttribute("name") for attr_node in attr_node_list]
 
-		if len(sub_obj_list)  > 0 :
+			attr_list = []
+			sub_obj_list = []
+			if sorted_rng_nodes != None :
+				attr_rng_nodes = sorted_rng_nodes.get("attribute", [])
+				elem_rng_nodes = sorted_rng_nodes.get("element", [])
+				for rng_node in attr_rng_nodes :
+					name = rng_node[0][1].getAttribute("name")
+					if name == "" :
+						attr_is_any_name = True
+					elif attr_list.count(name) == 0 :
+						attr_list.append(name)
+				for rng_node in elem_rng_nodes :
+					name = rng_node[0][1].getAttribute("name")
+					if name == "" :
+						elem_is_any_name = True
+					elif sub_obj_list.count(name) == 0 :
+						sub_obj_list.append(name)
+			else :
+				attr_is_any_name = True
+				elem_is_any_name = True
+
+			if attr_is_any_name :
+				for elem_node in elem_node_list :
+					for attr_name in elem_node.attributes.keys() :
+						if attr_list.count(attr_name) == 0 :
+							if attr_name == "id" :
+								attr_list.insert(0, attr_name)
+							else :
+								attr_list.append(attr_name)
+
+		if len(sub_obj_list) > 0 or elem_is_any_name :
 			has_elem = True
 		else :
 			has_elem = False
 
-		if len(attr_list) > 0 :
-			self.store = gtk.ListStore(*(tuple(str for i in range(len(attr_list)+1))))
-			tree = gtk.TreeView(self.store)
-			add_column(tree, _("Type"), 0, self.render_icon, visible=False)
-			for i in range(len(attr_list)) :
-				if i == 0 :
-					icon_func = self.render_icon
-				else :
-					icon_func = None
-				if attr_list[i] == "id" and not has_elem :
-					visible = False
-				else :
-					visible = True
-				add_column(tree, _(name_cap(attr_list[i])), i+1, icon_func, visible=visible)
+		self.store = gtk.ListStore(*(tuple(str for i in range(len(attr_list)+1))))
+		tree = gtk.TreeView(self.store)
+		add_column(tree, _("Type"), 0, self.render_icon, visible=False)
+		for i in range(len(attr_list)) :
+			if i == 0 :
+				icon_func = self.render_icon
+			else :
+				icon_func = None
+
+			if attr_list[i] == "id" :
+				self.id_index = i + 1
+			elif attr_list[i] == "id-ref" :
+				self.idref_index = i + 1
+
+			if attr_list[i] == "id" and not has_elem :
+				visible = False
+			else :
+				visible = True
+			add_column(tree, _(name_cap(attr_list[i])), i+1, icon_func, visible=visible)
 
 		sw = gtk.ScrolledWindow()
 		sw.set_shadow_type(gtk.SHADOW_IN)
@@ -643,6 +679,10 @@ class ElementList:
 			elem_type = elem_node.tagName
 			elem_id = elem_node.getAttribute("id")
 			if elem_id == "" :
+				elem_id = elem_node.getAttribute("id-ref")
+			if elem_id == "" :
+				elem_id = values[1]
+			if elem_id == "" :
 				elem_id = elem_node.parentNode.getAttribute("id") 
 			self.nodes[(elem_type, elem_id)] = elem_node
 
@@ -690,11 +730,19 @@ class ElementList:
 
 	def get_node_key(self, model, iter) :
 		type = model.get_value(iter, 0)
-		id = model.get_value(iter, 1)
+		id = ""
+		if self.id_index != None :
+			id = model.get_value(iter, self.id_index)
+
+		if id == "" and self.idref_index != None :
+			id = model.get_value(iter, self.idref_index)
+
 		if id == "" :
-			id = model.get_value(iter, 2)
-		if id == "" :
+			id = model.get_value(iter, 1)
+
+		if id == "" and model.iter_parent(iter) != None :
 			id = model.get_value(model.iter_parent(iter), 1)
+
 		return (type, id)
 
 class ElementTree(ElementList):
@@ -1996,20 +2044,55 @@ class ObjectView :
 				self.vbox.remove(child)
 
 		obj_type = self.xml_node.tagName
+		attr_is_any_name = False
+		elem_is_any_name = False
 		if validate_type == "dtd" :
 			self.dtd_elem = manager.get_dtd_elem(obj_type)
 			attr_list = self.dtd_elem.get_attr_list()
 			sub_obj_list = self.dtd_elem.get_content_model()[1]
 		else :
 			sorted_rng_nodes = manager.sorted_sub_rng_nodes_by_name(obj_type)
-			attr_list = sorted_rng_nodes.get("attribute", [])
-			sub_obj_list = sorted_rng_nodes.get("element", [])
+			attr_list = []
+			sub_obj_list = []
+			if sorted_rng_nodes != None :
+				attr_rng_nodes = sorted_rng_nodes.get("attribute", [])
+				elem_rng_nodes = sorted_rng_nodes.get("element", [])
+				for rng_node in attr_rng_nodes :
+					name = rng_node[0][1].getAttribute("name")
+					if name == "" :
+						attr_is_any_name = True
+					elif attr_list.count(name) == 0 :
+						attr_list.append(name)
 
-		if len(attr_list) > 0 :
+				for rng_node in elem_rng_nodes :
+					name = rng_node[0][1].getAttribute("name")
+					if name == "" :
+						elem_is_any_name = True
+					else :
+						sub_obj_list.append(name)
+			else :
+				attr_is_any_name = True
+				elem_is_any_name = True
+
+		if attr_is_any_name :
+			for attr_name in  self.xml_node.attributes.keys() :
+				if attr_list.count(attr_name) == 0 :
+					attr_list.append(attr_name)
+
+		if elem_is_any_name :
+			for elem_node in self.xml_node.childNodes :
+				if elem_node.nodeType != xml.dom.Node.ELEMENT_NODE :
+					continue
+				elem_name = elem_node.tagName
+				if sub_obj_list.count(elem_name) == 0 :
+					sub_obj_list.append(elem_name)
+
+		if not self.is_topview and (len(attr_list) >0 or attr_is_any_name) :
 			has_attr = True
 		else :
 			has_attr = False
-		if len(sub_obj_list)  > 0 :
+
+		if len(sub_obj_list) or elem_is_any_name > 0 :
 			has_elem = True
 		else :
 			has_elem = False
@@ -2386,37 +2469,95 @@ class ElementNotebook :
 					elem_list.tree.connect("cursor-changed", self.on_cursor_changed)
 					elem_list.tree.connect("event-after", self.on_click)
 		else :
+			elem_node_dict = {}
+			for elem_node in self.xml_node.childNodes :
+				if elem_node.nodeType != xml.dom.Node.ELEMENT_NODE :
+					continue
+				name = elem_node.tagName
+				if elem_node_dict.get(name) == None :
+					elem_node_dict[name] = []
+				elem_node_dict[name].append(elem_node)
+
 			sorted_rng_nodes = manager.sorted_sub_rng_nodes_by_name(self.obj_type)
-			self.sub_obj_list = sorted_rng_nodes.get("element", [])
+			is_any_name = False
+			elem_type_list = []
+			if sorted_rng_nodes != None :
+				self.elem_rng_nodes = sorted_rng_nodes.get("element", [])
+				for rng_node in self.elem_rng_nodes :
+					name = rng_node[0][1].getAttribute("name")
+					if name == "" :
+						is_any_name = True
+					elif elem_type_list.count(name) == 0 :
+						elem_type_list.append(name)
+			else :
+				self.elem_rng_nodes = []
+				is_any_name = True
 
-			for rng_node in self.sub_obj_list :
+			other_elem_types = []
+			if is_any_name :
+				for name in elem_node_dict.keys() :
+					if elem_type_list.count(name) == 0 :
+						other_elem_types.append(name)
+				
+			for rng_node in self.elem_rng_nodes :
 				name = rng_node[0][1].getAttribute("name")
-				elem_node_list = []
-				for elem_node in self.xml_node.getElementsByTagName(name) :
-					if elem_node in self.xml_node.childNodes :
-						elem_node_list.append(elem_node)
-				if len(elem_node_list) > 0 :
-					tab_label = gtk.Label(_(name_cap(name)))
-					sub_rng_nodes = manager.sorted_sub_rng_nodes_by_node(*rng_node[0])
-					sub_attr_list = sub_rng_nodes.get("attribute", [])
-					sub_sub_obj_list = sub_rng_nodes.get("element", [])
+				elem_node_list = elem_node_dict.get(name, [])
+				if len(elem_node_list) == 0 :
+					continue
 
-					if len(sub_attr_list) == 0 :
+				tab_label = gtk.Label(_(name_cap(name)))
+				sub_rng_nodes = manager.sorted_sub_rng_nodes_by_node(*rng_node[0])
+				if sub_rng_nodes != None :
+					sub_attr_rng_nodes = sub_rng_nodes.get("attribute", [])
+					sub_elem_rng_nodes = sub_rng_nodes.get("element", [])
+
+					if len(sub_attr_rng_nodes) == 0 :
 						sub_elem_node_list = []
-						name = sub_sub_obj_list[0][0][1].getAttribute("name")
+						name = sub_elem_rng_nodes[0][0][1].getAttribute("name")
 						for elem_node in elem_node_list :
 							for sub_elem_node in elem_node.getElementsByTagName(name) :
 								if sub_elem_node in elem_node.childNodes :
 									sub_elem_node_list.append(sub_elem_node)
 						elem_node_list = sub_elem_node_list
-					if self.show_mode == 0 :
-						elem_list = ElementList(name, elem_node_list)
-					else :
-						elem_list = ElementTree(name, elem_node_list)
-					self.notebook.append_page(elem_list.widget, tab_label)
-					self.elem_lists.append(elem_list)
-					elem_list.tree.connect("cursor-changed", self.on_cursor_changed)
-					elem_list.tree.connect("event-after", self.on_click)
+				if self.show_mode == 0 :
+					elem_list = ElementList(name, elem_node_list)
+				else :
+					elem_list = ElementTree(name, elem_node_list)
+				self.notebook.append_page(elem_list.widget, tab_label)
+				self.elem_lists.append(elem_list)
+				elem_list.tree.connect("cursor-changed", self.on_cursor_changed)
+				elem_list.tree.connect("event-after", self.on_click)
+
+			for name in other_elem_types :
+				elem_node_list = elem_node_dict.get(name, [])
+				if len(elem_node_list) == 0 :
+					continue
+
+				tab_label = gtk.Label(_(name_cap(name)))
+				
+				sub_attr_list = []
+				for elem_node in elem_node_list :
+					for attr_name in elem_node.attributes.keys() :
+						if sub_attr_list.count(attr_name) == 0 :
+							sub_attr_list.append(attr_name)
+				if len(sub_attr_list) == 0 :
+					sub_elem_node_list = []
+					for elem_node in elem_node_list :
+						for sub_elem_node in elem_node.childNodes :
+							if sub_elem_node.nodeType != xml.dom.Node.ELEMENT_NODE :
+								continue
+							name = sub_elem_node.tagName
+							sub_elem_node_list.append(sub_elem_node)
+					elem_node_list = sub_elem_node_list
+
+				if self.show_mode == 0 :
+					elem_list = ElementList(name, elem_node_list)
+				else :
+					elem_list = ElementTree(name, elem_node_list)
+				self.notebook.append_page(elem_list.widget, tab_label)
+				self.elem_lists.append(elem_list)
+				elem_list.tree.connect("cursor-changed", self.on_cursor_changed)
+				elem_list.tree.connect("event-after", self.on_click)
 
 		if self.notebook.get_n_pages() > 0 :
 			bbox = gtk.VButtonBox()
@@ -2465,10 +2606,27 @@ class ElementNotebook :
 			dtd_elem = manager.get_dtd_elem(selected_node.tagName)
 			attr_list = dtd_elem.get_attr_list()
 		else :
+			attr_list = []
+			is_any_name = False
 			sorted_rng_nodes = manager.sorted_sub_rng_nodes_by_name(selected_node.tagName)
-			attr_node_list = sorted_rng_nodes.get("attribute", [])
-			sub_obj_list = sorted_rng_nodes.get("element", [])
-			attr_list = [attr_node[0][1].getAttribute("name") for attr_node in attr_node_list]
+			if sorted_rng_nodes != None :
+				attr_rng_nodes = sorted_rng_nodes.get("attribute", [])
+				for rng_node in attr_rng_nodes :
+					name = rng_node[0][1].getAttribute("name")
+					if name == "" :
+						is_any_name = True
+					elif attr_list.count(name) == 0 :
+						attr_list.append(name)
+			else :
+				is_any_name = True
+
+			if is_any_name :
+				for attr_name in  selected_node.attributes.keys() :
+					if attr_list.count(attr_name) == 0 :
+						if attr_name == "id" :
+							attr_list.insert(0, attr_name)
+						else :
+							attr_list.append(attr_name)
 
 		name_labels = {}
 		name_label_max_len = 0
@@ -2672,7 +2830,7 @@ class ElementNotebook :
 
 	def get_elem_options_rng(self) :
 		option_list = []
-		for rng_node in self.sub_obj_list :
+		for rng_node in self.elem_rng_nodes :
 			name = rng_node[0][1].getAttribute("name")
 			if manager.find_decl(rng_node, "zeroOrMore") != 0 or manager.find_decl(rng_node, "oneOrMore") != 0 :
 				option_list.append(rng_node)
@@ -5358,6 +5516,7 @@ class Manager :
 			for elem_node in rng_doc.getElementsByTagName("element") :
 				if elem_node.getAttribute("name") == elem_name :
 					return (rng_doc, elem_node)
+		return None
 
 	def get_sub_rng_nodes(self, rng_doc, rng_node) :
 		sub_rng_nodes = []
@@ -5387,8 +5546,8 @@ class Manager :
 
 	def sorted_sub_rng_nodes_by_name(self, obj_type) :
 		rng_node = self.get_rng_elem(obj_type)	
-		if rng_node[1] == None :
-			msgbox(_("Cannot get %s in Relax-NG schema")%obj_type)
+		if rng_node == None or rng_node[1] == None :
+			# msgbox(_("Cannot get %s in Relax-NG schema")%obj_type)
 			return None
 		return self.sorted_sub_rng_nodes_by_node(*rng_node)
 
@@ -6079,6 +6238,14 @@ class WidgetGroup :
 				object[key] = widgets["entries"][key].get_text()
 				if object[key] == "" or object[key] == None :
 					object.pop(key)
+
+		if widgets.has_key("anyname_combo_entries") :
+			for key in widgets["anyname_combo_entries"].keys() :
+				attr_name = key.get_text()
+				object[attr_name] = widgets["anyname_combo_entries"][key].child.get_text()
+				if attr_name == "" or object[attr_name] == "" or object[attr_name] == None :
+					object.pop(attr_name)
+
 		return object
 
 	def show_values(self, object) :
@@ -6137,20 +6304,30 @@ class WidgetGroup :
 										or "yes" == lower_value
 										or "1" == lower_value)
 
+		if widgets.has_key("anyname_combo_entries") :
+			for key in widgets["anyname_combo_entries"].keys() :
+				attr_name = key.get_text()
+				if object.has_key(attr_name) :
+					widgets["anyname_combo_entries"][key].child.set_text(object[attr_name])
+				else :
+					widgets["anyname_combo_entries"][key].child.set_text("")
+
 class ObjectAttrs(WidgetGroup) :
 	dynamic_fill = None
 	dynamic_desc = None
 	static_desc = None
+	dynamic_render = None
 
 	def __init__(self, xml_node, is_newobj = False, change_call_back = None) :
+		self.xml_node = xml_node
 		self.obj_type = xml_node.tagName
 		self.is_newobj = is_newobj
 		self.change_call_back = change_call_back
 		self.render_attrs_vbox()
 
 		if validate_type == "dtd" :
-			self.dtd_elem = manager.get_dtd_elem(self.obj_type)
 			self.verify_values = self.verify_values_dtd
+			self.dtd_elem = manager.get_dtd_elem(self.obj_type)
 			self.attr_list = dtd_elem.get_attr_list()
 			if self.dtd_elem.get_content_model()[1] == [] :
 				self.auto_id = True
@@ -6159,19 +6336,16 @@ class ObjectAttrs(WidgetGroup) :
 			self.render_widgets_dtd()
 		else :
 			self.verify_values = self.verify_values_rng
-			sorted_rng_nodes = manager.sorted_sub_rng_nodes_by_name(self.obj_type)
-			self.attr_node_list = sorted_rng_nodes.get("attribute", [])
-			sub_obj_list = sorted_rng_nodes.get("element", [])
-			if sub_obj_list == [] :
-				self.auto_id = True
-			else :
-				self.auto_id = False
 			self.render_widgets_rng()
 
 		for widget_type in ("combos", "bool_combos", "combo_entries") :
 			if self.widgets.has_key(widget_type) :
 				for widget in self.widgets[widget_type].values() :
 					widget.connect("changed", self.on_changed)
+
+		for widget in self.widgets.get("anyname_combo_entries", {}) :
+			widget.connect("changed", self.on_changed)
+			self.widgets["anyname_combo_entries"][widget].connect("changed", self.on_changed)
 
 		self.update(xml_node)
 
@@ -6186,7 +6360,6 @@ class ObjectAttrs(WidgetGroup) :
 					self.widgets["name_labels"]["id"].hide_all()
 					self.widgets["value_labels"]["id"].hide_all()
 
-			self.optional_expander.set_expanded(True)
 		else :
 			if self.is_newobj :
 				if self.widgets.has_key("combo_entries") and self.widgets["combo_entries"].has_key("id") :
@@ -6196,6 +6369,9 @@ class ObjectAttrs(WidgetGroup) :
 					else :
 						id_prefix = parent_id + "-" + self.obj_type
 					self.widgets["combo_entries"]["id"].child.set_text(id_prefix)
+
+		if self.pref_expand :
+			self.optional_expander.set_expanded(True)
 
 		self.auto_fill()
 
@@ -6217,6 +6393,12 @@ class ObjectAttrs(WidgetGroup) :
 				for widget in self.widgets[widget_type].values() :
 					widget.disconnect_by_func(self.on_changed)
 					widget.connect("changed", self.on_changed_later)
+
+		for widget in self.widgets.get("anyname_combo_entries", {}) :
+			widget.disconnect_by_func(self.on_changed)
+			widget.connect("changed", self.on_changed_later)
+			self.widgets["anyname_combo_entries"][widget].disconnect_by_func(self.on_changed)
+			self.widgets["anyname_combo_entries"][widget].connect("changed", self.on_changed_later)
 
 	def render_attrs_vbox(self) :
 		required_vbox = gtk.VBox()
@@ -6383,10 +6565,75 @@ class ObjectAttrs(WidgetGroup) :
 		optional_row = 0
 		name_label_max_len = 0
 
-		self.attr_list = []
+		attr_is_any_name = False
+		any_attr_decl = []
+		elem_is_any_name = False
+		attr_list = []
+		elem_type_list = []
+		sorted_rng_nodes = manager.sorted_sub_rng_nodes_by_name(self.obj_type)
+		if sorted_rng_nodes != None :
+			attr_rng_nodes = sorted_rng_nodes.get("attribute", [])
+			elem_rng_nodes = sorted_rng_nodes.get("element", [])
+			for rng_node in attr_rng_nodes :
+				name = rng_node[0][1].getAttribute("name")
+				if name == "" :
+					attr_is_any_name = True
+					for decl in ["optional", "zeroOrMore", "oneOrMore"] :
+						if manager.find_decl(rng_node, decl) != 0 :
+							any_attr_decl.append(decl)
+				elif attr_list.count(name) == 0 :
+					attr_list.append(name)
+			for rng_node in elem_rng_nodes :
+				name = rng_node[0][1].getAttribute("name")
+				if name == "" :
+					elem_is_any_name = True
+				elif elem_type_list.count(name) == 0 :
+					elem_type_list.append(name)
+		else :
+			attr_is_any_name = True
+			any_attr_decl.append("zeroOrMore")
+			elem_is_any_name = True
+			attr_rng_nodes = []
+			elem_rng_nodes = None
+
+		self.attr_list = attr_list
+		self.any_attr_decl = any_attr_decl
+		self.attr_rng_nodes = attr_rng_nodes
+
+		other_attrs = []
+		if attr_is_any_name :
+			for attr_name in self.xml_node.attributes.keys() :
+				if attr_list.count(attr_name) == 0 :
+					if attr_name == "id" :
+						other_attrs.insert(0, attr_name)
+					else :
+						other_attrs.append(attr_name)
+		attr_list.extend(other_attrs)
+
+		if  any_attr_decl.count("zeroOrMore") or any_attr_decl.count("oneOrMore") :
+			other_attrs.append("")
+					
+		if elem_rng_nodes  == [] :
+			self.auto_id = True
+		else :
+			self.auto_id = False
+
+		sub_elem_node_list = []
+		for child_node in self.xml_node.childNodes :
+			if child_node.nodeType != xml.dom.Node.ELEMENT_NODE :
+				continue
+			sub_elem_node_list.append(child_node)
+			
+		if len(sub_elem_node_list) == 0 : 
+			self.pref_expand = True
+		else :
+			self.pref_expand = False
+
 		store_list = {}
-		for attr_node in self.attr_node_list :
+		for attr_node in attr_rng_nodes :
 			attr_name = attr_node[0][1].getAttribute("name")
+			if attr_name == "" :
+				continue
 
 			sub_rng_nodes = manager.sorted_sub_rng_nodes_by_node(*attr_node[0])
 			if store_list.get(attr_name) != None :
@@ -6399,7 +6646,6 @@ class ObjectAttrs(WidgetGroup) :
 							store_list[attr_name].append([option, ""])
 				continue
 
-			self.attr_list.append(attr_name)
 			label_text = _(name_cap(attr_name)+":")
 			label = gtk.Label(label_text)
 			label.set_alignment(0, 0.5)
@@ -6495,6 +6741,11 @@ class ObjectAttrs(WidgetGroup) :
 			else:
 				optional_vbox.pack_start(hbox, False, padding=2)
 
+		anyname_combo_entries = {}
+		for attr_name in other_attrs :
+			(name_entry, widget) = self.render_anyname_widgets(attr_name)
+			anyname_combo_entries[name_entry] = widget
+
 		attrs_vbox.show_all()
 
 		for name_label in name_labels.values() :
@@ -6505,8 +6756,38 @@ class ObjectAttrs(WidgetGroup) :
 		widgets["combos"] = combos
 		widgets["bool_combos"] = bool_combos
 		widgets["combo_entries"] = combo_entries
+		widgets["anyname_combo_entries"] = anyname_combo_entries
 
 		self.widgets = widgets
+
+	def render_anyname_widgets(self, attr_name) :
+		any_attr_decl = self.any_attr_decl
+		name_entry = gtk.Entry()
+		name_entry.set_text(attr_name)
+
+		label = gtk.Label(_(":"))
+
+		store = gtk.ListStore(str, str)
+		widget = gtk.ComboBoxEntry(store)
+		cell = gtk.CellRendererText()
+		widget.pack_start(cell, True)
+		widget.add_attribute(cell, 'text', 1)
+
+		hbox = gtk.HBox()
+		hbox.pack_start(name_entry, False, padding=5)
+		hbox.pack_start(label, False)
+		hbox.pack_start(widget, padding=5)
+
+		if any_attr_decl.count("optional") or any_attr_decl.count("zeroOrMore") :
+			self.optional_vbox.pack_start(hbox, False, padding=2)
+		elif any_attr_decl.count("oneOrMore") and len(self.widgets.get("anyname_combo_entries", {})) > 0:
+			self.optional_vbox.pack_start(hbox, False, padding=2)
+		else :
+			self.required_vbox.pack_start(hbox, False, padding=2)
+
+		hbox.show_all()
+
+		return (name_entry, widget)
 
 	def verify_values_rng(self) :
 		widgets = self.widgets
@@ -6515,7 +6796,7 @@ class ObjectAttrs(WidgetGroup) :
 		object = self.get_values()
 
 		choice_attrs = []
-		for attr_node in self.attr_node_list :
+		for attr_node in self.attr_rng_nodes :
 			attr_name = attr_node[0][1].getAttribute("name")
 			if object.has_key(attr_name) or manager.find_decl(attr_node, "optional") != 0 :
 				continue
@@ -6603,6 +6884,24 @@ class ObjectAttrs(WidgetGroup) :
 		if self.change_call_back != None :
 			self.change_call_back()
 
+		if self.dynamic_render != None :
+			self.dynamic_render(widget)
+
+	def dynamic_render(self, widget) :
+		if widget in self.widgets.get("anyname_combo_entries", {}) :
+			changed_attr_name = widget.get_text()
+			if len(changed_attr_name) > 0 :
+				need_add = True
+				for name_widget in self.widgets["anyname_combo_entries"] :
+					if name_widget.get_text() == "" :
+						need_add = False
+						break
+				if need_add :
+					(name_entry, widget) = self.render_anyname_widgets("")
+					self.widgets["anyname_combo_entries"][name_entry] = widget
+					name_entry.connect("changed", self.on_changed_later)
+					widget.connect("changed", self.on_changed_later)
+
 	def show_desc(self, desc) :
 		widgets = self.widgets
 		desc_vbox = self.desc_vbox
@@ -6631,14 +6930,16 @@ class ObjectAttrs(WidgetGroup) :
 			attr_value = self.xml_node.getAttribute(attr_name)
 			if attr_value != None :
 				object_attrs[attr_name] = attr_value
+
 		self.show_values(object_attrs)
 
 	def save(self) :
 		object_attrs = self.get_values()
-		for attr_name in self.attr_list :
-			if object_attrs.has_key(attr_name) :
-				self.xml_node.setAttribute(attr_name, object_attrs.get(attr_name , ""))
-			elif self.xml_node.hasAttribute(attr_name) :
+		for attr_name in object_attrs :
+			self.xml_node.setAttribute(attr_name, object_attrs.get(attr_name , ""))
+
+		for attr_name in self.xml_node.attributes.keys() :
+			if object_attrs.get(attr_name) == None :
 				self.xml_node.removeAttribute(attr_name)
 
 	def save_status(self) :
