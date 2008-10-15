@@ -7029,6 +7029,18 @@ class ObjectAttrs(WidgetGroup) :
 	def restore_status(self, saved_status) :
 		self.optional_expander.set_expanded(saved_status)
 
+	def get_score(self, score_str) :
+		try :
+			score = int(score_str)
+		except :
+			if score_str in ["INFINITY", "infinity", "+INFINITY", "+infinity"] :
+				score = 1000000
+			elif score_str in ["-INFINITY", "-infinity"] :
+				score = -1000000
+			else :
+				score = 0
+		return score
+
 class Primitive(ObjectAttrs) :
 	def dynamic_fill(self, widget) :
 		widgets = self.widgets
@@ -7496,14 +7508,12 @@ class RscOrder(ObjectAttrs) :
 			return None
 
 	def dynamic_desc_rng(self, widget) :
-		attr_rng_nodes = self.attr_rng_nodes
 		attr_list = self.attr_list
 		order = self.get_values()
 		for attr_name in self.attr_list :
-			if attr_name == "first" or attr_name == "then" :
-				if not order.has_key(attr_name) :
-					return [_("* Specify the order of actions on resources"), 
-						_("* Please set the required attributes"), "", ""]
+			if attr_name in ["first", "then"] and not order.has_key(attr_name) :
+				return [_("* Specify the order of actions on resources"), 
+						_("* Please set the required attributes or add resource sets"), "", ""]
 			if order.get(attr_name) == None :
 				if attr_name in ["first-action", "then-action"] :
 					order[attr_name] = "start"
@@ -7517,15 +7527,7 @@ class RscOrder(ObjectAttrs) :
 		desc.append("* %s %s before %s %s"
 				%(order["first-action"].capitalize(), order["first"], order["then-action"], order["then"]))
 
-		try :
-			score = int(order["score"])
-		except :
-			if order["score"] in ["INFINITY", "infinity", "+INFINITY", "+infinity"] :
-				score = 1000000
-			elif order["score"] in ["-INFINITY", "-infinity"] :
-				score = -1000000
-			else :
-				score = 0
+		score = self.get_score(order["score"])
 
 		if score > 0 :
 			desc.append("* If cannot %s %s, do not %s %s"
@@ -7553,6 +7555,8 @@ class RscColocation(ObjectAttrs) :
 	def __init__(self, xml_node, is_newobj = False, change_call_back = None) :
 		if validate_type == "dtd" :
 			self.dynamic_desc = self.dynamic_desc_dtd
+		else :
+			self.dynamic_desc = self.dynamic_desc_rng
 		ObjectAttrs.__init__(self, xml_node, is_newobj, change_call_back)
 
 	def dynamic_desc_dtd(self, widget) :
@@ -7604,6 +7608,62 @@ class RscColocation(ObjectAttrs) :
 		else :
 			desc.append("* Combine this colocation score and the appropriate location scores to decide where to put the resources")
 			desc.append("")
+			desc.append("")
+			desc.append("")
+
+		return desc
+
+	def dynamic_desc_rng(self, widget) :
+		attr_list = self.attr_list
+		colocation = self.get_values()
+		for attr_name in self.attr_list :
+			if attr_name in ["rsc", "with-rsc"] and not colocation.has_key(attr_name) :
+				return [_("* Specify where resources should run relative to other resources"),
+					_("* Please set the required attributes or add resource sets"), ""]
+			if colocation.get(attr_name) == None :
+				colocation[attr_name] = ""
+		desc = []
+
+		score = self.get_score(colocation["score"])
+
+		comb_tip = "* Combine this \"Score\" and corresponding location scores to decide where to place %s" \
+				%colocation["rsc"]
+
+		if score > 0 :
+			if colocation["score"] in ["INFINITY", "infinity", "+INFINITY", "+infinity"] :
+				desc.append("* Make %s %s on the same node as %s %s  ( %s is according to %s )" 
+						%(colocation["rsc"], colocation["rsc-role"], colocation["with-rsc"], colocation["with-rsc-role"],
+						colocation["rsc"], colocation["with-rsc"]))
+				desc.append("* If %s cannot be %s on any node, then %s won't be %s anywhere"
+						%(colocation["with-rsc"], colocation["with-rsc-role"], colocation["rsc"], colocation["rsc-role"]))
+				desc.append("* If %s cannot be %s on any node, %s won't be affected"
+						%(colocation["rsc"], colocation["rsc-role"], colocation["with-rsc"]))
+			else :
+				desc.append("* Prefer to make %s %s on the same node as %s %s  ( %s is according to %s )" 
+					%(colocation["rsc"], colocation["rsc-role"], colocation["with-rsc"], colocation["with-rsc-role"],
+					colocation["rsc"], colocation["with-rsc"])) 
+				desc.append(comb_tip)
+				desc.append("")
+
+
+		elif score < 0 :
+			if colocation["score"] in ["-INFINITY", "-infinity"] :
+				desc.append("* Prevent %s from being %s on the same node as %s %s  ( %s is according to %s )" 
+						%(colocation["rsc"], colocation["rsc-role"], colocation["with-rsc"], colocation["with-rsc-role"],
+						colocation["rsc"], colocation["with-rsc"]))
+				desc.append("* If %s is %s on the only (or every) available node, then %s won't be %s anywhere"
+						%(colocation["with-rsc"], colocation["with-rsc-role"], colocation["rsc"], colocation["rsc-role"]))
+				desc.append("* If %s is %s on the only (or every) available node, %s won't be affected"
+						%(colocation["rsc"], colocation["rsc-role"], colocation["with-rsc"]))
+			else :
+				desc.append("* Prefer to prevent %s from being %s on the same node as %s %s  ( %s is according to %s )" 
+						%(colocation["rsc"], colocation["rsc-role"], colocation["with-rsc"], colocation["with-rsc-role"],
+						colocation["rsc"], colocation["with-rsc"])) 
+				desc.append(comb_tip)
+				desc.append("")
+		else :
+			desc.append("* Please specify a valid \"Score\" to determine the location relationship between %s and %s"
+					%(colocation["rsc"], colocation["with-rsc"]))
 			desc.append("")
 			desc.append("")
 
