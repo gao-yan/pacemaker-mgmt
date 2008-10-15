@@ -6878,7 +6878,8 @@ class ObjectAttrs(WidgetGroup) :
 		choice_attrs = []
 		for attr_node in self.attr_rng_nodes :
 			attr_name = attr_node[0][1].getAttribute("name")
-			if object.has_key(attr_name) or manager.find_decl(attr_node, "optional") != 0 :
+			if object.has_key(attr_name) or manager.find_decl(attr_node, "optional") != 0 \
+					or manager.find_decl(attr_node, "zeroOrMore") != 0 :
 				continue
 
 			if manager.find_decl(attr_node, "choice") == 0  :
@@ -7392,6 +7393,8 @@ class RscOrder(ObjectAttrs) :
 		if validate_type == "dtd" :
 			self.dynamic_fill = self.dynamic_fill_dtd
 			self.dynamic_desc = self.dynamic_desc_dtd
+		else :
+			self.dynamic_desc = self.dynamic_desc_rng
 		ObjectAttrs.__init__(self, xml_node, is_newobj, change_call_back)
 
 	def dynamic_fill_dtd(self, widget) :
@@ -7491,6 +7494,60 @@ class RscOrder(ObjectAttrs) :
 			return "started"
 		else :
 			return None
+
+	def dynamic_desc_rng(self, widget) :
+		attr_rng_nodes = self.attr_rng_nodes
+		attr_list = self.attr_list
+		order = self.get_values()
+		for attr_name in self.attr_list :
+			if attr_name == "first" or attr_name == "then" :
+				if not order.has_key(attr_name) :
+					return [_("* Specify the order of actions on resources"), 
+						_("* Please set the required attributes"), "", ""]
+			if order.get(attr_name) == None :
+				if attr_name in ["first-action", "then-action"] :
+					order[attr_name] = "start"
+				elif attr_name == "score" :
+					order[attr_name] = "INFINITY"
+				elif attr_name == "symmetrical" :
+					order[attr_name] = "true"
+				else :
+					order[attr_name] = ""
+		desc = []
+		desc.append("* %s %s before %s %s"
+				%(order["first-action"].capitalize(), order["first"], order["then-action"], order["then"]))
+
+		try :
+			score = int(order["score"])
+		except :
+			if order["score"] in ["INFINITY", "infinity", "+INFINITY", "+infinity"] :
+				score = 1000000
+			elif order["score"] in ["-INFINITY", "-infinity"] :
+				score = -1000000
+			else :
+				score = 0
+
+		if score > 0 :
+			desc.append("* If cannot %s %s, do not %s %s"
+					%(order["first-action"], order["first"], order["then-action"], order["then"]))
+		else :
+			desc.append("")
+
+		first_action = self.invert_action(order["first-action"])
+		then_action = self.invert_action(order["then-action"])
+		if order["symmetrical"] == "true" and first_action != None and then_action != None :
+			desc.append("* %s %s before %s %s"
+					%(then_action.capitalize(), order["then"], first_action, order["first"]))
+			if score > 0 :
+				desc.append("* If cannot %s %s, do not %s %s"
+						%(then_action, order["then"], first_action, order["first"]))
+			else:
+				desc.append("")
+		else :
+			desc.append("")
+			desc.append("")
+
+		return desc
 
 class RscColocation(ObjectAttrs) :
 	def __init__(self, xml_node, is_newobj = False, change_call_back = None) :
