@@ -44,6 +44,11 @@ usr/lib/libhbmgmtclient.so
 usr/lib/heartbeat-gui/_pymgmt.so
 usr/lib/heartbeat/mgmtdtest
 usr/lib/heartbeat/hbagent
+usr/share/heartbeat-gui/dirty-stopped.png
+usr/share/heartbeat-gui/failed.png
+usr/share/heartbeat-gui/running.png
+usr/share/heartbeat-gui/stopped.png
+usr/share/heartbeat-gui/timeout.png
 usr/share/heartbeat/SNMPAgentSanityCheck
 usr/share/snmp/mibs/LINUX-HA-MIB.mib
 /etc/pam.d/hbmgmtd
