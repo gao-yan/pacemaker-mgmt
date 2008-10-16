@@ -93,17 +93,10 @@ def check_entry_value(glade, entry, label=None) :
 		return False
 	return True
 	
-def pygtk_2_6_newer () :
-	if gtk.pygtk_version[0] > 2 :
+def pygtk_newer(major, minor) :
+	if gtk.pygtk_version[0] > major :
 		return True
-	if gtk.pygtk_version[0] == 2 and  gtk.pygtk_version[1] >= 6 :
-		return True
-	return False
-
-def pygtk_2_4_newer () :
-	if gtk.pygtk_version[0] > 2 :
-		return True
-	if gtk.pygtk_version[0] == 2 and  gtk.pygtk_version[1] >= 4 :
+	if gtk.pygtk_version[0] == major and gtk.pygtk_version[1] >= minor :
 		return True
 	return False
 	
@@ -111,7 +104,7 @@ def add_column(widget, label, value, icon_cell_func = None, editable = False
 		, options=None, call_back=None, visible = True, is_enum = False) :
 	tvcolumn = gtk.TreeViewColumn(label)
 	widget.append_column(tvcolumn)
-	if options == None or options == [] or not pygtk_2_6_newer():
+	if options == None or options == [] or not pygtk_newer(2, 6):
 		cell = gtk.CellRendererText()
 	else :
 		cell = gtk.CellRendererCombo()
@@ -390,7 +383,7 @@ class NVList :
 		tvcolumn = gtk.TreeViewColumn(_("Name"),cell,text=0)
 		widget.append_column(tvcolumn)
 		
-		if pygtk_2_6_newer():
+		if pygtk_newer(2, 6):
 			cell = gtk.CellRendererCombo()
 			model = gtk.ListStore(str)
 			cell.set_property("model",model);
@@ -1054,7 +1047,7 @@ class ManageView :
 		self.vbox = vbox
 		self.widget = vbox
 
-		if pygtk_2_6_newer() :
+		if pygtk_newer(2, 6) :
 			startrsc_icon = gtk.STOCK_MEDIA_PLAY
 			stoprsc_icon = gtk.STOCK_MEDIA_STOP
 		else :
@@ -5078,7 +5071,7 @@ class MainWindow :
 
 		actiongroup = gtk.ActionGroup('haclient')
 		
-		if pygtk_2_6_newer() :
+		if pygtk_newer(2, 6) :
 			login_icon = gtk.STOCK_CONNECT
 			logout_icon = gtk.STOCK_DISCONNECT
 			startrsc_icon = gtk.STOCK_MEDIA_PLAY
@@ -6274,7 +6267,7 @@ class WidgetGroup :
 					object.pop(key)
 		if widgets.has_key("combos") :
 			for key in widgets["combos"].keys() :
-				if pygtk_2_6_newer() :
+				if pygtk_newer(2, 6) :
 					object[key] = widgets["combos"][key].get_active_text()
 				else :
 					iter = widgets["combos"][key].get_active_iter()
@@ -6286,7 +6279,7 @@ class WidgetGroup :
 					object.pop(key)
 		if widgets.has_key("bool_combos") :
 			for key in widgets["bool_combos"].keys() :
-				if pygtk_2_6_newer() :
+				if pygtk_newer(2, 6) :
 					object[key] = widgets["bool_combos"][key].get_active_text()
 				else :
 					iter = widgets["bool_combos"][key].get_active_iter()
@@ -7676,7 +7669,7 @@ class RscColocation(ObjectAttrs) :
 		return desc
 
 if __name__ == '__main__' :
-	if not pygtk_2_4_newer () :
+	if not pygtk_newer(2, 4) :
 		print "the pygtk 2.4 or newer is needed."
 		sys.exit()
 	gc.enable()
