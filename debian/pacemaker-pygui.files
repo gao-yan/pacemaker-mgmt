@@ -49,6 +49,8 @@ usr/share/heartbeat-gui/failed.png
 usr/share/heartbeat-gui/running.png
 usr/share/heartbeat-gui/stopped.png
 usr/share/heartbeat-gui/timeout.png
+usr/share/heartbeat-gui/nodes.png
+usr/share/heartbeat-gui/node.png
 usr/share/heartbeat/SNMPAgentSanityCheck
 usr/share/snmp/mibs/LINUX-HA-MIB.mib
 /etc/pam.d/hbmgmtd
