@@ -559,6 +559,7 @@ class ElementList:
 		treeiter = {}
 		attr_is_any_name = False
 		elem_is_any_name = False
+		id_is_idref = False
 		if validate_type == "dtd" :
 			self.dtd_elem = manager.get_dtd_elem(obj_type)
 			attr_list = self.dtd_elem.get_attr_list()
@@ -577,6 +578,13 @@ class ElementList:
 						attr_is_any_name = True
 					elif attr_list.count(name) == 0 :
 						attr_list.append(name)
+						if name != "id" :
+							continue
+						sub_rng_nodes = manager.sorted_sub_rng_nodes_by_node(*rng_node[0])
+						for sub_rng_node in sub_rng_nodes.get("data", []) :
+							if sub_rng_nodes["data"][0][0][1].getAttribute("type") == "IDREF" :
+								id_is_idref = True
+								break
 				for rng_node in elem_rng_nodes :
 					name = rng_node[0][1].getAttribute("name")
 					if name == "" :
@@ -615,7 +623,7 @@ class ElementList:
 			elif attr_list[i] == "id-ref" :
 				self.idref_index = i + 1
 
-			if attr_list[i] == "id" and not has_elem :
+			if attr_list[i] == "id" and not id_is_idref and not has_elem :
 				visible = False
 			else :
 				visible = True
@@ -6441,7 +6449,7 @@ class ObjectAttrs(WidgetGroup) :
 					self.widgets["value_labels"]["id"].hide_all()
 
 		else :
-			if self.is_newobj :
+			if self.is_newobj and not self.id_is_idref :
 				if self.widgets.has_key("combo_entries") and self.widgets["combo_entries"].has_key("id") :
 					parent_id = self.xml_node.parentNode.getAttribute("id")
 					if parent_id == "" :
@@ -6650,6 +6658,7 @@ class ObjectAttrs(WidgetGroup) :
 		elem_is_any_name = False
 		attr_list = []
 		elem_type_list = []
+		id_is_idref = False
 		sorted_rng_nodes = manager.sorted_sub_rng_nodes_by_name(self.obj_type)
 		if sorted_rng_nodes != None :
 			attr_rng_nodes = sorted_rng_nodes.get("attribute", [])
@@ -6663,6 +6672,14 @@ class ObjectAttrs(WidgetGroup) :
 							any_attr_decl.append(decl)
 				elif attr_list.count(name) == 0 :
 					attr_list.append(name)
+					if name != "id" :
+						continue
+					sub_rng_nodes = manager.sorted_sub_rng_nodes_by_node(*rng_node[0])
+					for sub_rng_node in sub_rng_nodes.get("data", []) :
+						if sub_rng_nodes["data"][0][0][1].getAttribute("type") == "IDREF" :
+							id_is_idref = True
+							break
+
 			for rng_node in elem_rng_nodes :
 				name = rng_node[0][1].getAttribute("name")
 				if name == "" :
@@ -6679,6 +6696,7 @@ class ObjectAttrs(WidgetGroup) :
 		self.attr_list = attr_list
 		self.any_attr_decl = any_attr_decl
 		self.attr_rng_nodes = attr_rng_nodes
+		self.id_is_idref = id_is_idref
 
 		other_attrs = []
 		if attr_is_any_name :
@@ -6692,12 +6710,12 @@ class ObjectAttrs(WidgetGroup) :
 
 		if  any_attr_decl.count("zeroOrMore") or any_attr_decl.count("oneOrMore") :
 			other_attrs.append("")
-					
-		if elem_rng_nodes  == [] :
+
+		if elem_rng_nodes == [] and not id_is_idref :
 			self.auto_id = True
 		else :
 			self.auto_id = False
-
+					
 		sub_elem_node_list = []
 		for child_node in self.xml_node.childNodes :
 			if child_node.nodeType != xml.dom.Node.ELEMENT_NODE :
@@ -6721,7 +6739,7 @@ class ObjectAttrs(WidgetGroup) :
 					for value_node in sub_rng_nodes["value"] :
 						store_list[attr_name].append([value_node[0][1].childNodes[0].data, ""])
 				for sub_rng_node in sub_rng_nodes.get("data", []) :
-					if sub_rng_nodes["data"][0][0][1].getAttribute("type") == "boolean"  :
+					if sub_rng_nodes["data"][0][0][1].getAttribute("type") == "boolean" :
 						for option in ("true", "false") :
 							store_list[attr_name].append([option, ""])
 				continue
@@ -6736,7 +6754,7 @@ class ObjectAttrs(WidgetGroup) :
 			eventbox.add(label)
 			name_labels[attr_name] = label
 
-			if attr_name == "id" and is_newobj == False :
+			if attr_name == "id" and not id_is_idref and is_newobj == False :
 				widget = gtk.Label()
 				widget.set_alignment(0, 0.5)
 				value_labels[attr_name] = widget
@@ -6917,6 +6935,8 @@ class ObjectAttrs(WidgetGroup) :
 			for key in ["rsc", "with-rsc", "first", "then", "from", "to"] :
 				if widgets["combo_entries"].has_key(key) :
 					self.combobox_store_append(widgets["combo_entries"][key], rsc_store)
+			if widgets["combo_entries"].has_key("id") and self.id_is_idref :
+				self.combobox_store_append(widgets["combo_entries"]["id"], rsc_store)
 
 		if validate_type != "dtd" :
 			return
