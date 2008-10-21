@@ -714,11 +714,14 @@ msgstr "活动"
 msgid "active"
 msgstr "活动"
 
-msgid "make the node standby"
+msgid "Make the node standby"
 msgstr "让节点备用"
 
-msgid "make the node active"
+msgid "Make the node active"
 msgstr "让节点活动"
+
+msgid "Group resources by node"
+msgstr "按节点分组资源"
 
 msgid "Make"
 msgstr "让"
@@ -732,10 +735,10 @@ msgstr "启动"
 msgid "Stop"
 msgstr "停止"
 
-msgid "stop resource"
+msgid "Stop resource"
 msgstr "停止资源"
 
-msgid "start resource"
+msgid "Start resource"
 msgstr "启动资源"
 
 msgid "Not Connected"
@@ -765,7 +768,7 @@ msgstr "运行(主)"
 msgid "running (Slave)"
 msgstr "运行(从)"
 
-msgid "cleanup resource"
+msgid "Cleanup resource"
 msgstr "清理资源"
 
 msgid "Cleanup Resource"
@@ -783,7 +786,7 @@ msgstr "所有节点"
 msgid "Default"
 msgstr "缺省"
 
-msgid "work as default"
+msgid "Work as default"
 msgstr "缺省运行"
 
 msgid "Move Up"
@@ -807,7 +810,7 @@ msgstr "目标节点"
 msgid "Force"
 msgstr "强制"
 
-msgid "migrate a resource to specified node"
+msgid "Migrate a resource to specified node"
 msgstr "迁移资源到指定节点"
 
 msgid " not migrated: not-active and no prefered node specified."
@@ -819,7 +822,7 @@ msgstr " 已经运行在 "
 msgid "Clear Migrate Constraints"
 msgstr "清理迁移限制"
 
-msgid "clear constraints created by migrate"
+msgid "Clear constraints created by migrate"
 msgstr "清理迁移时所创建的限制条件"
 
 msgid "all migrated resources"

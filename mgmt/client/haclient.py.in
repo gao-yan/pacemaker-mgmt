@@ -1090,19 +1090,19 @@ class ManageView :
 			stoprsc_icon = "ha-stop-resource"
 
 		rsc_actions = [
-			('startrsc', startrsc_icon, _('Start'), None,_('start resource'), self.on_rsc_action),
-			('stoprsc', stoprsc_icon, _('Stop'), None,_('stop resource'), self.on_rsc_action),
-			('defaultrsc', gtk.STOCK_EXECUTE, _('Default'), None,_('work as default'), self.on_rsc_action),
-			('cleanuprsc', gtk.STOCK_CLEAR, _('Cleanup Resource'), None,_('cleanup resource'), self.on_rsc_cleanup),
-			('migratersc', gtk.STOCK_GO_FORWARD,  _('Migrate Resource'), None, _('migrate a resource to specified node'), 
+			('startrsc', startrsc_icon, _('Start'), None,_('Start resource'), self.on_rsc_action),
+			('stoprsc', stoprsc_icon, _('Stop'), None,_('Stop resource'), self.on_rsc_action),
+			('defaultrsc', gtk.STOCK_EXECUTE, _('Default'), None,_('Work as default'), self.on_rsc_action),
+			('cleanuprsc', gtk.STOCK_CLEAR, _('Cleanup Resource'), None,_('Cleanup resource'), self.on_rsc_cleanup),
+			('migratersc', gtk.STOCK_GO_FORWARD,  _('Migrate Resource'), None, _('Migrate a resource to specified node'), 
 				self.on_migrate_rsc),
 			('unmigratersc', gtk.STOCK_GO_BACK,  _('Clear Migrate Constraints'),
-				None, _('clear constraints created by migrate'),
+				None, _('Clear constraints created by migrate'),
 				self.on_unmigrate_rsc)
 			]
 		node_actions = [
-			('standby', "ha-standby-node", _('Standby'), None,_('make the node standby'), self.on_standby),
-			('active', "ha-active-node", _('Active'), None,_('make the node active'), self.on_active)
+			('standby', "ha-standby-node", _('Standby'), None,_('Make the node standby'), self.on_standby),
+			('active', "ha-active-node", _('Active'), None,_('Make the node active'), self.on_active)
 			]
 
 		toggle_tool_actions = [
