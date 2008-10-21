@@ -2258,6 +2258,15 @@ class EditXMLDlg:
 		dialog.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_NORMAL)
 		dialog.set_size_request(700, 600)
 
+		ui_xml = '''
+		<ui>
+			<toolbar name="toolbar">
+				<toolitem action="import"/>
+				<toolitem action="export"/>
+			</toolbar>
+			
+		</ui>'''
+
 		actions = [
 			("import", gtk.STOCK_REVERT_TO_SAVED, _("Import"), "<control>O",
 				_("Import XML"), self.import_xml),
@@ -2268,16 +2277,23 @@ class EditXMLDlg:
 		action_group = gtk.ActionGroup("rw_xml_file")
 		action_group.add_actions(actions)
 
-		toolbar = gtk.Toolbar()
-		toolbar.set_orientation(gtk.ORIENTATION_HORIZONTAL)
+		uimanager = gtk.UIManager()
+		uimanager.insert_action_group(action_group, 0)
+		uimanager.add_ui_from_string(ui_xml)
+
+		#toolbar = gtk.Toolbar()
+		#toolbar.set_orientation(gtk.ORIENTATION_HORIZONTAL)
+		#toolbar.set_style(gtk.TOOLBAR_BOTH)
+
+		toolbar = uimanager.get_widget('/toolbar')
 		toolbar.set_style(gtk.TOOLBAR_BOTH)
 		dialog.vbox.pack_start(toolbar, False)
 
-		tool_item = action_group.get_action("import").create_tool_item()
-		toolbar.insert(tool_item, -1)
+		#tool_item = action_group.get_action("import").create_tool_item()
+		#toolbar.insert(tool_item, -1)
 
-		tool_item = action_group.get_action("export").create_tool_item()
-		toolbar.insert(tool_item, -1)
+		#tool_item = action_group.get_action("export").create_tool_item()
+		#toolbar.insert(tool_item, -1)
 
 		sw = gtk.ScrolledWindow()
 		sw.set_shadow_type(gtk.SHADOW_IN)
@@ -5132,8 +5148,8 @@ class MainWindow :
 		</ui>'''
 		uimanager = gtk.UIManager()
 
-		self.accelgroup = gtk.AccelGroup()
-		win_widget.add_accel_group(self.accelgroup)
+		#self.accelgroup = gtk.AccelGroup()
+		#win_widget.add_accel_group(self.accelgroup)
 
 		actiongroup = gtk.ActionGroup('haclient')
 		
