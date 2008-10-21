@@ -2168,13 +2168,21 @@ class ObjectView :
 				if self.is_fake_xml_node :
 					manager.cib_do_cmd("cib_create\n%s\n%s"
 							%(str(self.missing_opt_obj_parent_type), str(xml_str)))
+					if manager.failed_reason != "" :
+						msgbox(manager.failed_reason)
+					else :
+						xml_dlg.destroy()
+						break
 				else :
 					manager.cib_do_cmd("cib_replace\n%s\n%s"%(str(self.xml_node.tagName), str(xml_str)))
-				if manager.failed_reason != "" :
-					msgbox(manager.failed_reason)
-				else :
-					xml_dlg.destroy()
-					break
+					if manager.failed_reason != "" :
+						msgbox(manager.failed_reason)
+					else :
+						self.xml_node.parentNode.replaceChild(new_xml_node, self.xml_node)
+						self.xml_node = new_xml_node
+						self.update()
+						xml_dlg.destroy()
+						break
 
 	def validate(self) :
 		passed = True
@@ -2909,15 +2917,17 @@ class ElementNotebook :
 					self.change_call_back()
 				return
 			else :
-				if new_xml_node.getAttribute("id") != "" :
-					xml_str = new_xml_node.toxml().replace("\n", "")
-				else :
-					xml_str = new_xml_node.parentNode.toxml().replace("\n", "")
+				#if new_xml_node.getAttribute("id") != "" :
+				#	xml_str = new_xml_node.toxml().replace("\n", "")
+				#else :
+				#	xml_str = new_xml_node.parentNode.toxml().replace("\n", "")
+				xml_str = self.xml_node.toxml().replace("\n", "")
 
 				manager.cib_do_cmd("cib_replace\n%s\n%s"%(str(self.obj_type), str(xml_str)))
 				if manager.failed_reason != "" :
 					msgbox(manager.failed_reason)
 				else :
+					self.on_changed()
 					objdlg.destroy()
 					return
 
@@ -2976,6 +2986,9 @@ class ElementNotebook :
 			manager.cib_do_cmd("cib_replace\n%s\n%s"%(str(self.obj_type), str(xml_str)))
 			if manager.failed_reason != "" :
 				msgbox(manager.failed_reason)
+		else :
+			if self.change_call_back != None :
+				self.change_call_back()
 		self.on_changed()
 
 	def on_down(self, widget) :
@@ -3012,6 +3025,9 @@ class ElementNotebook :
 			manager.cib_do_cmd("cib_replace\n%s\n%s"%(str(self.obj_type), str(xml_str)))
 			if manager.failed_reason != "" :
 				msgbox(manager.failed_reason)
+		else :
+			if self.change_call_back != None :
+				self.change_call_back()
 		self.on_changed()
 
 	def on_changed(self) :
@@ -5432,7 +5448,6 @@ class Manager :
 
 	def update_cib_xml(self) :
 		global validate_type
-		self.xml_nodes = {}
 		xml_nodes = self.xml_nodes
 		cib_xml = self.cib_do_cmd("cib_query\ncib")
 		if self.failed_reason != "" :
