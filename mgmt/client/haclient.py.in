@@ -2619,7 +2619,8 @@ class ElementNotebook :
 		self.del_btn.set_sensitive(selected_node != None)
 
 		elem_list = self.get_elem_list(page_num)
-		if elem_list == None :
+		if elem_list == None or selected_node == None :
+			self.show_sub_attrs(None)
 			return
 
 		(model, iter) = elem_list.tree.get_selection().get_selected()
