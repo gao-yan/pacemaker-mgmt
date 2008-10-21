@@ -1047,6 +1047,41 @@ class ManageView :
 		self.vbox = vbox
 		self.widget = vbox
 
+		ui_xml = '''
+		<ui>
+			<popup name="resource_popup">
+				<menuitem action="startrsc"/>
+				<menuitem action="stoprsc"/>
+				<menuitem action="defaultrsc"/>
+				<menuitem action="cleanuprsc"/>
+				<menuitem action="migratersc"/>
+				<menuitem action="unmigratersc"/>
+			</popup>
+			<popup action="node_popup">
+				<menuitem action="standby"/>
+				<menuitem action="active"/>
+			</popup>
+			<popup action="tools_popup">
+				<menuitem action="group-by-node"/>
+			</popup>
+			<toolbar name="toolbar">
+				<toolitem action="startrsc"/>
+				<toolitem action="stoprsc"/>
+				<toolitem action="defaultrsc"/>
+				<toolitem action="cleanuprsc"/>
+				<toolitem action="migratersc"/>
+				<toolitem action="unmigratersc"/>
+				<separator/>
+				<toolitem action="standby"/>
+				<toolitem action="active"/>
+				<separator/>
+				<toolitem action="group-by-node"/>
+			</toolbar>
+		</ui>'''
+
+		uimanager = gtk.UIManager()
+		actiongroup = gtk.ActionGroup('management')
+
 		if pygtk_newer(2, 6) :
 			startrsc_icon = gtk.STOCK_MEDIA_PLAY
 			stoprsc_icon = gtk.STOCK_MEDIA_STOP
@@ -1074,52 +1109,66 @@ class ManageView :
 			('group-by-node', gtk.STOCK_SORT_DESCENDING, _('Group By Node'), None, _('Group resources by node'), self.change_group_mode),
 			]
 
-		toolbar = gtk.Toolbar()
-		toolbar.set_orientation(gtk.ORIENTATION_HORIZONTAL)
-		toolbar.set_style(gtk.TOOLBAR_ICONS)
-		self.vbox.pack_start(toolbar, False)
+		#toolbar = gtk.Toolbar()
+		#toolbar.set_orientation(gtk.ORIENTATION_HORIZONTAL)
+		#toolbar.set_style(gtk.TOOLBAR_ICONS)
+		#self.vbox.pack_start(toolbar, False)
 
 		rsc_action_group = gtk.ActionGroup("rsc_mgmt")
 		rsc_action_group.add_actions(rsc_actions)
 		self.rsc_action_group = rsc_action_group
 
-		for action_entry in rsc_actions :
-			action_name = action_entry[0]
-			action = rsc_action_group.get_action(action_name)
-			tool_item = action.create_tool_item()
-			toolbar.insert(tool_item, -1)
-			action.set_accel_group(window.accelgroup)
+		uimanager.insert_action_group(rsc_action_group, 0)
 
-		separator = gtk.SeparatorToolItem()
-		toolbar.insert(separator, -1)
+		#for action_entry in rsc_actions :
+		#	action_name = action_entry[0]
+		#	action = rsc_action_group.get_action(action_name)
+		#	tool_item = action.create_tool_item()
+		#	toolbar.insert(tool_item, -1)
+		#	action.set_accel_group(window.accelgroup)
+
+		#separator = gtk.SeparatorToolItem()
+		#toolbar.insert(separator, -1)
 
 		node_action_group = gtk.ActionGroup("node_mgmt")
 		node_action_group.add_actions(node_actions)
 		self.node_action_group = node_action_group
 
-		for action_entry in node_actions :
-			action_name = action_entry[0]
-			action = node_action_group.get_action(action_name)
-			tool_item = action.create_tool_item()
-			toolbar.insert(tool_item, -1)
-			action.set_accel_group(window.accelgroup)
+		uimanager.insert_action_group(node_action_group, 1)
 
-		separator = gtk.SeparatorToolItem()
-		toolbar.insert(separator, -1)
+		#for action_entry in node_actions :
+		#	action_name = action_entry[0]
+		#	action = node_action_group.get_action(action_name)
+		#	tool_item = action.create_tool_item()
+		#	toolbar.insert(tool_item, -1)
+		#	action.set_accel_group(window.accelgroup)
+
+		#separator = gtk.SeparatorToolItem()
+		#toolbar.insert(separator, -1)
 
 		self.toggle_tool_action_group = gtk.ActionGroup("toggle_tools")
 		self.toggle_tool_action_group.add_toggle_actions(toggle_tool_actions)
 
-		for action_entry in toggle_tool_actions :
-			action_name = action_entry[0]
-			action = self.toggle_tool_action_group.get_action(action_name)
-			tool_item = action.create_tool_item()
-			toolbar.insert(tool_item, -1)
-			action.set_accel_group(window.accelgroup)
+		uimanager.insert_action_group(self.toggle_tool_action_group, 2)
+
+		#for action_entry in toggle_tool_actions :
+		#	action_name = action_entry[0]
+		#	action = self.toggle_tool_action_group.get_action(action_name)
+		#	tool_item = action.create_tool_item()
+		#	toolbar.insert(tool_item, -1)
+		#	action.set_accel_group(window.accelgroup)
+
+		uimanager.add_ui_from_string(ui_xml)
+		self.uimanager = uimanager
+
+		toolbar = uimanager.get_widget('/toolbar')
+		toolbar.set_style(gtk.TOOLBAR_ICONS)
+		self.vbox.pack_start(toolbar, False)
 
 		self.manage_tree = ManageTree()
 		self.vbox.pack_start(self.manage_tree.widget)
 		self.manage_tree.tree.connect("cursor-changed", self.on_after_show)
+		self.manage_tree.tree.connect("event-after", self.on_right_click)
 
 		"""notebook =  gtk.Notebook()
 		self.notebook = notebook
@@ -1136,9 +1185,21 @@ class ManageView :
 		tab_label = gtk.Label(_("Scores"))
 		notebook.append_page(scores_vbox, tab_label)
 		self.scores_vbox = scores_vbox"""
-	
 
 		self.update()
+
+	def on_right_click(self, widget, event) :
+		if event.type == gtk.gdk.BUTTON_PRESS and event.button == 3 :
+			menu = None
+			(model, iter) = self.manage_tree.tree.get_selection().get_selected()
+			cur_type = model.get_value(iter, 0)
+			if cur_type in ["node"] :
+				menu = self.uimanager.get_widget("/node_popup")
+			elif cur_type in ["primitive", "group", "clone", "master"] :
+				menu = self.uimanager.get_widget("/resource_popup")
+			else :
+				menu = self.uimanager.get_widget("/tools_popup")
+			menu.popup(None, None, None, event.button, event.time)
 
 	def change_group_mode(self, action) :
 		self.update()
@@ -1341,22 +1402,10 @@ class ManageView :
 			if manager.failed_reason != "" :
 				msgbox(manager.failed_reason)
 
-
 class ManageTree :
 	store = None
 	tree = None
 	last_iter = None
-	def on_right_click(self, widget, event) :
-		if event.type == gtk.gdk.BUTTON_PRESS and event.button == 3 :
-			menu = None
-			if window.cur_type in ["node"] :
-				menu = window.uimanager.get_widget("/node_popup")
-			elif window.cur_type in ["primitive", "group", "clone", "master"] :
-				menu = window.uimanager.get_widget("/resource_popup")
-			else :
-				menu = window.uimanager.get_widget("/tools_popup")
-			menu.popup(None, None, None, event.button, event.time)
-
 	def __init__(self) :
 		treeiter = {}
 		self.store = gtk.TreeStore(str, str, str, str)
