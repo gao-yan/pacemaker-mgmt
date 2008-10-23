@@ -70,8 +70,14 @@ def debug(string) :
 	syslog.syslog(string)
 	print string
 	
-def uuid() :
-	return os.popen("uuidgen").readline()[:-1]
+# If the built-in uuid module is available, don't use the external command uuidgen
+try :
+	import uuid
+	def gen_uuid() :
+		return str(uuid.uuid4())
+except ImportError :
+	def gen_uuid() :
+		return os.popen("uuidgen").readline()[:-1]
 
 def cond(condition, vtrue, vfalse) :
 	if condition :
@@ -248,7 +254,7 @@ def kvbox(title, fields, auto_fill = None) :
 			passed = True
 			for row in range(len(fields)):
 				if fields[row].auto_gen :
-					kv[fields[row].key] = uuid()
+					kv[fields[row].key] = gen_uuid()
 					continue
 				if fields[row].options != None and fields[row].options != []:
 					combo = widgets[row]
@@ -3763,7 +3769,7 @@ class AddNativeDlg :
 					continue
 
 				if param["required"] == "1" :
-					param["id"] = uuid()
+					param["id"] = gen_uuid()
 					self.param_list.insert(param)
 			
 	def on_clone_changed(self, widget, glade) :
@@ -4634,7 +4640,7 @@ class MainWindow :
 		self.update_ui()
 	
 	def on_test(self, action) :
-		print uuid()
+		print gen_uuid()
 			 
 	def on_standby(self, action) :
 		if confirmbox(_("Make") +" " +self.cur_name + " " +_("standby")+"?") == gtk.RESPONSE_YES:
@@ -4833,7 +4839,7 @@ class MainWindow :
 				location["boolean_op"] = ""
 				location["exprs"] = []
 				expr = {}
-				expr["id"] = uuid() 
+				expr["id"] = gen_uuid() 
 				expr["attribute"] = "#uname"
 				expr["operation"] = "eq"
 				expr["value"] = migrate["to_node"]
@@ -4850,7 +4856,7 @@ class MainWindow :
 					location["boolean_op"] = ""
 					location["exprs"] = []
 					expr = {}
-					expr["id"] = uuid() 
+					expr["id"] = gen_uuid() 
 					expr["attribute"] = "#uname"
 					expr["operation"] = "eq"
 					expr["value"] = running_on[0]
@@ -6564,7 +6570,7 @@ class ObjectAttrs(WidgetGroup) :
 		if self.auto_id == True :
 			if self.is_newobj :
 				if self.widgets.has_key("combo_entries") and self.widgets["combo_entries"].has_key("id") :
-					self.widgets["combo_entries"]["id"].child.set_text(self.obj_type + "-" + uuid())
+					self.widgets["combo_entries"]["id"].child.set_text(self.obj_type + "-" + gen_uuid())
 					self.widgets["combo_entries"]["id"].hide_all()
 			else :
 				if self.widgets.has_key("name_labels") and self.widgets["name_labels"].has_key("id") :
