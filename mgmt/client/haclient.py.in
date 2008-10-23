@@ -1402,6 +1402,17 @@ class ManageView :
 			if manager.failed_reason != "" :
 				msgbox(manager.failed_reason)
 
+	def save_status(self) :
+		group_by_node = self.toggle_tool_action_group.get_action("group-by-node").get_active()
+		return (group_by_node, )
+
+	def restore_status(self, view_status) :
+		#if view_status == None :
+		#	return
+		(group_by_node, ) = view_status
+		if group_by_node :
+			self.toggle_tool_action_group.get_action("group-by-node").set_active(group_by_node)
+
 class ManageTree :
 	store = None
 	tree = None
@@ -1662,6 +1673,10 @@ class MainTree(ElementList) :
 
 	def on_cursor_changed(self, treeview, selection) :
 		(model, iter) = selection.get_selected()
+
+		if window.cur_type != None and window.cur_view != None :
+			window.view_status[window.cur_type] = window.cur_view.save_status()
+
 		#if not window.can_change_view() :
 		#	if self.last_iter != None :
 		#		selection.select_iter(self.last_iter)
@@ -1995,6 +2010,7 @@ class ClusterView(View) :
 			
 	def __init__(self) :
 		notebook =  gtk.Notebook()
+		self.notebook = notebook
 		self.widget = notebook
 
 		cluster_info_vbox = gtk.VBox()
@@ -2011,16 +2027,27 @@ class ClusterView(View) :
 
 		self.update()
 
+	def save_status(self) :
+		page_num = self.notebook.get_current_page()
+		return (page_num,)
+
+	def restore_status(self, view_status) :
+		#if view_status == None :
+		#	return
+		(page_num,) = view_status
+		self.notebook.set_current_page(page_num)
+
 class ObjectView :
 	obj_attrs = None
 	elem_notebook = None
-	show_mode = 0
 	
-	def __init__(self, xml_node, is_newobj = False, change_call_back = None, is_topview = False, missing_opt_obj_parent_type = None) :
+	def __init__(self, xml_node, is_newobj = False, change_call_back = None, is_topview = False,
+			missing_opt_obj_parent_type = None, show_mode = 0) :
 		self.is_newobj = is_newobj
+		self.change_call_back = change_call_back
 		self.is_topview = is_topview
 		self.missing_opt_obj_parent_type = missing_opt_obj_parent_type
-		self.change_call_back = change_call_back
+		self.show_mode = show_mode
 		vbox = gtk.VBox()
 		self.vbox = vbox
 		self.widget = vbox
@@ -2055,13 +2082,7 @@ class ObjectView :
 			self.init_xml_node = self.xml_node.cloneNode(True)
 			self.is_fake_xml_node = False
 
-		attrs_status = False
-		if self.obj_attrs != None :
-			attrs_status = self.obj_attrs.save_status()
-
-		notebook_status = None
-		if self.elem_notebook != None :
-			notebook_status = self.elem_notebook.save_status()
+		objview_status = self.save_status()
 
 		for child in self.vbox.get_children() :
 			if child != self.hbox :
@@ -2163,17 +2184,16 @@ class ObjectView :
 			else :
 				obj_attrs = ObjectAttrs(self.xml_node, is_newobj, self.change_call_back)
 
-			obj_attrs.restore_status(attrs_status)
 			obj_box.pack_start(obj_attrs.attrs_vbox, False)
 			self.obj_attrs = obj_attrs
 			
 		if has_elem :
 			self.elem_notebook = ElementNotebook(self.xml_node, self.is_topview, self.change_call_back,
 						self.show_mode, self.is_fake_xml_node, self.missing_opt_obj_parent_type)
-			if notebook_status != None :
-				self.elem_notebook.restore_status(notebook_status)
 			obj_box.pack_start(self.elem_notebook.widget, True, padding = 5)
 			self.vbox.pack_start(self.elem_notebook.bbox, False, padding = 2)
+
+		self.restore_status(objview_status)
 
 		self.vbox.show_all()
 		self.on_after_show()
@@ -2181,6 +2201,25 @@ class ObjectView :
 		if not has_elem :
 			self.label.hide_all()
 			self.mode_combobox.hide_all()
+
+	def save_status(self) :
+		attrs_status = None
+		if self.obj_attrs != None :
+			attrs_status = self.obj_attrs.save_status()
+
+		notebook_status = None
+		if self.elem_notebook != None :
+			notebook_status = self.elem_notebook.save_status()
+		return (self.show_mode, attrs_status, notebook_status)
+
+	def restore_status(self, objview_status) :
+		#if objview_status == None :
+		#	return
+		(show_mode, attrs_status, notebook_status) = objview_status
+		if self.obj_attrs != None and attrs_status != None :
+			self.obj_attrs.restore_status(attrs_status)
+		if self.elem_notebook != None and notebook_status != None :
+			self.elem_notebook.restore_status(notebook_status)
 
 	def on_after_show(self) :
 		if self.obj_attrs != None :
@@ -3101,23 +3140,29 @@ class ElementNotebook :
 		self.update()
 		if notebook_status != None :
 			self.restore_status(notebook_status)
-		self.on_after_show()
+		else :
+			self.on_after_show()
 
 	def save_status(self) :
 		elem_list =  self.get_elem_list()
 		if elem_list == None :
 			return None
 		page_type = elem_list.obj_type
-		tree_status =  elem_list.save_tree_status()
+
+		tree_status = {}
+		for elem_list in self.elem_lists :
+			tree_status[elem_list.obj_type] =  elem_list.save_tree_status()
 		return (page_type, tree_status)
 
 	def restore_status(self, notebook_status) :
 		(page_type, tree_status) = notebook_status
 		for i in range(len(self.elem_lists)) :
-			if self.elem_lists[i].obj_type == page_type :
+			obj_type = self.elem_lists[i].obj_type
+			if obj_type == page_type :
 				self.notebook.set_current_page(i)
-				self.elem_lists[i].restore_tree_status(tree_status)
-				break
+			if tree_status.get(obj_type) != None :
+				self.elem_lists[i].restore_tree_status(tree_status[obj_type])
+		self.on_after_show()
 
 class CRMConfigView(View) :
 	name = "clusterview"
@@ -4419,6 +4464,7 @@ class MainWindow :
 	main_view = None
 	statusbar = None
 	tree = None
+	view_status = {}
 	
 	# utility functions
 	def set_action_sensitive(self, action, sensitive) :
@@ -4507,16 +4553,23 @@ class MainWindow :
 		for child in self.mainview_sw.get_children() :
 			self.mainview_sw.remove(child)
 
+		if self.view_status.get(type) != None :
+			last_show_mode = self.view_status[type][0]
+		else :
+			last_show_mode = 0
+
 		self.cur_type, self.cur_name, self.cur_status = type, name, status
 		self.update_ui()
 		if type == "configuration" :
 			self.cur_view = ClusterView()
 		elif type in ["crm_config", "nodes", "resources", "constraints", "status", "rsc_defaults", "op_defaults"] \
 				and manager.xml_nodes["cib"].getElementsByTagName(type) != [] :
-			self.cur_view = ObjectView(manager.xml_nodes["cib"].getElementsByTagName(type)[0], is_topview = True)
+			self.cur_view = ObjectView(manager.xml_nodes["cib"].getElementsByTagName(type)[0],
+					is_topview = True, show_mode = last_show_mode)
 		elif type in ["rsc_defaults", "op_defaults"] \
 				and manager.xml_nodes["cib"].getElementsByTagName(type) == [] :
-			self.cur_view = ObjectView(type, is_topview = True, missing_opt_obj_parent_type = "configuration")
+			self.cur_view = ObjectView(type, is_topview = True, missing_opt_obj_parent_type = "configuration",
+					show_mode = last_show_mode)
 		elif type == "node" and status not in [_("never started"),_("ping node"),_("unknown type")]:
 			self.cur_view = NodeView(name)
 		elif type == "management" :
@@ -4537,6 +4590,8 @@ class MainWindow :
 			#self.cur_view = View()
 		self.mainview_sw.add_with_viewport(self.cur_view.widget)
 		#self.cur_view.on_after_show()
+		if self.view_status.get(type) != None :
+			self.cur_view.restore_status(self.view_status[type])
 			
 	# ui event handler	
 	def on_quit(self, action) :
