@@ -2488,6 +2488,7 @@ class EditXMLDlg:
 
 class ElementNotebook :
 	notebook = None
+	new_page_type = None
 	def __init__(self, xml_node, is_topview = False, change_call_back = None, show_mode = 0,
 				is_fake_xml_node = False, missing_opt_obj_parent_type = None) :
 		self.is_topview = is_topview
@@ -2948,6 +2949,7 @@ class ElementNotebook :
 				return
 			if not self.is_topview :
 				objdlg.destroy()
+				self.new_page_type = new_xml_node.tagName
 				self.on_changed()
 				if self.change_call_back != None :
 					self.change_call_back()
@@ -2967,6 +2969,7 @@ class ElementNotebook :
 					msgbox(manager.failed_reason)
 				else :
 					objdlg.destroy()
+					self.new_page_type = new_xml_node.tagName
 					return
 
 	def get_elem_options_dtd(self) :
@@ -3155,16 +3158,25 @@ class ElementNotebook :
 			return None
 		page_type = elem_list.obj_type
 
+		new_page_type = self.new_page_type
+		self.new_page_type = None
+
 		tree_status = {}
 		for elem_list in self.elem_lists :
 			tree_status[elem_list.obj_type] =  elem_list.save_tree_status()
-		return (page_type, tree_status)
+		return (page_type, new_page_type, tree_status)
 
 	def restore_status(self, notebook_status) :
-		(page_type, tree_status) = notebook_status
+		(page_type, new_page_type, tree_status) = notebook_status
+
+		if new_page_type != None :
+			set_page_type = new_page_type
+		else :
+			set_page_type = page_type
+
 		for i in range(len(self.elem_lists)) :
 			obj_type = self.elem_lists[i].obj_type
-			if obj_type == page_type :
+			if obj_type == set_page_type :
 				self.notebook.set_current_page(i)
 			if tree_status.get(obj_type) != None :
 				self.elem_lists[i].restore_tree_status(tree_status[obj_type])
