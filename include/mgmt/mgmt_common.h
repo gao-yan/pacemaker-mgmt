@@ -883,6 +883,16 @@ or
 
 /*
 description:
+	return the translated string of a lrm_rsc_op return code
+format:
+	MSG_LRM_OP_RC2STR RC
+return:
+	MSG_OK STRING
+*/
+#define MSG_LRM_OP_RC2STR	"lrm_op_rc2str"
+
+/*
+description:
 	generate cluster report and return the list of files
 format:
 	MSG_GEN_CLUSTER_REPORT ftime ttime

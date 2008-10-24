@@ -6282,6 +6282,9 @@ class Manager :
 	def get_rsc_providers(self, rsc_class, rsc_type) :
 		return self.query("rsc_providers\n%s\n%s"%(rsc_class, rsc_type),True)
 
+	def lrm_op_rc2str(self, rc) :
+		return self.query("lrm_op_rc2str\n%s"%rc, True)
+
 	def rsc_exists(self, rsc_id) :
 		return rsc_id in self.get_all_rsc()
 

@@ -22,6 +22,7 @@
 #include <pygui_internal.h>
 
 #include <unistd.h>
+#include <stdlib.h>
 #include <string.h>
 #include <glib.h>
 
@@ -38,6 +39,7 @@ static char* on_rsc_class(char* argv[], int argc);
 static char* on_rsc_type(char* argv[], int argc);
 static char* on_rsc_provider(char* argv[], int argc);
 static char* on_rsc_metadata(char* argv[], int argc);
+static char* on_lrm_op_rc2str(char* argv[], int argc);
 
 
 ll_lrm_t* lrm = NULL;
@@ -70,6 +72,7 @@ init_lrm(void)
 	reg_msg(MSG_RSC_TYPES, on_rsc_type);
 	reg_msg(MSG_RSC_PROVIDERS, on_rsc_provider);
 	reg_msg(MSG_RSC_METADATA, on_rsc_metadata);
+	reg_msg(MSG_LRM_OP_RC2STR, on_lrm_op_rc2str);
 	return 0;
 }	
 
@@ -148,4 +151,15 @@ on_rsc_metadata(char* argv[], int argc)
 		return ret;
 	}
 	return strdup(MSG_FAIL);
+}
+
+char*
+on_lrm_op_rc2str(char* argv[], int argc)
+{
+	int rc;
+	char* ret = strdup(MSG_OK);
+
+	rc = atoi(argv[1]);
+	ret = mgmt_msg_append(ret, execra_code2string(rc));
+	return ret;
 }
