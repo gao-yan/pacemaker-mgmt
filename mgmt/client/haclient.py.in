@@ -6111,6 +6111,9 @@ class Manager :
 	def true_obj_id(self, obj_id) :
 		return obj_id.split(":")[0]
 
+	def op_status2str(self, op_status) :
+		return self.query("op_status2str\n%s"%op_status, True)
+
 	def get_rsc_info(self, rsc) :
 		rsc_attr_names = ["id", "description", "class", "provider", 
 				"type", "is_managed","restart_type",

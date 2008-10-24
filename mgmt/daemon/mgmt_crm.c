@@ -91,6 +91,7 @@ static char* on_get_rsc_attrs(char* argv[], int argc);
 static char* on_update_rsc_attr(char* argv[], int argc);
 static char* on_get_rsc_running_on(char* argv[], int argc);
 static char* on_get_rsc_status(char* argv[], int argc);
+static char* on_op_status2str(char* argv[], int argc);
 
 static char* on_set_rsc_attr(char* argv[], int argc);
 static char* on_get_rsc_attr(char* argv[], int argc);
@@ -537,6 +538,7 @@ init_crm(int cache_cib)
 	reg_msg(MSG_RSC_STATUS, on_get_rsc_status);
 	reg_msg(MSG_RSC_TYPE, on_get_rsc_type);
 	reg_msg(MSG_UP_RSC_ATTR, on_update_rsc_attr);
+	reg_msg(MSG_OP_STATUS2STR, on_op_status2str);
 
 	reg_msg(MSG_SET_RSC_ATTR, on_set_rsc_attr);
 	reg_msg(MSG_GET_RSC_ATTR, on_get_rsc_attr);
@@ -1788,6 +1790,17 @@ on_get_rsc_type(char* argv[], int argc)
 			break;
 	}
 	free_data_set(data_set);
+	return ret;
+}
+
+char*
+on_op_status2str(char* argv[], int argc)
+{
+	int op_status;
+	char* ret = strdup(MSG_OK);
+
+	op_status = atoi(argv[1]);
+	ret = mgmt_msg_append(ret, op_status2text(op_status));
 	return ret;
 }
 

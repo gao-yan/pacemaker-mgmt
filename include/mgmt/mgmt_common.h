@@ -429,6 +429,16 @@ or
 
 /*
 description:
+	return the translated string of a operation status
+format:
+	MSG_OP_STATUS2STR STATUS
+return:
+	MSG_OK STRING
+*/
+#define MSG_OP_STATUS2STR       "op_status2str"
+
+/*
+description:
 	add a new resource
 format:
 	MSG_ADD_RSC rsc_id rsc_class rsc_type rsc_provider group("" for NONE)
