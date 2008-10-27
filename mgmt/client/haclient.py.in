@@ -1393,10 +1393,10 @@ class ManageView :
 			cur_type in all_rsc_type)
 
 	def update(self, xml_node = None) :
-		group_by_node = self.toggle_tool_action_group.get_action("group-by-node").get_active()
-		self.manage_tree.update(group_by_node)
+		view_status = self.save_status()
+		self.manage_tree.update(view_status[0])
+		self.restore_status(view_status)
 		self.widget.show_all()
-		self.on_after_show()
 
 	def on_rsc_action(self, action) :
 		(cur_type, cur_name) = self.manage_tree.get_selected_node()
@@ -1548,14 +1548,17 @@ class ManageView :
 
 	def save_status(self) :
 		group_by_node = self.toggle_tool_action_group.get_action("group-by-node").get_active()
-		return (group_by_node, )
+		tree_status = self.manage_tree.save_tree_status()
+		return (group_by_node, tree_status)
 
 	def restore_status(self, view_status) :
 		#if view_status == None :
 		#	return
-		(group_by_node, ) = view_status
+		(group_by_node, tree_status) = view_status
 		if group_by_node :
 			self.toggle_tool_action_group.get_action("group-by-node").set_active(group_by_node)
+		self.manage_tree.restore_tree_status(tree_status)
+		self.on_after_show()
 
 class ManageTree :
 	store = None
@@ -1656,14 +1659,13 @@ class ManageTree :
 		type = model.get_value(iter, 0)
 		name = model.get_value(iter, 1)
 		expand_status[(type, name)] = self.tree.row_expanded(path)
-
 	
 	def restore_iter_status(self, model, path, iter, user_data):
 		(select_name, select_type, select_path, expand_status) = user_data
 		type = model.get_value(iter, 0)
 		name = model.get_value(iter, 1)
 		path = model.get_path(iter)
-		if name == select_name and type == select_type and path == select_path:
+		if name == select_name and type == select_type :
 			self.tree.get_selection().select_iter(iter)
 		if expand_status.has_key((name,type)) :
 			if expand_status[name, type] :
@@ -1689,10 +1691,12 @@ class ManageTree :
 
 	def restore_tree_status(self, tree_status) :
 		self.store.foreach(self.restore_iter_status, tree_status)
+		(name, type, path, expand_status) = tree_status
+		if  name == None :
+			#self.tree.get_selection().select_iter(root)
+			self.tree.expand_all()
 		
 	def update(self, group_by_node = False) :
-		tree_status = self.save_tree_status()		
-		
 		self.store.clear()
 		if not manager.connected :
 			return
@@ -1747,13 +1751,6 @@ class ManageTree :
 			rscs = manager.get_top_rsc()
 			for rsc in rscs :
 				self.add_rsc(rscs_root, rsc)
-		
-		self.restore_tree_status(tree_status)
-		(name, type, path, expand_status) = tree_status
-		if  name == None :
-			#self.tree.get_selection().select_iter(root)
-			self.tree.expand_all()
- 		#self.on_cursor_changed(self.widget, self.widget.get_selection())
 		
 	def add_rsc(self, parent, rsc) :
 		type = manager.get_rsc_type(rsc)
