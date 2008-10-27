@@ -1048,10 +1048,11 @@ class Tree :
  				self.add_rsc(node_iter, rsc)
 class ManageView :
 	def __init__(self) :
-		vbox = gtk.VBox()
-		#vbox.set_border_width(5)
-		self.vbox = vbox
-		self.widget = vbox
+		vpaned = gtk.VPaned()
+		self.widget = vpaned
+
+		top_vbox = gtk.VBox()
+		vpaned.add1(top_vbox)
 
 		ui_xml = '''
 		<ui>
@@ -1169,12 +1170,15 @@ class ManageView :
 
 		toolbar = uimanager.get_widget('/toolbar')
 		toolbar.set_style(gtk.TOOLBAR_ICONS)
-		self.vbox.pack_start(toolbar, False)
+		top_vbox.pack_start(toolbar, False)
 
 		self.manage_tree = ManageTree()
-		self.vbox.pack_start(self.manage_tree.widget)
+		top_vbox.pack_start(self.manage_tree.widget)
 		self.manage_tree.tree.connect("cursor-changed", self.on_after_show)
 		self.manage_tree.tree.connect("event-after", self.on_right_click)
+
+		self.sub_vbox = gtk.VBox()
+		vpaned.add2(self.sub_vbox)
 
 		"""notebook =  gtk.Notebook()
 		self.notebook = notebook
@@ -1211,6 +1215,9 @@ class ManageView :
 		self.update()
 
 	def on_after_show(self, treeview = None) :
+		for child in self.sub_vbox.get_children() :
+			self.sub_vbox.remove(child)
+
 		(model, iter) = self.manage_tree.tree.get_selection().get_selected()
 		if iter == None :
 			self.update_ui(None, None)
@@ -1219,6 +1226,137 @@ class ManageView :
 		cur_type = model.get_value(iter, 0)
 		cur_status = model.get_value(iter, 2)
 		self.update_ui(cur_type, cur_status)
+
+		id = model.get_value(iter, 1)
+		if cur_type == "primitive" :
+			self.show_operations(id)
+
+	def show_operations(self, rsc_id) :
+		op_fields = ["Call ID", "Operation", "Interval", "Result", "Status", 
+				"Last Run", "Exec Time", "Queue Time", "Last Result Change"]
+			
+		store = gtk.TreeStore(*(tuple(str for i in range(len(op_fields)))))
+		tree = gtk.TreeView(store)
+		for i in range(len(op_fields)) :
+			add_column(tree, _(op_fields[i]), i)
+
+		ops = self.get_operations(rsc_id)
+		for node_id in ops :
+			if len(ops[node_id]) == 0 :
+				continue
+
+			for node_xml_node in manager.xml_nodes["cib"].getElementsByTagName("node") :
+				if node_xml_node.getAttribute("id") == node_id :
+					node_name = node_xml_node.getAttribute("uname")
+					break
+
+			node_root = store.append(None, [node_name, "", "", "", "", "", "", "", ""])
+			call_ids = [call_id for call_id in ops[node_id]]
+			call_ids.sort()
+			for call_id in call_ids :
+				store.append(node_root, ops[node_id][call_id])
+	
+		tree.expand_all()
+
+		sw = gtk.ScrolledWindow()
+		sw.set_shadow_type(gtk.SHADOW_IN)
+		sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+		sw.add(tree)
+
+		self.sub_vbox.pack_start(sw)
+		self.sub_vbox.show_all()
+
+	def get_operations(self, rsc_id) :
+		if validate_type == "dtd" :
+			call_id_key = "call_id"
+			rc_code_key = "rc_code"
+			op_status_key = "op_status"
+			last_run_key = "last_run"
+			exec_time_key = "exec_time"
+			queue_time_key = "queue_time"
+			last_rc_change_key = "last_rc_change"
+		else :
+			call_id_key = "call-id"
+			rc_code_key = "rc-code"
+			op_status_key = "op-status"
+			last_run_key = "last-run"
+			exec_time_key = "exec-time"
+			queue_time_key = "queue-time"
+			last_rc_change_key = "last-rc-change"
+
+		operations = {}
+		for lrm_node in manager.xml_nodes["cib"].getElementsByTagName("lrm") :
+			node_id = lrm_node.getAttribute("id")
+			operations[node_id] = {}
+			for lrm_resource_node in lrm_node.getElementsByTagName("lrm_resource") :
+				if lrm_resource_node.getAttribute("id") == rsc_id :
+					for lrm_rsc_op in lrm_resource_node.getElementsByTagName("lrm_rsc_op") :
+						operation = lrm_rsc_op.getAttribute("operation")
+						interval = lrm_rsc_op.getAttribute("interval")
+						if interval == "0" :
+							interval_time = ""
+							if operation == "monitor" :
+								operation = "probe"
+						elif interval == "" :
+							interval_time = ""
+						else :
+							interval_time = interval+"ms"
+
+						rc_code = lrm_rsc_op.getAttribute(rc_code_key)
+
+						if rc_code == "7" and operation == "probe" :
+							continue
+						elif operation == "notify" :
+							continue
+
+						rc_str = manager.lrm_op_rc2str(rc_code)
+						if rc_code == "" :
+							result_str = rc_str
+						else :
+							result_str = "%s (rc=%s)"%(rc_str, rc_code)
+
+						call_id = lrm_rsc_op.getAttribute(call_id_key)
+
+						op_status = lrm_rsc_op.getAttribute(op_status_key)
+						op_status_str = manager.op_status2str(op_status)
+
+						last_run = lrm_rsc_op.getAttribute(last_run_key)
+						if last_run != "" :
+							last_run_time = time.ctime(float(last_run))
+						else :
+							last_run_time = ""
+
+						exec_time = lrm_rsc_op.getAttribute(exec_time_key)
+						if exec_time == "" :
+							exec_time_str = ""
+						else :
+							exec_time_str = exec_time + "ms"
+
+						queue_time = lrm_rsc_op.getAttribute(queue_time_key)
+						if queue_time == "" :
+							queue_time_str = ""
+						else :
+							queue_time_str = queue_time + "ms"
+
+						last_rc_change = lrm_rsc_op.getAttribute(last_rc_change_key)
+						if last_rc_change != "" :
+							last_rc_change_time = time.ctime(float(last_rc_change))
+						else :
+							last_rc_change_time = ""
+
+						operations[node_id][call_id] = [
+										call_id,
+										operation,
+										interval_time,
+										result_str,
+										op_status_str,
+										last_run_time, 
+										exec_time_str, 
+										queue_time_str,
+										last_rc_change_time 
+										]
+					break
+		return operations
 
 	def set_action_sensitive(self, action, sensitive) :
 		if self.rsc_action_group.get_action(action) != None :
@@ -1257,7 +1395,7 @@ class ManageView :
 	def update(self, xml_node = None) :
 		group_by_node = self.toggle_tool_action_group.get_action("group-by-node").get_active()
 		self.manage_tree.update(group_by_node)
-		self.vbox.show_all()
+		self.widget.show_all()
 		self.on_after_show()
 
 	def on_rsc_action(self, action) :
@@ -1432,6 +1570,7 @@ class ManageTree :
 		add_column(tree, _("Name"), 1, self.render_type_icon)
 		add_column(tree, _("Status"), 2, self.render_status_icon)
 		add_column(tree, _("Details"), 3)
+		tree.set_size_request(500, 310)
 		#tree.connect("cursor-changed", self.on_cursor_changed, tree.get_selection())
 		#tree.connect("event-after", self.on_right_click)
 
@@ -6112,7 +6251,11 @@ class Manager :
 		return obj_id.split(":")[0]
 
 	def op_status2str(self, op_status) :
-		return self.query("op_status2str\n%s"%op_status, True)
+		str_list = self.query("op_status2str\n%s"%str(op_status), True)
+		if str_list != None and len(str_list) > 0 :
+			return str_list[0]
+		else :
+			return ""
 
 	def get_rsc_info(self, rsc) :
 		rsc_attr_names = ["id", "description", "class", "provider", 
@@ -6286,7 +6429,11 @@ class Manager :
 		return self.query("rsc_providers\n%s\n%s"%(rsc_class, rsc_type),True)
 
 	def lrm_op_rc2str(self, rc) :
-		return self.query("lrm_op_rc2str\n%s"%rc, True)
+		str_list = self.query("lrm_op_rc2str\n%s"%str(rc), True)
+		if str_list != None and len(str_list) > 0 :
+			return str_list[0]
+		else :
+			return ""
 
 	def rsc_exists(self, rsc_id) :
 		return rsc_id in self.get_all_rsc()
