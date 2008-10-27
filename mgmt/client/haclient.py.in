@@ -1592,7 +1592,7 @@ class ManageTree :
 
 	def render_type_icon(self, tvcolumn, cell, model, iter) :
 		icons = {
-			"nodes": "nodes",
+			"cluster": "nodes",
 			"node": "node", 
 			"resources": gtk.STOCK_DIRECTORY,
 			"inactive resources": gtk.STOCK_DIRECTORY,
@@ -1728,7 +1728,7 @@ class ManageTree :
 		#root = self.store.append(None, ["cluster", cluster_type, status, ""])
 		
 		if group_by_node :
-			nodes_root = self.store.append(None, ["nodes", _("Nodes"), status, ""])
+			nodes_root = self.store.append(None, ["cluster", _("Cluster"), status, ""])
 			for node in nodes :
 				self.add_node(nodes_root, node, node in active_nodes, node in crm_nodes)
 			inactive_root = self.store.append(None, ["inactive resources", _("Inactive resources"), "", ""])
@@ -1744,7 +1744,7 @@ class ManageTree :
 				else :
 					self.store.append(inactive_root,[rsc_type, rsc, _(status), ""]) 
 		else :
-			nodes_root = self.store.append(None, ["nodes", _("Nodes"), status, ""])
+			nodes_root = self.store.append(None, ["cluster", _("Cluster"), status, ""])
 			for node in nodes :
 				self.add_node(nodes_root, node, node in active_nodes, node in crm_nodes, False)
 			rscs_root = self.store.append(None, ["resources", _("Resources"), "", ""])
