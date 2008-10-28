@@ -1762,7 +1762,7 @@ class ManageTree :
 		self.store.foreach(self.restore_iter_status, tree_status)
 		(name, type, path, expand_status) = tree_status
 		if  name == None :
-			#self.tree.get_selection().select_iter(root)
+			self.tree.get_selection().select_path((0,))
 			self.tree.expand_all()
 		
 	def update(self, group_by_node = False) :
