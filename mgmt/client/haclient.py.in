@@ -1737,12 +1737,13 @@ class ManageTree :
 				rsc_type = manager.get_rsc_type(rsc)
 				if rsc_type != "primitive" :
 					continue
-				status = manager.get_rsc_status(rsc)
 				nodes = manager.get_rsc_running_on(rsc)
 				if nodes != None and len(nodes) > 0 :
 					continue 
 				else :
-					self.store.append(inactive_root,[rsc_type, rsc, _(status), ""]) 
+					status = manager.get_rsc_status(rsc)
+					info = self.get_rsc_info(rsc)
+					self.store.append(inactive_root,[rsc_type, rsc, _(status), info]) 
 		else :
 			nodes_root = self.store.append(None, ["cluster", _("Cluster"), status, ""])
 			for node in nodes :
@@ -1759,16 +1760,35 @@ class ManageTree :
 		if type == "primitive" :
 			status = manager.get_rsc_status(rsc)
 			nodes = manager.get_rsc_running_on(rsc)
+			info = self.get_rsc_info(rsc)
 			if nodes != None and len(nodes)>0:
-				self.store.append(parent,[type, rsc, _(status) + _(" on ")+str(nodes), ""])
+				self.store.append(parent,[type, rsc, _(status) + _(" on ")+str(nodes), info])
 			else :
-				self.store.append(parent,[type, rsc, _(status), ""])
+				self.store.append(parent,[type, rsc, _(status), info])
 				
 		elif type in ["group","clone","master"] :
 			status = type
 			iter = self.store.append(parent,[type, rsc, _(status), ""])
 			for subrsc in manager.get_sub_rsc(rsc) :
 				self.add_rsc(iter, subrsc)
+
+	def get_rsc_info(self, rsc_id) :
+		for lrm_rsc_node in manager.xml_nodes["cib"].getElementsByTagName("lrm_resource") :
+			if lrm_rsc_node.getAttribute("id") == rsc_id :
+				rsc_class = lrm_rsc_node.getAttribute("class")
+				if rsc_class != "" :
+					rsc_info = rsc_class + "::"
+				else :
+					rsc_info = ""
+
+				rsc_provider = lrm_rsc_node.getAttribute("provider")
+				if rsc_provider != "" :
+					rsc_info += rsc_provider + ":"
+
+				rsc_type = lrm_rsc_node.getAttribute("type")
+				rsc_info += rsc_type
+				return rsc_info
+		return ""
 					
 	def add_node(self, nodes_root, node, active, started, add_rscs = True):
 		status = _("unknown")
