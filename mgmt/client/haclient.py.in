@@ -1229,6 +1229,7 @@ class ManageView :
 
 		id = model.get_value(iter, 1)
 		if cur_type == "primitive" :
+			self.show_rsc_summary(id)
 			self.show_operations(id)
 		elif cur_type == "cluster" : 
 			self.show_sub_attrs(manager.xml_nodes["cib"])
@@ -1300,6 +1301,77 @@ class ManageView :
 
 		self.sub_vbox.show_all()
 
+	def show_rsc_summary(self, rsc_id) :
+		rsc_summary = {}
+
+		(status, mig_threshold) = manager.get_rsc_status(rsc_id)
+		if mig_threshold != "0" :
+			rsc_summary["migration-threshold"] = [mig_threshold]
+
+		rsc_summary["fail-count"] = self.get_rsc_failcount(rsc_id)
+
+		name_labels = []
+		name_label_max_len = 0
+		for attr_name in rsc_summary :
+			for i in range(len(rsc_summary[attr_name])) :
+				hbox = gtk.HBox()
+				if i == 0 :
+					name_label = gtk.Label(_(name_cap(attr_name)+":"))
+				else :
+					name_label = gtk.Label("")
+				name_label.set_alignment(0, 0.5)
+
+				name_labels.append(name_label)
+				name_label_len = len(name_label.get_text())
+				if name_label_len > name_label_max_len :
+					name_label_max_len = name_label_len
+
+				value_label = gtk.Label(rsc_summary[attr_name][i])
+				value_label.set_alignment(0, 0.5)
+
+				hbox.pack_start(name_label, False, padding=5)
+				hbox.pack_start(value_label, False, padding=5)
+				self.sub_vbox.pack_start(hbox, False, padding=2)
+
+		for name_label in name_labels :
+			name_label.set_width_chars(name_label_max_len)
+
+		self.sub_vbox.show_all()
+
+	def get_rsc_failcount(self, rsc_id) :
+		rsc_summary = []
+		for trans_attr_node in manager.xml_nodes["cib"].getElementsByTagName("transient_attributes") :
+			node_id = trans_attr_node.getAttribute("id")
+			fail_count = ""
+			last_failure = ""
+			for nv_node in trans_attr_node.getElementsByTagName("nvpair") :
+				nv_name = nv_node.getAttribute("name")
+				if nv_name.count("fail-count") and nv_name.count(rsc_id) :
+					fail_count = nv_node.getAttribute("value")
+				elif nv_name.count("last-failure") and nv_name.count(rsc_id) :
+					last_failure = nv_node.getAttribute("value")
+
+			if fail_count == "" :
+				continue
+
+			summary_str = fail_count
+			node_name = manager.node_name(node_id)
+			if node_name != "" :
+				summary_str += "  (%s, "%node_name
+			else :
+				summary_str += "  (%s, "%node_id
+
+			if last_failure != "" :
+				last_failure_time = time.ctime(float(last_failure))
+				if len(summary_str) > 0 :
+					summary_str += "  "
+				summary_str += "last failure at \"%s\""%last_failure_time
+
+			summary_str += ")"
+
+			rsc_summary.append(summary_str)
+		return rsc_summary
+
 	def show_operations(self, rsc_id) :
 		op_fields = ["Call ID", "Operation", "Interval", "Result", "Status", 
 				"Last Run", "Exec Time", "Queue Time", "Last Result Change"]
@@ -1314,10 +1386,9 @@ class ManageView :
 			if len(ops[node_id]) == 0 :
 				continue
 
-			for node_xml_node in manager.xml_nodes["cib"].getElementsByTagName("node") :
-				if node_xml_node.getAttribute("id") == node_id :
-					node_name = node_xml_node.getAttribute("uname")
-					break
+			node_name = manager.node_name(node_id)
+			if node_name == "" :
+				node_name = node_id
 
 			node_root = store.append(None, [node_name, "", "", "", "", "", "", "", ""])
 			call_ids = [call_id for call_id in ops[node_id]]
@@ -1635,14 +1706,13 @@ class ManageTree :
 	last_iter = None
 	def __init__(self) :
 		treeiter = {}
-		self.store = gtk.TreeStore(str, str, str, str, str)
+		self.store = gtk.TreeStore(str, str, str, str)
 
 		tree = gtk.TreeView(self.store)
 		add_column(tree, _("Type"), 0, self.render_type_icon, visible=False)
 		add_column(tree, _("Name"), 1, self.render_type_icon)
 		add_column(tree, _("Status"), 2, self.render_status_icon)
 		add_column(tree, _("Details"), 3)
-		add_column(tree, _("Migration Threshold"), 4)
 		tree.set_size_request(500, 310)
 		#tree.connect("cursor-changed", self.on_cursor_changed, tree.get_selection())
 		#tree.connect("event-after", self.on_right_click)
@@ -1798,10 +1868,10 @@ class ManageTree :
 		#root = self.store.append(None, ["cluster", cluster_type, status, ""])
 		
 		if group_by_node :
-			nodes_root = self.store.append(None, ["cluster", _("Cluster"), status, cluster_type, ""])
+			nodes_root = self.store.append(None, ["cluster", _("Cluster"), status, cluster_type])
 			for node in nodes :
 				self.add_node(nodes_root, node, node in active_nodes, node in crm_nodes)
-			inactive_root = self.store.append(None, ["inactive resources", _("Inactive resources"), "", "", ""])
+			inactive_root = self.store.append(None, ["inactive resources", _("Inactive resources"), "", ""])
 			rscs = manager.get_all_rsc()
 			for rsc in rscs :
 				rsc_type = manager.get_rsc_type(rsc)
@@ -1813,12 +1883,12 @@ class ManageTree :
 				else :
 					(status, mig_threshold) = manager.get_rsc_status(rsc)
 					info = self.get_rsc_info(rsc)
-					self.store.append(inactive_root,[rsc_type, rsc, _(status), info, mig_threshold]) 
+					self.store.append(inactive_root,[rsc_type, rsc, _(status), info])
 		else :
-			nodes_root = self.store.append(None, ["cluster", _("Cluster"), status, cluster_type, ""])
+			nodes_root = self.store.append(None, ["cluster", _("Cluster"), status, cluster_type])
 			for node in nodes :
 				self.add_node(nodes_root, node, node in active_nodes, node in crm_nodes, False)
-			rscs_root = self.store.append(None, ["resources", _("Resources"), "", "", ""])
+			rscs_root = self.store.append(None, ["resources", _("Resources"), "", ""])
 			rscs = manager.get_top_rsc()
 			for rsc in rscs :
 				self.add_rsc(rscs_root, rsc)
@@ -1832,13 +1902,13 @@ class ManageTree :
 			nodes = manager.get_rsc_running_on(rsc)
 			info = self.get_rsc_info(rsc)
 			if nodes != None and len(nodes)>0:
-				self.store.append(parent,[type, rsc, _(status) + _(" on ")+str(nodes), info, mig_threshold])
+				self.store.append(parent,[type, rsc, _(status) + _(" on ")+str(nodes), info])
 			else :
-				self.store.append(parent,[type, rsc, _(status), info, mig_threshold])
+				self.store.append(parent,[type, rsc, _(status), info])
 				
 		elif type in ["group","clone","master"] :
 			status = type
-			iter = self.store.append(parent,[type, rsc, _(status), "", ""])
+			iter = self.store.append(parent,[type, rsc, _(status), ""])
 			for subrsc in manager.get_sub_rsc(rsc) :
 				self.add_rsc(iter, subrsc)
 
@@ -1882,7 +1952,7 @@ class ManageTree :
 			if manager.get_node_config(node)["standby"] == "True" :
 				status = status + "-"+ _("standby")
 
-		node_iter = self.store.append(nodes_root,["node", node, status, "", ""])
+		node_iter = self.store.append(nodes_root,["node", node, status, ""])
 
 		if add_rscs and active :
 	 		running_rsc = manager.get_running_rsc(node)
@@ -5902,6 +5972,13 @@ class Manager :
 			if xml_node.getAttribute("id") == obj_name :
 				return xml_node
 		return None
+
+	def node_name(self, node_id) :
+		for node_xml_node in manager.xml_nodes["cib"].getElementsByTagName("node") :
+			if node_xml_node.getAttribute("id") == node_id :
+				node_name = node_xml_node.getAttribute("uname")
+				return node_name
+		return ""
 
 	def update_rng_docs(self, validate_name = "", file= "") :
 		self.rng_docs[file] = self.get_start_rng_node(validate_name, file)
