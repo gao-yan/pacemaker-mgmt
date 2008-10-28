@@ -1004,7 +1004,7 @@ class Tree :
 		label = ""
 		if type == "native" :
 			label = _("native")
-			status = manager.get_rsc_status(rsc)
+			(status, mig_threshold) = manager.get_rsc_status(rsc)
 			nodes = manager.get_rsc_running_on(rsc)
 			if nodes != None and len(nodes)>0:
 				self.store.append(parent,[rsc, _(status) + _(" on ")+str(nodes), label])
@@ -1635,13 +1635,14 @@ class ManageTree :
 	last_iter = None
 	def __init__(self) :
 		treeiter = {}
-		self.store = gtk.TreeStore(str, str, str, str)
+		self.store = gtk.TreeStore(str, str, str, str, str)
 
 		tree = gtk.TreeView(self.store)
 		add_column(tree, _("Type"), 0, self.render_type_icon, visible=False)
 		add_column(tree, _("Name"), 1, self.render_type_icon)
 		add_column(tree, _("Status"), 2, self.render_status_icon)
 		add_column(tree, _("Details"), 3)
+		add_column(tree, _("Migration Threshold"), 4)
 		tree.set_size_request(500, 310)
 		#tree.connect("cursor-changed", self.on_cursor_changed, tree.get_selection())
 		#tree.connect("event-after", self.on_right_click)
@@ -1797,10 +1798,10 @@ class ManageTree :
 		#root = self.store.append(None, ["cluster", cluster_type, status, ""])
 		
 		if group_by_node :
-			nodes_root = self.store.append(None, ["cluster", _("Cluster"), status, cluster_type])
+			nodes_root = self.store.append(None, ["cluster", _("Cluster"), status, cluster_type, ""])
 			for node in nodes :
 				self.add_node(nodes_root, node, node in active_nodes, node in crm_nodes)
-			inactive_root = self.store.append(None, ["inactive resources", _("Inactive resources"), "", ""])
+			inactive_root = self.store.append(None, ["inactive resources", _("Inactive resources"), "", "", ""])
 			rscs = manager.get_all_rsc()
 			for rsc in rscs :
 				rsc_type = manager.get_rsc_type(rsc)
@@ -1810,14 +1811,14 @@ class ManageTree :
 				if nodes != None and len(nodes) > 0 :
 					continue 
 				else :
-					status = manager.get_rsc_status(rsc)
+					(status, mig_threshold) = manager.get_rsc_status(rsc)
 					info = self.get_rsc_info(rsc)
-					self.store.append(inactive_root,[rsc_type, rsc, _(status), info]) 
+					self.store.append(inactive_root,[rsc_type, rsc, _(status), info, mig_threshold]) 
 		else :
-			nodes_root = self.store.append(None, ["cluster", _("Cluster"), status, cluster_type])
+			nodes_root = self.store.append(None, ["cluster", _("Cluster"), status, cluster_type, ""])
 			for node in nodes :
 				self.add_node(nodes_root, node, node in active_nodes, node in crm_nodes, False)
-			rscs_root = self.store.append(None, ["resources", _("Resources"), "", ""])
+			rscs_root = self.store.append(None, ["resources", _("Resources"), "", "", ""])
 			rscs = manager.get_top_rsc()
 			for rsc in rscs :
 				self.add_rsc(rscs_root, rsc)
@@ -1827,17 +1828,17 @@ class ManageTree :
 		status = ""
 		label = ""
 		if type == "primitive" :
-			status = manager.get_rsc_status(rsc)
+			(status, mig_threshold) = manager.get_rsc_status(rsc)
 			nodes = manager.get_rsc_running_on(rsc)
 			info = self.get_rsc_info(rsc)
 			if nodes != None and len(nodes)>0:
-				self.store.append(parent,[type, rsc, _(status) + _(" on ")+str(nodes), info])
+				self.store.append(parent,[type, rsc, _(status) + _(" on ")+str(nodes), info, mig_threshold])
 			else :
-				self.store.append(parent,[type, rsc, _(status), info])
+				self.store.append(parent,[type, rsc, _(status), info, mig_threshold])
 				
 		elif type in ["group","clone","master"] :
 			status = type
-			iter = self.store.append(parent,[type, rsc, _(status), ""])
+			iter = self.store.append(parent,[type, rsc, _(status), "", ""])
 			for subrsc in manager.get_sub_rsc(rsc) :
 				self.add_rsc(iter, subrsc)
 
@@ -1881,7 +1882,7 @@ class ManageTree :
 			if manager.get_node_config(node)["standby"] == "True" :
 				status = status + "-"+ _("standby")
 
-		node_iter = self.store.append(nodes_root,["node", node, status, ""])
+		node_iter = self.store.append(nodes_root,["node", node, status, "", ""])
 
 		if add_rscs and active :
 	 		running_rsc = manager.get_running_rsc(node)
@@ -6288,7 +6289,7 @@ class Manager :
 			return rsc_type
 	
 	def get_rsc_status(self, rsc_id) :
-		return self.query("rsc_status\n"+rsc_id)[0]
+		return self.query("rsc_status\n"+rsc_id)
 
 	def get_rsc_running_on(self, rsc_id) :
 		return self.query("rsc_running_on\n"+rsc_id)

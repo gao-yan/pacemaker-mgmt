@@ -1756,6 +1756,7 @@ on_get_rsc_status(char* argv[], int argc)
 			ret = mgmt_msg_append(ret, "master");
 			break;
 	}
+	ret = mgmt_msg_append(ret, crm_itoa(rsc->migration_threshold));
 	free_data_set(data_set);
 	return ret;
 }
