@@ -4927,7 +4927,10 @@ class MainWindow :
 			
 	# ui event handler	
 	def on_quit(self, action) :
-		gtk.main_quit()
+		if confirmbox(_("Do you want to quit ?")) == gtk.RESPONSE_YES :
+			if manager.connected :
+				self.confirm_record_pending()
+			gtk.main_quit()
 	
 	def on_login(self, action) :
 		dialog = gtk.Dialog(_("Login"),self.win_widget, gtk.DIALOG_MODAL,
@@ -4962,8 +4965,18 @@ class MainWindow :
 		self.update_ui()
 
 	def on_logout(self, action) :
-		manager.logout()
-		self.update_ui()
+		if confirmbox(_("Do you want to logout ?")) == gtk.RESPONSE_YES :
+			self.confirm_record_pending()
+			manager.logout()
+			self.update_ui()
+
+	def confirm_record_pending(self) :
+		if self.toggle_tool_action_group.get_action("record-pending").get_active() :
+			retval = confirmbox((_("\"Indicate pending operations\" has been activated.") + "\n"
+					+ _("It could affect the performance.") + "\n"
+					+ _("Turn it off ?")))
+			if retval ==  gtk.RESPONSE_YES :
+				manager.do_cmd("crm_attribute\nop_defaults\ndel\nrecord-pending")
 	
 	def on_test(self, action) :
 		print gen_uuid()
