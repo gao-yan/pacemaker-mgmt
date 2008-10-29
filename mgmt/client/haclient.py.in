@@ -4851,6 +4851,7 @@ class MainWindow :
 
 		self.set_action_sensitive('unmigratersc', manager.connected)
 		self.set_action_sensitive('report', manager.connected)
+		self.set_action_sensitive('maintenance-mode', manager.connected)
 		self.set_action_sensitive('record-pending', manager.connected)
 
 	# functions
@@ -4861,6 +4862,12 @@ class MainWindow :
 		return False
 
 	def update_tool_button(self) :
+		value = manager.do_cmd("crm_attribute\ncrm_config\nget\nmaintenance-mode")
+		if value != None and len(value) > 0 and value[0].count("true") :
+			self.toggle_tool_action_group.get_action("maintenance-mode").set_active(True)
+		else :
+			self.toggle_tool_action_group.get_action("maintenance-mode").set_active(False)
+
 		value = manager.do_cmd("crm_attribute\nop_defaults\nget\nrecord-pending")
 		if value != None and len(value) > 0 and value[0].count("true") :
 			self.toggle_tool_action_group.get_action("record-pending").set_active(True)
@@ -5451,6 +5458,12 @@ class MainWindow :
 		except OSError, msg :
 			msgbox(_("System error: ") + str(msg))
 
+	def change_maintenance_mode(self, action) :
+		if action.get_active() :
+			manager.do_cmd("crm_attribute\ncrm_config\nset\nmaintenance-mode\ntrue")
+		else :
+			manager.do_cmd("crm_attribute\ncrm_config\ndel\nmaintenance-mode")
+
 	def change_record_pending(self, action) :
 		if action.get_active() :
 			manager.do_cmd("crm_attribute\nop_defaults\nset\nrecord-pending\ntrue")
@@ -5491,6 +5504,9 @@ class MainWindow :
 		self.load_icon("starting","@HA_DATADIR@/heartbeat-gui/starting.png")
 		self.load_icon("stopping","@HA_DATADIR@/heartbeat-gui/stopping.png")
 
+		self.load_icon("administration","@HA_DATADIR@/heartbeat-gui/administration.png")
+		self.load_icon("record-pending","@HA_DATADIR@/heartbeat-gui/record-pending.png")
+
 		# create ui-manager
 		ui_xml = '''
 		<ui>
@@ -5502,6 +5518,7 @@ class MainWindow :
 				</menu>
 				<menu action="tools">
 					<menuitem action="report"/>
+					<menuitem action="maintenance-mode"/>
 					<menuitem action="record-pending"/>
 				</menu>
 			</menubar>
@@ -5528,6 +5545,7 @@ class MainWindow :
 			</popup>
 			<popup action="tools_popup">
 				<menuitem action="report"/>
+				<menuitem action="maintenance-mode"/>
 				<menuitem action="record-pending"/>
 			</popup>
 			<toolbar name="toolbar">
@@ -5536,6 +5554,7 @@ class MainWindow :
 				<separator/>
 				<toolitem action="report"/>
 				<separator/>
+				<toolitem action="maintenance-mode"/>
 				<toolitem action="record-pending"/>
 				<separator/>
 				<toolitem action="quit"/>
@@ -5605,7 +5624,9 @@ class MainWindow :
 		uimanager.insert_action_group(actiongroup, 0)
 
 		toggle_tool_actions = [
-			('record-pending', gtk.STOCK_CONVERT, _('Indicate Pending Operations'), None,
+			('maintenance-mode', "administration", _('Maintenance Mode'), None,
+				_('Switch to maintenance mode'), self.change_maintenance_mode),
+			('record-pending', "record-pending", _('Indicate Pending Operations'), None,
 				_('Indicate pending(starting/stopping) operations'), self.change_record_pending),
 			]
 
