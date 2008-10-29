@@ -6287,7 +6287,7 @@ class Manager :
 				  
 		values = manager.query("node_config\n%s"%node)
 		if values == None :
-			return None
+			values = ["" for i in range(8)]
 		config = dict(zip(node_attr_names,values))
 		
 		return config
