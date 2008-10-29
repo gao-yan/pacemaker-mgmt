@@ -61,6 +61,7 @@ static char* on_get_crm_schema(char* argv[], int argc);
 static char* on_get_crm_dtd(char* argv[], int argc);
 
 static char* on_get_crm_metadata(char* argv[], int argc);
+static char* on_crm_attribute(char* argv[], int argc);
 static char* on_get_crm_config(char* argv[], int argc);
 static char* on_update_crm_config(char* argv[], int argc);
 static char* on_get_activenodes(char* argv[], int argc);
@@ -513,6 +514,7 @@ init_crm(int cache_cib)
 	reg_msg(MSG_CRM_SCHEMA, on_get_crm_schema);
 	reg_msg(MSG_CRM_DTD, on_get_crm_dtd);
 	reg_msg(MSG_CRM_METADATA, on_get_crm_metadata);
+	reg_msg(MSG_CRM_ATTRIBUTE, on_crm_attribute);
 	reg_msg(MSG_CRM_CONFIG, on_get_crm_config);
 	reg_msg(MSG_UP_CRM_CONFIG, on_update_crm_config);
 	
@@ -744,6 +746,79 @@ on_get_crm_dtd(char* argv[], int argc)
 		mgmt_log(LOG_WARNING, "failed to fclose stream");
 
 	return ret;
+}
+
+static char*
+on_crm_attribute(char* argv[], int argc)
+{
+	char cmd[MAX_STRLEN];
+	char buf[MAX_STRLEN];
+	char* ret = NULL;
+	const char* nv_regex = "^[A-Za-z0-9_-]+$";
+	FILE *fstream = NULL;
+
+
+	snprintf(cmd, sizeof(cmd), "crm_attribute -t %s", argv[1]);
+
+	if (regex_match(nv_regex, argv[3])){
+		if (STRNCMP_CONST(argv[2], "get") == 0){
+			strncat(cmd, " -G", sizeof(cmd)-strlen(cmd)-1);
+		}
+		else if (STRNCMP_CONST(argv[2], "del") == 0){
+			strncat(cmd, " -D", sizeof(cmd)-strlen(cmd)-1);
+		}
+		strncat(cmd, " -n \"", sizeof(cmd)-strlen(cmd)-1);
+		strncat(cmd, argv[3], sizeof(cmd)-strlen(cmd)-1);
+		strncat(cmd, "\"", sizeof(cmd)-strlen(cmd)-1);
+	}
+	else {
+		mgmt_log(LOG_ERR, "invalid attribute name specified: \"%s\"", argv[3]);
+		return strdup(MSG_FAIL"\nInvalid attribute name");
+	}
+
+	if (STRNCMP_CONST(argv[2], "set") == 0){
+		if (regex_match(nv_regex, argv[4])){
+			strncat(cmd, " -v \"", sizeof(cmd)-strlen(cmd)-1);
+			strncat(cmd, argv[4], sizeof(cmd)-strlen(cmd)-1);
+			strncat(cmd, "\"", sizeof(cmd)-strlen(cmd)-1);
+		}
+		else {
+			mgmt_log(LOG_ERR, "invalid attribute value specified: \"%s\"", argv[4]);
+			return strdup(MSG_FAIL"\nInvalid attribute value");
+		}
+	}
+
+	strncat(cmd, " 2>&1", sizeof(cmd)-strlen(cmd)-1);
+
+	if ((fstream = popen(cmd, "r")) == NULL){
+		mgmt_log(LOG_ERR, "error on popen %s: %s",
+			 cmd, strerror(errno));
+		return strdup(MSG_FAIL"\nInvoke crm_attribute failed");
+	}
+
+	if (STRNCMP_CONST(argv[2], "get") == 0){
+		ret = strdup(MSG_OK);
+	}
+	else{
+		ret = strdup(MSG_FAIL);
+	}
+
+	while (!feof(fstream)){
+		memset(buf, 0, sizeof(buf));
+		if (fgets(buf, sizeof(buf), fstream) != NULL){
+			ret = mgmt_msg_append(ret, buf);
+			ret[strlen(ret)-1] = '\0';
+		}
+		else{
+			sleep(1);
+		}
+	}
+
+	if (pclose(fstream) == -1)
+		mgmt_log(LOG_WARNING, "failed to close pipe");
+
+	return ret;
+
 }
 
 static char*

@@ -4788,7 +4788,10 @@ class MainWindow :
 	
 	# utility functions
 	def set_action_sensitive(self, action, sensitive) :
-		self.actiongroup.get_action(action).set_property("sensitive", sensitive)
+		if self.actiongroup.get_action(action) != None :
+			self.actiongroup.get_action(action).set_property("sensitive", sensitive)
+		elif self.toggle_tool_action_group.get_action(action) != None :
+			self.toggle_tool_action_group.get_action(action).set_property("sensitive", sensitive)
 
 	# system event handler
 	def on_delete_event(self, widget, event, data=None) :
@@ -4848,12 +4851,21 @@ class MainWindow :
 
 		self.set_action_sensitive('unmigratersc', manager.connected)
 		self.set_action_sensitive('report', manager.connected)
+		self.set_action_sensitive('record-pending', manager.connected)
 
 	# functions
 	def update(self) :
 		self.maintree.update()
+		self.update_tool_button()
 		self.statusbar.pop(2)
 		return False
+
+	def update_tool_button(self) :
+		value = manager.do_cmd("crm_attribute\nop_defaults\nget\nrecord-pending")
+		if value != None and len(value) > 0 and value[0].count("true") :
+			self.toggle_tool_action_group.get_action("record-pending").set_active(True)
+		else :
+			self.toggle_tool_action_group.get_action("record-pending").set_active(False)
 	
 	def can_change_view(self) :
 		if not self.cur_view.changed :
@@ -5426,6 +5438,12 @@ class MainWindow :
 		except OSError, msg :
 			msgbox(_("System error: ") + str(msg))
 
+	def change_record_pending(self, action) :
+		if action.get_active() :
+			manager.do_cmd("crm_attribute\nop_defaults\nset\nrecord-pending\ntrue")
+		else :
+			manager.do_cmd("crm_attribute\nop_defaults\ndel\nrecord-pending")
+
 	def load_icon(self, name, file) :
 		icons = gtk.IconFactory()
 		icons.add(name,gtk.IconSet(gtk.gdk.pixbuf_new_from_file(file)))
@@ -5471,6 +5489,7 @@ class MainWindow :
 				</menu>
 				<menu action="tools">
 					<menuitem action="report"/>
+					<menuitem action="record-pending"/>
 				</menu>
 			</menubar>
 			<popup name="resource_popup">
@@ -5496,12 +5515,15 @@ class MainWindow :
 			</popup>
 			<popup action="tools_popup">
 				<menuitem action="report"/>
+				<menuitem action="record-pending"/>
 			</popup>
 			<toolbar name="toolbar">
 				<toolitem action="login"/>
 				<toolitem action="logout"/>
 				<separator/>
 				<toolitem action="report"/>
+				<separator/>
+				<toolitem action="record-pending"/>
 				<separator/>
 				<toolitem action="quit"/>
 			</toolbar>
@@ -5566,7 +5588,18 @@ class MainWindow :
 			('tools', None, _('Tools')),
 			('report', gtk.STOCK_FIND_AND_REPLACE, _('Cluster Report'), None, _('generate a cluster report'), self.on_cluster_report)
 			])
+
 		uimanager.insert_action_group(actiongroup, 0)
+
+		toggle_tool_actions = [
+			('record-pending', gtk.STOCK_CONVERT, _('Indicate Pending Operations'), None,
+				_('Indicate pending(starting/stopping) operations'), self.change_record_pending),
+			]
+
+		self.toggle_tool_action_group = gtk.ActionGroup("toggle_tools")
+		self.toggle_tool_action_group.add_toggle_actions(toggle_tool_actions)
+		uimanager.insert_action_group(self.toggle_tool_action_group, 1)
+
 		uimanager.add_ui_from_string(ui_xml)
 
 		# put componets to window

@@ -154,6 +154,18 @@ or
 
 /*
 description:
+	get or set specified attribute
+format:
+	MSG_CRM_ATTRIBUTE type <get|set|del> attribute [value]
+return:
+	MSG_OK [value]
+or
+	MSG_FAIL reason
+*/
+#define MSG_CRM_ATTRIBUTE	"crm_attribute"
+
+/*
+description:
 	return CRM configuration
 format:
 	MSG_CRM_CONFIG config_key
