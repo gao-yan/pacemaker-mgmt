@@ -48,7 +48,8 @@ usr/share/heartbeat-gui/dirty-stopped.png
 usr/share/heartbeat-gui/failed.png
 usr/share/heartbeat-gui/running.png
 usr/share/heartbeat-gui/stopped.png
-usr/share/heartbeat-gui/timeout.png
+usr/share/heartbeat-gui/starting.png
+usr/share/heartbeat-gui/stopping.png
 usr/share/heartbeat-gui/nodes.png
 usr/share/heartbeat-gui/node.png
 usr/share/heartbeat/SNMPAgentSanityCheck

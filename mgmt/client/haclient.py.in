@@ -1753,7 +1753,9 @@ class ManageTree :
 			  0:"running",
 			  1:"stopped",
 			  2:"dirty-stopped",
-			  3:"failed"}
+			  3:"failed",
+			  4:"starting",
+			  5:"stopping"}
 		status = self.iter_status(model,iter)
 		pb = self.tree.render_icon(icons[status],
 			gtk.ICON_SIZE_SMALL_TOOLBAR, None)
@@ -1772,6 +1774,10 @@ class ManageTree :
 				iter_status = 0
 			elif string.find(status, _("fail")) != -1 :
 				iter_status = 3
+			elif string.find(status, _("starting")) != -1 :
+				iter_status = 4
+			elif string.find(status, _("stopping")) != -1 :
+				iter_status = 5
 			else :
 				iter_status = 2
 		
@@ -5448,10 +5454,11 @@ class MainWindow :
 		self.load_icon("node","@HA_DATADIR@/heartbeat-gui/node.png")
 
 		self.load_icon("failed","@HA_DATADIR@/heartbeat-gui/failed.png")
-		self.load_icon("timeout","@HA_DATADIR@/heartbeat-gui/timeout.png")
 		self.load_icon("running","@HA_DATADIR@/heartbeat-gui/running.png")
 		self.load_icon("stopped","@HA_DATADIR@/heartbeat-gui/stopped.png")
 		self.load_icon("dirty-stopped","@HA_DATADIR@/heartbeat-gui/dirty-stopped.png")
+		self.load_icon("starting","@HA_DATADIR@/heartbeat-gui/starting.png")
+		self.load_icon("stopping","@HA_DATADIR@/heartbeat-gui/stopping.png")
 
 		# create ui-manager
 		ui_xml = '''
@@ -6366,7 +6373,21 @@ class Manager :
 			return rsc_type
 	
 	def get_rsc_status(self, rsc_id) :
-		return self.query("rsc_status\n"+rsc_id)
+		status = self.query("rsc_status\n"+rsc_id)
+		for lrm_node in manager.xml_nodes["cib"].getElementsByTagName("lrm") :
+			node_id = lrm_node.getAttribute("id")
+			for lrm_resource_node in lrm_node.getElementsByTagName("lrm_resource") :
+				if lrm_resource_node.getAttribute("id") == rsc_id :
+					for lrm_rsc_op in lrm_resource_node.getElementsByTagName("lrm_rsc_op") :
+						operation = lrm_rsc_op.getAttribute("operation")
+						if lrm_rsc_op.getAttribute("op-status") == "-1" :
+							if operation == "start" :
+								status[0] = "starting"
+								break
+							elif operation == "stop" :
+								status[0] = "stopping"
+								break
+		return status
 
 	def get_rsc_running_on(self, rsc_id) :
 		return self.query("rsc_running_on\n"+rsc_id)

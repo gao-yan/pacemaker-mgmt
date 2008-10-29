@@ -1720,6 +1720,10 @@ on_get_rsc_status(char* argv[], int argc)
 			ret = mgmt_msg_append(ret, "unknown");
 			break;
 		case pe_native:
+			if(is_set(rsc->flags, pe_rsc_start_pending)) {
+				ret = mgmt_msg_append(ret, "starting");
+				break;
+			}
 			if(is_not_set(rsc->flags, pe_rsc_managed)) {
 				ret = mgmt_msg_append(ret, "unmanaged");
 				break;
