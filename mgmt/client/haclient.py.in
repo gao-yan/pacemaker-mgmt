@@ -105,6 +105,16 @@ def pygtk_newer(major, minor) :
 	if gtk.pygtk_version[0] == major and gtk.pygtk_version[1] >= minor :
 		return True
 	return False
+
+def pygobject_newer(major, minor, rel) :
+	if gobject.pygobject_version[0] > major :
+		return True
+	if gobject.pygobject_version[0] == major :
+		if gobject.pygobject_version[1] > minor :
+			return True
+		if gobject.pygobject_version[1] == minor and gobject.pygobject_version[2] >= rel :
+			return True
+	return False
 	
 def add_column(widget, label, value, icon_cell_func = None, editable = False
 		, options=None, call_back=None, visible = True, is_enum = False) :
@@ -6967,14 +6977,14 @@ class ObjectAttrs(WidgetGroup) :
 		for widget_type in ("combos", "bool_combos", "combo_entries") :
 			if self.widgets.has_key(widget_type) :
 				for widget in self.widgets[widget_type].values() :
-					if pygtk_newer(2, 10) :
+					if pygtk_newer(2, 10) and pygobject_newer(2, 12, 3) :
 						widget.connect("changed", self.on_changed)
 					else :
 						widget.connect("changed", self.on_changed_later)
 						
 
 		for widget in self.widgets.get("anyname_combo_entries", {}) :
-			if pygtk_newer(2, 10) :
+			if pygtk_newer(2, 10) and pygobject_newer(2, 12, 3) :
 				widget.connect("changed", self.on_changed)
 				self.widgets["anyname_combo_entries"][widget].connect("changed", self.on_changed)
 			else :
@@ -7022,7 +7032,7 @@ class ObjectAttrs(WidgetGroup) :
 		if self.static_desc != None :
 			self.show_desc(self.static_desc)
 
-		if not pygtk_newer(2, 10) :
+		if not pygtk_newer(2, 10) or not pygobject_newer(2, 12, 3) :
 			return
 
 		for widget_type in ("combos", "bool_combos", "combo_entries") :
