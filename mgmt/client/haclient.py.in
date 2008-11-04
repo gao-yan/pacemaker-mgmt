@@ -1637,7 +1637,7 @@ class ManageView :
 		if migrate == None :
 			return
 
-		manager.do_cmd("migrate\n%s\n%s\n\%s\n%s"
+		manager.do_cmd("migrate\n%s\n%s\n%s\n%s"
 				%(migrate["rsc"], migrate["to_node"], migrate["force"], migrate["duration"]))
 		if manager.failed_reason != "" :
 			msgbox(manager.failed_reason.replace("This message can be disabled with -Q", "").replace
