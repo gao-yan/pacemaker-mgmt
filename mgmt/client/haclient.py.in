@@ -44,6 +44,7 @@ import gtk, gtk.glade, gobject
 UI_FILE = "@HA_DATADIR@/heartbeat-gui/haclient.glade"
 
 validate_type = "dtd"
+expert_mode = False
 name_cap = lambda name: name.replace("-"," ").replace("_"," ").title().replace("Crmd","CRMD").\
 				replace("Crm","CRM").replace("Pe ", "PE ").replace("Dc ","DC ").\
 				replace("Cib", "CIB").replace("Ccm", "CCM").replace("Ha", "HA").\
@@ -2086,6 +2087,8 @@ class MainTree(ElementList) :
 			self.dtd_elem = manager.get_dtd_elem(obj_type)
 			for (name, mod) in self.dtd_elem.get_content_model()[1] :
 				if mod == '' :
+					if not expert_mode and name == "status" :
+						continue
 					treeiter[name] = self.store.append(None, [_(name_cap(name)), name])
 					sub_dtd_elem = manager.get_dtd_elem(name)
 					for (sub_name, sub_mod) in sub_dtd_elem.get_content_model()[1] :
@@ -2096,6 +2099,8 @@ class MainTree(ElementList) :
 			sorted_rng_nodes = manager.sorted_sub_rng_nodes_by_name("cib")
 			for rng_node in sorted_rng_nodes.get("element", []) :
 					name = rng_node[0][1].getAttribute("name")
+					if not expert_mode and name == "status" :
+						continue
 					treeiter[name] = self.store.append(None, [_(name_cap(name)), name])
 					sub_rng_nodes = manager.sorted_sub_rng_nodes_by_node(*rng_node[0])
 					for sub_rng_node in sub_rng_nodes.get("element", []) :
@@ -2508,8 +2513,12 @@ class ObjectView :
 		if has_elem :
 			self.elem_notebook = ElementNotebook(self.xml_node, self.is_topview, self.change_call_back,
 						self.show_mode, self.is_fake_xml_node, self.missing_opt_obj_parent_type)
-			obj_box.pack_start(self.elem_notebook.widget, True, padding = 5)
-			self.vbox.pack_start(self.elem_notebook.bbox, False, padding = 2)
+			if self.elem_notebook.update(self.xml_node) :
+				obj_box.pack_start(self.elem_notebook.widget, True, padding = 5)
+				self.vbox.pack_start(self.elem_notebook.bbox, False, padding = 2)
+			else :
+				self.update()
+				return
 
 		self.restore_status(objview_status)
 
@@ -2835,12 +2844,13 @@ class ElementNotebook :
 		self.add_btn = add_btn
 		self.edit_btn = edit_btn
 		self.del_btn = del_btn
-		self.update(xml_node)
 
 	def update(self, xml_node = None) :
+		global expert_mode
 		if xml_node != None :
 			self.xml_node = xml_node
 		self.elem_lists = []
+		self.pages = []
 		self.obj_type = self.xml_node.tagName
 		for child in self.hbox.get_children() :
 			self.hbox.remove(child)
@@ -2856,16 +2866,56 @@ class ElementNotebook :
 					if elem_node in self.xml_node.childNodes :
 						elem_node_list.append(elem_node)
 				if len(elem_node_list) > 0 :
+					self.pages.append(name)
 					tab_label = gtk.Label(_(name_cap(name)))
 					sub_dtd_elem = manager.get_dtd_elem(name)
-					if len(sub_dtd_elem.get_attr_list()) == 0 :
-						(name, mod) =  sub_dtd_elem.get_content_model()[1][0]
+					if len(sub_dtd_elem.get_attr_list()) == 0 \
+							or (not expert_mode and name in
+							["meta_attributes", "instance_attributes", "operations",
+							"cluster_property_set"]) :
+						if len(elem_node_list) > 1 and len(sub_dtd_elem.get_attr_list()) > 0 :
+							expert_mode = True
+							window.toggle_tool_action_group.get_action("expert-mode").set_active(True)
+							if not self.is_topview :
+								msgbox(_("The \"%s\" has multiple \"%s\" sets.")
+									%(_(name_cap(self.obj_type)), _(name_cap(name))) + "\n"
+									+_("We now switch to expert mode to view them properly."))
+							return False
+
+						if len(sub_dtd_elem.get_attr_list()) == 0 :
+							(name, mod) = sub_dtd_elem.get_content_model()[1][0]
+						else :
+							(name, mod) = sub_dtd_elem.get_content_model()[1][1]
 						sub_elem_node_list = []
 						for elem_node in elem_node_list :
-							for sub_elem_node in elem_node.getElementsByTagName(name) :
-								if sub_elem_node in elem_node.childNodes :
+							for sub_elem_node in elem_node.childNodes :
+								if sub_elem_node.nodeType != xml.dom.Node.ELEMENT_NODE :
+									continue
+								if sub_elem_node.tagName == name :
 									sub_elem_node_list.append(sub_elem_node)
-						elem_node_list = sub_elem_node_list
+								else :
+									expert_mode = True
+									window.toggle_tool_action_group.get_action("expert-mode").set_active(True)
+									if not self.is_topview :
+										msgbox(_("The \"%s\" has a \"%s\".")
+											%(_(name_cap(elem_node.tagName)),
+											name_cap(sub_elem_node.tagName)) + "\n"
+											+_("We now switch to expert mode to view them properly."))
+									return False
+
+						if len(sub_dtd_elem.get_attr_list()) == 0 :
+							elem_node_list = sub_elem_node_list
+						else :
+							sub_sub_dtd_elem = manager.get_dtd_elem(name)
+							(name, mod) = sub_sub_dtd_elem.get_content_model()[1][0]
+
+							sub_sub_elem_node_list = []
+							for sub_elem_node in sub_elem_node_list :
+								for sub_sub_elem_node in sub_elem_node.getElementsByTagName(name) :
+									if sub_sub_elem_node in sub_elem_node.childNodes :
+										sub_sub_elem_node_list.append(sub_sub_elem_node)
+							elem_node_list = sub_sub_elem_node_list
+
 					if self.show_mode == 0 :
 						elem_list = ElementList(name, elem_node_list)
 					else :
@@ -2912,20 +2962,48 @@ class ElementNotebook :
 				if len(elem_node_list) == 0 :
 					continue
 
+				self.pages.append(name)
 				tab_label = gtk.Label(_(name_cap(name)))
 				sub_rng_nodes = manager.sorted_sub_rng_nodes_by_node(*rng_node[0])
 				if sub_rng_nodes != None :
 					sub_attr_rng_nodes = sub_rng_nodes.get("attribute", [])
 					sub_elem_rng_nodes = sub_rng_nodes.get("element", [])
 
-					if len(sub_attr_rng_nodes) == 0 :
+					if len(sub_attr_rng_nodes) == 0 \
+							or (not expert_mode and name in 
+							["meta_attributes", "instance_attributes", "operations",
+							"cluster_property_set"]) :
+						if len(elem_node_list) > 1 and len(sub_attr_rng_nodes) > 0 :
+							expert_mode = True
+							window.toggle_tool_action_group.get_action("expert-mode").set_active(True)
+							if not self.is_topview :
+								msgbox(_("The \"%s\" has multiple \"%s\" sets.")
+									%(_(name_cap(self.obj_type)), _(name_cap(name))) + "\n"
+									+_("We now switch to expert mode to view them properly."))
+							return False
 						sub_elem_node_list = []
-						name = sub_elem_rng_nodes[0][0][1].getAttribute("name")
-						for elem_node in elem_node_list :
-							for sub_elem_node in elem_node.getElementsByTagName(name) :
-								if sub_elem_node in elem_node.childNodes :
-									sub_elem_node_list.append(sub_elem_node)
-						elem_node_list = sub_elem_node_list
+						for sub_elem_rng_node in sub_elem_rng_nodes :
+							if manager.find_decl(sub_elem_rng_node, "optional") != 0 :
+								continue
+							name = sub_elem_rng_node[0][1].getAttribute("name")
+							for elem_node in elem_node_list :
+								for sub_elem_node in elem_node.childNodes :
+									if sub_elem_node.nodeType != xml.dom.Node.ELEMENT_NODE :
+										continue
+									if sub_elem_node.tagName == name :
+										sub_elem_node_list.append(sub_elem_node)
+									else :
+										expert_mode = True
+										window.toggle_tool_action_group.get_action("expert-mode").set_active(True)
+										if not self.is_topview :
+											msgbox(_("The \"%s\" has a \"%s\".")
+												%(_(name_cap(elem_node.tagName)),
+												name_cap(sub_elem_node.tagName)) + "\n"
+												+_("We now switch to expert mode to view them properly."))
+										return False
+
+							elem_node_list = sub_elem_node_list
+							break
 				if self.show_mode == 0 :
 					elem_list = ElementList(name, elem_node_list)
 				else :
@@ -2940,6 +3018,7 @@ class ElementNotebook :
 				if len(elem_node_list) == 0 :
 					continue
 
+				self.pages.append(name)
 				tab_label = gtk.Label(_(name_cap(name)))
 				
 				sub_attr_list = []
@@ -2985,6 +3064,8 @@ class ElementNotebook :
 			self.hbox.show_all()
 			self.notebook.set_size_request(320, 180)
 			self.notebook.connect("switch-page", self.on_switch_page)
+
+		return True
 
 	def on_after_show(self, page_num = None) :
 		selected_node = self.get_selected_node(page_num)
@@ -3098,6 +3179,12 @@ class ElementNotebook :
 			(gtk.STOCK_OK, gtk.RESPONSE_OK, gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL))
 		dialog.set_border_width(5)
 
+		page_num = self.notebook.get_current_page()
+		if page_num >= 0 :
+			current_type = self.pages[page_num]
+		else :
+			current_type = None
+
 		elem_rng_nodes = []
 		if validate_type == "dtd" :
 			option_list = self.get_elem_options_dtd()
@@ -3139,6 +3226,8 @@ class ElementNotebook :
 					continue
 
 				radio_btn = gtk.RadioButton(radio_btn, _(name_cap(opt_name)))
+				if opt_name == current_type :
+					radio_btn.set_active(True)
 				dialog.vbox.pack_start(radio_btn, False, padding=2)
 				radio_btns[radio_btn] = option
 
@@ -3218,12 +3307,12 @@ class ElementNotebook :
 			else :
 				sub_attr_is_any_name = True
 				sub_elem_is_any_name = True
+				sub_elem_rng_nodes = []
 					
-		if len(sub_attr_list) > 0 or sub_attr_is_any_name :
-			newdoc = impl.createDocument(None, obj_type_name, None)
-			new_elem = newdoc.documentElement
-			self.xml_node.appendChild(new_elem)
-		else :
+		if not sub_attr_is_any_name and (len(sub_attr_list) == 0 \
+				or (not expert_mode and obj_type_name in
+				["meta_attributes", "instance_attributes", "operations",
+				"cluster_property_set"])) :
 			elem_node_list = []
 			for elem_node in self.xml_node.getElementsByTagName(obj_type_name) :
 				if elem_node in self.xml_node.childNodes :
@@ -3232,24 +3321,68 @@ class ElementNotebook :
 				newdoc = impl.createDocument(None, obj_type_name, None)
 				mid_elem = newdoc.documentElement
 				self.xml_node.appendChild(mid_elem)
+
+				if self.obj_type == "crm_config" :
+					mid_id = "cib-bootstrap-options"
+				elif self.obj_type in ["rsc_defaults", "op_defaults"] :
+					mid_id = self.obj_type + "-options"
+				elif self.obj_type == "node" :
+					mid_id = "nodes-" + self.xml_node.getAttribute("id")
+				else :
+					parent_id = self.xml_node.getAttribute("id")
+					if parent_id != "" and sub_attr_list.count("id") > 0 :
+						mid_id = self.xml_node.getAttribute("id") + "-" + obj_type_name
+					else :
+						mid_id = ""
+
+				if mid_id != "" :
+					mid_elem.setAttribute("id", mid_id)
+				
 			else :
 				mid_elem = elem_node_list[0]
 
 			if validate_type == "dtd" :
 				(sep,cont,mod) = dtd_elem.get_content_model()
 				if len(cont) > 0 :
-					sub_obj_type = cont[0][0]
+					if len(sub_attr_list) == 0 :
+						sub_obj_type = cont[0][0]
+					else :
+						sub_obj_type = cont[1][0]
+						sub_elem_node_list = []
+						for sub_elem_node in mid_elem.getElementsByTagName(sub_obj_type) :
+							if sub_elem_node in mid_elem.childNodes :
+								sub_elem_node_list.append(sub_elem_node)
+						if len(sub_elem_node_list) == 0 :
+							newdoc = impl.createDocument(None, sub_obj_type, None)
+							sub_mid_elem = newdoc.documentElement
+							mid_elem.appendChild(sub_mid_elem)
+							mid_elem = sub_mid_elem
+						else :
+							mid_elem = sub_elem_node_list[0]
+							
+						sub_dtd_elem = manager.get_dtd_elem(sub_obj_type)
+						(sub_obj_type, mod) = sub_dtd_elem.get_content_model()[1][0]
 				else :
 					return
 			else:
-				if len(sub_elem_type_list) > 0 :		
-					sub_obj_type = sub_elem_type_list[0]
-				else :
+				sub_obj_type = None
+				for sub_elem_rng_node in sub_elem_rng_nodes :
+					if manager.find_decl(sub_elem_rng_node, "optional") != 0  :
+						continue
+					sub_obj_type = sub_elem_rng_node[0][1].getAttribute("name")
+					break
+
+				if sub_obj_type == None :
 					return
 				
 			newdoc = impl.createDocument(None, sub_obj_type, None)
 			new_elem = newdoc.documentElement
 			mid_elem.appendChild(new_elem)
+		else :
+			newdoc = impl.createDocument(None, obj_type_name, None)
+			new_elem = newdoc.documentElement
+			self.xml_node.appendChild(new_elem)
+
 
 		objdlg = ObjectViewDlg(new_elem, True)
 
@@ -3261,7 +3394,7 @@ class ElementNotebook :
 				return
 			if not self.is_topview :
 				objdlg.destroy()
-				self.new_page_type = new_xml_node.tagName
+				self.new_page_type = obj_type_name
 				self.on_changed()
 				if self.change_call_back != None :
 					self.change_call_back()
@@ -3269,19 +3402,26 @@ class ElementNotebook :
 			else :
 				if self.is_fake_xml_node :
 					parent_xml_node = self.xml_node.cloneNode(True)
-					parent_xml_node.appendChild(new_xml_node)
+					#parent_xml_node.appendChild(new_xml_node)
 					xml_str = parent_xml_node.toxml().replace("\n", "")
 					parent_type = self.missing_opt_obj_parent_type
+					if parent_type == None :
+						if parent_xml_node.tagName != "node_state" :
+							parent_type = "configuration"
+						else :
+							parent_type = "status"
+					manager.cib_do_cmd("cib_create\n%s\n%s"%(str(parent_type), str(xml_str)))
 				else :
-					xml_str = new_xml_node.toxml().replace("\n", "")
-					parent_type = self.obj_type
+					#xml_str = new_xml_node.toxml().replace("\n", "")
+					#parent_type = self.obj_type
+					xml_str = self.xml_node.toxml().replace("\n", "")
+					manager.cib_do_cmd("cib_replace\n%s\n%s"%(str(self.obj_type), str(xml_str)))
 					
-				manager.cib_do_cmd("cib_create\n%s\n%s"%(str(parent_type), str(xml_str)))
 				if manager.failed_reason != "" :
 					msgbox(manager.failed_reason)
 				else :
 					objdlg.destroy()
-					self.new_page_type = new_xml_node.tagName
+					self.new_page_type = obj_type_name
 					return
 
 	def get_elem_options_dtd(self) :
@@ -3320,8 +3460,8 @@ class ElementNotebook :
 					if elem_node in self.xml_node.childNodes :
 						elem_node_list.append(elem_node)
 				sub_rng_nodes = manager.sorted_sub_rng_nodes_by_node(*rng_node[0])
-				if len(elem_node_list) < 1 or \
-						len(sub_rng_nodes.get("attribute", [])) == 0 :
+				if len(elem_node_list) < 1 or len(sub_rng_nodes.get("attribute", [])) == 0 \
+						or (not expert_mode and name in ["operations"]):
 					option_list.append(rng_node)
 		return option_list
 							
@@ -3465,17 +3605,18 @@ class ElementNotebook :
 			self.on_after_show()
 
 	def save_status(self) :
-		elem_list =  self.get_elem_list()
-		if elem_list == None :
+		page_num = self.notebook.get_current_page()
+		if page_num < 0 :
 			return None
-		page_type = elem_list.obj_type
+
+		page_type = self.pages[page_num]
 
 		new_page_type = self.new_page_type
 		self.new_page_type = None
 
 		tree_status = {}
-		for elem_list in self.elem_lists :
-			tree_status[elem_list.obj_type] =  elem_list.save_tree_status()
+		for i in range(len(self.elem_lists)) :
+			tree_status[self.pages[i]] =  self.elem_lists[i].save_tree_status()
 		return (page_type, new_page_type, tree_status)
 
 	def restore_status(self, notebook_status) :
@@ -3487,11 +3628,11 @@ class ElementNotebook :
 			set_page_type = page_type
 
 		for i in range(len(self.elem_lists)) :
-			obj_type = self.elem_lists[i].obj_type
-			if obj_type == set_page_type :
+			page_name = self.pages[i]
+			if page_name == set_page_type :
 				self.notebook.set_current_page(i)
-			if tree_status.get(obj_type) != None :
-				self.elem_lists[i].restore_tree_status(tree_status[obj_type])
+			if tree_status.get(page_name) != None :
+				self.elem_lists[i].restore_tree_status(tree_status[page_name])
 		self.on_after_show()
 
 class CRMConfigView(View) :
@@ -4805,7 +4946,7 @@ class MainWindow :
 
 	# system event handler
 	def on_delete_event(self, widget, event, data=None) :
-		self.on_quit(None)
+		self.do_quit(None)
 		return False
 	
 	def update_ui(self) :
@@ -4869,6 +5010,18 @@ class MainWindow :
 		self.maintree.update()
 		self.update_tool_button()
 		self.statusbar.pop(2)
+
+		window.statusbar.pop(1)
+		if manager.connected :
+			status_str = _("Connected to ") + manager.server
+		else :
+			status_str = _("Not connected")
+		if expert_mode :
+			status_str += " " + _("(Expert mode)")
+		else :
+			status_str += " " + _("(Simple mode)")
+		window.statusbar.push(1, status_str)
+
 		return False
 
 	def update_tool_button(self) :
@@ -4883,7 +5036,7 @@ class MainWindow :
 			self.toggle_tool_action_group.get_action("record-pending").set_active(True)
 		else :
 			self.toggle_tool_action_group.get_action("record-pending").set_active(False)
-	
+
 	def can_change_view(self) :
 		if not self.cur_view.changed :
 			return True
@@ -4945,9 +5098,12 @@ class MainWindow :
 	# ui event handler	
 	def on_quit(self, action) :
 		if confirmbox(_("Do you want to quit ?")) == gtk.RESPONSE_YES :
-			if manager.connected :
-				self.confirm_record_pending()
-			gtk.main_quit()
+			self.do_quit(action)
+
+	def do_quit(self, action) :
+		if manager.connected :
+			self.confirm_record_pending()
+		gtk.main_quit()
 	
 	def on_login(self, action) :
 		dialog = gtk.Dialog(_("Login"),self.win_widget, gtk.DIALOG_MODAL,
@@ -5468,6 +5624,12 @@ class MainWindow :
 		except OSError, msg :
 			msgbox(_("System error: ") + str(msg))
 
+	def change_expert_mode(self, action) :
+		global expert_mode
+		expert_mode = action.get_active()
+			
+		self.update()
+
 	def change_maintenance_mode(self, action) :
 		if action.get_active() :
 			manager.do_cmd("crm_attribute\ncrm_config\nset\nmaintenance-mode\ntrue")
@@ -5514,6 +5676,7 @@ class MainWindow :
 		self.load_icon("starting","@HA_DATADIR@/heartbeat-gui/starting.png")
 		self.load_icon("stopping","@HA_DATADIR@/heartbeat-gui/stopping.png")
 
+		self.load_icon("expert-mode","@HA_DATADIR@/heartbeat-gui/expert-mode.png")
 		self.load_icon("administration","@HA_DATADIR@/heartbeat-gui/administration.png")
 		self.load_icon("record-pending","@HA_DATADIR@/heartbeat-gui/record-pending.png")
 
@@ -5526,10 +5689,13 @@ class MainWindow :
 					<menuitem action="logout"/>
 					<menuitem action="quit"/>
 				</menu>
+				<menu action="view">
+					<menuitem action="expert-mode"/>
+					<menuitem action="record-pending"/>
+				</menu>
 				<menu action="tools">
 					<menuitem action="report"/>
 					<menuitem action="maintenance-mode"/>
-					<menuitem action="record-pending"/>
 				</menu>
 			</menubar>
 			<popup name="resource_popup">
@@ -5556,16 +5722,18 @@ class MainWindow :
 			<popup action="tools_popup">
 				<menuitem action="report"/>
 				<menuitem action="maintenance-mode"/>
+				<menuitem action="expert-mode"/>
 				<menuitem action="record-pending"/>
 			</popup>
 			<toolbar name="toolbar">
 				<toolitem action="login"/>
 				<toolitem action="logout"/>
 				<separator/>
-				<toolitem action="report"/>
-				<separator/>
-				<toolitem action="maintenance-mode"/>
+				<toolitem action="expert-mode"/>
 				<toolitem action="record-pending"/>
+				<separator/>
+				<toolitem action="report"/>
+				<toolitem action="maintenance-mode"/>
 				<separator/>
 				<toolitem action="quit"/>
 			</toolbar>
@@ -5627,6 +5795,7 @@ class MainWindow :
 			('node', None, _('Nodes')),
 			('standby', "ha-standby-node", _('Standby'), None,_('make the node standby'), self.on_standby),
 			('active', "ha-active-node", _('Active'), None,_('make the node active'), self.on_active),
+			('view', None, _('View')),
 			('tools', None, _('Tools')),
 			('report', gtk.STOCK_FIND_AND_REPLACE, _('Cluster Report'), None, _('generate a cluster report'), self.on_cluster_report)
 			])
@@ -5634,6 +5803,8 @@ class MainWindow :
 		uimanager.insert_action_group(actiongroup, 0)
 
 		toggle_tool_actions = [
+			('expert-mode', "expert-mode", _('Expert Mode'), None,
+				_('Switch to expert mode'), self.change_expert_mode),
 			('maintenance-mode', "administration", _('Maintenance Mode'), None,
 				_('Switch to maintenance mode'), self.change_maintenance_mode),
 			('record-pending', "record-pending", _('Indicate Pending Operations'), None,
