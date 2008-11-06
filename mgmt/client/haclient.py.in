@@ -5025,14 +5025,18 @@ class MainWindow :
 		return False
 
 	def update_tool_button(self) :
-		value = manager.do_cmd("crm_attribute\ncrm_config\nget\nmaintenance-mode")
-		if value != None and len(value) > 0 and value[0].count("true") :
+		#value = manager.do_cmd("crm_attribute\ncrm_config\nget\nmaintenance-mode")
+		#if value != None and len(value) > 0 and value[0].count("true") :
+		value = manager.find_attribute("crm_config", "maintenance-mode")
+		if value == "true" :
 			self.toggle_tool_action_group.get_action("maintenance-mode").set_active(True)
 		else :
 			self.toggle_tool_action_group.get_action("maintenance-mode").set_active(False)
 
-		value = manager.do_cmd("crm_attribute\nop_defaults\nget\nrecord-pending")
-		if value != None and len(value) > 0 and value[0].count("true") :
+		#value = manager.do_cmd("crm_attribute\nop_defaults\nget\nrecord-pending")
+		#if value != None and len(value) > 0 and value[0].count("true") :
+		value = manager.find_attribute("op_defaults", "record-pending")
+		if value == "true" :
 			self.toggle_tool_action_group.get_action("record-pending").set_active(True)
 		else :
 			self.toggle_tool_action_group.get_action("record-pending").set_active(False)
@@ -6226,6 +6230,13 @@ class Manager :
 		for xml_node in self.xml_nodes["cib"].getElementsByTagName(obj_type) :
 			if xml_node.getAttribute("id") == obj_name :
 				return xml_node
+		return None
+
+	def find_attribute(self, obj_type, attribute_name) :
+		for xml_node in self.xml_nodes["cib"].getElementsByTagName(obj_type) :
+			for nv_xml_node in xml_node.getElementsByTagName("nvpair") :
+				if nv_xml_node.getAttribute("name") == attribute_name :
+					return nv_xml_node.getAttribute("value")
 		return None
 
 	def node_name(self, node_id) :
