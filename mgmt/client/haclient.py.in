@@ -1081,6 +1081,9 @@ class ManageView :
 			</popup>
 			<popup action="tools_popup">
 				<menuitem action="group-by-node"/>
+				<menuitem action="record-pending"/>
+				<separator/>
+				<menuitem action="maintenance-mode"/>
 			</popup>
 			<toolbar name="toolbar">
 				<toolitem action="startrsc"/>
@@ -1093,6 +1096,9 @@ class ManageView :
 				<toolitem action="standby"/>
 				<toolitem action="active"/>
 				<separator/>
+				<toolitem action="maintenance-mode"/>
+				<separator/>
+				<toolitem action="record-pending"/>
 				<toolitem action="group-by-node"/>
 			</toolbar>
 		</ui>'''
@@ -1125,6 +1131,10 @@ class ManageView :
 
 		toggle_tool_actions = [
 			('group-by-node', gtk.STOCK_SORT_DESCENDING, _('Group By Node'), None, _('Group resources by node'), self.change_group_mode),
+			('maintenance-mode', "administration", _('Maintenance Mode'), None,
+				_('Switch to maintenance mode'), self.change_maintenance_mode),
+			('record-pending', "record-pending", _('Indicate Pending Operations'), None,
+				_('Indicate pending(starting/stopping) operations'), self.change_record_pending),
 			]
 
 		#toolbar = gtk.Toolbar()
@@ -1224,6 +1234,18 @@ class ManageView :
 
 	def change_group_mode(self, action) :
 		self.update()
+
+	def change_maintenance_mode(self, action) :
+		if action.get_active() :
+			manager.do_cmd("crm_attribute\ncrm_config\nset\nmaintenance-mode\ntrue")
+		else :
+			manager.do_cmd("crm_attribute\ncrm_config\ndel\nmaintenance-mode")
+
+	def change_record_pending(self, action) :
+		if action.get_active() :
+			manager.do_cmd("crm_attribute\nop_defaults\nset\nrecord-pending\ntrue")
+		else :
+			manager.do_cmd("crm_attribute\nop_defaults\ndel\nrecord-pending")
 
 	def on_after_show(self, treeview = None) :
 		for child in self.sub_vbox.get_children() :
@@ -1708,8 +1730,45 @@ class ManageView :
 		(group_by_node, tree_status) = view_status
 		if group_by_node :
 			self.toggle_tool_action_group.get_action("group-by-node").set_active(group_by_node)
+
+		self.update_tool_button()
 		self.manage_tree.restore_tree_status(tree_status)
 		self.on_after_show()
+
+	def update_tool_button(self) :
+		#value = manager.do_cmd("crm_attribute\ncrm_config\nget\nmaintenance-mode")
+		#if value != None and len(value) > 0 and value[0].count("true") :
+		value = manager.find_attribute("crm_config", "maintenance-mode")
+		action = self.toggle_tool_action_group.get_action("maintenance-mode")
+		if pygtk_newer(2, 10) and pygobject_newer(2, 12, 3) :
+			action.disconnect_by_func(self.change_maintenance_mode)
+
+		if value == "true" :
+			if not action.get_active() :
+				action.set_active(True)
+		else :
+			if action.get_active() :
+				action.set_active(False)
+
+		if pygtk_newer(2, 10) and pygobject_newer(2, 12, 3) :
+			action.connect("toggled", self.change_maintenance_mode)
+
+		#value = manager.do_cmd("crm_attribute\nop_defaults\nget\nrecord-pending")
+		#if value != None and len(value) > 0 and value[0].count("true") :
+		value = manager.find_attribute("op_defaults", "record-pending")
+		action = self.toggle_tool_action_group.get_action("record-pending")
+		if pygtk_newer(2, 10) and pygobject_newer(2, 12, 3) :
+			action.disconnect_by_func(self.change_record_pending)
+
+		if value == "true" :
+			if not action.get_active() :
+				action.set_active(True)
+		else :
+			if action.get_active() :
+				action.set_active(False)
+
+		if pygtk_newer(2, 10) and pygobject_newer(2, 12, 3) :
+			action.connect("toggled", self.change_record_pending)
 
 class ManageTree :
 	store = None
@@ -5002,13 +5061,10 @@ class MainWindow :
 
 		self.set_action_sensitive('unmigratersc', manager.connected)
 		self.set_action_sensitive('report', manager.connected)
-		self.set_action_sensitive('maintenance-mode', manager.connected)
-		self.set_action_sensitive('record-pending', manager.connected)
 
 	# functions
 	def update(self) :
 		self.maintree.update()
-		self.update_tool_button()
 		self.statusbar.pop(2)
 
 		window.statusbar.pop(1)
@@ -5023,23 +5079,6 @@ class MainWindow :
 		window.statusbar.push(1, status_str)
 
 		return False
-
-	def update_tool_button(self) :
-		#value = manager.do_cmd("crm_attribute\ncrm_config\nget\nmaintenance-mode")
-		#if value != None and len(value) > 0 and value[0].count("true") :
-		value = manager.find_attribute("crm_config", "maintenance-mode")
-		if value == "true" :
-			self.toggle_tool_action_group.get_action("maintenance-mode").set_active(True)
-		else :
-			self.toggle_tool_action_group.get_action("maintenance-mode").set_active(False)
-
-		#value = manager.do_cmd("crm_attribute\nop_defaults\nget\nrecord-pending")
-		#if value != None and len(value) > 0 and value[0].count("true") :
-		value = manager.find_attribute("op_defaults", "record-pending")
-		if value == "true" :
-			self.toggle_tool_action_group.get_action("record-pending").set_active(True)
-		else :
-			self.toggle_tool_action_group.get_action("record-pending").set_active(False)
 
 	def can_change_view(self) :
 		if not self.cur_view.changed :
@@ -5148,7 +5187,7 @@ class MainWindow :
 			self.update_ui()
 
 	def confirm_record_pending(self) :
-		if self.toggle_tool_action_group.get_action("record-pending").get_active() :
+		if manager.find_attribute("op_defaults", "record-pending") == "true" :
 			retval = confirmbox((_("\"Indicate pending operations\" has been activated.") + "\n"
 					+ _("It could affect the performance.") + "\n"
 					+ _("Turn it off ?")))
@@ -5634,18 +5673,6 @@ class MainWindow :
 			
 		self.update()
 
-	def change_maintenance_mode(self, action) :
-		if action.get_active() :
-			manager.do_cmd("crm_attribute\ncrm_config\nset\nmaintenance-mode\ntrue")
-		else :
-			manager.do_cmd("crm_attribute\ncrm_config\ndel\nmaintenance-mode")
-
-	def change_record_pending(self, action) :
-		if action.get_active() :
-			manager.do_cmd("crm_attribute\nop_defaults\nset\nrecord-pending\ntrue")
-		else :
-			manager.do_cmd("crm_attribute\nop_defaults\ndel\nrecord-pending")
-
 	def load_icon(self, name, file) :
 		icons = gtk.IconFactory()
 		icons.add(name,gtk.IconSet(gtk.gdk.pixbuf_new_from_file(file)))
@@ -5670,6 +5697,9 @@ class MainWindow :
 		#self.load_icon("ha-master-resource","@HA_DATADIR@/heartbeat-gui/master-resource.png")
 		#self.load_icon("ha-slave-resource","@HA_DATADIR@/heartbeat-gui/slave-resource.png")
 
+		self.load_icon("administration","@HA_DATADIR@/heartbeat-gui/administration.png")
+		self.load_icon("record-pending","@HA_DATADIR@/heartbeat-gui/record-pending.png")
+
 		self.load_icon("nodes","@HA_DATADIR@/heartbeat-gui/nodes.png")
 		self.load_icon("node","@HA_DATADIR@/heartbeat-gui/node.png")
 
@@ -5681,8 +5711,6 @@ class MainWindow :
 		self.load_icon("stopping","@HA_DATADIR@/heartbeat-gui/stopping.png")
 
 		self.load_icon("expert-mode","@HA_DATADIR@/heartbeat-gui/expert-mode.png")
-		self.load_icon("administration","@HA_DATADIR@/heartbeat-gui/administration.png")
-		self.load_icon("record-pending","@HA_DATADIR@/heartbeat-gui/record-pending.png")
 
 		# create ui-manager
 		ui_xml = '''
@@ -5695,11 +5723,9 @@ class MainWindow :
 				</menu>
 				<menu action="view">
 					<menuitem action="expert-mode"/>
-					<menuitem action="record-pending"/>
 				</menu>
 				<menu action="tools">
 					<menuitem action="report"/>
-					<menuitem action="maintenance-mode"/>
 				</menu>
 			</menubar>
 			<popup name="resource_popup">
@@ -5725,19 +5751,15 @@ class MainWindow :
 			</popup>
 			<popup action="tools_popup">
 				<menuitem action="report"/>
-				<menuitem action="maintenance-mode"/>
 				<menuitem action="expert-mode"/>
-				<menuitem action="record-pending"/>
 			</popup>
 			<toolbar name="toolbar">
 				<toolitem action="login"/>
 				<toolitem action="logout"/>
 				<separator/>
 				<toolitem action="expert-mode"/>
-				<toolitem action="record-pending"/>
 				<separator/>
 				<toolitem action="report"/>
-				<toolitem action="maintenance-mode"/>
 				<separator/>
 				<toolitem action="quit"/>
 			</toolbar>
@@ -5809,10 +5831,6 @@ class MainWindow :
 		toggle_tool_actions = [
 			('expert-mode', "expert-mode", _('Expert Mode'), None,
 				_('Switch to expert mode'), self.change_expert_mode),
-			('maintenance-mode', "administration", _('Maintenance Mode'), None,
-				_('Switch to maintenance mode'), self.change_maintenance_mode),
-			('record-pending', "record-pending", _('Indicate Pending Operations'), None,
-				_('Indicate pending(starting/stopping) operations'), self.change_record_pending),
 			]
 
 		self.toggle_tool_action_group = gtk.ActionGroup("toggle_tools")
