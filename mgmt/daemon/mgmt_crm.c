@@ -143,7 +143,8 @@ static const char* uname2id(const char* node);
 static resource_t* get_parent(resource_t* child);
 static int get_fix(const char* rsc_id, char* prefix, char* suffix, char* real_id);
 static const char* get_rsc_tag(resource_t* rsc);
-static int cl_msg_swap_offset(crm_data_t* msg, int offset1, int offset2);
+static int cl_msg_swap_offset(crm_data_t *parent, crm_data_t *node1, crm_data_t *node2);
+static int cleanup_xml_node(crm_data_t *node);
 int regex_match(const char *regex, const char *str);
 
 pe_working_set_t* cib_cached = NULL;
@@ -1538,53 +1539,72 @@ on_add_rsc(char* argv[], int argc)
 
 }
 
-int
-cl_msg_swap_offset(crm_data_t* msg, int offset1, int offset2)
+static int
+cleanup_xml_node(crm_data_t *node) 
 {
-#if 0
-    /* this code doesn't work when crm_data_t is an alias for xmlNode */
-	char* name;
-	int nlen;
-	void* value;
-	int vlen;
-	int type;
-	
-	name = msg->names[offset1];
-	nlen = msg->nlens[offset1];
-	value = msg->values[offset1];
-	vlen = msg->vlens[offset1];
-	type = msg->types[offset1];
-		
-	msg->names[offset1] = msg->names[offset2];
-	msg->nlens[offset1] = msg->nlens[offset2];
-	msg->values[offset1] = msg->values[offset2];
-	msg->vlens[offset1] = msg->vlens[offset2];
-	msg->types[offset1] = msg->types[offset2];
-		
-	msg->names[offset2] = name;
-	msg->nlens[offset2] = nlen;
-	msg->values[offset2] = value;
-	msg->vlens[offset2] = vlen;
-	msg->types[offset2] = type;
-	
+	if (node != NULL) { 
+		crm_data_t *c = NULL; 
+		int cont = 1; 
+		int counter = 0;
+		while (cont) {
+			cont = 0;
+			for (counter = 0; counter < node->nfields; counter++)
+			{
+				if (node->types[counter] != FT_STRUCT
+				   && node->types[counter] != FT_UNCOMPRESS)
+					continue;
+				c = node->values[counter];
+				if (c == NULL) {
+					continue;
+				} else {
+					replace_xml_child(node, c, c, TRUE);
+					cont = 1;
+					break;
+				}
+			}
+		}
+	}
+	return 0;
+}
+
+int
+cl_msg_swap_offset(crm_data_t *parent, crm_data_t *node1, crm_data_t *node2)
+{
+	crm_data_t *temp1 = NULL;
+	crm_data_t *temp2 = NULL;
+
+	temp1= copy_xml(node1);
+	temp2= copy_xml(node2);
+
+	cleanup_xml_node(node1);
+	copy_in_properties(node1, temp2);
+	xml_child_iter(temp2, temp2_child, add_node_copy(node1, temp2_child));
+
+	cleanup_xml_node(node2);
+	copy_in_properties(node2, temp1);
+	xml_child_iter(temp1, temp1_child, add_node_copy(node2, temp1_child));
+
+	free(temp1);
+	free(temp2);
+
 	return HA_OK;
-#else
-	return HA_FAIL;;
-#endif
 }
 
 char*
 on_move_rsc(char* argv[], int argc)
 {
-	int i = 0, rc, pos = -1;
-	int first_child = -1;
-	int last_child = -1;
+	int i = 0, rc;
 	const char* child_id;
+	char *msg;
 	resource_t* rsc;
 	resource_t* parent;
 	pe_working_set_t* data_set;
 	crm_data_t* output = NULL;
 	
+	crm_data_t *prev_node = NULL;
+	crm_data_t *target_node = NULL;
+	crm_data_t *next_node = NULL;
+
 	data_set = get_data_set();
 	GET_RESOURCE()
 	parent = get_parent(rsc);
@@ -1596,38 +1616,51 @@ on_move_rsc(char* argv[], int argc)
 		parent->xml, child,
 		const char *name = crm_element_name(child);
 		if (STRNCMP_CONST(name, "primitive") == 0) {
-		    if (first_child == -1) {
-			first_child = i;
-		    }
-		    last_child = i;
+			if (target_node != NULL) {
+				if (next_node == NULL) next_node = child;
+			}
 		    child_id = crm_element_value(child, "id");
 		    if (strcmp(child_id, argv[1]) == 0) {
 			mgmt_log(LOG_INFO,"find %s !", child_id);
-			pos = i;
+			if (target_node == NULL) target_node = child;
 		    }
+		    if (target_node == NULL) {
+		      prev_node = child;
+		    }
+
 		}
 		i++;
 	    );
 	
+	if (target_node == NULL) {
+		mgmt_log(LOG_INFO, "Can't find %s!", argv[1]);
+		return strdup(MSG_FAIL);
+	}
+
 	if (STRNCMP_CONST(argv[2],"up")==0) {
-		if (pos-1<first_child) {
+		if (prev_node == NULL) {
 			free_data_set(data_set);
+			mgmt_log(LOG_INFO, "already first in the group.");
 			return strdup(MSG_FAIL);
 		}
-		cl_msg_swap_offset(parent->xml, pos-1, pos);
+		cl_msg_swap_offset(parent->xml, prev_node, target_node);
 	}
 	else if (STRNCMP_CONST(argv[2],"down")==0) {
-		if (pos+1>last_child) {
+		if (next_node == NULL) {
 			free_data_set(data_set);
+			mgmt_log(LOG_INFO, "already last in the group.");
 			return strdup(MSG_FAIL);
 		}
-		cl_msg_swap_offset(parent->xml, pos, pos+1);
+		cl_msg_swap_offset(parent->xml, target_node, next_node);
 	}
 	else {
 		free_data_set(data_set);
 		return strdup(MSG_FAIL);
 	}
-	mgmt_log(LOG_INFO, "on_move_rsc:%s", dump_xml_formatted(parent->xml)); /* Memory leak! */
+
+	msg = dump_xml_formatted(parent->xml); 
+	mgmt_log(LOG_INFO, "on_move_rsc:%s", msg); 
+	free(msg);
 	
 	rc = cib_conn->cmds->variant_op(
 			cib_conn, CIB_OP_REPLACE, NULL,"resources",
