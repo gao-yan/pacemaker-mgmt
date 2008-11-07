@@ -2553,7 +2553,10 @@ class ObjectView :
 							self.xml_node.parentNode.parentNode.tagName == "primitive" :
 						obj_attrs = PrimInstAttrsNV(self.xml_node, is_newobj, self.change_call_back)
 					elif self.xml_node.parentNode.tagName == "meta_attributes" :
-						obj_attrs = MetaAttrsNV(self.xml_node, is_newobj, self.change_call_back)
+						if self.xml_node.parentNode.parentNode.tagName == "op_defaults" :
+							obj_attrs = OPDefaultsNV(self.xml_node, is_newobj, self.change_call_back)
+						else :
+							obj_attrs = MetaAttrsNV(self.xml_node, is_newobj, self.change_call_back)
 					elif self.xml_node.parentNode.tagName == "cluster_property_set" :
 						obj_attrs = CRMConfNV(self.xml_node, is_newobj, self.change_call_back)
 					else :
@@ -4534,9 +4537,6 @@ class AddNativeDlg :
 		
 
 class ObjectViewDlg :
-	obj_type = None	
-	widgets = None
-	glade = None
 	def __init__(self, xml_node, is_newobj = False) :
 		self.xml_node = xml_node
 
@@ -8085,6 +8085,50 @@ class PrimInstAttrsNV(MetaNV) :
 		primitive_provider = str(primitive_node.getAttribute("provider"))
 		self.meta = manager.get_rsc_meta(primitive_class, primitive_type, primitive_provider)
 		MetaNV.__init__(self, xml_node, is_newobj, change_call_back)
+
+class OPDefaultsNV(ObjectAttrs) :
+	def __init__(self, xml_node, is_newobj = False, change_call_back = None) :
+		self.op_attr_rng_nodes = {}
+		self.op_attr_list = []
+		sorted_rng_nodes = manager.sorted_sub_rng_nodes_by_name("op")
+		if sorted_rng_nodes != None :
+			attr_rng_nodes = sorted_rng_nodes.get("attribute", [])
+			for rng_node in attr_rng_nodes :
+				name = rng_node[0][1].getAttribute("name")
+				if name in ["id", "name", "description"] :
+					continue
+				if not self.op_attr_rng_nodes.has_key(name) :
+					self.op_attr_rng_nodes[name] = []
+					self.op_attr_list.append(name)
+				self.op_attr_rng_nodes[name].append(rng_node)
+
+		ObjectAttrs.__init__(self, xml_node, is_newobj, change_call_back)
+
+	def auto_fill(self) :
+		widgets = self.widgets
+		name_store = [[name, ""] for name in self.op_attr_list]
+		if widgets.get("combo_entries", {}).has_key("name") :
+			self.combobox_store_append(widgets["combo_entries"]["name"], name_store)
+
+	def dynamic_fill(self, widget) :
+		widgets = self.widgets
+		if widgets.get("combo_entries", {}).has_key("name") \
+				and widget == widgets["combo_entries"]["name"] :
+			nvpair = self.get_values()
+			if nvpair.has_key("name") :
+				value_store = []
+				for attr_rng_node in self.op_attr_rng_nodes.get(nvpair["name"], []):
+					sub_rng_nodes = manager.sorted_sub_rng_nodes_by_node(*attr_rng_node[0])
+					if len(sub_rng_nodes.get("value",[])) > 0 :
+						for value_node in sub_rng_nodes["value"] :
+							value_store.append([value_node[0][1].childNodes[0].data, ""])
+					for sub_rng_node in sub_rng_nodes.get("data", []) :
+						if sub_rng_nodes["data"][0][0][1].getAttribute("type") == "boolean" :
+							for option in ("true", "false") :
+								value_store.append([option, ""])
+
+				if widgets.get("combo_entries", {}).has_key("value") :
+					self.combobox_store_append(widgets["combo_entries"]["value"], value_store)
 
 class Expression(ObjectAttrs) :
 	def __init__(self, xml_node, is_newobj = False, change_call_back = None) :
