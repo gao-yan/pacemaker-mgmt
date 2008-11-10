@@ -7910,6 +7910,57 @@ class Primitive(ObjectAttrs) :
 
 class MetaAttrsNV(ObjectAttrs) :
 	def __init__(self, xml_node, is_newobj = False, change_call_back = None) :
+		common_options = [
+		("priority", [], 
+		 _("If not all resources can be active, the cluster will stop lower priority resources in order to keep higher priority ones active.")), 
+		("target-role", [["Started", _("[ default ]")], ["Stopped", ""]],
+		 _("What state should the cluster attempt to keep this resource in?")),
+		("is-managed", [["true", _("[ default ]")], ["false", ""]],
+		 _("Is the cluster allowed to start and stop the resource?"))
+		]
+
+		primitive_options = [
+		("resource-stickiness", [],
+		 _("How much does the resource prefer to stay where it is? Defaults to the value of \"default-resource-stickiness\"")),
+		("migration-threshold", [],
+		 _("How many failures should occur for this resource on a node before making the node ineligible to host this resource. Default: \"none\"")),
+		("multiple-active", [["stop_start", _("[ default ]")], ["stop_only", ""], ["block", _("(mark the resource as unmanaged)")]],
+		 _("What should the cluster do if it ever finds the resource active on more than one node.")),
+		("failure-timeout", [],
+		 _("How many seconds to wait before acting as if the failure had not occurred (and potentially allowing the resource back to the node on which it failed. Default: \"never\""))
+		]
+
+		clone_basic_options = [
+		("clone-max", [],
+		 _("How many copies of the resource to start. Defaults to the number of nodes in the cluster.")),
+		("clone-node-max", [["1", "[ default ]"]],
+		 _("How many copies of the resource can be started on a single node.")),
+		]
+		clone_other_options = [
+		("notify", [["false", _("[ default ]")], ["true", ""]],
+		 _("When stopping or starting a copy of the clone, tell all the other copies beforehand and when the action was successful.")),
+		("globally-unique", [["true", _("[ default ]")], ["false", ""]],
+		 _("Does each copy of the clone perform a different function?")),
+		("ordered", [["false", _("[ default ]")], ["true", ""]],
+		 _("Should the copies be started in series (instead of in parallel)")),
+		("interleave", [["false", _("[ default ]")], ["true", ""]],
+		 _("Changes the behavior of ordering constraints (between clones/masters) so that instances can start/stop as soon as their peer instance has (rather than waiting for every instance of the other clone has)."))
+		]
+
+		master_basic_options = [
+		("master-max", [["1", "[ default ]"]],
+		 _("How many copies of the resource can be promoted to master status.")),
+		("master-node-max", [["1", "[ default ]"]],
+		 _("How many copies of the resource can be promoted to master status on a single node."))
+		]
+
+		self.meta_attributes_options = {
+		"primitive": common_options + primitive_options,
+		"group": common_options,
+		"clone": common_options + clone_basic_options + clone_other_options,
+		"master": common_options + clone_basic_options + master_basic_options + clone_other_options,
+		}
+
 		if validate_type == "dtd" :
 			self.target_node = xml_node.parentNode.parentNode.parentNode
 			self.target_type = self.target_node.tagName
@@ -7920,8 +7971,49 @@ class MetaAttrsNV(ObjectAttrs) :
 		else :
 			self.target_node = xml_node.parentNode.parentNode
 			self.target_type = self.target_node.tagName
+			self.auto_fill = self.auto_fill_rng
+			self.dynamic_fill = self.dynamic_fill_rng
+			self.dynamic_desc = self.dynamic_desc_rng
 			
 		ObjectAttrs.__init__(self, xml_node, is_newobj, change_call_back)
+
+	def auto_fill_rng(self) :
+		widgets = self.widgets
+		name_store = [[option[0], ""] for option in self.meta_attributes_options.get(self.target_type, [])]
+		if widgets.get("combo_entries", {}).has_key("name") :
+			self.combobox_store_append(widgets["combo_entries"]["name"], name_store)
+
+	def dynamic_fill_rng(self, widget) :
+		widgets = self.widgets
+		if widgets.get("combo_entries", {}).has_key("name") \
+				and widget == widgets["combo_entries"]["name"] :
+			value_store = []
+			nvpair = self.get_values()
+			if nvpair.has_key("name") :
+				options = self.meta_attributes_options.get(self.target_type, [])
+				for i in range(len(options)) :
+					if options[i][0] == nvpair["name"] :
+						value_store = options[i][1]
+						break
+
+			if widgets.get("combo_entries", {}).has_key("value") :
+				self.combobox_store_append(widgets["combo_entries"]["value"], value_store)
+
+	def dynamic_desc_rng(self, widget) :
+		widgets = self.widgets
+		if widgets.get("combo_entries", {}).get("name") != widget :
+			return None
+
+		desc = [""]
+		nvpair =  self.get_values()
+		if nvpair.has_key("name") :
+			options = self.meta_attributes_options.get(self.target_type, [])
+			for i in range(len(options)) :
+				if options[i][0] == nvpair["name"] :
+					desc = [options[i][2]]
+					break
+
+		return desc
 
 	def auto_fill_dtd(self) :
 		widgets = self.widgets
