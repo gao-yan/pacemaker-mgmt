@@ -7959,6 +7959,7 @@ class MetaAttrsNV(ObjectAttrs) :
 		"group": common_options,
 		"clone": common_options + clone_basic_options + clone_other_options,
 		"master": common_options + clone_basic_options + master_basic_options + clone_other_options,
+		"rsc_defaults": common_options + primitive_options,
 		}
 
 		if validate_type == "dtd" :
