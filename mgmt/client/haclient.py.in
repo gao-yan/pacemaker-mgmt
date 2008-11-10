@@ -8131,7 +8131,7 @@ class MetaNV(ObjectAttrs) :
 				or widget != widgets["combo_entries"].get("name") :
 			return None
 
-		desc = []
+		desc = [""]
 		instattr = self.get_values()
 		if instattr.has_key("name") :
 			for param in meta.parameters :
@@ -8149,8 +8149,6 @@ class MetaNV(ObjectAttrs) :
 						else :
 							desc = [shortdesc + _(".") + "\n" + longdesc]
 					break
-		else :
-			desc = [""]
 		return desc
 
 class CRMConfNV(MetaNV) :
