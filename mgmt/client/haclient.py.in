@@ -2542,6 +2542,12 @@ class ObjectView :
 					if self.xml_node.parentNode.parentNode.tagName == "instance_attributes" and \
 							self.xml_node.parentNode.parentNode.parentNode.tagName == "primitive" :
 						obj_attrs = PrimInstAttrsNV(self.xml_node, is_newobj, self.change_call_back)
+					elif self.xml_node.parentNode.parentNode.tagName == "instance_attributes" and \
+							self.xml_node.parentNode.parentNode.parentNode.tagName == "op" :
+						obj_attrs = OPInstAttrsNV(self.xml_node, is_newobj, self.change_call_back)
+					elif self.xml_node.parentNode.parentNode.tagName == "instance_attributes" and \
+							self.xml_node.parentNode.parentNode.parentNode.tagName == "node" :
+						obj_attrs = InstAttrsNV(self.xml_node, is_newobj, self.change_call_back)
 					elif self.xml_node.parentNode.parentNode.tagName == "meta_attributes" :
 						obj_attrs = MetaAttrsNV(self.xml_node, is_newobj, self.change_call_back)
 					elif self.xml_node.parentNode.parentNode.tagName == "cluster_property_set" :
@@ -2552,6 +2558,12 @@ class ObjectView :
 					if self.xml_node.parentNode.tagName == "instance_attributes" and \
 							self.xml_node.parentNode.parentNode.tagName == "primitive" :
 						obj_attrs = PrimInstAttrsNV(self.xml_node, is_newobj, self.change_call_back)
+					elif self.xml_node.parentNode.tagName == "instance_attributes" and \
+							self.xml_node.parentNode.parentNode.tagName == "op" :
+						obj_attrs = OPInstAttrsNV(self.xml_node, is_newobj, self.change_call_back)
+					elif self.xml_node.parentNode.tagName == "instance_attributes" and \
+							self.xml_node.parentNode.parentNode.tagName == "node" :
+						obj_attrs = InstAttrsNV(self.xml_node, is_newobj, self.change_call_back)
 					elif self.xml_node.parentNode.tagName == "meta_attributes" :
 						if self.xml_node.parentNode.parentNode.tagName == "op_defaults" :
 							obj_attrs = OPDefaultsNV(self.xml_node, is_newobj, self.change_call_back)
@@ -8176,6 +8188,53 @@ class PrimInstAttrsNV(MetaNV) :
 		primitive_provider = str(primitive_node.getAttribute("provider"))
 		self.meta = manager.get_rsc_meta(primitive_class, primitive_type, primitive_provider)
 		MetaNV.__init__(self, xml_node, is_newobj, change_call_back)
+
+class OPInstAttrsNV(ObjectAttrs) :
+	def auto_fill(self) :
+		widgets = self.widgets
+		name_store = [["OCF_CHECK_LEVEL", ""]]
+		if widgets.get("combo_entries", {}).has_key("name") :
+			self.combobox_store_append(widgets["combo_entries"]["name"], name_store)
+
+class InstAttrsNV(ObjectAttrs) :
+	def __init__(self, xml_node, is_newobj = False, change_call_back = None) :
+		self.attributes_options = {
+		"node": [
+		("standby", [["false", "[ default ]"], ["true", ""]]),
+		("cpu_mips", [])
+		]
+		}
+
+		if validate_type == "dtd" :
+			self.target_node = xml_node.parentNode.parentNode.parentNode
+			self.target_type = self.target_node.tagName
+		else :
+			self.target_node = xml_node.parentNode.parentNode
+			self.target_type = self.target_node.tagName
+
+		ObjectAttrs.__init__(self, xml_node, is_newobj, change_call_back)
+
+	def auto_fill(self) :
+		widgets = self.widgets
+		name_store = [[option[0], ""] for option in self.attributes_options.get(self.target_type, [])]
+		if widgets.get("combo_entries", {}).has_key("name") :
+			self.combobox_store_append(widgets["combo_entries"]["name"], name_store)
+
+	def dynamic_fill(self, widget) :
+		widgets = self.widgets
+		if widgets.get("combo_entries", {}).has_key("name") \
+				and widget == widgets["combo_entries"]["name"] :
+			value_store = []
+			nvpair = self.get_values()
+			if nvpair.has_key("name") :
+				options = self.attributes_options.get(self.target_type, [])
+				for i in range(len(options)) :
+					if options[i][0] == nvpair["name"] :
+						value_store = options[i][1]
+						break
+
+			if widgets.get("combo_entries", {}).has_key("value") :
+				self.combobox_store_append(widgets["combo_entries"]["value"], value_store)
 
 class OPDefaultsNV(ObjectAttrs) :
 	def __init__(self, xml_node, is_newobj = False, change_call_back = None) :
