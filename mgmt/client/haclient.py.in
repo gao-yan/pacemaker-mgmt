@@ -7424,6 +7424,8 @@ class ObjectAttrs(WidgetGroup) :
 		optional_row = 0
 		name_label_max_len = 0
 
+
+		self.attr_rng_node_dict = {}
 		attr_is_any_name = False
 		any_attr_decl = []
 		elem_is_any_name = False
@@ -7443,6 +7445,7 @@ class ObjectAttrs(WidgetGroup) :
 							any_attr_decl.append(decl)
 				elif attr_list.count(name) == 0 :
 					attr_list.append(name)
+					self.attr_rng_node_dict[name] = rng_node
 					if name != "id" :
 						continue
 					sub_rng_nodes = manager.sorted_sub_rng_nodes_by_node(*rng_node[0])
@@ -7745,6 +7748,9 @@ class ObjectAttrs(WidgetGroup) :
 			if desc != None :
 				self.show_desc(desc)
 
+		if self.dynamic_choice != None and validate_type != "dtd" :
+			self.dynamic_choice(widget)
+
 	def on_changed_later(self, widget) :
 		self.save()
 		if self.dynamic_fill != None :
@@ -7758,6 +7764,9 @@ class ObjectAttrs(WidgetGroup) :
 
 		if self.dynamic_render != None :
 			self.dynamic_render(widget)
+
+		if self.dynamic_choice != None and validate_type != "dtd" :
+			self.dynamic_choice(widget)
 
 	def dynamic_render(self, widget) :
 		if widget in self.widgets.get("anyname_combo_entries", {}) :
@@ -7831,6 +7840,89 @@ class ObjectAttrs(WidgetGroup) :
 			else :
 				score = 0
 		return score
+
+	def dynamic_choice(self, widget) :
+		widgets = self.widgets
+		attr_rng_node_dict = self.attr_rng_node_dict
+		attr_name = None
+		for widget_type in widgets :
+			if type(widgets[widget_type]) != dict :
+				continue
+			for key in widgets[widget_type] :
+				if widgets[widget_type][key] == widget :
+					attr_name = key
+					break
+
+		if attr_name == None :
+			return
+
+		attr_rng_node = attr_rng_node_dict.get(attr_name)
+		if attr_rng_node == None :
+			return
+
+		choice_rng_index = manager.find_decl(attr_rng_node, "choice")
+		if choice_rng_index != 0 :
+			choice_rng_node = attr_rng_node[choice_rng_index]
+		else :
+			return
+
+		group_rng_index = manager.find_decl(attr_rng_node, "group")
+		if group_rng_index != 0 :
+			group_rng_node = attr_rng_node[group_rng_index]
+		else :
+			group_rng_node = None
+		
+		friend_attrs = []
+		opposite_attrs = []
+		for key in attr_rng_node_dict :
+			if key == attr_name :
+				continue
+
+			decl_index = manager.find_decl(attr_rng_node_dict[key], "choice")
+			if decl_index != 0 :
+				decl_rng_node = attr_rng_node_dict[key][decl_index]
+				if decl_rng_node != choice_rng_node :
+					continue
+			else :
+				continue
+
+			decl_index = manager.find_decl(attr_rng_node_dict[key], "group")
+			if decl_index != 0 :
+				decl_rng_node = attr_rng_node_dict[key][decl_index]
+			else :
+				decl_rng_node = None
+
+			if group_rng_node == None :
+				opposite_attrs.append(key)
+			else :
+				if decl_rng_node == group_rng_node :
+					friend_attrs.append(key)
+				else :
+					opposite_attrs.append(key)
+
+		if len(opposite_attrs) == 0 :
+			return
+
+		object_attrs = self.get_values()
+		if object_attrs.get(attr_name, "") == "" :
+			friends_clean = True
+			for key in friend_attrs :
+				if object_attrs.get(key, "") != "" :
+					friends_clean = False
+					break
+			if friends_clean :
+				self.set_sensibility(opposite_attrs, True)
+		else :
+			self.set_sensibility(opposite_attrs, False)
+
+	def set_sensibility(self, keys, sensibility) :
+		widgets = self.widgets
+		for widget_type in widgets :
+			if type(widgets[widget_type]) != dict :
+				continue
+			for key in widgets[widget_type] :
+				if key in keys :
+					widgets[widget_type][key].set_sensitive(sensibility)
 
 class Primitive(ObjectAttrs) :
 	def dynamic_fill(self, widget) :
