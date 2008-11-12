@@ -6369,11 +6369,14 @@ class Manager :
 			sorted_nodes[name].append(sub_rng_node)
 		return sorted_nodes
 
-	def find_decl(self, rng_node, name) :
+	def find_decl(self, rng_node, name, first = True) :
+		decl_node_index = 0
 		for decl_node in rng_node[1:] :
 			if decl_node.tagName == name :
-				return  rng_node.index(decl_node) - len(rng_node)
-		return 0
+				decl_node_index = rng_node.index(decl_node) - len(rng_node)
+				if first :
+					break
+		return decl_node_index
 
 	def update(self) :
 		self.cache_clear()
@@ -7860,13 +7863,19 @@ class ObjectAttrs(WidgetGroup) :
 		if attr_rng_node == None :
 			return
 
-		choice_rng_index = manager.find_decl(attr_rng_node, "choice")
+		choice_rng_index = manager.find_decl(attr_rng_node, "choice", False)
 		if choice_rng_index != 0 :
 			choice_rng_node = attr_rng_node[choice_rng_index]
 		else :
 			return
 
-		group_rng_index = manager.find_decl(attr_rng_node, "group")
+		first_choice_index = manager.find_decl(attr_rng_node, "choice")
+		if first_choice_index != choice_rng_index :
+			first_choice_rng_node = attr_rng_node[first_choice_index]
+		else :
+			first_choice_rng_node = None
+
+		group_rng_index = manager.find_decl(attr_rng_node, "group", False)
 		if group_rng_index != 0 :
 			group_rng_node = attr_rng_node[group_rng_index]
 		else :
@@ -7874,33 +7883,42 @@ class ObjectAttrs(WidgetGroup) :
 		
 		friend_attrs = []
 		opposite_attrs = []
+		sub_opposite_attrs = []
 		for key in attr_rng_node_dict :
 			if key == attr_name :
 				continue
 
-			decl_index = manager.find_decl(attr_rng_node_dict[key], "choice")
-			if decl_index != 0 :
-				decl_rng_node = attr_rng_node_dict[key][decl_index]
-				if decl_rng_node != choice_rng_node :
+			target_choice_index = manager.find_decl(attr_rng_node_dict[key], "choice", False)
+			if target_choice_index != 0 :
+				target_choice_rng_node = attr_rng_node_dict[key][target_choice_index]
+				if target_choice_rng_node != choice_rng_node :
 					continue
 			else :
 				continue
 
-			decl_index = manager.find_decl(attr_rng_node_dict[key], "group")
-			if decl_index != 0 :
-				decl_rng_node = attr_rng_node_dict[key][decl_index]
+			first_target_choice_index = manager.find_decl(attr_rng_node_dict[key], "choice")
+			if first_target_choice_index != target_choice_index :
+				first_target_choice_rng_node = attr_rng_node_dict[key][first_target_choice_index]
 			else :
-				decl_rng_node = None
+				first_target_choice_rng_node = None
+
+			target_group_index = manager.find_decl(attr_rng_node_dict[key], "group", False)
+			if target_group_index != 0 :
+				target_group_rng_node = attr_rng_node_dict[key][target_group_index]
+			else :
+				target_group_rng_node = None
 
 			if group_rng_node == None :
 				opposite_attrs.append(key)
 			else :
-				if decl_rng_node == group_rng_node :
-					friend_attrs.append(key)
-				else :
+				if target_group_rng_node != group_rng_node :
 					opposite_attrs.append(key)
+				elif first_choice_rng_node != None and first_target_choice_rng_node == first_choice_rng_node :
+					sub_opposite_attrs.append(key)
+				else :
+					friend_attrs.append(key)
 
-		if len(opposite_attrs) == 0 :
+		if len(opposite_attrs) == 0 and len(sub_opposite_attrs) == 0 :
 			return
 
 		object_attrs = self.get_values()
@@ -7912,8 +7930,11 @@ class ObjectAttrs(WidgetGroup) :
 					break
 			if friends_clean :
 				self.set_sensibility(opposite_attrs, True)
+
+			self.set_sensibility(sub_opposite_attrs, True)
 		else :
 			self.set_sensibility(opposite_attrs, False)
+			self.set_sensibility(sub_opposite_attrs, False)
 
 	def set_sensibility(self, keys, sensibility) :
 		widgets = self.widgets
