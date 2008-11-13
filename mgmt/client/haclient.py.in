@@ -7046,11 +7046,15 @@ class WidgetGroup :
 		widgets = self.widgets
 		if widgets.has_key("value_labels") :
 			for key in widgets["value_labels"].keys() :
+				if widgets["value_labels"][key].get_property("sensitive") == False :
+					continue
 				object[key] = widgets["value_labels"][key].get_text()
 				if object[key] == "" or object[key] == None :
 					object.pop(key)
 		if widgets.has_key("combos") :
 			for key in widgets["combos"].keys() :
+				if widgets["combos"][key].get_property("sensitive") == False :
+					continue
 				if pygtk_newer(2, 6) :
 					object[key] = widgets["combos"][key].get_active_text()
 				else :
@@ -7063,6 +7067,8 @@ class WidgetGroup :
 					object.pop(key)
 		if widgets.has_key("bool_combos") :
 			for key in widgets["bool_combos"].keys() :
+				if widgets["bool_combos"][key].get_property("sensitive") == False :
+					continue
 				if pygtk_newer(2, 6) :
 					object[key] = widgets["bool_combos"][key].get_active_text()
 				else :
@@ -7075,23 +7081,31 @@ class WidgetGroup :
 					object.pop(key)
 		if widgets.has_key("combo_entries") :
 			for key in widgets["combo_entries"].keys() :
+				if widgets["combo_entries"][key].get_property("sensitive") == False :
+					continue
 				object[key] = widgets["combo_entries"][key].child.get_text()
 				if object[key] == "" or object[key] == None :
 					object.pop(key)
 		if widgets.has_key("checkbuttons") :
 			for key in widgets["checkbuttons"].keys() :
+				if widgets["checkbuttons"][key].get_property("sensitive") == False :
+					continue
 				if widgets["checkbuttons"][key].get_active() :
 					object[key] = "true"
 				else:
 					object[key] = "false"
 		if widgets.has_key("entries") :
 			for key in widgets["entries"].keys() :
+				if widgets["entries"][key].get_property("sensitive") == False :
+					continue
 				object[key] = widgets["entries"][key].get_text()
 				if object[key] == "" or object[key] == None :
 					object.pop(key)
 
 		if widgets.has_key("anyname_combo_entries") :
 			for key in widgets["anyname_combo_entries"].keys() :
+				if widgets["anyname_combo_entries"][key].get_property("sensitive") == False :
+					continue
 				attr_name = key.get_text()
 				object[attr_name] = widgets["anyname_combo_entries"][key].child.get_text()
 				if attr_name == "" or object[attr_name] == "" or object[attr_name] == None :
@@ -7744,7 +7758,6 @@ class ObjectAttrs(WidgetGroup) :
 
 
 	def on_changed(self, widget) :
-		self.save()
 		if self.dynamic_fill != None :
 			self.dynamic_fill(widget)
 		if self.dynamic_desc != None :
@@ -7755,8 +7768,9 @@ class ObjectAttrs(WidgetGroup) :
 		if self.dynamic_choice != None and validate_type != "dtd" :
 			self.dynamic_choice(widget)
 
-	def on_changed_later(self, widget) :
 		self.save()
+
+	def on_changed_later(self, widget) :
 		if self.dynamic_fill != None :
 			self.dynamic_fill(widget)
 		if self.dynamic_desc != None :
@@ -7771,6 +7785,8 @@ class ObjectAttrs(WidgetGroup) :
 
 		if self.dynamic_choice != None and validate_type != "dtd" :
 			self.dynamic_choice(widget)
+
+		self.save()
 
 	def dynamic_render(self, widget) :
 		if widget in self.widgets.get("anyname_combo_entries", {}) :
@@ -7865,31 +7881,105 @@ class ObjectAttrs(WidgetGroup) :
 			return
 
 		object_attrs = self.get_values()
+
+		ref_match_value_decl_nodes_list = []
+		ref_decl_nodes_list = []
+		for key in object_attrs :
+			for attr_rng_node in attr_rng_node_dict[key] :
+				decl_rng_nodes = self.get_decl_rng_nodes(attr_rng_node)
+				value_list = []
+				sub_rng_nodes = manager.sorted_sub_rng_nodes_by_node(*attr_rng_node[0])
+				for value_node in sub_rng_nodes.get("value", []) :
+					value_list.append(value_node[0][1].childNodes[0].data)
+				if object_attrs.get(key, "") in value_list :
+					ref_match_value_decl_nodes_list.append(decl_rng_nodes)
+				elif len(sub_rng_nodes.get("data", [])) > 0 or len(sub_rng_nodes.get("text", [])) > 0 :
+					ref_decl_nodes_list.append(decl_rng_nodes)
+
+		if len(ref_match_value_decl_nodes_list) > 0 :
+			ref_decl_nodes_list = ref_match_value_decl_nodes_list
+
+		ref_sorted_nodes = {}
+		for decl_type in ["choice", "first_choice", "group", "first_group"] :
+			ref_sorted_nodes[decl_type] = self.get_sorted_decl_nodes(ref_decl_nodes_list, decl_type)
+			
+		"""rng_nodes.get("choice") != None and rng_nodes.get("choice") not in ref_choice_nodes
+		ref_choice_nodes = [rng_nodes["choice"] for rng_nodes in ref_decl_nodes_list]
+		ref_group_nodes = [rng_nodes["group"] for rng_nodes in ref_decl_nodes_list]
+		ref_first_group_nodes = [rng_nodes["first_group"] for rng_nodes in ref_decl_nodes_list]"""
+
+		match_value_decl_nodes_list = []
+		decl_nodes_list = []
 		for attr_rng_node in attr_rng_nodes :
-			choice_rng_index = manager.find_decl(attr_rng_node, "choice", False)
-			if choice_rng_index != 0 :
-				choice_rng_node = attr_rng_node[choice_rng_index]
+			"""choice_index = manager.find_decl(attr_rng_node, "choice", False)
+			if choice_index != 0 :
+				choice_node = attr_rng_node[choice_index]
 			else :
 				return
 
 			first_choice_index = manager.find_decl(attr_rng_node, "choice")
-			if first_choice_index != choice_rng_index :
-				first_choice_rng_node = attr_rng_node[first_choice_index]
+			if first_choice_index != choice_index :
+				first_choice_node = attr_rng_node[first_choice_index]
 			else :
-				first_choice_rng_node = None
+				first_choice_node = None
 
-			group_rng_index = manager.find_decl(attr_rng_node, "group", False)
-			if group_rng_index != 0 :
-				group_rng_node = attr_rng_node[group_rng_index]
+			group_index = manager.find_decl(attr_rng_node, "group", False)
+			if group_index != 0 :
+				group_node = attr_rng_node[group_index]
 			else :
-				group_rng_node = None
+				group_node = None
+
+			first_group_index = manager.find_decl(attr_rng_node, "group")
+			if first_group_index != group_index :
+				first_group_node = attr_rng_node[first_group_index]
+			else :
+				first_group_node = None"""
+			decl_rng_nodes = self.get_decl_rng_nodes(attr_rng_node)
+			if decl_rng_nodes.get("choice") == None :
+				return
+
+			if decl_rng_nodes.get("choice") in ref_sorted_nodes["choice"] and \
+					decl_rng_nodes.get("group") != None and \
+					len(ref_sorted_nodes["group"]) > 0 and \
+					decl_rng_nodes.get("group") not in ref_sorted_nodes["group"] :
+				continue
 
 			value_list = []
 			sub_rng_nodes = manager.sorted_sub_rng_nodes_by_node(*attr_rng_node[0])
 			for value_node in sub_rng_nodes.get("value", []) :
 				value_list.append(value_node[0][1].childNodes[0].data)
 			if object_attrs.get(attr_name, "") in value_list :
-				break
+				#match_value_decl_rng_nodes.append([choice_node, first_choice_node, group_node, first_group_node])
+				match_value_decl_nodes_list.append(decl_rng_nodes)
+			else :
+				if len(sub_rng_nodes.get("data", [])) > 0 or len(sub_rng_nodes.get("text", [])) > 0 :
+					#decl_rng_nodes.append([choice_node, first_choice_node, group_node, first_group_node])
+					decl_nodes_list.append(decl_rng_nodes)
+
+		if len(match_value_decl_nodes_list) > 0 :
+			decl_nodes_list = match_value_decl_nodes_list
+
+		sorted_nodes = {}
+		for decl_type in ["choice", "first_choice", "group", "first_group"] :
+			sorted_nodes[decl_type] = self.get_sorted_decl_nodes(decl_nodes_list, decl_type)
+
+		#if attr_name == "end" :
+		#	print sorted_nodes
+
+		"""choice_nodes = []
+		first_choice_nodes = []
+		group_nodes = []
+		first_group_nodes = []
+		for decl_rng_node in decl_rng_nodes :
+			(choice_node, first_choice_node, group_node, first_group_node) = decl_rng_node
+			if choice_node != None and choice_node not in choice_nodes :
+				choice_nodes.append(choice_node)
+			if first_choice_node != None and first_choice_node not in first_choice_nodes :
+				first_choice_nodes.append(first_choice_node)
+			if group_node != None and group_node not in group_nodes :
+				group_nodes.append(group_node)
+			if first_group_node != None and first_group_node not in first_group_nodes :
+				first_group_nodes.append(first_group_node)"""
 		
 		friend_attrs = []
 		opposite_attrs = []
@@ -7898,37 +7988,73 @@ class ObjectAttrs(WidgetGroup) :
 			if key == attr_name :
 				continue
 
+			match_value = False
 			for attr_rng_node in attr_rng_node_dict[key] :
-				target_choice_index = manager.find_decl(attr_rng_node, "choice", False)
+				if match_value :
+					continue
+
+				decl_rng_nodes = self.get_decl_rng_nodes(attr_rng_node)
+				if decl_rng_nodes.get("choice") == None or \
+						decl_rng_nodes.get("choice") not in sorted_nodes["choice"] :
+					continue
+
+				"""target_choice_index = manager.find_decl(attr_rng_node, "choice", False)
 				if target_choice_index != 0 :
-					target_choice_rng_node = attr_rng_node[target_choice_index]
-					if target_choice_rng_node != choice_rng_node :
+					target_choice_node = attr_rng_node[target_choice_index]
+					if target_choice_node not in choice_nodes :
 						continue
 				else :
 					continue
 
-				first_target_choice_index = manager.find_decl(attr_rng_node, "choice")
-				if first_target_choice_index != target_choice_index :
-					first_target_choice_rng_node = attr_rng_node[first_target_choice_index]
+				target_first_choice_index = manager.find_decl(attr_rng_node, "choice")
+				if target_first_choice_index != target_choice_index :
+					target_first_choice_node = attr_rng_node[target_first_choice_index]
 				else :
-					first_target_choice_rng_node = None
+					target_first_choice_node = None
 
 				target_group_index = manager.find_decl(attr_rng_node, "group", False)
 				if target_group_index != 0 :
-					target_group_rng_node = attr_rng_node[target_group_index]
+					target_group_node = attr_rng_node[target_group_index]
 				else :
-					target_group_rng_node = None
+					target_group_node = None
 
-				if group_rng_node == None :
+				target_first_group_index = manager.find_decl(attr_rng_node, "group")
+				if target_first_group_index != target_group_index :
+					target_first_group_node = attr_rng_node[target_first_group_index]
+				else :
+					target_first_group_node = None"""
+
+				value_list = []
+				sub_rng_nodes = manager.sorted_sub_rng_nodes_by_node(*attr_rng_node[0])
+				for value_node in sub_rng_nodes.get("value", []) :
+					value_list.append(value_node[0][1].childNodes[0].data)
+				if object_attrs.get(key, "") in value_list :
+					if key in friend_attrs :
+						friend_attrs.remove(key)
+					if key in opposite_attrs :
+						opposite_attrs.remove(key)
+					if key in sub_opposite_attrs :
+						sub_opposite_attrs.remove(key)
+					match_value = True
+
+				if len(sorted_nodes["group"]) == 0 :
 					opposite_attrs.append(key)
 				else :
-					if target_group_rng_node != group_rng_node :
-						opposite_attrs.append(key)
-					elif first_choice_rng_node != None and first_target_choice_rng_node == first_choice_rng_node :
-						sub_opposite_attrs.append(key)
+					#if attr_name == "end" and key == "start" :
+					#	print decl_rng_nodes
+					if decl_rng_nodes.get("group") not in sorted_nodes["group"] :
+						#and \ decl_rng_nodes.get("first_group") not in sorted_nodes["first_group"] :
+						if key not in opposite_attrs :
+							opposite_attrs.append(key)
+					elif decl_rng_nodes.get("first_choice") in sorted_nodes["first_choice"] and \
+							decl_rng_nodes.get("first_group") not in sorted_nodes["first_group"] :
+						if key not in sub_opposite_attrs :
+							sub_opposite_attrs.append(key)
 					else :
-						friend_attrs.append(key)
+						if key not in friend_attrs :
+							friend_attrs.append(key)
 
+		#print attr_name, opposite_attrs, sub_opposite_attrs, friend_attrs
 		if len(opposite_attrs) == 0 and len(sub_opposite_attrs) == 0 and len(friend_attrs) == 0 :
 			return
 
@@ -7945,8 +8071,35 @@ class ObjectAttrs(WidgetGroup) :
 		else :
 			self.set_sensibility(opposite_attrs, False)
 			self.set_sensibility(sub_opposite_attrs, False)
+			self.set_sensibility(friend_attrs, True)
 
-		self.set_sensibility(friend_attrs, True)
+	def get_decl_rng_nodes(self, attr_rng_node) :
+		decl_rng_nodes = {}
+		choice_index = manager.find_decl(attr_rng_node, "choice", False)
+		if choice_index != 0 :
+			decl_rng_nodes["choice"] = attr_rng_node[choice_index]
+
+		first_choice_index = manager.find_decl(attr_rng_node, "choice")
+		if first_choice_index != choice_index :
+			decl_rng_nodes["first_choice"] = attr_rng_node[first_choice_index]
+
+		group_index = manager.find_decl(attr_rng_node, "group", False)
+		if group_index != 0 :
+			decl_rng_nodes["group"] = attr_rng_node[group_index]
+
+		first_group_index = manager.find_decl(attr_rng_node, "group")
+		if first_group_index != group_index :
+			decl_rng_nodes["first_group"] = attr_rng_node[first_group_index]
+
+		return decl_rng_nodes
+
+	def get_sorted_decl_nodes(self, decl_nodes_list, decl_type) :
+		sorted_nodes = []
+		for rng_nodes in decl_nodes_list :
+			rng_node = rng_nodes.get(decl_type)
+			if rng_node != None and rng_node not in sorted_nodes :
+				sorted_nodes.append(rng_node)
+		return sorted_nodes
 
 	def set_sensibility(self, keys, sensibility) :
 		widgets = self.widgets
@@ -7985,7 +8138,7 @@ class Primitive(ObjectAttrs) :
 		widgets = self.widgets
 		primitive_class = primitive.get("class", "")
 		primitive_type = primitive.get("type", "")
-		if primitive_class != "" and primitive_type != "" :
+		if primitive_class == "ocf" and primitive_type != "" :
 			provider_list = manager.get_rsc_providers(primitive_class, primitive_type)
 		else :
 			provider_list = None
