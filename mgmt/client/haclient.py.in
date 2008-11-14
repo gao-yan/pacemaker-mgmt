@@ -7226,7 +7226,8 @@ class ObjectAttrs(WidgetGroup) :
 		if self.auto_id == True :
 			if self.is_newobj :
 				if self.widgets.has_key("combo_entries") and self.widgets["combo_entries"].has_key("id") :
-					self.widgets["combo_entries"]["id"].child.set_text(self.obj_type + "-" + gen_uuid())
+					if len(self.widgets["combo_entries"]["id"].child.get_text()) == 0 :
+						self.widgets["combo_entries"]["id"].child.set_text(self.obj_type + "-" + gen_uuid())
 					self.widgets["combo_entries"]["id"].hide_all()
 			else :
 				if self.widgets.has_key("name_labels") and self.widgets["name_labels"].has_key("id") :
@@ -7235,7 +7236,8 @@ class ObjectAttrs(WidgetGroup) :
 
 		else :
 			if self.is_newobj and not self.id_is_idref :
-				if self.widgets.has_key("combo_entries") and self.widgets["combo_entries"].has_key("id") :
+				if self.widgets.has_key("combo_entries") and self.widgets["combo_entries"].has_key("id") \
+						and len(self.widgets["combo_entries"]["id"].child.get_text()) == 0 :
 					parent_id = self.xml_node.parentNode.getAttribute("id")
 					if parent_id == "" :
 						id_prefix = self.obj_type
