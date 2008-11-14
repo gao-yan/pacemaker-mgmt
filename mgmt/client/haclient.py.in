@@ -1316,6 +1316,7 @@ class ManageView :
 			hbox = gtk.HBox()
 			name_label = gtk.Label(_(name_cap(attr_name)+":"))
 			name_label.set_alignment(0, 0.5)
+			name_label.set_selectable(True)
 
 			name_labels[attr_name] = name_label
 			name_label_len = len(name_label.get_text())
@@ -1324,6 +1325,7 @@ class ManageView :
 
 			value_label = gtk.Label(attr_value)
 			value_label.set_alignment(0, 0.5)
+			value_label.set_selectable(True)
 
 			hbox.pack_start(name_label, False, padding=5)
 			hbox.pack_start(value_label, False, padding=5)
@@ -1353,6 +1355,7 @@ class ManageView :
 				else :
 					name_label = gtk.Label("")
 				name_label.set_alignment(0, 0.5)
+				name_label.set_selectable(True)
 
 				name_labels.append(name_label)
 				name_label_len = len(name_label.get_text())
@@ -1361,6 +1364,7 @@ class ManageView :
 
 				value_label = gtk.Label(rsc_summary[attr_name][i])
 				value_label.set_alignment(0, 0.5)
+				value_label.set_selectable(True)
 
 				hbox.pack_start(name_label, False, padding=5)
 				hbox.pack_start(value_label, False, padding=5)
@@ -2317,11 +2321,13 @@ class ClusterView(View) :
 		hbox = gtk.HBox()
 		name_label = gtk.Label()
 		name_label.set_alignment(0, 0.5)
+		name_label.set_selectable(True)
 		eventbox = gtk.EventBox()
 		eventbox.add(name_label)
 
 		value_label = gtk.Label(value)
 		value_label.set_alignment(0, 0.5)
+		value_label.set_selectable(True)
 
 		hbox.pack_start(eventbox, False, padding=5)
 		hbox.pack_start(value_label, False, padding=5)
@@ -3200,6 +3206,7 @@ class ElementNotebook :
 			hbox = gtk.HBox()
 			name_label = gtk.Label(_(name_cap(attr_name)+":"))
 			name_label.set_alignment(0, 0.5)
+			name_label.set_selectable(True)
 
 			name_labels[attr_name] = name_label
 			name_label_len = len(name_label.get_text())
@@ -3208,6 +3215,7 @@ class ElementNotebook :
 
 			value_label = gtk.Label(attr_value)
 			value_label.set_alignment(0, 0.5)
+			value_label.set_selectable(True)
 
 			hbox.pack_start(name_label, False, padding=5)
 			hbox.pack_start(value_label, False, padding=5)
@@ -7817,6 +7825,7 @@ class ObjectAttrs(WidgetGroup) :
 				desc_label.set_alignment(0, 0.5)
 				desc_label.set_padding(5, 0)
 				desc_label.set_line_wrap(True)
+				desc_label.set_selectable(True)
 				desc_vbox.pack_start(desc_label, padding=2)
 				desc_labels.append(desc_label)
 			if desc_labels != [] :
