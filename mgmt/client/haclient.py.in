@@ -7228,6 +7228,7 @@ class ObjectAttrs(WidgetGroup) :
 				if self.widgets.has_key("combo_entries") and self.widgets["combo_entries"].has_key("id") :
 					if len(self.widgets["combo_entries"]["id"].child.get_text()) == 0 :
 						self.widgets["combo_entries"]["id"].child.set_text(self.obj_type + "-" + gen_uuid())
+					self.widgets["name_labels"]["id"].hide_all()
 					self.widgets["combo_entries"]["id"].hide_all()
 			else :
 				if self.widgets.has_key("name_labels") and self.widgets["name_labels"].has_key("id") :
