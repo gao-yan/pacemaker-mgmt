@@ -762,7 +762,7 @@ on_crm_attribute(char* argv[], int argc)
 
 	if (regex_match(nv_regex, argv[3])){
 		if (STRNCMP_CONST(argv[2], "get") == 0){
-			strncat(cmd, " -G", sizeof(cmd)-strlen(cmd)-1);
+			strncat(cmd, " -Q -G", sizeof(cmd)-strlen(cmd)-1);
 		}
 		else if (STRNCMP_CONST(argv[2], "del") == 0){
 			strncat(cmd, " -D", sizeof(cmd)-strlen(cmd)-1);
