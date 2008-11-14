@@ -2278,7 +2278,7 @@ class ClusterView(View) :
 		self.widget.show_all()
 
 		config = manager.get_cluster_config()
-		if config == None and len(config) == 0 :
+		if config == None or len(config) == 0 :
 			self.widget.get_nth_page(0).hide_all()
 		else :	
 			cluster_info_labels= {}
