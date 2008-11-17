@@ -31,6 +31,8 @@ usr/share/heartbeat-gui/standby-node.png
 usr/share/heartbeat-gui/start-resource.png
 usr/share/heartbeat-gui/stop-resource.png
 usr/share/heartbeat-gui/up-resource.png
+usr/share/heartbeat-gui/manage-resource.png
+usr/share/heartbeat-gui/unmanage-resource.png
 usr/share/locale/zh_CN/LC_MESSAGES/haclient.mo
 usr/include/heartbeat/mgmt/mgmt_client.h
 usr/include/heartbeat/mgmt/mgmt_common.h

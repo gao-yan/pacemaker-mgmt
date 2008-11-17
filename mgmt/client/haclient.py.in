@@ -1074,6 +1074,8 @@ class ManageView :
 				<menuitem action="cleanuprsc"/>
 				<menuitem action="migratersc"/>
 				<menuitem action="unmigratersc"/>
+				<menuitem action="managersc"/>
+				<menuitem action="unmanagersc"/>
 			</popup>
 			<popup action="node_popup">
 				<menuitem action="standby"/>
@@ -1092,6 +1094,8 @@ class ManageView :
 				<toolitem action="cleanuprsc"/>
 				<toolitem action="migratersc"/>
 				<toolitem action="unmigratersc"/>
+				<toolitem action="managersc"/>
+				<toolitem action="unmanagersc"/>
 				<separator/>
 				<toolitem action="standby"/>
 				<toolitem action="active"/>
@@ -1122,7 +1126,11 @@ class ManageView :
 				self.on_migrate_rsc),
 			('unmigratersc', gtk.STOCK_GO_BACK,  _('Clear Migrate Constraints'),
 				None, _('Clear constraints created by migrate'),
-				self.on_unmigrate_rsc)
+				self.on_unmigrate_rsc),
+			('managersc', "ha-manage-resource",  _('Manage Resource'), None, _('Put a resource into managed mode'), 
+				self.on_manage_rsc),
+			('unmanagersc', "ha-unmanage-resource",  _('Unmanage Resource'), None, _('Put a resource into unmanaged mode'), 
+				self.on_manage_rsc)
 			]
 		node_actions = [
 			('standby', "ha-standby-node", _('Standby'), None,_('Make the node standby'), self.on_standby),
@@ -1569,6 +1577,12 @@ class ManageView :
 		self.set_action_sensitive('migratersc',
 			cur_type in all_rsc_type)
 
+		self.set_action_sensitive('managersc',
+			cur_type in all_rsc_type)
+
+		self.set_action_sensitive('unmanagersc',
+			cur_type in all_rsc_type)
+
 	def update(self, xml_node = None) :
 		view_status = self.save_status()
 		self.manage_tree.update(view_status[0])
@@ -1708,6 +1722,28 @@ class ManageView :
 			else :
 				for id in migrate_ids[unmigrate["rsc"]] :
 					manager.do_cmd("del_co\nrsc_location\n"+id)
+
+	def on_manage_rsc(self, action) :
+		(cur_type, cur_name) = self.manage_tree.get_selected_node()
+
+		if action.get_name() == "managersc" :
+			is_managed = "true"
+		elif action.get_name() == "unmanagersc" :
+			is_managed = "false"
+		else :
+			is_managed = "#default"
+
+		if validate_type == "dtd" :
+			metaattr_name = "is_managed"
+		else :
+			metaattr_name = "is-managed"
+
+		if is_managed == "#default" :
+			manager.do_cmd("del_rsc_attr\n%s\nmeta\n%s"%(cur_name, metaattr_name))
+		else :
+			manager.do_cmd("set_rsc_attr\n%s\nmeta\n%s\n%s"%(cur_name, metaattr_name, is_managed))
+			if manager.failed_reason != "" :
+				msgbox(manager.failed_reason)
 
 	def on_standby(self, action) :
 		(cur_type, cur_name) = self.manage_tree.get_selected_node()
@@ -5716,6 +5752,8 @@ class MainWindow :
 		self.load_icon("ha-stop-resource","@HA_DATADIR@/heartbeat-gui/stop-resource.png")
 		#self.load_icon("ha-master-resource","@HA_DATADIR@/heartbeat-gui/master-resource.png")
 		#self.load_icon("ha-slave-resource","@HA_DATADIR@/heartbeat-gui/slave-resource.png")
+		self.load_icon("ha-manage-resource","@HA_DATADIR@/heartbeat-gui/manage-resource.png")
+		self.load_icon("ha-unmanage-resource","@HA_DATADIR@/heartbeat-gui/unmanage-resource.png")
 
 		self.load_icon("administration","@HA_DATADIR@/heartbeat-gui/administration.png")
 		self.load_icon("record-pending","@HA_DATADIR@/heartbeat-gui/record-pending.png")
