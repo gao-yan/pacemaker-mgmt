@@ -1085,6 +1085,8 @@ class ManageView :
 				<menuitem action="group-by-node"/>
 				<menuitem action="record-pending"/>
 				<separator/>
+				<menuitem action="refresh"/>
+				<menuitem action="reprobe"/>
 				<menuitem action="maintenance-mode"/>
 			</popup>
 			<toolbar name="toolbar">
@@ -1100,6 +1102,8 @@ class ManageView :
 				<toolitem action="standby"/>
 				<toolitem action="active"/>
 				<separator/>
+				<toolitem action="refresh"/>
+				<toolitem action="reprobe"/>
 				<toolitem action="maintenance-mode"/>
 				<separator/>
 				<toolitem action="record-pending"/>
@@ -1122,15 +1126,19 @@ class ManageView :
 			('stoprsc', stoprsc_icon, _('Stop'), None,_('Stop resource'), self.on_rsc_action),
 			('defaultrsc', gtk.STOCK_EXECUTE, _('Default'), None,_('Work as default'), self.on_rsc_action),
 			('cleanuprsc', gtk.STOCK_CLEAR, _('Cleanup Resource'), None,_('Cleanup resource'), self.on_rsc_cleanup),
-			('migratersc', gtk.STOCK_GO_FORWARD,  _('Migrate Resource'), None, _('Migrate a resource to specified node'), 
+			('migratersc', gtk.STOCK_GO_FORWARD, _('Migrate Resource'), None, _('Migrate a resource to specified node'), 
 				self.on_migrate_rsc),
-			('unmigratersc', gtk.STOCK_GO_BACK,  _('Clear Migrate Constraints'),
+			('unmigratersc', gtk.STOCK_GO_BACK, _('Clear Migrate Constraints'),
 				None, _('Clear constraints created by migrate'),
 				self.on_unmigrate_rsc),
-			('managersc', "ha-manage-resource",  _('Manage Resource'), None, _('Put a resource into managed mode'), 
+			('managersc', "ha-manage-resource", _('Manage Resource'), None, _('Put a resource into managed mode'), 
 				self.on_manage_rsc),
-			('unmanagersc', "ha-unmanage-resource",  _('Unmanage Resource'), None, _('Put a resource into unmanaged mode'), 
-				self.on_manage_rsc)
+			('unmanagersc', "ha-unmanage-resource", _('Unmanage Resource'), None, _('Put a resource into unmanaged mode'), 
+				self.on_manage_rsc),
+			('refresh', gtk.STOCK_REFRESH, _('Refresh Resources'), None, _('Refresh CIB from the LRM status'), 
+				self.on_crm_rsc_cmd),
+			('reprobe', gtk.STOCK_FIND, _('Reprobe Resources'), None, _('Reprobe for resources started outside of the CRM'), 
+				self.on_crm_rsc_cmd),
 			]
 		node_actions = [
 			('standby', "ha-standby-node", _('Standby'), None,_('Make the node standby'), self.on_standby),
@@ -1676,11 +1684,12 @@ class ManageView :
 	def on_migrate_rsc(self, action) :
 		(cur_type, cur_name) = self.manage_tree.get_selected_node()
 		node_list = manager.get_normal_nodes()
-		node_list.insert(0, "")
+		node_options = node_list[:]
+		node_options.insert(0, "")
 		
 		migrate = kvbox(_("Migrate Resource"),
 				[Field("rsc", _("Resource"), cur_name, manager.get_all_rsc(), False, entry_editable = False),
-				Field("to_node", _("To Node"), "", node_list, True, entry_editable = False),
+				Field("to_node", _("To Node"), "", node_options, True, entry_editable = False),
 				Field("force", _("Force"), "", ["", "True", "False"], True, entry_editable = False),
 				Field("duration", _("Duration"), "", ["", "P1M", "P1W", "P1D", "PT8H", "PT30M", "PT30S"],
 					True, entry_editable = True)])
@@ -1744,6 +1753,24 @@ class ManageView :
 			manager.do_cmd("set_rsc_attr\n%s\nmeta\n%s\n%s"%(cur_name, metaattr_name, is_managed))
 			if manager.failed_reason != "" :
 				msgbox(manager.failed_reason)
+
+	def on_crm_rsc_cmd(self, action) :
+		cmd = action.get_name()
+		node_list = manager.get_normal_nodes()
+		if node_list == None :
+			node_list = []
+		node_options = node_list[:]
+		node_options.insert(0, "")
+
+		cmd_args = kvbox(_("%s Resources")%_(name_cap(cmd)) ,
+				[Field("node", _("Node"), "", node_options, True, entry_editable = False)])
+
+		if cmd_args == None :
+			return
+
+		manager.do_cmd("crm_rsc_cmd\n%s\n%s"%(cmd, cmd_args.get("node", "")))
+		if manager.failed_reason != "" :
+			msgbox(manager.failed_reason)
 
 	def on_standby(self, action) :
 		(cur_type, cur_name) = self.manage_tree.get_selected_node()

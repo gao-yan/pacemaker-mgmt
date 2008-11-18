@@ -536,6 +536,18 @@ or
 
 /*
 description:
+	execute specified crm_resource command
+format:
+	MSG_CRM_RSC_CMD command [host_uname]
+return:
+	MSG_OK
+or
+	MSG_FAIL [reason]
+*/
+#define MSG_CRM_RSC_CMD		"crm_rsc_cmd"
+
+/*
+description:
 	set the named attribute for a given resource
 format:
 	MSG_SET_RSC_ATTR rsc_id <instance|meta> name value

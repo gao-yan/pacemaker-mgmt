@@ -94,6 +94,7 @@ static char* on_get_rsc_running_on(char* argv[], int argc);
 static char* on_get_rsc_status(char* argv[], int argc);
 static char* on_op_status2str(char* argv[], int argc);
 
+static char* on_crm_rsc_cmd(char* argv[], int argc);
 static char* on_set_rsc_attr(char* argv[], int argc);
 static char* on_get_rsc_attr(char* argv[], int argc);
 static char* on_del_rsc_attr(char* argv[], int argc);
@@ -542,6 +543,7 @@ init_crm(int cache_cib)
 	reg_msg(MSG_UP_RSC_ATTR, on_update_rsc_attr);
 	reg_msg(MSG_OP_STATUS2STR, on_op_status2str);
 
+	reg_msg(MSG_CRM_RSC_CMD, on_crm_rsc_cmd);
 	reg_msg(MSG_SET_RSC_ATTR, on_set_rsc_attr);
 	reg_msg(MSG_GET_RSC_ATTR, on_get_rsc_attr);
 	reg_msg(MSG_DEL_RSC_ATTR, on_del_rsc_attr);
@@ -1904,6 +1906,62 @@ on_get_sub_rsc(char* argv[], int argc)
 		cur = g_list_next(cur);
 	}
 	free_data_set(data_set);
+	return ret;
+}
+
+char*
+on_crm_rsc_cmd(char* argv[], int argc)
+{
+	char cmd[MAX_STRLEN];
+	char* ret = NULL;
+	FILE* fstream = NULL;
+	char buf[MAX_STRLEN];
+
+	ARGC_CHECK(3)
+
+	if (STRNCMP_CONST(argv[1], "refresh") == 0){
+		strncpy(cmd, "crm_resource -R", sizeof(cmd)-1) ;
+	}
+	else if (STRNCMP_CONST(argv[1], "reprobe") == 0){
+		strncpy(cmd, "crm_resource -P", sizeof(cmd)-1) ;
+	}
+	else{
+		return strdup(MSG_FAIL"\nNo such command");
+	}
+
+	if (strlen(argv[2]) > 0){
+		if (uname2id(argv[2]) == NULL){
+			return strdup(MSG_FAIL"\nNo such node");
+		}
+		else{
+			strncat(cmd, " -H ", sizeof(cmd)-strlen(cmd)-1);
+			strncat(cmd, argv[2], sizeof(cmd)-strlen(cmd)-1);
+		}
+	}
+
+	strncat(cmd, " 2>&1", sizeof(cmd)-strlen(cmd)-1);
+
+	if ((fstream = popen(cmd, "r")) == NULL){
+		mgmt_log(LOG_ERR, "error on popen %s: %s", cmd, strerror(errno));
+		return strdup(MSG_FAIL"\nDo crm_resource command failed");
+	}
+
+	ret = strdup(MSG_FAIL);
+	while (!feof(fstream)){
+		memset(buf, 0, sizeof(buf));
+		if (fgets(buf, sizeof(buf), fstream) != NULL){
+			ret = mgmt_msg_append(ret, buf);
+			ret[strlen(ret)-1] = '\0';
+		}
+		else{
+			sleep(1);
+		}
+	}
+
+	if (pclose(fstream) == -1){
+		mgmt_log(LOG_WARNING, "failed to close pipe");
+	}
+
 	return ret;
 }
 
