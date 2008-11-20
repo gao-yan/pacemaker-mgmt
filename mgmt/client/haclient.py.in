@@ -219,19 +219,32 @@ def kvbox(title, fields, auto_fill = None) :
 			continue
 		label = gtk.Label(fields[row].label+":")
 		label.set_alignment(0, 0.5)
-		table.attach(label, 0, 1, row, row+1, xpadding=5, ypadding=2)
+		table.attach(label, 0, 1, row, row+1, xoptions=gtk.FILL, yoptions=gtk.FILL, xpadding=5, ypadding=2)
 		if fields[row].options != None and fields[row].options!=[]:
-			combo = gtk.combo_box_entry_new_text()
+			if fields[row].entry_editable :
+				combo = gtk.combo_box_entry_new_text()
+			else :
+				combo = gtk.combo_box_new_text()
 			for option in fields[row].options:
 				combo.append_text(option)
 			if fields[row].default != None :
-				combo.child.set_text(fields[row].default)
+				if fields[row].entry_editable :
+					combo.child.set_text(fields[row].default)
+				else :
+					model = combo.get_model()
+					iter = model.get_iter_first()
+					while iter != None :
+						if model.get_value(iter,0) == fields[row].default :
+							combo.set_active_iter(iter)
+							break
+						iter = model.iter_next(iter)
 			else :
-				combo.child.set_text(fields[row].options[0])
-			if fields[row].entry_editable == False :
-				combo.child.set_editable(False)
+				if fields[row].entry_editable :
+					combo.child.set_text(fields[row].options[0])
+				else :
+					combo.set_active(0)
 			widgets.append(combo)
-			table.attach(combo, 1,2, row, row+1, xpadding=5, ypadding=2)
+			table.attach(combo, 1,2, row, row+1, yoptions=gtk.FILL, xpadding=5, ypadding=2)
 			combos[fields[row].key] = combo
 		else :
 			entry = gtk.Entry()
@@ -269,7 +282,17 @@ def kvbox(title, fields, auto_fill = None) :
 					continue
 				if fields[row].options != None and fields[row].options != []:
 					combo = widgets[row]
-					kv[fields[row].key] = combo.child.get_text()
+					if fields[row].entry_editable :
+						kv[fields[row].key] = combo.child.get_text()
+					else :
+						if pygtk_newer(2, 6) :
+							kv[fields[row].key] = combo.get_active_text()
+						else :
+							iter = combo.get_active_iter()
+							if iter != None :
+								kv[fields[row].key] = combo.get_model().get_value(iter, 0)
+							else :
+								kv[fields[row].key] = ""
 				else :
 					entry = widgets[row]
 					kv[fields[row].key] = entry.get_text()
@@ -4114,14 +4137,14 @@ class CRMConfigView(View) :
 				for option in parameters[row]["content"]["values"]:
 					combo.append_text(option)
 				combo.connect("changed", self.on_changed)
-				table.attach(combo, 1, 2, row, row+1, yoptions = not gtk.EXPAND, xpadding=3)
+				table.attach(combo, 1, 2, row, row+1, yoptions = gtk.FILL, xpadding=3)
 				combos[parameters[row]["name"]] = combo
 			elif parameters[row]["content"].has_key("values"):
 				combo_entry = gtk.combo_box_entry_new_text()
 				for option in parameters[row]["content"]["values"]:
 					combo_entry.append_text(option)
 				combo_entry.connect("changed", self.on_changed)
-				table.attach(combo_entry, 1, 2, row, row+1, yoptions = not gtk.EXPAND, xpadding=3)
+				table.attach(combo_entry, 1, 2, row, row+1, yoptions = gtk.FILL, xpadding=3)
 				combo_entries[parameters[row]["name"]] = combo_entry
 			elif parameters[row]["content"]["type"] == "boolean":
 				checkbutton = gtk.CheckButton()
