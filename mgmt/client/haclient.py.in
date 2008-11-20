@@ -1691,7 +1691,7 @@ class ManageView :
 
 		duration_elems = ["yrs", "mths", "wks", "days", "hrs", "mins", "secs"]
 
-		combo_entries = {}
+		combos = {}
 		checkbuttons = {}
 		spinbuttons = {}
 		name_labels = []
@@ -1710,24 +1710,29 @@ class ManageView :
 				hbox.pack_start(name_label, False, padding=2)
 
 			if key == "rsc" :
-				widget = gtk.combo_box_entry_new_text()
+				widget = gtk.combo_box_new_text()
 				for rsc in manager.get_all_rsc() :
 					widget.append_text(rsc)
-				widget.child.set_text(cur_name)
-				widget.child.set_editable(False)
 
-				combo_entries[key] = widget
+				model = widget.get_model()
+				iter = model.get_iter_first()
+				while iter != None :
+					if model.get_value(iter,0) == cur_name :
+						widget.set_active_iter(iter)
+						break
+					iter = model.iter_next(iter)
+
+				combos[key] = widget
 				hbox.pack_start(widget, True, padding=2)
 			elif key == "to_node" :
-				widget = gtk.combo_box_entry_new_text()
+				widget = gtk.combo_box_new_text()
 				node_list = manager.get_normal_nodes()
 				node_options = node_list[:]
 				node_options.insert(0, "")
 				for node in node_options :
 					widget.append_text(node)
-				widget.child.set_editable(False)
 
-				combo_entries[key] = widget
+				combos[key] = widget
 				hbox.pack_start(widget, True, padding=2)
 			elif key == "force" :
 				widget = gtk.CheckButton(_(name_cap(key)))
@@ -1774,7 +1779,7 @@ class ManageView :
 			name_label.set_width_chars(name_label_max_len)
 
 		widgets = {}
-		widgets["combo_entries"] = combo_entries
+		widgets["combos"] = combos
 		widgets["checkbuttons"] = checkbuttons
 		widgets["spinbuttons"] = spinbuttons
 
