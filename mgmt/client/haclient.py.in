@@ -1852,10 +1852,13 @@ class ManageView :
 		 self.time_hbox.set_sensitive(widget.get_active())
 
 	def on_unmigrate_rsc(self, action) :
-		location_ids = manager.query("get_cos\nrsc_location")
+		rsc_locations = {}
+		for rsc_location in manager.xml_nodes["cib"].getElementsByTagName("rsc_location") :
+			id = str(rsc_location.getAttribute("id"))
+			rsc_locations[id] = rsc_location
 		migrate_ids = {}
 		rsc_ids = []
-		for id in location_ids :
+		for id in rsc_locations :
 			for prefix in ["cli-prefer-", "cli-standby-"] :
 				if id.startswith(prefix) :
 					split_id = id.split(prefix)
@@ -1868,17 +1871,25 @@ class ManageView :
 		all_str = _("all migrated resources")
 		rsc_list = migrate_ids.keys()[:]
 		rsc_list.insert(0, all_str)
+
+		(cur_type, cur_name) = self.manage_tree.get_selected_node()
+		if cur_name in migrate_ids :
+			default_option = cur_name
+		else :
+			default_option = all_str
 		unmigrate = kvbox(_("Clear Migrate Constraints"),
-				[Field("rsc", _("Resource"), all_str, rsc_list, False, entry_editable = False)])
+				[Field("rsc", _("Resource"), default_option, rsc_list, False, entry_editable = False)])
 
 		if unmigrate != None :
 			if unmigrate["rsc"] == all_str :
 				for rsc_id in migrate_ids.keys() :
 					for id in migrate_ids[rsc_id] :
-						manager.do_cmd("del_co\nrsc_location\n"+id)
+						xml_str = rsc_locations[id].toxml().replace("\n", "")
+						manager.cib_do_cmd("cib_delete\nconstraints\n%s"%(str(xml_str)))
 			else :
 				for id in migrate_ids[unmigrate["rsc"]] :
-					manager.do_cmd("del_co\nrsc_location\n"+id)
+					xml_str = rsc_locations[id].toxml().replace("\n", "")
+					manager.cib_do_cmd("cib_delete\nconstraints\n%s"%(str(xml_str)))
 
 	def on_manage_rsc(self, action) :
 		(cur_type, cur_name) = self.manage_tree.get_selected_node()
