@@ -1126,7 +1126,7 @@ on_migrate_rsc(char* argv[], int argc)
 		}
 	}
 
-	if (STRNCMP_CONST(argv[3], "True") == 0){
+	if (STRNCMP_CONST(argv[3], "true") == 0){
 		strncat(cmd, " -f", sizeof(cmd)-strlen(cmd)-1);
 	}
 
