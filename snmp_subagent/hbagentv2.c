@@ -1,16 +1,3 @@
-#include <pygui_internal.h>
-
-#include "hbagent.h"
-#include "hbagentv2.h"
-
-
-#if SUPPORT_HEARTBEAT
-#include "hb_api.h"
-#include "heartbeat.h"
-#endif
-#include "clplumbing/cl_log.h"
-#include "clplumbing/coredumps.h"
-
 #include "crm/crm.h"
 #include "crm/cib.h"
 #include "crm/pengine/status.h"
@@ -25,6 +12,22 @@
 #include <unistd.h>
 
 #include <errno.h>
+
+#ifdef SUPPORT_HEARTBEAT
+#undef SUPPORT_HEARTBEAT
+#endif
+
+#include <pygui_internal.h>
+
+#if SUPPORT_HEARTBEAT
+#include "hb_api.h"
+#include "heartbeat.h"
+#endif
+#include "clplumbing/cl_log.h"
+#include "clplumbing/coredumps.h"
+
+#include "hbagent.h"
+#include "hbagentv2.h"
 
 #include "LHAResourceTable.h"
 #include "LHAResourceStatusUpdate.h"
