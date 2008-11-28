@@ -48,7 +48,13 @@
 #include "LHAHeartbeatConfigInfo.h"
 
 #include "hbagent.h"
+#if SUPPORT_HEARTBEAT
 #include <hb_api.h>
+#endif
+
+#ifndef HA_OK
+#define HA_OK 0
+#endif
 
 /** Initializes the LHAHeartbeatConfigInfo module */
 void

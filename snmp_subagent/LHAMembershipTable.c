@@ -177,7 +177,9 @@ LHAMembershipTable_get_next_data_point(void **my_loop_context, void **my_data_co
 {
     static size_t i = 0;
     netsnmp_variable_list *vptr;
+#if SUPPORT_HEARTBEAT
     SaClmClusterNotificationT * info;
+#endif
 
     if (*my_loop_context != NULL) {
 	i = *((size_t *) *my_loop_context);
@@ -189,14 +191,18 @@ LHAMembershipTable_get_next_data_point(void **my_loop_context, void **my_data_co
 	return NULL;
 
     vptr = put_index_data;
+#if SUPPORT_HEARTBEAT
     info = (SaClmClusterNotificationT *) g_ptr_array_index(gMembershipInfo, i);
+#endif
 
     snmp_set_var_value(vptr, (u_char *) &i, sizeof(i));
     vptr = vptr->next_variable;
 
     i++;
     *my_loop_context = (void *) &i;
+#if SUPPORT_HEARTBEAT
     *my_data_context = (void *) info;
+#endif
 
     return put_index_data;
 }
@@ -213,7 +219,9 @@ LHAMembershipTable_handler(
     netsnmp_table_request_info *table_info;
     netsnmp_variable_list *var;
 
+#if SUPPORT_HEARTBEAT
     SaClmClusterNotificationT * entry;
+#endif
     int member;
     
     for(request = requests; request; request = request->next) {
@@ -227,6 +235,7 @@ LHAMembershipTable_handler(
         /** the following extracts the my_data_context pointer set in
            the loop functions above.  You can then use the results to
            help return data for the columns of the LHAMembershipTable table in question */
+#if SUPPORT_HEARTBEAT
         entry = (SaClmClusterNotificationT *) 
 	    netsnmp_extract_iterator_context(request);
 
@@ -238,6 +247,7 @@ LHAMembershipTable_handler(
             /** XXX: no row existed, if you support creation and this is a
                set, start dealing with it here, else continue */
         }
+#endif
 
         /** extracts the information about the table from the request */
         table_info = netsnmp_extract_table_info(request);
@@ -258,31 +268,39 @@ LHAMembershipTable_handler(
             case MODE_GET:
                 switch(table_info->colnum) {
                     case COLUMN_LHAMEMBERNAME:
+#if SUPPORT_HEARTBEAT
                         snmp_set_var_typed_value(var, 
 				ASN_OCTET_STR, 
 				(u_char *) entry->clusterNode.nodeName.value, 
 				strlen((char *)entry->clusterNode.nodeName.value) + 1);
+#endif
                         break;
 
                     case COLUMN_LHAMEMBERADDRESS:
+#if SUPPORT_HEARTBEAT
                         snmp_set_var_typed_value(var, 
 				ASN_OCTET_STR, 
 				(u_char *) entry->clusterNode.nodeAddress.value, 
 				SA_CLM_MAX_ADDRESS_LENGTH);
+#endif
                         break;
 
                     case COLUMN_LHAMEMBERCLUSTERNAME:
+#if SUPPORT_HEARTBEAT
                         snmp_set_var_typed_value(var, 
 				ASN_OCTET_STR, 
 				(u_char *) entry->clusterNode.clusterName.value, 
 				strlen((char *)entry->clusterNode.clusterName.value) + 1);
+#endif
                         break;
 
                     case COLUMN_LHAMEMBERISMEMBER:
+#if SUPPORT_HEARTBEAT
 			if (entry->clusterNode.member)
 			    member = 1;
 			else 
 			    member = 2;
+#endif
 
                         snmp_set_var_typed_value(var, 
 				ASN_INTEGER, 
@@ -291,17 +309,21 @@ LHAMembershipTable_handler(
                         break;
 
                     case COLUMN_LHAMEMBERLASTCHANGE:
+#if SUPPORT_HEARTBEAT
                         snmp_set_var_typed_value(var, 
 				ASN_INTEGER, 
 				(u_char *) & entry->clusterChanges, 
 				sizeof(entry->clusterChanges));
+#endif
                         break;
 
                     case COLUMN_LHAMEMBERBOOTTIME:
+#if SUPPORT_HEARTBEAT
                         snmp_set_var_typed_value(var, 
 				ASN_TIMETICKS, 
 				(u_char *) & entry->clusterNode.bootTimestamp, 
 				sizeof(entry->clusterNode.bootTimestamp));
+#endif
                         break;
 
                     default:

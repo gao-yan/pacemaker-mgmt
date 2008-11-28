@@ -4,8 +4,10 @@
 #include "hbagentv2.h"
 
 
+#if SUPPORT_HEARTBEAT
 #include "hb_api.h"
 #include "heartbeat.h"
+#endif
 #include "clplumbing/cl_log.h"
 #include "clplumbing/coredumps.h"
 
@@ -273,7 +275,9 @@ hbagentv2_update_diff(const char *event, crm_data_t *msg)
 {
 
     /*implement parsing the diff and send a trap */
+	/*
     const char *op = NULL;
+	*/
     crm_data_t *diff = NULL;
     const char *set_name = NULL;
 
@@ -297,7 +301,9 @@ hbagentv2_update_diff(const char *event, crm_data_t *msg)
         err_occurs = 1;
         return;
     }
+	/*
     op = cl_get_string(msg, F_CIB_OPERATION);
+	*/
     diff = get_message_xml(msg, F_CIB_UPDATE_RESULT);
     if (!diff) {
         cl_log(LOG_ERR, "update result is NULL.");

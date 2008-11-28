@@ -13,7 +13,9 @@
 
 #include "hbagent.h"
 #include "hbagentv2.h"
+#if SUPPORT_HEARTBEAT
 #include "hb_api.h"
+#endif
 /*#include "heartbeat.h"*/
 /*#include "clplumbing/cl_log.h"*/
 

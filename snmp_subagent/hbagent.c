@@ -26,8 +26,11 @@
 #include "hbagent.h"
 #include "hbagentv2.h"
 
+#if SUPPORT_HEARTBEAT
 #include "hb_api.h"
 #include "heartbeat.h"
+#endif
+
 #include "clplumbing/cl_log.h"
 #include "clplumbing/coredumps.h"
 
@@ -62,17 +65,23 @@
 #include <signal.h>
 
 #include <sys/types.h> /* getpid() */
+#include <sys/stat.h> /* fstat() */
 #include <unistd.h>
 
 #include <errno.h>
 
+#if SUPPORT_HEARTBEAT
 #include "saf/ais.h"
+#endif
 #include "clplumbing/cl_uuid.h" /* UU_UNPARSE_SIZEOF */
 
+#if SUPPORT_HEARTBEAT
 static unsigned long hbInitialized = 0;
 static ll_cluster_t * hb = NULL; /* heartbeat handle */
+#endif
 char * myid = NULL; /* my node id */
 char * myuuid = NULL; /* my node uuid */
+#if SUPPORT_HEARTBEAT
 static SaClmHandleT clm = 0;
 static unsigned long clmInitialized = 0;
 
@@ -80,10 +89,12 @@ static GPtrArray * gNodeTable = NULL;
 static GPtrArray * gIFTable = NULL;
 static GPtrArray * gMembershipTable = NULL;
 static GPtrArray * gResourceTable = NULL;
+#endif
 
 static int keep_running;
 int snmp_cache_time_out = CACHE_TIME_OUT;
 
+#if SUPPORT_HEARTBEAT
 int init_heartbeat(void);
 int get_heartbeat_fd(void);
 int handle_heartbeat_msg(void);
@@ -107,10 +118,12 @@ int membership_trap(const char * node, SaClmClusterChangesT status);
 int hbagent_trap(int online, const char * node);
 
 int ping_membership(int * mem_fd);
+#endif
 
 /* LHAHeartbeatConfigInfo partial-mode */
 #define DEFAULT_REFRESH_TIMING  (0)
 
+#if SUPPORT_HEARTBEAT
 int  init_hbconfig(void);
 void free_hbconfig(void);
 int  hbconfig_get_str_value(const char * attr, char * * value);
@@ -135,7 +148,6 @@ static struct hbconfig_map {
 	{LHA_CONF_RESPAWN,     KEY_CLIENT_CHILD},
 	{LHA_CONF_END,         NULL}
 };
-
 
 uint32_t get_status_value(const char * status, const char * * status_array, uint32_t * value_array);
 
@@ -188,11 +200,13 @@ static uint32_t IF_STATUS_VALUE[] =
 	LHAIFSTATUS_DOWN
 };
 
+#endif
 static RETSIGTYPE
 stop_server(int a) {
     	keep_running = 0;
 }
 
+#if SUPPORT_HEARTBEAT
 uint32_t 
 get_status_value(const char * status, const char * * status_array, uint32_t * value_array)
 {
@@ -1302,6 +1316,29 @@ membership_trap(const char * node, SaClmClusterChangesT status)
     return HA_OK;
 }
 
+#else
+GPtrArray *
+get_hb_info(lha_group_t group)
+{
+  return NULL;
+}
+int
+get_int_value(lha_group_t group, lha_attribute_t attr, size_t index, uint32_t * value)
+{
+  return 0;
+}
+int
+hbconfig_get_str(lha_hbconfig_t attr_no, char * * value)
+{
+  return 0;
+}
+int
+rsinfo_get_int_value(lha_attribute_t attr, size_t index, uint32_t * value)
+{
+  return 0;
+}
+#endif
+
 static void
 usage(void)
 {
@@ -1323,8 +1360,12 @@ main(int argc, char ** argv)
 
 	fd_set fdset;
 	struct timeval tv, *tvp;
+#if SUPPORT_HEARTBEAT
 	int flag, block = 0, numfds, hb_fd = 0, mem_fd = 0, debug = 0;
 	int hb_already_dead = 0;
+#else
+	int flag, block = 0, numfds, mem_fd = 0, debug = 0;
+#endif
 	int cib_fd = 0;
 
 	/* change this if you want to be a SNMP master agent */
@@ -1334,7 +1375,9 @@ main(int argc, char ** argv)
 	int background = 0; 
 
 	/* LHAHeartbeatConfigInfo partial-mode */
+#if SUPPORT_HEARTBEAT
 	int hbconfig_refresh_timing = 0;
+#endif
 	int hbconfig_refresh_cnt;
 
 	while ((flag = getopt(argc, argv, "dr:h")) != EOF) {
@@ -1345,12 +1388,14 @@ main(int argc, char ** argv)
 			debug++ ;
 			break;
 		    case 'r': /* LHAHeartbeatConfigInfo partial-mode */
+#if SUPPORT_HEARTBEAT
 			hbconfig_partial = 1;
 			i = atoi(optarg);
 			if (i > 0)
 				hbconfig_refresh_timing = i / DEFAULT_TIME_OUT;
 			else
 				hbconfig_refresh_timing = DEFAULT_REFRESH_TIMING;
+#endif
 			snmp_cache_time_out = i;
 			break;
 		    case 'h':
@@ -1390,6 +1435,7 @@ main(int argc, char ** argv)
 
 	/* initialize mib code here */
 
+#if SUPPORT_HEARTBEAT
 	if ((ret = init_storage()) != HA_OK) {
 	    	return -2;
 	}
@@ -1409,6 +1455,7 @@ main(int argc, char ** argv)
 	if (ret != HA_OK) {
 		cl_log(LOG_ERR, "fatal error during membership initialization. ");
 	}  
+#endif
 
 	/*
 	if ((ret = init_membership() != HA_OK) ||
@@ -1417,6 +1464,7 @@ main(int argc, char ** argv)
 	} 
 	*/
 
+#if SUPPORT_HEARTBEAT
 	/* LHAHeartbeatConfigInfo partial-mode */
 	if ((ret = init_hbconfig()) != HA_OK) {
 	    	return -3;
@@ -1428,7 +1476,7 @@ main(int argc, char ** argv)
 	init_LHAResourceGroupTable();
 	init_LHAMembershipTable();
 	init_LHAHeartbeatConfigInfo();
-
+#endif
 
 	/* now implementing: hbagentv2 */
 	if ((ret = init_hbagentv2()) != HA_OK ||
@@ -1450,7 +1498,9 @@ main(int argc, char ** argv)
 
 	snmp_log(LOG_INFO,"LHA-agent is up and running.\n");
 
+#if SUPPORT_HEARTBEAT
 	hbagent_trap(1, myid);
+#endif
 
 	hbconfig_refresh_cnt = 0;
 
@@ -1462,6 +1512,7 @@ main(int argc, char ** argv)
 		/* 0 == don't block */
 		/* agent_check_and_process(1); */
 
+#if SUPPORT_HEARTBEAT
 		FD_ZERO(&fdset);
                 FD_SET(hb_fd, &fdset);
 		numfds = hb_fd + 1;
@@ -1472,6 +1523,7 @@ main(int argc, char ** argv)
 			if (mem_fd > hb_fd)
 				numfds = mem_fd + 1;
 		}
+#endif
 		FD_SET(cib_fd, &fdset);
 		if (numfds < (cib_fd + 1)) {
 			numfds = cib_fd + 1;
@@ -1517,6 +1569,7 @@ main(int argc, char ** argv)
 			break;
 		} else if (ret == 0) {
 			/* timeout */
+#if SUPPORT_HEARTBEAT
 			ping_membership(&mem_fd);
 
 			/* LHAHeartbeatConfigInfo partial-mode */
@@ -1526,10 +1579,12 @@ main(int argc, char ** argv)
 				init_hbconfig();
 				hbconfig_refresh_cnt = 0;
 			}
+#endif
 			snmp_timeout();
 			goto process_pending;
 		} 
 
+#if SUPPORT_HEARTBEAT
 		if (FD_ISSET(hb_fd, &fdset)) {
 			/* heartbeat */
 
@@ -1546,6 +1601,9 @@ main(int argc, char ** argv)
 				break;
 			}
 		} else  if (FD_ISSET(cib_fd, &fdset)) {
+#else
+		if (FD_ISSET(cib_fd, &fdset)) {
+#endif
 			/* change cib info events */
 			if ((ret = handle_cib_msg()) == HA_FAIL) {
 		  		cl_log(LOG_DEBUG, "unrecoverable CIB error. quit now.");
@@ -1565,15 +1623,20 @@ process_pending:
 
 	/* at shutdown time */
 	
+#if SUPPORT_HEARTBEAT
 	hbagent_trap(0, myid);
+#endif
 	snmp_shutdown("LHA-agent");
 
 	free_hbagentv2();
+#if SUPPORT_HEARTBEAT
  	free_hbconfig();
 	free(myid);
 	free(myuuid);
 	free_storage();
+#endif
 
+#if SUPPORT_HEARTBEAT
         if (!hb_already_dead && hb->llc_ops->signoff(hb, TRUE) != HA_OK) {
                 cl_log(LOG_ERR, "Cannot sign off from heartbeat.");
                 cl_log(LOG_ERR, "REASON: %s", hb->llc_ops->errmsg(hb));
@@ -1584,6 +1647,7 @@ process_pending:
                 cl_log(LOG_ERR, "REASON: %s", hb->llc_ops->errmsg(hb));
                 exit(11);
         }
+#endif
 
 	return 0;
 }

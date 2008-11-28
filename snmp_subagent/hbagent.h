@@ -30,7 +30,7 @@
 #endif
 
 #include <glib.h>
-#include "saf/ais.h"
+/* #include "saf/ais.h" */
 #include "snmp-config-resolve.h"
 #include <clplumbing/cl_uuid.h>
 
