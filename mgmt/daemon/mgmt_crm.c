@@ -22,6 +22,7 @@
 #include <unistd.h>
 #include <glib.h>
 #include <regex.h>
+#include <dirent.h>
 
 #include <hb_config.h>
 #include <clplumbing/cl_log.h>
@@ -128,6 +129,8 @@ static char* on_cib_delete(char* argv[], int argc);
 /* end new protocol */
 
 static char* on_gen_cluster_report(char* argv[], int argc);
+static char* on_get_pe_inputs(char* argv[], int argc);
+static char* on_gen_pe_graph(char* argv[], int argc);
 
 static void get_meta_attributes_id(const char* rsc_id, char* id);
 static void get_instance_attributes_id(const char* rsc_id, char* id);
@@ -574,6 +577,8 @@ init_crm(int cache_cib)
 	reg_msg(MSG_UP_CONSTRAINT, on_update_constraint);
 
 	reg_msg(MSG_GEN_CLUSTER_REPORT, on_gen_cluster_report);
+	reg_msg(MSG_GET_PE_INPUTS, on_get_pe_inputs);
+	reg_msg(MSG_GEN_PE_GRAPH, on_gen_pe_graph);
 	
 	reg_msg(MSG_CIB_CREATE, on_cib_create);
 	reg_msg(MSG_CIB_QUERY, on_cib_query);
@@ -3238,6 +3243,102 @@ on_gen_cluster_report(char* argv[], int argc)
 
 	unlink(filename);
 	free(dest);
+	return ret;
+}
+
+static const char* pe_working_dir = HA_VARLIBDIR"/heartbeat/pengine";
+
+static char*
+on_get_pe_inputs(char* argv[], int argc)
+{
+	char* ret = NULL;
+	struct dirent *dirp;
+	DIR *dp;
+	char fullpath[MAX_STRLEN];
+	struct stat statbuf;
+	char buf[MAX_STRLEN];
+
+	if ((dp = opendir(pe_working_dir)) == NULL){
+		mgmt_log(LOG_ERR, "error on opendir \"%s\": %s", pe_working_dir, strerror(errno));
+		return strdup(MSG_FAIL"\nCannot open the pengine working directory");
+	}
+
+	ret = strdup(MSG_OK);
+	while ((dirp = readdir(dp)) != NULL) {
+		if (dirp->d_type == DT_REG && strstr(dirp->d_name, "pe-input-") != NULL
+			&& strstr(dirp->d_name, "bz2") != NULL){
+			memset(fullpath, 0, sizeof(fullpath));
+			snprintf(fullpath, sizeof(fullpath), "%s/%s", pe_working_dir, dirp->d_name);
+			if (stat(fullpath, &statbuf) < 0){
+				mgmt_log(LOG_ERR, "Cannot stat the file \"%s\"", fullpath);
+				continue;
+			}
+			if (S_ISREG(statbuf.st_mode)){
+				memset(buf, 0, sizeof(buf));
+				snprintf(buf, sizeof(buf), "%s %ld",  dirp->d_name, (long int)statbuf.st_mtime);
+				ret = mgmt_msg_append(ret, buf);
+			}
+		}
+	}
+
+	if (closedir(dp) < 0){
+		mgmt_log(LOG_WARNING, "failed to closedir \"%s\": %s", pe_working_dir, strerror(errno) );
+	}
+	return ret;
+}
+
+static char*
+on_gen_pe_graph(char* argv[], int argc)
+{
+	char* ret = NULL;
+	char cmd[MAX_STRLEN];
+	char buf[MAX_STRLEN];
+	char *dotfile = NULL;
+	FILE *fstream = NULL;
+
+	ARGC_CHECK(2)
+	if (STRNCMP_CONST(argv[1], "live") == 0){
+		strncpy(cmd, "ptest -L", sizeof(cmd)-1);
+	}
+	else{
+		snprintf(cmd, sizeof(cmd), "ptest -x %s/pe-input-%s.bz2", pe_working_dir, argv[1]);
+	}
+
+	strncat(cmd, " -D ", sizeof(cmd)-strlen(cmd)-1);
+	dotfile = tempnam("/tmp", "dot.");
+	strncat(cmd, dotfile, sizeof(cmd)-strlen(cmd)-1);
+
+	if (system(cmd) < 0){
+		mgmt_log(LOG_ERR, "error on execute \"%s\": %s", cmd, strerror(errno));
+		free(dotfile);
+		return strdup(MSG_FAIL"Error on execute the ptest command");
+	}
+
+	if ((fstream = fopen(dotfile, "r")) == NULL){
+		mgmt_log(LOG_ERR, "error on fopen %s: %s", dotfile, strerror(errno));
+		free(dotfile);
+		unlink(dotfile);
+		return strdup(MSG_FAIL"Error on read the transition graph file");
+	}
+
+	ret = strdup(MSG_OK);
+	while (!feof(fstream)){
+		memset(buf, 0, sizeof(buf));
+		if (fgets(buf, sizeof(buf), fstream) != NULL){
+			ret = mgmt_msg_append(ret, buf);
+			ret[strlen(ret)-1] = '\0';
+		}
+		else{
+			sleep(1);
+		}
+	}
+
+	if (fclose(fstream) == -1){
+		mgmt_log(LOG_WARNING, "failed to fclose stream");
+	}
+
+	unlink(dotfile);
+	free(dotfile);
 	return ret;
 }
 

@@ -937,6 +937,9 @@ or
 */
 #define MSG_GEN_CLUSTER_REPORT	"gen_cluster_report"
 
+#define MSG_GET_PE_INPUTS "get_pe_inputs"
+#define MSG_GEN_PE_GRAPH "gen_pe_graph"
+
 /*************************EVENTS*********************************************/
 
 /*

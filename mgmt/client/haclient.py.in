@@ -24,11 +24,12 @@ Copyright (C) 2005 International Business Machines
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 
-import sys, os, string, socket, syslog, webbrowser, pickle, xml, gc, time, binascii, thread, tarfile
+import sys, os, string, socket, syslog, webbrowser, pickle, xml, gc, time, binascii, thread, tarfile, gv
 from stat import *
 from xml.dom.minidom import parseString
 from xml.dom.minidom import getDOMImplementation
 from xml.parsers.xmlproc.xmldtd import load_dtd_string
+from tempfile import mkstemp
 
 import locale, gettext
 app_name = "haclient"
@@ -4836,6 +4837,78 @@ class ObjectViewDlg :
 			self.obj_view.update()
 			self.dialog.set_response_sensitive(gtk.RESPONSE_APPLY, False)
 
+
+class TransitionInfoDlg :
+	def select_input(self, input_dict) :
+		global top_window
+		self.input_dict = input_dict
+		dialog = gtk.Dialog("Transition Information", top_window, gtk.DIALOG_MODAL,
+			(gtk.STOCK_OK, gtk.RESPONSE_OK, gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL))
+		dialog.set_border_width(5)
+
+		live_radio_btn = gtk.RadioButton(None, _("Live"))
+		live_radio_btn.set_active(True)
+		dialog.vbox.pack_start(live_radio_btn, False, padding=2)
+
+		history_label = _("History:")
+		history_radio_btn = gtk.RadioButton(live_radio_btn, history_label)
+
+		hbox = gtk.HBox()
+		hbox.pack_start(history_radio_btn, False)
+
+		min_num = int(input_dict.keys()[0])
+		max_num = 0
+		for input_num in input_dict :
+			if int(input_num) < min_num :
+				min_num = int(input_num)
+			if input_num > max_num :
+				max_num = int(input_num)
+
+		adj = gtk.Adjustment(float(max_num), float(min_num), float(max_num), 1, 5)
+		self.spin_btn = gtk.SpinButton(adj, 0, 0)
+		self.spin_btn.set_width_chars(len(str(max_num)))
+		self.spin_btn.set_wrap(True)
+		self.spin_btn.set_sensitive(False)
+		hbox.pack_start(self.spin_btn, False, padding=2)
+
+		dialog.vbox.pack_start(hbox, False, padding=2)
+
+		self.time_label = gtk.Label(" "*8 + input_dict[str(max_num)])
+		self.time_label.set_alignment(0, 0.5)
+		self.time_label.set_sensitive(False)
+		dialog.vbox.pack_start(self.time_label, False, padding=2)
+
+		history_radio_btn.connect("toggled", self.on_radio_changed)
+		self.spin_btn.connect("value-changed", self.on_value_changed)
+
+		save_top_window = top_window
+		top_window = dialog
+		dialog.vbox.show_all()
+
+		ret = dialog.run()
+
+		if ret in [gtk.RESPONSE_CANCEL, gtk.RESPONSE_DELETE_EVENT] :
+			pe_input = None
+		else :
+			if live_radio_btn.get_active() :
+				pe_input = "live"
+			else :
+				pe_input = int(self.spin_btn.get_value())
+
+		top_window = save_top_window
+		dialog.destroy()
+
+		return pe_input
+
+	def on_radio_changed(self, radio_btn) :
+		radio_active = radio_btn.get_active()
+		self.spin_btn.set_sensitive(radio_active)
+		self.time_label.set_sensitive(radio_active)
+
+	def on_value_changed(self, spin_btn) :
+		value = int(spin_btn.get_value())
+		self.time_label.set_text(" "*8 + self.input_dict.get(str(value), ""))
+
 class ClusterReportDlg :
 	def set_params(self) :
 		global top_window
@@ -5302,6 +5375,7 @@ class MainWindow :
 			and self.cur_type in [_("native"), _("group"), _("clone"), _("master")])
 
 		self.set_action_sensitive('unmigratersc', manager.connected)
+		self.set_action_sensitive('transition-info', manager.connected)
 		self.set_action_sensitive('report', manager.connected)
 
 	# functions
@@ -5689,6 +5763,71 @@ class MainWindow :
 				for id in migrate_ids[unmigrate["rsc"]] :
 					manager.do_cmd("del_co\nrsc_location\n"+id)
 
+	def on_transition_info(self, action) :
+		input_list = manager.do_cmd("get_pe_inputs")
+		if manager.failed_reason != "" :
+			msgbox(manager.failed_reason)
+			return
+		elif input_list == None or len(input_list) < 1 :
+			msgbox(_("Cannot find any transition record"))
+			return
+
+		input_dict = {}
+		for input in input_list :
+			(input_file, input_time) = input.split()
+			input_num = input_file.replace("pe-input-", "").replace(".bz2", "")
+			input_dict[input_num] = time.ctime(float(input_time))
+
+		tidlg = TransitionInfoDlg()
+		pe_input = tidlg.select_input(input_dict)
+		if pe_input == None :
+			return
+
+		graph_str = self.gen_pe_graph(pe_input)
+		if graph_str != None :
+			import gv
+			G = gv.readstring(graph_str)
+			gv.layout(G, "dot")
+			fd, tmp_png = mkstemp(suffix=".png")
+			os.close(fd)
+			gv.render(G, "png", tmp_png)
+			self.show_pe_graph(tmp_png)
+			os.unlink(tmp_png)
+
+	def show_pe_graph(self, png_file) :
+		global top_window
+		dialog = gtk.Dialog(_("Edit XML"), top_window, gtk.DIALOG_MODAL, (gtk.STOCK_OK, gtk.RESPONSE_OK))
+		dialog.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_NORMAL)
+		dialog.set_size_request(700, 600)
+
+		sw = gtk.ScrolledWindow()
+		sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+		dialog.vbox.pack_start(sw, padding=1)
+
+		image = gtk.Image()
+		image.set_from_file(png_file)
+		sw.add_with_viewport(image)
+
+		dialog.show_all()
+		save_top_window = top_window
+
+		dialog.run()
+
+		dialog.destroy()
+		top_window = save_top_window
+
+	def gen_pe_graph(self, pe_input) :
+		graph_lines = manager.do_cmd("gen_pe_graph\n%s"%pe_input)
+		if manager.failed_reason != "" :
+			msgbox(manager.failed_reason)
+			return None
+		elif graph_lines == None or len(graph_lines) < 1 :
+			msgbox(_("Failed to generate the transition graph"))
+			return None
+		graph_str = "\n".join(graph_lines)
+		return graph_str
+
+
 	def on_cluster_report(self, action) :
 		rpdlg = ClusterReportDlg()
 		report_params = rpdlg.set_params()
@@ -5969,6 +6108,7 @@ class MainWindow :
 					<menuitem action="expert-mode"/>
 				</menu>
 				<menu action="tools">
+					<menuitem action="transition-info"/>
 					<menuitem action="report"/>
 				</menu>
 			</menubar>
@@ -5994,6 +6134,7 @@ class MainWindow :
 				<menuitem action="active"/>
 			</popup>
 			<popup action="tools_popup">
+				<menuitem action="transition-info"/>
 				<menuitem action="report"/>
 				<menuitem action="expert-mode"/>
 			</popup>
@@ -6003,6 +6144,7 @@ class MainWindow :
 				<separator/>
 				<toolitem action="expert-mode"/>
 				<separator/>
+				<toolitem action="transition-info"/>
 				<toolitem action="report"/>
 				<separator/>
 				<toolitem action="quit"/>
@@ -6067,6 +6209,8 @@ class MainWindow :
 			('active', "ha-active-node", _('Active'), None,_('make the node active'), self.on_active),
 			('view', None, _('View')),
 			('tools', None, _('Tools')),
+			('transition-info', gtk.STOCK_SELECT_COLOR, _('Transition Information'), None,
+				_('Show Transition Information'), self.on_transition_info),
 			('report', gtk.STOCK_FIND_AND_REPLACE, _('Cluster Report'), None, _('generate a cluster report'), self.on_cluster_report)
 			])
 
