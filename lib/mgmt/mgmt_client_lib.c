@@ -175,10 +175,11 @@ mgmt_session_sendmsg(void* session, const char* msg)
 		return -1;
 	}
 	/* send the msg, with the last zero */
-	len = strnlen(msg, MAX_MSGLEN)+1;
+	/*len = strnlen(msg, MAX_MSGLEN)+1;
 	if (len == MAX_MSGLEN + 1) {
 		return -2;
-	}
+	}*/
+	len = strlen(msg) + 1;
 	while (count < len) {
 		ret = tls_send(session, msg + count, len - count) ;
 		if (ret < 0) {

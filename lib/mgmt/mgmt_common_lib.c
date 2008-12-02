@@ -86,9 +86,11 @@ mgmt_msg_append(char* msg, const char* append)
 	int append_len;
 	int len;
 	
-	msg_len = strnlen(msg, MAX_MSGLEN);
+	/*msg_len = strnlen(msg, MAX_MSGLEN);*/
+	msg_len = strlen(msg);
 	if (append != NULL) {
-		append_len = strnlen(append, MAX_STRLEN);
+		/*append_len = strnlen(append, MAX_STRLEN);*/
+		append_len = strlen(append);
 		/* +2: one is the '\n', other is the end 0*/
 		len = msg_len+append_len+2;
 		msg = (char*)mgmt_realloc(msg, len);
