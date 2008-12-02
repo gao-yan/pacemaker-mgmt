@@ -131,6 +131,7 @@ static char* on_cib_delete(char* argv[], int argc);
 static char* on_gen_cluster_report(char* argv[], int argc);
 static char* on_get_pe_inputs(char* argv[], int argc);
 static char* on_gen_pe_graph(char* argv[], int argc);
+static char* on_gen_pe_info(char* argv[], int argc);
 
 static void get_meta_attributes_id(const char* rsc_id, char* id);
 static void get_instance_attributes_id(const char* rsc_id, char* id);
@@ -579,6 +580,7 @@ init_crm(int cache_cib)
 	reg_msg(MSG_GEN_CLUSTER_REPORT, on_gen_cluster_report);
 	reg_msg(MSG_GET_PE_INPUTS, on_get_pe_inputs);
 	reg_msg(MSG_GEN_PE_GRAPH, on_gen_pe_graph);
+	reg_msg(MSG_GEN_PE_INFO, on_gen_pe_info);
 	
 	reg_msg(MSG_CIB_CREATE, on_cib_create);
 	reg_msg(MSG_CIB_QUERY, on_cib_query);
@@ -3339,6 +3341,63 @@ on_gen_pe_graph(char* argv[], int argc)
 
 	unlink(dotfile);
 	free(dotfile);
+	return ret;
+}
+
+static char*
+on_gen_pe_info(char* argv[], int argc)
+{
+	char* ret = NULL;
+	char cmd[MAX_STRLEN];
+	int i;
+	char buf[MAX_STRLEN];
+	FILE *fstream = NULL;
+
+	ARGC_CHECK(3)
+	if (STRNCMP_CONST(argv[1], "live") == 0){
+		strncpy(cmd, "ptest -L", sizeof(cmd)-1);
+	}
+	else{
+		snprintf(cmd, sizeof(cmd), "ptest -x %s/pe-input-%s.bz2", pe_working_dir, argv[1]);
+	}
+	
+	if (STRNCMP_CONST(argv[2], "scores") == 0){
+		strncat(cmd, " -s", sizeof(cmd)-strlen(cmd)-1);
+	}
+	else{
+		for (i = 0; i < atoi(argv[2]); i++){
+			if (i == 0){
+				strncat(cmd, " -V", sizeof(cmd)-strlen(cmd)-1);
+			}
+			else{
+				strncat(cmd, "V", sizeof(cmd)-strlen(cmd)-1);
+			}
+		}
+	}
+
+	strncat(cmd, " 2>&1", sizeof(cmd)-strlen(cmd)-1);
+
+	if ((fstream = popen(cmd, "r")) == NULL){
+		mgmt_log(LOG_ERR, "error on popen \"%s\": %s", cmd, strerror(errno));
+		return strdup(MSG_FAIL"Error on popen the ptest command");
+	}
+
+	ret = strdup(MSG_OK);
+	while (!feof(fstream)){
+		memset(buf, 0, sizeof(buf));
+		if (fgets(buf, sizeof(buf), fstream) != NULL){
+			ret = mgmt_msg_append(ret, buf);
+			ret[strlen(ret)-1] = '\0';
+		}
+		else{
+			sleep(1);
+		}
+	}
+
+	if (fclose(fstream) == -1){
+		mgmt_log(LOG_WARNING, "failed to fclose stream");
+	}
+
 	return ret;
 }
 

@@ -4843,18 +4843,23 @@ class TransitionInfoDlg :
 		global top_window
 		self.input_dict = input_dict
 		dialog = gtk.Dialog("Transition Information", top_window, gtk.DIALOG_MODAL,
-			(gtk.STOCK_OK, gtk.RESPONSE_OK, gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL))
-		dialog.set_border_width(5)
-
-		live_radio_btn = gtk.RadioButton(None, _("Live"))
-		live_radio_btn.set_active(True)
-		dialog.vbox.pack_start(live_radio_btn, False, padding=2)
-
-		history_label = _("History:")
-		history_radio_btn = gtk.RadioButton(live_radio_btn, history_label)
+			(gtk.STOCK_HELP, gtk.RESPONSE_HELP, gtk.STOCK_SAVE, gtk.RESPONSE_APPLY, 
+			gtk.STOCK_OK, gtk.RESPONSE_OK))
+		dialog.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_NORMAL)
+		dialog.set_size_request(700, 600)
 
 		hbox = gtk.HBox()
-		hbox.pack_start(history_radio_btn, False)
+		label = gtk.Label(_("Transition:"))
+		hbox.pack_start(label, False, padding=2)
+
+		self.live_radio_btn = gtk.RadioButton(None, _("Live"))
+		self.live_radio_btn.set_active(True)
+		hbox.pack_start(self.live_radio_btn, False, padding=2)
+
+		history_label = _("History:")
+		history_radio_btn = gtk.RadioButton(self.live_radio_btn, history_label)
+
+		hbox.pack_start(history_radio_btn, False, padding=2)
 
 		min_num = int(input_dict.keys()[0])
 		max_num = 0
@@ -4871,43 +4876,196 @@ class TransitionInfoDlg :
 		self.spin_btn.set_sensitive(False)
 		hbox.pack_start(self.spin_btn, False, padding=2)
 
-		dialog.vbox.pack_start(hbox, False, padding=2)
-
-		self.time_label = gtk.Label(" "*8 + input_dict[str(max_num)])
+		self.time_label = gtk.Label(input_dict[str(max_num)])
 		self.time_label.set_alignment(0, 0.5)
 		self.time_label.set_sensitive(False)
-		dialog.vbox.pack_start(self.time_label, False, padding=2)
+		hbox.pack_start(self.time_label, False, padding=2)
+
+		self.refresh_btn = gtk.Button(stock=gtk.STOCK_REFRESH)
+		hbox.pack_start(self.refresh_btn, False, padding=2)
+
+		dialog.vbox.pack_start(hbox, False, padding=2)
+
+		notebook = gtk.Notebook()
+		dialog.vbox.pack_start(notebook, True)
+
+		vbox = gtk.VBox()
+		tab_label = gtk.Label(_("Graph"))
+		notebook.append_page(vbox, tab_label)
+
+		sw = gtk.ScrolledWindow()
+		sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+		vbox.pack_start(sw, True)
+
+		self.image = gtk.Image()
+		sw.add_with_viewport(self.image)
+
+		vbox = gtk.VBox()
+		tab_label = gtk.Label(_("Detail"))
+		notebook.append_page(vbox, tab_label)
+
+		hbox = gtk.HBox()
+		label = gtk.Label(_("Verbosity:"))
+		hbox.pack_start(label, False, padding=2)
+
+		adj = gtk.Adjustment(3, 0, 99, 1, 5)
+		self.detail_spin_btn = gtk.SpinButton(adj, 0, 0)
+		self.detail_spin_btn.set_width_chars(2)
+		self.detail_spin_btn.set_wrap(True)
+		hbox.pack_start(self.detail_spin_btn, False, padding=2)
+
+		self.detail_refresh_btn = gtk.Button(stock=gtk.STOCK_REFRESH)
+		hbox.pack_start(self.detail_refresh_btn, False, padding=2)
+
+		vbox.pack_start(hbox, False, padding=2)
+
+		sw = gtk.ScrolledWindow()
+		sw.set_shadow_type(gtk.SHADOW_IN)
+		sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+		vbox.pack_start(sw, True)
+
+		self.pe_detail_text = gtk.TextView()
+		#self.pe_detail_text.set_wrap_mode(gtk.WRAP_WORD)
+		self.pe_detail_text.set_property("editable", False)
+		self.pe_detail_textbuffer = self.pe_detail_text.get_buffer()
+		sw.add(self.pe_detail_text)
+
+		vbox = gtk.VBox()
+		tab_label = gtk.Label(_("Scores"))
+		notebook.append_page(vbox, tab_label)
+
+		sw = gtk.ScrolledWindow()
+		sw.set_shadow_type(gtk.SHADOW_IN)
+		sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+		vbox.pack_start(sw, True)
+
+		self.pe_scores_text = gtk.TextView()
+		#self.pe_scores_text.set_wrap_mode(gtk.WRAP_WORD)
+		self.pe_scores_text.set_property("editable", False)
+		self.pe_scores_textbuffer = self.pe_scores_text.get_buffer()
+		sw.add(self.pe_scores_text)
 
 		history_radio_btn.connect("toggled", self.on_radio_changed)
 		self.spin_btn.connect("value-changed", self.on_value_changed)
+		self.refresh_btn.connect("clicked", self.on_refresh)
+		self.detail_spin_btn.connect("value-changed", self.on_detail_value_changed)
+		self.detail_refresh_btn.connect("clicked", self.on_detail_refresh)
 
+		self.on_refresh()
+
+		dialog.show_all()
 		save_top_window = top_window
 		top_window = dialog
-		dialog.vbox.show_all()
 
-		ret = dialog.run()
-
-		if ret in [gtk.RESPONSE_CANCEL, gtk.RESPONSE_DELETE_EVENT] :
-			pe_input = None
-		else :
-			if live_radio_btn.get_active() :
-				pe_input = "live"
+		while True :
+			ret = dialog.run()
+			if ret == gtk.RESPONSE_APPLY :
+				continue
+			elif ret == gtk.RESPONSE_HELP :
+				continue
 			else :
-				pe_input = int(self.spin_btn.get_value())
+				break
 
-		top_window = save_top_window
 		dialog.destroy()
-
-		return pe_input
+		top_window = save_top_window
 
 	def on_radio_changed(self, radio_btn) :
 		radio_active = radio_btn.get_active()
 		self.spin_btn.set_sensitive(radio_active)
 		self.time_label.set_sensitive(radio_active)
 
+		self.refresh_btn.set_sensitive(True)
+
 	def on_value_changed(self, spin_btn) :
 		value = int(spin_btn.get_value())
-		self.time_label.set_text(" "*8 + self.input_dict.get(str(value), ""))
+		self.time_label.set_text(self.input_dict.get(str(value), ""))
+
+		self.refresh_btn.set_sensitive(True)
+
+	def on_detail_value_changed(self, spin_btn) :
+		self.detail_refresh_btn.set_sensitive(True)
+
+	def on_refresh(self, btn=None) :
+		self.show_pe_graph()
+		self.show_pe_detail()
+		self.show_pe_scores()
+		self.refresh_btn.set_sensitive(False)
+		self.detail_refresh_btn.set_sensitive(False)
+
+	def on_detail_refresh(self, btn=None) :
+		self.show_pe_detail()
+		self.detail_refresh_btn.set_sensitive(False)
+
+	def show_pe_graph(self) :
+		if self.live_radio_btn.get_active() :
+			pe_input = "live"
+		else :
+			pe_input = int(self.spin_btn.get_value())
+
+		self.image.clear()
+		graph_str = self.gen_pe_graph(pe_input)
+		if graph_str != None :
+			import gv
+			G = gv.readstring(graph_str)
+			gv.layout(G, "dot")
+			fd, tmp_png = mkstemp(suffix=".png")
+			os.close(fd)
+			gv.render(G, "png", tmp_png)
+			self.image.set_from_file(tmp_png)
+			os.unlink(tmp_png)
+
+	def gen_pe_graph(self, pe_input) :
+		graph_lines = manager.do_cmd("gen_pe_graph\n%s"%pe_input)
+		if manager.failed_reason != "" :
+			msgbox(manager.failed_reason)
+			return None
+		elif graph_lines == None or len(graph_lines) < 1 :
+			msgbox(_("Failed to generate the transition graph"))
+			return None
+		graph_str = "\n".join(graph_lines)
+		return graph_str
+
+	def show_pe_detail(self) :
+		if self.live_radio_btn.get_active() :
+			pe_input = "live"
+		else :
+			pe_input = int(self.spin_btn.get_value())
+
+		verbosity = int(self.detail_spin_btn.get_value())
+
+		self.pe_detail_textbuffer.set_text("")
+		detail_lines = manager.do_cmd("gen_pe_info\n%s\n%s"%(pe_input, verbosity))
+		if manager.failed_reason != "" :
+			msgbox(manager.failed_reason)
+			return
+		elif detail_lines == None or len(detail_lines) < 1 :
+			return
+		detail_str = "\n".join(detail_lines)
+
+		self.pe_detail_textbuffer.set_text(detail_str)
+
+	def show_pe_scores(self) :
+		if self.live_radio_btn.get_active() :
+			pe_input = "live"
+		else :
+			pe_input = int(self.spin_btn.get_value())
+
+		self.pe_scores_textbuffer.set_text("")
+		scores_lines = manager.do_cmd("gen_pe_info\n%s\nscores"%pe_input)
+		if manager.failed_reason != "" :
+			msgbox(manager.failed_reason)
+			return
+		elif scores_lines == None or len(scores_lines) < 1 :
+			return
+		scores_str = "\n".join(scores_lines)
+
+		self.pe_scores_textbuffer.set_text(scores_str)
+
+	def save_pe_graph(self, widget) :
+		pass
+
+	def save_pe_detail(self, widget) :
+		pass
 
 class ClusterReportDlg :
 	def set_params(self) :
@@ -5782,50 +5940,6 @@ class MainWindow :
 		pe_input = tidlg.select_input(input_dict)
 		if pe_input == None :
 			return
-
-		graph_str = self.gen_pe_graph(pe_input)
-		if graph_str != None :
-			import gv
-			G = gv.readstring(graph_str)
-			gv.layout(G, "dot")
-			fd, tmp_png = mkstemp(suffix=".png")
-			os.close(fd)
-			gv.render(G, "png", tmp_png)
-			self.show_pe_graph(tmp_png)
-			os.unlink(tmp_png)
-
-	def show_pe_graph(self, png_file) :
-		global top_window
-		dialog = gtk.Dialog(_("Edit XML"), top_window, gtk.DIALOG_MODAL, (gtk.STOCK_OK, gtk.RESPONSE_OK))
-		dialog.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_NORMAL)
-		dialog.set_size_request(700, 600)
-
-		sw = gtk.ScrolledWindow()
-		sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-		dialog.vbox.pack_start(sw, padding=1)
-
-		image = gtk.Image()
-		image.set_from_file(png_file)
-		sw.add_with_viewport(image)
-
-		dialog.show_all()
-		save_top_window = top_window
-
-		dialog.run()
-
-		dialog.destroy()
-		top_window = save_top_window
-
-	def gen_pe_graph(self, pe_input) :
-		graph_lines = manager.do_cmd("gen_pe_graph\n%s"%pe_input)
-		if manager.failed_reason != "" :
-			msgbox(manager.failed_reason)
-			return None
-		elif graph_lines == None or len(graph_lines) < 1 :
-			msgbox(_("Failed to generate the transition graph"))
-			return None
-		graph_str = "\n".join(graph_lines)
-		return graph_str
 
 
 	def on_cluster_report(self, action) :

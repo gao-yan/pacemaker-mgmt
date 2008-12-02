@@ -939,6 +939,7 @@ or
 
 #define MSG_GET_PE_INPUTS "get_pe_inputs"
 #define MSG_GEN_PE_GRAPH "gen_pe_graph"
+#define MSG_GEN_PE_INFO "gen_pe_info"
 
 /*************************EVENTS*********************************************/
 
