@@ -937,8 +937,40 @@ or
 */
 #define MSG_GEN_CLUSTER_REPORT	"gen_cluster_report"
 
+/*
+description:
+	get transition list
+format:
+	MSG_GET_PE_INPUTS
+return:
+	MSG_OK "FILENAME1 TIME1" "FILENAME2 TIME2" ... "FILENAMEn TIMEn"
+or
+	MSG_FAIL REASON
+*/
 #define MSG_GET_PE_INPUTS "get_pe_inputs"
+
+/*
+description:
+	generate specified transition graph
+format:
+	MSG_GEN_PE_GRAPH <live|TRANSITION_NUM>
+return:
+	MSG_OK LINE1 LINE2 ... LINEn
+or
+	MSG_FAIL REASON
+*/
 #define MSG_GEN_PE_GRAPH "gen_pe_graph"
+
+/*
+description:
+	generate ptest information
+format:
+	MSG_GEN_PE_INFO <live|TRANSITION_NUM> <VERBOSITY|scores>
+return:
+	MSG_OK LINE1 LINE2 ... LINEn
+or
+	MSG_FAIL REASON
+*/
 #define MSG_GEN_PE_INFO "gen_pe_info"
 
 /*************************EVENTS*********************************************/

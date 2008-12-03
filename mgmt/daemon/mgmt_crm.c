@@ -3268,7 +3268,7 @@ on_get_pe_inputs(char* argv[], int argc)
 	ret = strdup(MSG_OK);
 	while ((dirp = readdir(dp)) != NULL) {
 		if (dirp->d_type == DT_REG && strstr(dirp->d_name, "pe-input-") != NULL
-			&& strstr(dirp->d_name, "bz2") != NULL){
+				&& strstr(dirp->d_name, "bz2") != NULL){
 			memset(fullpath, 0, sizeof(fullpath));
 			snprintf(fullpath, sizeof(fullpath), "%s/%s", pe_working_dir, dirp->d_name);
 			if (stat(fullpath, &statbuf) < 0){
@@ -3277,7 +3277,7 @@ on_get_pe_inputs(char* argv[], int argc)
 			}
 			if (S_ISREG(statbuf.st_mode)){
 				memset(buf, 0, sizeof(buf));
-				snprintf(buf, sizeof(buf), "%s %ld",  dirp->d_name, (long int)statbuf.st_mtime);
+				snprintf(buf, sizeof(buf), "%s %ld", dirp->d_name, (long int)statbuf.st_mtime);
 				ret = mgmt_msg_append(ret, buf);
 			}
 		}
