@@ -4961,7 +4961,7 @@ class TransitionInfoDlg :
 			if ret == gtk.RESPONSE_APPLY :
 				self.save_transition_info()
 			elif ret == gtk.RESPONSE_HELP :
-				continue
+				self.show_help()
 			else :
 				break
 
@@ -5116,6 +5116,47 @@ class TransitionInfoDlg :
 			os.close(fd)
 			return
 		os.close(fd)
+
+	def show_help(self) :
+		global top_window
+
+		help_str = _("""Interpreting the graph:
+* Arrows indicate ordering dependancies
+* Dashed-arrows indicate dependancies that are not present in the transition graph
+* Actions with a dashed border of any color do not form part of the transition graph
+* Actions with a green border form part of the transition graph
+* Actions with a red border are ones the cluster would like to execute but are unrunnable
+* Actions with a blue border are ones the cluster does not feel need to be executed
+* Actions with orange text are pseudo/pretend actions that the cluster uses to simplify the graph
+* Actions with black text are sent to the LRM
+* Resource actions have text of the form {rsc}_{action}_{interval} {node}
+* Any action depending on an action with a red border will not be able to execute.
+* Loops are really bad. Please report them to the development team.""")
+
+		dialog = gtk.Dialog("Transition Information", top_window, gtk.DIALOG_MODAL,
+				(gtk.STOCK_OK, gtk.RESPONSE_OK))
+		dialog.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_NORMAL)
+		dialog.set_size_request(590, 270)
+
+		sw = gtk.ScrolledWindow()
+		sw.set_shadow_type(gtk.SHADOW_IN)
+		sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+		dialog.vbox.pack_start(sw, True)
+
+		help_text = gtk.TextView()
+		#help_text.set_wrap_mode(gtk.WRAP_WORD)
+		help_text.set_property("editable", False)
+		help_textbuffer = help_text.get_buffer()
+		help_textbuffer.set_text(help_str)
+		sw.add(help_text)
+
+		dialog.show_all()
+		save_top_window = top_window
+		top_window = dialog
+
+		dialog.run()
+		dialog.destroy()
+		top_window = save_top_window
 
 class ClusterReportDlg :
 	def set_params(self) :
