@@ -4864,7 +4864,7 @@ class TransitionInfoDlg :
 		for input_num in input_dict :
 			if int(input_num) < min_num :
 				min_num = int(input_num)
-			if input_num > max_num :
+			if int(input_num) > max_num :
 				max_num = int(input_num)
 
 		adj = gtk.Adjustment(float(max_num), float(min_num), float(max_num), 1, 5)
@@ -5133,7 +5133,7 @@ class TransitionInfoDlg :
 * Any action depending on an action with a red border will not be able to execute.
 * Loops are really bad. Please report them to the development team.""")
 
-		dialog = gtk.Dialog("Transition Information", top_window, gtk.DIALOG_MODAL,
+		dialog = gtk.Dialog("Help", top_window, gtk.DIALOG_MODAL,
 				(gtk.STOCK_OK, gtk.RESPONSE_OK))
 		dialog.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_NORMAL)
 		dialog.set_size_request(590, 270)
