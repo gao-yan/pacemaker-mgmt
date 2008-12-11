@@ -3477,18 +3477,8 @@ class ElementNotebook :
 			elem_list = None
 		return elem_list
 
-	def on_add(self, widget) :
+	def on_add(self, widget = None, invoked_by_wizard = False, append_title = "") :
 		global top_window
-
-		dialog = gtk.Dialog("Add", top_window, gtk.DIALOG_MODAL,
-			(gtk.STOCK_OK, gtk.RESPONSE_OK, gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL))
-		dialog.set_border_width(5)
-
-		page_num = self.notebook.get_current_page()
-		if page_num >= 0 :
-			current_type = self.pages[page_num]
-		else :
-			current_type = None
 
 		elem_rng_nodes = []
 		if validate_type == "dtd" :
@@ -3515,10 +3505,25 @@ class ElementNotebook :
 						option_list.append(elem_name)
 
 		if len(option_list) == 0 and not elem_is_any_name :
-			return
-		elif len(option_list) == 1 and not elem_is_any_name :
+			return 0
+		elif len(option_list) == 1 and not elem_is_any_name and not invoked_by_wizard :
 			obj_type = option_list[0]
 		else :
+			dialog = gtk.Dialog(_("Add"), top_window, gtk.DIALOG_MODAL,
+				(gtk.STOCK_OK, gtk.RESPONSE_OK, gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL))
+			dialog.set_border_width(5)
+
+			if append_title != "" :
+				label = gtk.Label(append_title)
+				label.set_alignment(0, 0.5)
+				dialog.vbox.pack_start(label, False, padding=2)
+
+			page_num = self.notebook.get_current_page()
+			if page_num >= 0 :
+				current_type = self.pages[page_num]
+			else :
+				current_type = None
+
 			radio_btns = {}
 			radio_btn = None
 			for option in option_list :
@@ -3528,6 +3533,9 @@ class ElementNotebook :
 					opt_name = option[0][1].getAttribute("name")
 
 				if opt_name == "" :
+					continue
+
+				if invoked_by_wizard and opt_name in ["meta_attributes", "instance_attributes", "operations"] :
 					continue
 
 				radio_btn = gtk.RadioButton(radio_btn, _(name_cap(opt_name)))
@@ -3572,7 +3580,7 @@ class ElementNotebook :
 			dialog.destroy()
 
 			if obj_type == None :
-				return
+				return 0
 
 		impl = getDOMImplementation()
 		if validate_type == "dtd" :
@@ -3668,7 +3676,7 @@ class ElementNotebook :
 						sub_dtd_elem = manager.get_dtd_elem(sub_obj_type)
 						(sub_obj_type, mod) = sub_dtd_elem.get_content_model()[1][0]
 				else :
-					return
+					return 1
 			else:
 				sub_obj_type = None
 				for sub_elem_rng_node in sub_elem_rng_nodes :
@@ -3678,7 +3686,7 @@ class ElementNotebook :
 					break
 
 				if sub_obj_type == None :
-					return
+					return 1
 				
 			newdoc = impl.createDocument(None, sub_obj_type, None)
 			new_elem = newdoc.documentElement
@@ -3688,22 +3696,58 @@ class ElementNotebook :
 			new_elem = newdoc.documentElement
 			self.xml_node.appendChild(new_elem)
 
+		if invoked_by_wizard :
+			add_mode = "wizard"
+		else :
+			add_mode = "dialog"
 
-		objdlg = ObjectViewDlg(new_elem, True)
+		if not invoked_by_wizard and obj_type_name in manager.get_supported_rsc_types() :
+			dialog = gtk.Dialog("Select Mode", top_window, gtk.DIALOG_MODAL,
+				(gtk.STOCK_OK, gtk.RESPONSE_OK, gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL))
+			dialog.set_border_width(5)
+
+			wizard_radio_btn = gtk.RadioButton(None, _("Wizards"))
+			dialog.vbox.pack_start(wizard_radio_btn, False, padding=2)
+
+			dialog_radio_btn = gtk.RadioButton(wizard_radio_btn, _("Dialogs"))
+			dialog.vbox.pack_start(dialog_radio_btn, False, padding=2)
+
+			save_top_window = top_window
+			top_window = dialog
+			dialog.vbox.show_all()
+
+			ret = dialog.run()
+
+			if ret == gtk.RESPONSE_OK :
+				if wizard_radio_btn.get_active() :
+					add_mode = "wizard"
+			else :
+				add_mode = None
+
+			top_window = save_top_window
+			dialog.destroy()
+
+			if add_mode == None :
+				return 1
+
+		if add_mode == "wizard" :
+			objdlg = AddWizard(new_elem)
+		else :
+			objdlg = ObjectViewDlg(new_elem, True)
 
 		while True :
 			new_xml_node = objdlg.run()
 			if new_xml_node == None :
 				tmp_elem = objdlg.obj_view.xml_node
 				tmp_elem.parentNode.removeChild(tmp_elem)
-				return
+				return 2
 			if not self.is_topview :
 				objdlg.destroy()
 				self.new_page_type = obj_type_name
 				self.on_changed()
 				if self.change_call_back != None :
 					self.change_call_back()
-				return
+				return 3
 			else :
 				if self.is_fake_xml_node :
 					parent_xml_node = self.xml_node.cloneNode(True)
@@ -3727,7 +3771,7 @@ class ElementNotebook :
 				else :
 					objdlg.destroy()
 					self.new_page_type = obj_type_name
-					return
+					return 3
 
 	def get_elem_options_dtd(self) :
 		(sep,cont,mod) =  self.dtd_elem.get_content_model()
@@ -4778,6 +4822,500 @@ class AddNativeDlg :
 					dialog.destroy()
 					return None
 		
+class AddWizard :
+	current_page = None
+	def __init__(self, xml_node) :
+		self.xml_node = xml_node
+		self.obj_type = xml_node.tagName
+
+		common_options = [
+		("target-role", [["", "Defaults to \"Started\" or inherit from its parent"], ["Started", ""], ["Stopped", ""]],
+			_("Initial state of resource")),
+		]
+
+		clone_basic_options = [
+		("clone-max", [],
+		 _("Maximum number of copies (Defaults to the number of nodes in the cluster)")),
+		("clone-node-max", [["1", "[ default ]"]],
+		 _("Maximum number of copies on a single node (Defaults to 1)")),
+		]
+		clone_other_options = [
+		("notify", [["false", _("[ default ]")], ["true", ""]],
+		 _("Notify all the other copies before stopping or starting a copy and when the action was successful (Defaults to false)")),
+		("globally-unique", [["true", _("[ default ]")], ["false", ""]],
+		 _("Globally Unique (Does each copy of the clone perform a different function? Defaults to true)")),
+		]
+
+		master_basic_options = [
+		("master-max", [["1", "[ default ]"]],
+		 _("Maximum number of master copies (Defaults to 1)")),
+		("master-node-max", [["1", "[ default ]"]],
+		 _("Maximum number of master copies on a single node (Defaults to 1)"))
+		]
+
+		meta_attributes_options = {
+		"primitive": common_options,
+		"group": common_options,
+		"clone": common_options + clone_basic_options + clone_other_options,
+		"master": common_options + clone_basic_options + master_basic_options + clone_other_options,
+		}
+		self.meta_attributes_options = meta_attributes_options
+
+		self.default_meta_attributes = {}
+		for option in meta_attributes_options[self.obj_type] :
+			if validate_type == "dtd" :
+				key = option[0].replace("-", "_")
+			else :
+				key = option[0]
+			for (value, decl) in option[1] :
+				if decl.count("default") > 0 :
+					self.default_meta_attributes[key] = value
+
+	def first_page_render(self) :
+		title = _("Add") + " " + _(name_cap(self.xml_node.tagName))
+		dialog = gtk.Dialog(title, top_window, gtk.DIALOG_MODAL,
+			(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_GO_FORWARD, gtk.RESPONSE_OK))
+		dialog.set_border_width(5)
+		dialog.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_NORMAL)
+		self.dialog = dialog
+		self.current_page = 0
+
+		if self.obj_type == "primitive" :
+			obj_attrs = Primitive(self.xml_node, True, hide_optional = True)
+		else :
+			obj_attrs = obj_attrs = ObjectAttrs(self.xml_node, True, hide_optional = True)
+		obj_attrs.on_after_show()
+
+		dialog.vbox.pack_start(obj_attrs.attrs_vbox, False)
+		self.obj_attrs = obj_attrs
+		self.obj_view = obj_attrs
+
+		label = gtk.Label()
+		label.set_markup('<b>' + _("Options") + '</b>')
+		label.set_alignment(0, 1)
+		label.show()
+		dialog.vbox.pack_start(label, False, padding = 2)
+
+		meta_attributes = self.get_meta_attributes()
+
+		combos = {}
+		checkbuttons = {}
+		spinbuttons = {}
+
+		self.num_buttons_map = {}
+
+		for option in self.meta_attributes_options[self.obj_type] :
+			if validate_type == "dtd" :
+				key = option[0].replace("-", "_")
+			else :
+				key = option[0]
+
+			is_boolean = False
+			for value in option[1] :
+				if value[0] in ["true", "false"] :
+					is_boolean = True
+					break
+
+			hbox = gtk.HBox()
+			if not is_boolean :
+				name_label = gtk.Label(option[2] + _(":"))
+				name_label.set_alignment(0, 0.5)
+
+				if key.count("max") > 0 :
+					num_checkbutton = gtk.CheckButton()
+					num_checkbutton.add(name_label)
+
+					num_checkbutton.connect("toggled", self.on_num_checkbutton_toggled)
+					if meta_attributes.get(key, "") != "" :
+						num_checkbutton.set_active(True)
+					
+					hbox.pack_start(num_checkbutton, False, padding=2)
+				else :
+					hbox.pack_start(name_label, False, padding=2)
+
+			if is_boolean :
+				label = gtk.Label(option[2])
+				label.set_line_wrap(True)
+				widget = gtk.CheckButton()
+				widget.add(label)
+
+				checkbuttons[key] = widget
+				hbox.pack_start(widget, True, padding=2)
+			elif key.count("max") > 0 :
+				if key in ["clone-max", "clone_max"] :
+					node_list = manager.get_normal_nodes()
+					if node_list != None and len(node_list) > 0 :
+						init_value = len(node_list)
+					else :
+						init_value = 1
+				else :
+					init_value = 1
+
+				adj = gtk.Adjustment(init_value, 1, 999, 1, 3)
+				widget = gtk.SpinButton(adj, 0, 0)
+				widget.set_width_chars(3)
+				widget.set_wrap(True)
+
+				if meta_attributes.get(key, "") == "" :
+					widget.set_sensitive(False)
+
+				self.num_buttons_map[num_checkbutton] = widget
+
+				hbox.pack_start(widget, False)
+				spinbuttons[key] = widget
+			else :
+				store = gtk.ListStore(str, str)
+				for value in option[1] :
+					store.append(value)
+
+				widget = gtk.ComboBox(store)
+				cell0 = gtk.CellRendererText()
+				cell1 = gtk.CellRendererText()
+				widget.pack_start(cell0, True)
+				widget.pack_start(cell1, True)
+				widget.add_attribute(cell0, 'text', 0)
+				widget.add_attribute(cell1, 'text', 1)
+
+				combos[key] = widget
+				hbox.pack_start(widget, True, padding=2)
+
+			hbox.show_all()
+			dialog.vbox.pack_start(hbox, False, padding=2)
+
+		widgets = {}
+		widgets["combos"] = combos
+		widgets["checkbuttons"] = checkbuttons
+		widgets["spinbuttons"] = spinbuttons
+		widget_group = WidgetGroup(widgets)
+		self.widget_group = widget_group
+
+		if self.obj_type == "primitive" :
+			label = gtk.Label(_("Add monitor operation"))
+			self.monitor_checkbutton = gtk.CheckButton()
+			self.monitor_checkbutton.add(label)
+			self.monitor_checkbutton.show_all()
+			dialog.vbox.pack_start(self.monitor_checkbutton, False, padding=2)
+
+	def on_num_checkbutton_toggled(self, widget) :
+		spinbutton = self.num_buttons_map.get(widget)
+		if spinbutton != None :
+			spinbutton.set_sensitive(widget.get_active())
+
+	def get_meta_attributes(self) :
+		meta_attributes = {}
+		for meta_attributes_node in self.xml_node.getElementsByTagName("meta_attributes") :
+			for nv_xml_node in meta_attributes_node.getElementsByTagName("nvpair") :
+				attribute_name = nv_xml_node.getAttribute("name")
+				meta_attributes[attribute_name] = nv_xml_node.getAttribute("value")
+			break
+		return meta_attributes
+
+	def first_page_update(self) :
+		meta_attributes = self.get_meta_attributes()
+		tmp_meta_attributes = self.default_meta_attributes.copy()
+		tmp_meta_attributes.update(meta_attributes)
+		self.widget_group.show_values(tmp_meta_attributes)
+
+		if self.obj_type == "primitive" :
+			monitors = self.get_monitors()
+			if len(monitors) > 0 :
+				self.monitor_checkbutton.set_active(True)
+			else :
+				self.monitor_checkbutton.set_active(False)
+
+	def first_page_run(self) :
+		global top_window
+		dialog = self.dialog
+		dialog.vbox.show()
+		save_top_window = top_window
+		top_window = dialog
+
+		while True :
+			ret = dialog.run()
+
+			if ret == gtk.RESPONSE_OK :
+				passed = self.obj_attrs.verify_values()
+				if not passed :
+					continue
+				dialog.destroy()
+				top_window = save_top_window
+
+				self.set_meta_attributes()
+				if self.obj_type == "primitive" :
+					meta = self.get_rsc_meta()
+					self.set_monitor(meta)
+					self.set_inst_attributes(meta)
+				return self.last_page(True)
+			else :
+				dialog.destroy()
+				top_window = save_top_window
+				return None
+
+	def set_meta_attributes(self) :
+		meta_attributes = self.widget_group.get_values()
+
+		(parent_xml_node, add_obj_type) = manager.real_add_obj_type(self.xml_node, "meta_attributes", True)
+		if parent_xml_node == None :
+			return
+
+		nv_xml_nodes = {}
+		for nv_xml_node in parent_xml_node.getElementsByTagName("nvpair") :
+			nv_name = nv_xml_node.getAttribute("name")
+			nv_xml_nodes[nv_name] = nv_xml_node
+
+		impl = getDOMImplementation()
+		for attr_name in meta_attributes :
+			nv_xml_node = nv_xml_nodes.get(attr_name)
+			if attr_name.count("max") > 0 :
+				value = meta_attributes[attr_name].split(".")[0]
+			else :
+				value = meta_attributes[attr_name]
+
+			if nv_xml_node != None :
+				#if value != self.default_meta_attributes.get(attr_name) :
+					nv_xml_node.setAttribute("value", value)
+				#else :
+				#	nv_xml_node.parentNode.removeChild(nv_xml_node)
+			else :
+				#if value != self.default_meta_attributes.get(attr_name) :
+					newdoc = impl.createDocument(None, "nvpair", None)
+					nv = newdoc.documentElement
+					parent_xml_node.appendChild(nv)
+
+					nv.setAttribute("id", "nvpair" + "-" + gen_uuid())
+					nv.setAttribute("name", attr_name)
+					nv.setAttribute("value", value)
+
+		for option in self.meta_attributes_options[self.obj_type] :
+			if validate_type == "dtd" :
+				attr_name = option[0].replace("-", "_")
+			else :
+				attr_name = option[0]
+
+			nv_xml_node = nv_xml_nodes.get(attr_name)
+			if nv_xml_node != None and meta_attributes.get(attr_name, "") == "" :
+				nv_xml_node.parentNode.removeChild(nv_xml_node)
+
+	def get_monitors(self) :
+		monitors = []
+		for operations_node in self.xml_node.getElementsByTagName("operations") :
+			for op_node in operations_node.getElementsByTagName("op") :
+				op_name = op_node.getAttribute("name")
+				if op_name == "monitor" :
+					monitors.append(op_node)
+		return monitors
+
+	def get_rsc_meta(self) :
+		primitive_class = str(self.xml_node.getAttribute("class"))
+		primitive_type = str(self.xml_node.getAttribute("type"))
+		primitive_provider = str(self.xml_node.getAttribute("provider"))
+		meta = manager.get_rsc_meta(primitive_class, primitive_type, primitive_provider)
+		return meta
+
+	def set_monitor(self, meta) :
+		if self.obj_type != "primitive" or meta == None :
+			return
+
+		monitors = self.get_monitors()
+		(parent_xml_node, add_obj_type) = manager.real_add_obj_type(self.xml_node, "operations", True)
+		if parent_xml_node == None :
+			return
+
+		enable_monitor = self.monitor_checkbutton.get_active()
+		if enable_monitor :
+			if len(monitors) == 0 :
+				impl = getDOMImplementation()
+
+				if validate_type == "dtd" :
+					dtd_elem = manager.get_dtd_elem(add_obj_type)
+					attr_list = dtd_elem.get_attr_list()
+				else :
+					attr_list = []
+					sorted_rng_nodes = manager.sorted_sub_rng_nodes_by_name(add_obj_type)
+					if sorted_rng_nodes != None :
+						attr_rng_nodes = sorted_rng_nodes.get("attribute", [])
+						for rng_node in attr_rng_nodes :
+							name = rng_node[0][1].getAttribute("name")
+							if attr_list.count(name) == 0 :
+								attr_list.append(name)
+
+				for action in meta.actions :
+					if action.get("name") == "monitor" :
+						newdoc = impl.createDocument(None, add_obj_type, None)
+						op = newdoc.documentElement
+						parent_xml_node.appendChild(op)
+
+						primitive_id = str(self.xml_node.getAttribute("id"))
+						op_id = primitive_id + "-" + add_obj_type + "-" + action["name"]
+						role = action.get("role", "")
+						if role != "" : 
+							op_id += "-" + role
+						interval = action.get("interval", "")
+						if interval != "" :
+							op_id += "-" + interval
+						op.setAttribute("id", op_id)
+
+						for attr_name in attr_list :
+							key  = attr_name.replace("_", "-")
+							value = action.get(key, "")
+							if value != "" :
+								op.setAttribute(key, action[key])
+
+			else :
+				return
+				
+		else :
+			for monitor in monitors :
+				monitor.parentNode.removeChild(monitor)
+
+	def set_inst_attributes(self, meta) :
+		if self.obj_type != "primitive" or meta == None :
+			return
+
+		(parent_xml_node, add_obj_type) = manager.real_add_obj_type(self.xml_node, "instance_attributes", True)
+		if parent_xml_node == None :
+			return
+
+		nv_xml_nodes = {}
+		for nv_xml_node in parent_xml_node.getElementsByTagName("nvpair") :
+			nv_name = nv_xml_node.getAttribute("name")
+			nv_xml_nodes[nv_name] = nv_xml_node
+
+		impl = getDOMImplementation()
+
+		param_list = []
+		for param in meta.parameters :
+			attr_name = param.get("name", "")
+			if attr_name == "" :
+				continue
+
+			param_list.append(attr_name)
+
+			if nv_xml_nodes.get(attr_name) != None :
+				continue
+
+			if param.get("required") == "1" :
+				newdoc = impl.createDocument(None, "nvpair", None)
+				nv = newdoc.documentElement
+				parent_xml_node.appendChild(nv)
+
+				nv.setAttribute("id", "nvpair" + "-" + gen_uuid())
+				nv.setAttribute("name", attr_name)
+
+		for nv_name in nv_xml_nodes :
+			if nv_name not in param_list :
+				nv_xml_nodes[nv_name].parentNode.removeChild(nv_xml_nodes[nv_name])
+
+	def first_page_init_run(self) :
+		self.first_page_render()
+		self.first_page_update()
+
+		if validate_type == "dtd" :
+			target_role_widget = self.widget_group.widgets["combos"].get("target_role")
+		else :
+			target_role_widget = self.widget_group.widgets["combos"].get("target-role")
+		if target_role_widget != None :
+			if self.xml_node.parentNode.tagName == "resources" :
+				default_value = "Stopped"
+			else :
+				default_value = ""
+				
+			model = target_role_widget.get_model()
+			iter = model.get_iter_first()
+			while iter != None :
+				if model.get_value(iter,0) == default_value :
+					target_role_widget.set_active_iter(iter)
+					break
+				iter = model.iter_next(iter)
+
+		if self.obj_type == "primitive" :
+			self.monitor_checkbutton.set_active(True)
+
+		return self.first_page_run()
+
+	def first_page_update_run(self) :
+		self.first_page_render()
+		self.first_page_update()
+		return self.first_page_run()
+
+	def last_page(self, add_prompt = False) :
+		global top_window
+		title = _("Add") + " " + _(name_cap(self.xml_node.tagName))
+		dialog = gtk.Dialog(title, top_window, gtk.DIALOG_MODAL,
+			(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_GO_BACK, gtk.RESPONSE_APPLY, gtk.STOCK_OK, gtk.RESPONSE_OK))
+		dialog.set_border_width(5)
+		dialog.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_NORMAL)
+		self.current_page = 1
+
+		elem_notebook = ElementNotebook(self.xml_node, False)
+		elem_notebook.update(self.xml_node)
+		dialog.vbox.pack_start(elem_notebook.widget, True, padding = 5)
+		dialog.vbox.pack_start(elem_notebook.bbox, False, padding = 2)
+
+		dialog.vbox.show_all()
+
+		if self.obj_type != "primitive" and add_prompt :
+			title_suffix = _("a sub-resource for ") + _(self.obj_type)
+			rsc_id = self.xml_node.getAttribute("id")
+			if rsc_id != "" :
+				title_suffix += " \"%s\""%rsc_id
+
+			first_title = _("Add ") + title_suffix
+			later_title = _("Continue adding ") + title_suffix
+			append_title = first_title
+
+			while True :
+				if elem_notebook.on_add(invoked_by_wizard = True, append_title = append_title) == 0 :
+					break
+				append_title = later_title
+
+		if self.obj_type == "primitive" :
+			set_page_type = "instance_attributes"
+		elif self.obj_type == "group" :
+			set_page_type = "primitive"
+		else :
+			if len(self.xml_node.getElementsByTagName("group")) > 0 :
+				set_page_type = "group"
+			else :
+				set_page_type = "primitive"
+
+		elem_notebook.restore_status((set_page_type, None, {}))
+		#elem_notebook.on_after_show()
+
+		save_top_window = top_window
+		top_window = dialog
+
+		while True :
+			ret = dialog.run()
+
+			if ret == gtk.RESPONSE_OK :
+				dialog.destroy()
+				top_window = save_top_window
+				return self.xml_node
+			elif ret == gtk.RESPONSE_APPLY :
+				dialog.destroy()
+				top_window = save_top_window
+				return self.first_page_update_run()
+			else :
+				dialog.destroy()
+				top_window = save_top_window
+				return None
+
+	def run(self) :
+		if self.current_page == None :
+			ret = self.first_page_init_run()
+		elif self.current_page == 0 :
+			ret = self.first_page_update_run()
+		else :
+			ret = self.last_page()
+
+		return ret
+
+	def destroy(self) :
+		#global top_window
+		#self.dialog.destroy()
+		#top_window = self.save_top_window
+		pass
 
 class ObjectViewDlg :
 	def __init__(self, xml_node, is_newobj = False) :
@@ -6965,6 +7503,108 @@ class Manager :
 					break
 		return decl_node_index
 
+	def real_add_obj_type(self, xml_node, obj_type_name, is_wizard = False) :
+		if validate_type == "dtd" :
+			dtd_elem = manager.get_dtd_elem(obj_type_name)
+			sub_attr_list = dtd_elem.get_attr_list()
+		else :
+			sorted_rng_nodes = manager.sorted_sub_rng_nodes_by_name(obj_type_name)
+			sub_attr_list = []
+			sub_elem_type_list = []
+			sub_attr_is_any_name = False 
+			sub_elem_is_any_name = False
+			if sorted_rng_nodes != None :
+				sub_attr_rng_nodes = sorted_rng_nodes.get("attribute", [])
+				sub_elem_rng_nodes = sorted_rng_nodes.get("element", [])
+				for rng_node in sub_attr_rng_nodes :
+					name = rng_node[0][1].getAttribute("name")
+					if name == "" :
+						sub_attr_is_any_name = True
+					elif sub_attr_list.count(name) == 0 :
+						sub_attr_list.append(name)
+				for rng_node in sub_elem_rng_nodes :
+					name = rng_node[0][1].getAttribute("name")
+					if name == "" :
+						sub_elem_is_any_name = True
+					elif sub_elem_type_list.count(name) == 0 :
+						sub_elem_type_list.append(name)
+			else :
+				sub_attr_is_any_name = True
+				sub_elem_is_any_name = True
+				sub_elem_rng_nodes = []
+					
+		if not sub_attr_is_any_name and (len(sub_attr_list) == 0 \
+				or ((not expert_mode or is_wizard) and obj_type_name in
+				["meta_attributes", "instance_attributes", "operations",
+				"cluster_property_set"])) :
+			impl = getDOMImplementation()
+			elem_node_list = []
+			for elem_node in xml_node.getElementsByTagName(obj_type_name) :
+				if elem_node in xml_node.childNodes :
+					elem_node_list.append(elem_node)
+			if len(elem_node_list) == 0 :
+				newdoc = impl.createDocument(None, obj_type_name, None)
+				mid_elem = newdoc.documentElement
+				xml_node.appendChild(mid_elem)
+
+				obj_type = xml_node.tagName
+				if obj_type == "crm_config" :
+					mid_id = "cib-bootstrap-options"
+				elif obj_type in ["rsc_defaults", "op_defaults"] :
+					mid_id = obj_type + "-options"
+				elif obj_type == "node" :
+					mid_id = "nodes-" + xml_node.getAttribute("id")
+				else :
+					parent_id = xml_node.getAttribute("id")
+					if parent_id != "" and sub_attr_list.count("id") > 0 :
+						mid_id = xml_node.getAttribute("id") + "-" + obj_type_name
+					else :
+						mid_id = ""
+
+				if mid_id != "" :
+					mid_elem.setAttribute("id", mid_id)
+				
+			else :
+				mid_elem = elem_node_list[0]
+
+			if validate_type == "dtd" :
+				(sep,cont,mod) = dtd_elem.get_content_model()
+				if len(cont) > 0 :
+					if len(sub_attr_list) == 0 :
+						sub_obj_type = cont[0][0]
+					else :
+						sub_obj_type = cont[1][0]
+						sub_elem_node_list = []
+						for sub_elem_node in mid_elem.getElementsByTagName(sub_obj_type) :
+							if sub_elem_node in mid_elem.childNodes :
+								sub_elem_node_list.append(sub_elem_node)
+						if len(sub_elem_node_list) == 0 :
+							newdoc = impl.createDocument(None, sub_obj_type, None)
+							sub_mid_elem = newdoc.documentElement
+							mid_elem.appendChild(sub_mid_elem)
+							mid_elem = sub_mid_elem
+						else :
+							mid_elem = sub_elem_node_list[0]
+							
+						sub_dtd_elem = manager.get_dtd_elem(sub_obj_type)
+						(sub_obj_type, mod) = sub_dtd_elem.get_content_model()[1][0]
+				else :
+					return (None, None)
+			else:
+				sub_obj_type = None
+				for sub_elem_rng_node in sub_elem_rng_nodes :
+					if manager.find_decl(sub_elem_rng_node, "optional") != 0  :
+						continue
+					sub_obj_type = sub_elem_rng_node[0][1].getAttribute("name")
+					break
+
+				if sub_obj_type == None :
+					return (None, None)
+
+			return (mid_elem, sub_obj_type)
+		else :
+			return (xml_node, obj_type_name)
+
 	def update(self) :
 		self.cache_clear()
 		self.update_cib_xml()
@@ -7762,6 +8402,13 @@ class WidgetGroup :
 					widgets["checkbuttons"][key].set_active("true" == lower_value
 										or "yes" == lower_value
 										or "1" == lower_value)
+		if widgets.has_key("spinbuttons") :
+			for key in widgets["spinbuttons"].keys() :
+				if object.has_key(key) :
+					try :
+						widgets["spinbuttons"][key].set_value(float(object[key]))
+					except :
+						pass
 
 		if widgets.has_key("anyname_combo_entries") :
 			for key in widgets["anyname_combo_entries"].keys() :
@@ -7776,12 +8423,14 @@ class ObjectAttrs(WidgetGroup) :
 	dynamic_desc = None
 	static_desc = None
 	dynamic_render = None
+	save_id = None
 
-	def __init__(self, xml_node, is_newobj = False, change_call_back = None) :
+	def __init__(self, xml_node, is_newobj = False, change_call_back = None, hide_optional = False) :
 		self.xml_node = xml_node
 		self.obj_type = xml_node.tagName
 		self.is_newobj = is_newobj
 		self.change_call_back = change_call_back
+		self.hide_optional = hide_optional
 		self.render_attrs_vbox()
 
 		if validate_type == "dtd" :
@@ -7848,7 +8497,7 @@ class ObjectAttrs(WidgetGroup) :
 		if len(self.required_vbox.get_children()) < 2 :
 			self.required_vbox.hide()
 
-		if len(self.optional_vbox.get_children()) < 1 :
+		if len(self.optional_vbox.get_children()) < 1 or self.hide_optional :
 			self.optional_expander.hide()
 
 		if self.dynamic_desc == None and self.static_desc == None :
@@ -8355,6 +9004,9 @@ class ObjectAttrs(WidgetGroup) :
 
 
 	def on_changed(self, widget) :
+		if self.dynamic_choice != None and validate_type != "dtd" :
+			self.dynamic_choice(widget)
+
 		if self.dynamic_fill != None :
 			self.dynamic_fill(widget)
 		if self.dynamic_desc != None :
@@ -8362,12 +9014,12 @@ class ObjectAttrs(WidgetGroup) :
 			if desc != None :
 				self.show_desc(desc)
 
-		if self.dynamic_choice != None and validate_type != "dtd" :
-			self.dynamic_choice(widget)
-
 		self.save()
 
 	def on_changed_later(self, widget) :
+		if self.dynamic_choice != None and validate_type != "dtd" :
+			self.dynamic_choice(widget)
+
 		if self.dynamic_fill != None :
 			self.dynamic_fill(widget)
 		if self.dynamic_desc != None :
@@ -8380,10 +9032,24 @@ class ObjectAttrs(WidgetGroup) :
 		if self.dynamic_render != None :
 			self.dynamic_render(widget)
 
-		if self.dynamic_choice != None and validate_type != "dtd" :
-			self.dynamic_choice(widget)
+		save_id = self.xml_node.getAttribute("id")
+		if save_id != "" :
+			self.save_id = save_id
 
 		self.save()
+
+		new_id = self.xml_node.getAttribute("id")
+		if self.save_id != None and new_id != "" and new_id != self.save_id :
+			self.auto_change_child_ids(self.xml_node, new_id)
+
+	def auto_change_child_ids(self, xml_node, new_id) :
+		for child_node in xml_node.childNodes :
+			if child_node.nodeType != xml.dom.Node.ELEMENT_NODE :
+				continue
+			id = child_node.getAttribute("id")
+			if id.count(self.save_id + "-") > 0 :
+				child_node.setAttribute("id", id.replace(self.save_id + "-", new_id + "-"))
+			self.auto_change_child_ids(child_node, new_id)
 
 	def dynamic_render(self, widget) :
 		if widget in self.widgets.get("anyname_combo_entries", {}) :
@@ -8692,7 +9358,8 @@ class Primitive(ObjectAttrs) :
 		primitive = self.get_values()
 		primitive_class = primitive.get("class", "")
 		primitive_type = primitive.get("type", "")
-		primitive_provider = primitive.get("provider", "")
+		primitive_provider = primitive.get("provider", "heartbeat")
+
 		meta = manager.get_rsc_meta(primitive_class, primitive_type, primitive_provider) 
 		if meta == None :
 			return [""]
