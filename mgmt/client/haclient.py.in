@@ -5267,6 +5267,8 @@ class AddWizard :
 			while True :
 				if elem_notebook.on_add(invoked_by_wizard = True, append_title = append_title) == 0 :
 					break
+				if self.obj_type in ["clone", "master"] :
+					break
 				append_title = later_title
 
 		if self.obj_type == "primitive" :
