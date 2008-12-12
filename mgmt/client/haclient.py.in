@@ -10140,6 +10140,11 @@ class RscColocation(ObjectAttrs) :
 		return desc
 
 if __name__ == '__main__' :
+	try :
+		gtk._gtk.init_check()
+	except RuntimeError :
+		print "Could not open display"
+		sys.exit()
 	if not pygtk_newer(2, 4) :
 		print "the pygtk 2.4 or newer is needed."
 		sys.exit()
