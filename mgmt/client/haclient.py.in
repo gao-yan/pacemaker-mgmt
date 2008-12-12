@@ -6084,7 +6084,7 @@ class DesReportDlg:
 
 		name_label_max_len = 0
 		for name_label in name_labels :
-			name_label_len = len(name_label.get_label())
+			name_label_len = len(name_label.get_text())
 			if name_label_len >  name_label_max_len :
 				name_label_max_len = name_label_len
 		for name_label in name_labels :
@@ -8609,7 +8609,7 @@ class ObjectAttrs(WidgetGroup) :
 			label_text = _(name_cap(attr_name)+":")
 			label = gtk.Label(label_text)
 			label.set_alignment(0, 0.5)
-			label_len = len(attr_name)
+			label_len = len(label.get_text())
 			if label_len > name_label_max_len :
 				name_label_max_len = label_len
 			eventbox = gtk.EventBox()
@@ -8817,7 +8817,7 @@ class ObjectAttrs(WidgetGroup) :
 			label_text = _(name_cap(attr_name)+":")
 			label = gtk.Label(label_text)
 			label.set_alignment(0, 0.5)
-			label_len = len(attr_name)
+			label_len = len(label.get_text())
 			if label_len > name_label_max_len :
 				name_label_max_len = label_len
 			eventbox = gtk.EventBox()
