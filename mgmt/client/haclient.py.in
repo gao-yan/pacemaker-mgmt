@@ -3515,8 +3515,12 @@ class ElementNotebook :
 
 			if append_title != "" :
 				label = gtk.Label(append_title)
-				label.set_alignment(0, 0.5)
+				label.set_markup('<big><b>' + append_title + '</b></big>')
+				label.set_alignment(0, 0)
 				dialog.vbox.pack_start(label, False, padding=2)
+
+				separator = gtk.HSeparator()
+				dialog.vbox.pack_start(separator, False, padding = 2)
 
 			page_num = self.notebook.get_current_page()
 			if page_num >= 0 :
@@ -4880,6 +4884,17 @@ class AddWizard :
 		self.dialog = dialog
 		self.current_page = 0
 
+		label = gtk.Label()
+		label_text = title + " - " + "Basic Settings"
+		label.set_markup('<big><b>' + label_text + '</b></big>')
+		label.set_alignment(0, 0)
+		label.show()
+		dialog.vbox.pack_start(label, False, padding = 2)
+
+		separator = gtk.HSeparator()
+		separator.show()
+		dialog.vbox.pack_start(separator, False, padding = 2)
+
 		if self.obj_type == "primitive" :
 			obj_attrs = Primitive(self.xml_node, True, hide_optional = True)
 		else :
@@ -5240,12 +5255,27 @@ class AddWizard :
 
 	def last_page(self, add_prompt = False) :
 		global top_window
-		title = _("Add") + " " + _(name_cap(self.xml_node.tagName))
+		title = _("Add") + " " + _(name_cap(self.obj_type))
 		dialog = gtk.Dialog(title, top_window, gtk.DIALOG_MODAL,
-			(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_GO_BACK, gtk.RESPONSE_APPLY, gtk.STOCK_OK, gtk.RESPONSE_OK))
+			(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_GO_BACK, gtk.RESPONSE_REJECT, gtk.STOCK_APPLY, gtk.RESPONSE_APPLY))
 		dialog.set_border_width(5)
 		dialog.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_NORMAL)
 		self.current_page = 1
+
+		label_text = title + " - "
+		rsc_id = self.xml_node.getAttribute("id")
+		if rsc_id != "" :
+			label_text += _("Summary Of \"%s\"")%rsc_id
+		else :
+			label_text += _("Summary")
+
+		label = gtk.Label()
+		label.set_markup('<big><b>' + label_text + '</b></big>')
+		label.set_alignment(0, 0)
+		dialog.vbox.pack_start(label, False, padding=2)
+
+		separator = gtk.HSeparator()
+		dialog.vbox.pack_start(separator, False, padding = 2)
 
 		elem_notebook = ElementNotebook(self.xml_node, False)
 		elem_notebook.update(self.xml_node)
@@ -5255,13 +5285,13 @@ class AddWizard :
 		dialog.vbox.show_all()
 
 		if self.obj_type != "primitive" and add_prompt :
-			title_suffix = _("a sub-resource for ") + _(self.obj_type)
-			rsc_id = self.xml_node.getAttribute("id")
 			if rsc_id != "" :
-				title_suffix += " \"%s\""%rsc_id
+				title_suffix = _("Sub-resource For \"%s\"")%rsc_id
+			else :
+				title_suffix = _("Sub-resource")
 
-			first_title = _("Add ") + title_suffix
-			later_title = _("Continue adding ") + title_suffix
+			first_title = title + " - " + _("Add ") + title_suffix
+			later_title = title + " - " + _("Continue Adding ") + title_suffix
 			append_title = first_title
 
 			while True :
@@ -5290,11 +5320,11 @@ class AddWizard :
 		while True :
 			ret = dialog.run()
 
-			if ret == gtk.RESPONSE_OK :
+			if ret == gtk.RESPONSE_APPLY :
 				dialog.destroy()
 				top_window = save_top_window
 				return self.xml_node
-			elif ret == gtk.RESPONSE_APPLY :
+			elif ret == gtk.RESPONSE_REJECT :
 				dialog.destroy()
 				top_window = save_top_window
 				return self.first_page_update_run()
