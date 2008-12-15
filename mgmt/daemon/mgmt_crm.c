@@ -3179,8 +3179,11 @@ on_gen_cluster_report(char* argv[], int argc)
 	char cmd[MAX_STRLEN];
 	char buf[MAX_STRLEN];
 	char filename[MAX_STRLEN];
-	char *dest = tempnam("/tmp", "clrp.");
-	char* ret = NULL;
+	const char *tempdir = "/tmp";
+	char *dest = tempnam(tempdir, "clrp.");
+	struct dirent *dirp;
+	DIR *dp;
+	char *ret = NULL;
 	FILE *fstream = NULL;
 	const char* date_regex = \
 		"^[0-9]{4}-[0-1][0-9]-[0-3][0-9] [0-2][0-9]:[0-5][0-9]:[0-5][0-9]$";
@@ -3191,9 +3194,9 @@ on_gen_cluster_report(char* argv[], int argc)
 		snprintf(buf, sizeof(buf), "-f \"%s\"", argv[1]);
 	}
 	else {
-		mgmt_log(LOG_ERR, "invalid \"from\" date expression: \"%s\"", argv[1]);
+		mgmt_log(LOG_ERR, "cluster_report: invalid \"from\" date expression: \"%s\"", argv[1]);
 		free(dest);
-		return strdup(MSG_FAIL);
+		return strdup(MSG_FAIL"\nInvalid \"from\" date expression");
 	}
 
 	if (strnlen(argv[2], MAX_STRLEN) != 0) {
@@ -3203,29 +3206,58 @@ on_gen_cluster_report(char* argv[], int argc)
 			strncat(buf, "\"", sizeof(buf)-strlen(buf)-1);
 		}
 		else {
-			mgmt_log(LOG_ERR, "invalid \"to\" date expression: \"%s\"", argv[2]);
+			mgmt_log(LOG_ERR, "cluster_report: invalid \"to\" date expression: \"%s\"", argv[2]);
 			free(dest);
-			return strdup(MSG_FAIL);
+			return strdup(MSG_FAIL"\nInvalid \"to\" date expression");
 		}
 	}
 
-	snprintf(cmd, sizeof(cmd), "hb_report -DC %s %s", buf, dest);
-	mgmt_log(LOG_INFO, "cluster_report: %s", cmd);
-	if (system(cmd) < 0) {
-		mgmt_log(LOG_ERR, "error on system %s: %s",
-			 cmd, strerror(errno));
-		free(dest);
-		return strdup(MSG_FAIL);
+	if (is_openais_cluster()){
+		snprintf(cmd, sizeof(cmd), "hb_report -ADC %s %s", buf, dest);
+	}
+	else{
+		snprintf(cmd, sizeof(cmd), "hb_report -DC %s %s", buf, dest);
 	}
 
-	snprintf(filename, sizeof(filename), "%s.tar.gz", dest);
-	snprintf(cmd, sizeof(cmd), "base64 %s", filename);
-	if ((fstream = popen(cmd, "r")) == NULL) {
-		mgmt_log(LOG_ERR, "error on popen %s: %s",
-			 cmd, strerror(errno));
-		unlink(filename);
+	mgmt_log(LOG_INFO, "cluster_report: %s", cmd);
+	if (system(cmd) < 0) {
+		mgmt_log(LOG_ERR, "cluster_report: error on system \"%s\": %s", cmd, strerror(errno));
 		free(dest);
-		return strdup(MSG_FAIL);
+		return strdup(MSG_FAIL"\nError on execute the cluster report command");
+	}
+
+	if ((dp = opendir(tempdir)) == NULL){
+		mgmt_log(LOG_ERR, "cluster_report: error on opendir \"%s\": %s", tempdir, strerror(errno));
+		free(dest);
+		return strdup(MSG_FAIL"\nCannot open the temporary directory");
+	}
+
+	while ((dirp = readdir(dp)) != NULL) {
+		if (dirp->d_type == DT_REG && strstr(dirp->d_name, basename(dest)) != NULL
+				&& strstr(dirp->d_name, "tar") != NULL){
+			snprintf(filename, sizeof(filename), "%s/%s", tempdir, dirp->d_name);
+			break;
+		}
+	}
+
+	if (closedir(dp) < 0){
+		mgmt_log(LOG_WARNING, "cluster_report: failed to closedir \"%s\": %s", tempdir, strerror(errno) );
+	}
+
+	free(dest);
+
+	if (strnlen(filename, MAX_STRLEN) == 0) {
+		mgmt_log(LOG_ERR, "cluster_report: failed to generate a cluster report");
+		return strdup(MSG_FAIL"\nFailed to generate a cluster report");
+	}
+
+	mgmt_log(LOG_INFO, "cluster_report: execute the cluster report command successfully");
+
+	snprintf(cmd, sizeof(cmd), "/usr/bin/base64 %s", filename);
+	if ((fstream = popen(cmd, "r")) == NULL) {
+		mgmt_log(LOG_ERR, "cluster_report: error on popen \"%s\": %s", cmd, strerror(errno));
+		unlink(filename);
+		return strdup(MSG_FAIL"\nFailed to encode the cluster report to base64");
 	 }
 
 	ret = strdup(MSG_OK);
@@ -3240,11 +3272,12 @@ on_gen_cluster_report(char* argv[], int argc)
 			sleep(1);
 		}
 	}
-	if (pclose(fstream) == -1)
-		mgmt_log(LOG_WARNING, "failed to close pipe");
+	if (pclose(fstream) == -1){
+		mgmt_log(LOG_WARNING, "cluster_report: failed to close pipe");
+	}
 
+	mgmt_log(LOG_INFO, "cluster_report: send out the report");
 	unlink(filename);
-	free(dest);
 	return ret;
 }
 
@@ -3313,14 +3346,14 @@ on_gen_pe_graph(char* argv[], int argc)
 	if (system(cmd) < 0){
 		mgmt_log(LOG_ERR, "error on execute \"%s\": %s", cmd, strerror(errno));
 		free(dotfile);
-		return strdup(MSG_FAIL"Error on execute the ptest command");
+		return strdup(MSG_FAIL"\nError on execute the ptest command");
 	}
 
 	if ((fstream = fopen(dotfile, "r")) == NULL){
 		mgmt_log(LOG_ERR, "error on fopen %s: %s", dotfile, strerror(errno));
 		free(dotfile);
 		unlink(dotfile);
-		return strdup(MSG_FAIL"Error on read the transition graph file");
+		return strdup(MSG_FAIL"\nError on read the transition graph file");
 	}
 
 	ret = strdup(MSG_OK);
@@ -3379,7 +3412,7 @@ on_gen_pe_info(char* argv[], int argc)
 
 	if ((fstream = popen(cmd, "r")) == NULL){
 		mgmt_log(LOG_ERR, "error on popen \"%s\": %s", cmd, strerror(errno));
-		return strdup(MSG_FAIL"Error on popen the ptest command");
+		return strdup(MSG_FAIL"\nError on popen the ptest command");
 	}
 
 	ret = strdup(MSG_OK);

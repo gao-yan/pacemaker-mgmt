@@ -5576,7 +5576,7 @@ class TransitionInfoDlg :
 		if graph_str != None :
 			G = gv.readstring(graph_str)
 			gv.layout(G, "dot")
-			fd, tmp_png = mkstemp(suffix=".png")
+			(fd, tmp_png) = mkstemp(suffix=".png")
 			os.close(fd)
 			gv.render(G, "png", tmp_png)
 			self.G = G
@@ -6622,7 +6622,7 @@ class MainWindow :
 					_("Generating the cluster report may take a while,")+"\n"
 					+_("depending on the size of logs..."), 
 					None, None,
-					lambda : manager.async_ret_list.get(report_cmd) != None)
+					lambda : manager.async_ret_list.has_key(report_cmd))
 		ret = pbar.run()
 		if ret not in [gtk.RESPONSE_CANCEL, gtk.RESPONSE_DELETE_EVENT] :
 			self.save_cluster_report(manager.async_ret_list.pop(report_cmd))
@@ -6635,10 +6635,8 @@ class MainWindow :
 			msgbox(_("Failed to generate the cluster report"))
 			return
 
-		sfdlg = SelectFileDlg()
-		(save_file, save_type) = sfdlg.select_file(str_list[0].split("/")[-1])
-		if save_file == None :
-			return
+		default_filename = os.path.basename(str_list[0])
+		default_filetype = default_filename.split(".")[-1]
 
 		base64_str = "\n".join(str_list[1:])
 		try :
@@ -6647,11 +6645,13 @@ class MainWindow :
 			msgbox(_("Incomplete data: ") + str(msg))
 			return
 
-		try :
-			fd = os.open(save_file, os.O_RDWR|os.O_CREAT|os.O_TRUNC, 0644)
-		except OSError, msg :
-			msgbox(_("System error: ") + str(msg))
-			return
+		(fd, tmp_file) = mkstemp(suffix = ".tar." + default_filetype, prefix = "cluster-report-")
+
+		#try :
+		#	fd = os.open(save_file, os.O_RDWR|os.O_CREAT|os.O_TRUNC, 0644)
+		#except OSError, msg :
+		#	msgbox(_("System error: ") + str(msg))
+		#	return
 
 		try :
 			os.write(fd, bin_str)
@@ -6661,29 +6661,34 @@ class MainWindow :
 			return
 		os.close(fd)
 
-		self.des_cluster_report(save_file)
+		self.des_cluster_report(tmp_file)
 
-	def des_cluster_report(self, save_file) :
-		save_dir = os.path.dirname(save_file)
+	def des_cluster_report(self, tmp_file) :
+		tmp_dir = os.path.dirname(tmp_file)
+
+		default_filename = os.path.basename(tmp_file)
+		default_filetype = default_filename.split(".")[-1]
 
 		try :
-			current_tarfile = tarfile.open(save_file, "r:gz")
+			tmp_tarfile = tarfile.open(tmp_file, "r:"+default_filetype)
 		except IOError, msg :
 			msgbox(_("I/O error: ") + str(msg))
 			return
 		except tarfile.TarError, msg :
-			msgbox(_("Tar error: ") + "%s: '%s'"%(str(msg), save_file))
+			msgbox(_("Tar error: ") + "%s: '%s'"%(str(msg), tmp_file))
 			return
 			
 		try :
-			file_list = current_tarfile.getnames()
+			file_list = tmp_tarfile.getnames()
 			for filename in file_list :
-				current_tarfile.extract(filename, save_dir)
+				tmp_tarfile.extract(filename, tmp_dir)
 		except tarfile.TarError, msg :
-			msgbox(_("Tar error: ") + "%s: '%s'"%(str(msg), save_file))
-			current_tarfile.close()
+			msgbox(_("Tar error: ") + "%s: '%s'"%(str(msg), tmp_file))
+			tmp_tarfile.close()
 			return
-		current_tarfile.close()
+
+		tmp_tarfile.close()
+		os.unlink(tmp_file)	
 
 		des_filename = None
 		for filename in file_list :
@@ -6692,13 +6697,13 @@ class MainWindow :
 				break
 
 		if des_filename != None :
-			des_filepath = os.path.join(save_dir, des_filename)
+			des_filepath = os.path.join(tmp_dir, des_filename)
 
 			try :
 				des_f = open(des_filepath, "r+")
 			except IOError, msg :
 				msgbox(_("I/O error: ") + str(msg))
-				self.delete_files(save_dir, file_list)
+				self.delete_files(tmp_dir, file_list)
 				return
 
 			try :
@@ -6706,7 +6711,7 @@ class MainWindow :
 			except IOError, msg :
 				msgbox(_("I/O error: ") + str(msg))
 				des_f.close()
-				self.delete_files(save_dir, file_list)
+				self.delete_files(tmp_dir, file_list)
 				return
 
 			des_report = DesReportDlg(file_lines)
@@ -6722,65 +6727,72 @@ class MainWindow :
 			except IOError, msg :
 				msgbox(_("I/O error: ") + str(msg))
 				des_f.close()
-				self.delete_files(save_dir, file_list)
+				self.delete_files(tmp_dir, file_list)
 				return
 
 			des_f.close()
 
+		sfdlg = SelectFileDlg()
+		(save_file, save_type) = sfdlg.select_file(default_filename)
+		if save_file == None :
+			self.delete_files(tmp_dir, file_list)
+			return
+
 		try :
-			new_tarfile = tarfile.open(save_file, "w:gz")
+			new_tarfile = tarfile.open(save_file, "w:"+default_filetype)
 		except IOError, msg :
 			msgbox(_("I/O error: ") + str(msg))
-			self.delete_files(save_dir, file_list)
+			self.delete_files(tmp_dir, file_list)
 			return
 		except tarfile.TarError, msg :
 			msgbox(_("Tar error: ") + "%s: '%s'"%(str(msg), save_file))
-			self.delete_files(save_dir, file_list)
+			self.delete_files(tmp_dir, file_list)
 			return
 
 		current_arcname = os.path.commonprefix(file_list).split(os.sep)[0]
 		if current_arcname != '' :
 			file_basename = os.path.basename(save_file)
-			if save_file.endswith(".tar.gz") :
-				new_arcname = file_basename[:file_basename.rfind(".tar.gz")]
-			elif save_file.endswith(".tgz") :
-				new_arcname = file_basename[:file_basename.rfind(".tgz")]
-			elif save_file.endswith(".gz") :
-				new_arcname = file_basename[:file_basename.rfind(".gz")]
-			else :
+
+			new_arcname = None
+			for suffix in [".tar.gz", ".tgz", ".gz", ".tar.bz2", ".tbz", ".bz2"] :
+				if save_file.endswith(suffix) :
+					new_arcname = file_basename[:file_basename.rfind(suffix)]
+					break
+			if new_arcname == None :
 				new_arcname = file_basename
 
-			folder = os.path.join(save_dir, current_arcname)
+			folder = os.path.join(tmp_dir, current_arcname)
 			try :
 				new_tarfile.add(folder, new_arcname)
 			except IOError, msg :
 				msgbox(_("I/O error: ") + str(msg))
+				self.delete_files(tmp_dir, file_list)
 				return
 			except tarfile.TarError, msg :
 				msgbox(_("Tar error: ") + "%s: '%s'"%(str(msg), save_file))
 				new_tarfile.close()
-				self.delete_files(save_dir, file_list)
+				self.delete_files(tmp_dir, file_list)
 				return
 			new_tarfile.close()
-			self.delete_files(save_dir, file_list)
+			self.delete_files(tmp_dir, file_list)
 
 		else :
 			for filename in file_list :
-				file_path = os.path.join(save_dir, filename)
+				file_path = os.path.join(tmp_dir, filename)
 				try :
 					new_tarfile.add(file_path, recursive=False)
 				except IOError, msg :
 					msgbox(_("I/O error: ") + str(msg))
 					new_tarfile.close()
-					self.delete_files(save_dir, file_list)
+					self.delete_files(tmp_dir, file_list)
 					return
 				except tarfile.TarError, msg :
 					msgbox(_("Tar error: ") + "%s: '%s'"%(str(msg), save_file))
 					new_tarfile.close()
-					self.delete_files(save_dir, file_list)
+					self.delete_files(tmp_dir, file_list)
 					return
 			new_tarfile.close()
-			self.delete_files(save_dir, file_list)
+			self.delete_files(tmp_dir, file_list)
 
 	def delete_files(self, save_dir, file_list) :
 		dir_list = []
