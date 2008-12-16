@@ -4790,11 +4790,6 @@ class MainWindow :
 		all_rsc_type = [_("native"),_("group"),_("clone"),_("master")]
 		self.set_action_sensitive('logout',manager.connected)
 		self.set_action_sensitive('login',not manager.connected)
-		
-		self.set_action_sensitive('delrsc',
-			manager.connected
-			and self.cur_type in [_("native"),_("group"),_("clone"),
-				_("location"),_("order"),_("colocation"),_("master")])
 
 		self.set_action_sensitive('cleanuprsc',
 			manager.connected
@@ -4932,30 +4927,6 @@ class MainWindow :
 					+ _("Turn it off ?")))
 			if retval ==  gtk.RESPONSE_YES :
 				manager.do_cmd("crm_attribute\nop_defaults\ndel\nrecord-pending")
-
-	def on_del_item(self, action) :
-		if confirmbox(_("Delete") + " "+self.cur_type + " " + self.cur_name + "?") == gtk.RESPONSE_YES:
-			if self.cur_type in [_("group"),_("clone"),_("master")] :
-				manager.do_cmd("del_rsc\n"+self.cur_name)
-			elif self.cur_type == _("native") :
-				if self.cur_name not in manager.parent :
-					manager.do_cmd("del_rsc\n"+self.cur_name)
-				try :	
-					parent = manager.parent[self.cur_name] 
-				except KeyError : # the self.cur_name does not exist in manager.parent
-					parent = self.cur_name
-				if len(manager.get_sub_rsc(parent)) == 1 :
-					manager.do_cmd("del_rsc\n"+parent)
-				else :
-					manager.do_cmd("del_rsc\n"+self.cur_name)
-			elif self.cur_type == _("location") :
-				manager.do_cmd("del_co\nrsc_location\n"+self.cur_name)
-			elif self.cur_type == _("order") :
-				manager.do_cmd("del_co\nrsc_order\n"+self.cur_name)
-			elif self.cur_type == _("colocation") :
-				manager.do_cmd("del_co\nrsc_colocation\n"+self.cur_name)
-			if manager.failed_reason != "" :
-				msgbox(manager.failed_reason)
 
 	def on_item_action(self, action) :
 		if action.get_name() == "startrsc" :
@@ -5439,7 +5410,6 @@ class MainWindow :
 				</menu>
 			</menubar>
 			<popup name="resource_popup">
-				<menuitem action="delrsc"/>
 				<menuitem action="cleanuprsc"/>
 				<menuitem action="startrsc"/>
 				<menuitem action="stoprsc"/>
@@ -5471,7 +5441,6 @@ class MainWindow :
 				<toolitem action="quit"/>
 			</toolbar>
 			<toolbar name="resource_toolbar">
-				<toolitem action="delrsc"/>
 				<toolitem action="cleanuprsc"/>
 				<toolitem action="startrsc"/>
 				<toolitem action="stoprsc"/>
@@ -5506,7 +5475,6 @@ class MainWindow :
 			('logout', logout_icon, _('Logout'), None,_('logout from cluster'), self.on_logout),
 			('quit', gtk.STOCK_QUIT, _('Quit'), None,_('Quit the Program'), self.on_quit),
 			('resource', None, _('Resources')),
-			('delrsc', gtk.STOCK_REMOVE, _('Delete'), None,_('delete current item'), self.on_del_item),
 			('cleanuprsc', gtk.STOCK_CLEAR, _('Cleanup Resource'), None,_('cleanup resource'), self.on_item_cleanup),
 			('startrsc', startrsc_icon, _('Start'), None,_('start resource'), self.on_item_action),
 			('stoprsc', stoprsc_icon, _('Stop'), None,_('stop resource'), self.on_item_action),
