@@ -5270,7 +5270,6 @@ class MainWindow :
 		all_rsc_type = [_("native"),_("group"),_("clone"),_("master")]
 		self.set_action_sensitive('logout',manager.connected)
 		self.set_action_sensitive('login',not manager.connected)
-		self.set_action_sensitive('addrsc',manager.connected)
 		
 		self.set_action_sensitive('delrsc',
 			manager.connected
@@ -5451,56 +5450,6 @@ class MainWindow :
 		if confirmbox(_("Make") +" " +self.cur_name + " " + _("active")+"?") == gtk.RESPONSE_YES :
 			manager.do_cmd("standby\n"+self.cur_name + "\n" + "off")
 
-	def on_add_item(self, action) :
-		if self.cur_type in [_("constraints"), _("locations"), _("location")]:
-			add_type = _("location") 	
-		elif self.cur_type in [_("orders"), _("order")]:
-			add_type = _("order")
-		elif self.cur_type in [_("colocations"), _("colocation")]:
-			add_type = _("colocation")
-		else:
-			add_type = _("native")
-		new_type = kvbox(_("The type of new item"),
-				[Field("type",_("Item Type"),add_type,
-				[_("native"), _("group"), _("location"),_("order"), _("colocation")])])
-		if new_type == None :
-			return
-		if new_type["type"] == _("native"):
-			dlg = AddNativeDlg()
-			dlg.run()
-		elif new_type["type"] == _("group") : 	 
-			group = kvbox(_("Add Resource Group"),
-				[Field("id",_("ID"),"group_"),
-				Field("ordered",_("Ordered"),"true", ["true","false"],False),
-				Field("collocated",_("Collocated"),"true", ["true","false"],False)])
-			if group != None :
-				self.cur_name = group["id"]
-				self.cur_type = _("group")
-				manager.cache_update(group["id"]+"\nordered",group["ordered"])
-				manager.cache_update(group["id"]+"\ncollocated",group["collocated"])
-				dlg = AddNativeDlg()
-				dlg.run()
-				
-		elif new_type["type"] == _("location") :
-			location = kvbox(_("Add Location Constraint"),
-				[Field("id",_("ID"),"location_",None, False),
-				 Field("rsc",_("Resource"),None, manager.get_all_rsc(),False)])
-			if location != None :
-				location["score"] = '0'
-				location["boolean_op"] = ''
-				location["exprs"] = []
-				manager.update_constraint("rsc_location", location)
-		elif new_type["type"] == _("order") :
-			objdlg = AddObjectDlg()
-			object = objdlg.run("Add Order Constraint", "rsc_order")
-			if object != None :
-				manager.update_constraint("rsc_order", object)
-		elif new_type["type"] == _("colocation") :
-			objdlg = AddObjectDlg()
-			object = objdlg.run("Add Colocation Constraint", "rsc_colocation")
-			if object != None :
-				manager.update_constraint("rsc_colocation", object)
-			
 	def on_del_item(self, action) :
 		if confirmbox(_("Delete") + " "+self.cur_type + " " + self.cur_name + "?") == gtk.RESPONSE_YES:
 			if self.cur_type in [_("group"),_("clone"),_("master")] :
@@ -6007,7 +5956,6 @@ class MainWindow :
 				</menu>
 			</menubar>
 			<popup name="resource_popup">
-				<menuitem action="addrsc"/>
 				<menuitem action="delrsc"/>
 				<menuitem action="cleanuprsc"/>
 				<menuitem action="startrsc"/>
@@ -6044,7 +5992,6 @@ class MainWindow :
 				<toolitem action="quit"/>
 			</toolbar>
 			<toolbar name="resource_toolbar">
-				<toolitem action="addrsc"/>
 				<toolitem action="delrsc"/>
 				<toolitem action="cleanuprsc"/>
 				<toolitem action="startrsc"/>
@@ -6084,7 +6031,6 @@ class MainWindow :
 			('logout', logout_icon, _('Logout'), None,_('logout from cluster'), self.on_logout),
 			('quit', gtk.STOCK_QUIT, _('Quit'), None,_('Quit the Program'), self.on_quit),
 			('resource', None, _('Resources')),
-			('addrsc', gtk.STOCK_ADD, _('Add New Item'), None,_('add new item'), self.on_add_item),
 			('delrsc', gtk.STOCK_REMOVE, _('Delete'), None,_('delete current item'), self.on_del_item),
 			('cleanuprsc', gtk.STOCK_CLEAR, _('Cleanup Resource'), None,_('cleanup resource'), self.on_item_cleanup),
 			('startrsc', startrsc_icon, _('Start'), None,_('start resource'), self.on_item_action),
