@@ -2211,36 +2211,6 @@ class View :
 	def on_after_show(self) :
 		pass	
 		
-class NodeView(View) :
-	name = "nodeview"
-	def __init__(self, param=None) :
-		View.__init__(self, param)
-		self.update()
-
-	def update(self) :
-		glade = self.glade
-		node = self.param
-		config = manager.get_node_config(node)
-		if config != {} :
-			glade.get_widget("standby").set_text(config["standby"])
-			glade.get_widget("uname").set_text(config["uname"])
-			glade.get_widget("expected_up").set_text(config["expected_up"])
-			glade.get_widget("is_dc").set_text(config["is_dc"])
-			glade.get_widget("shutdown").set_text(config["shutdown"])
-			glade.get_widget("online").set_text(config["online"])
-			glade.get_widget("type").set_text(config["type"])
-			glade.get_widget("unclean").set_text(config["unclean"])
-	def on_after_show(self) :
-		make_label_active(self.glade.get_widget("l_standby"),_("Standby:"),"www.linux-ha.org")
-		make_label_active(self.glade.get_widget("l_uname"),_("Node Name:"),"www.linux-ha.org")
-		make_label_active(self.glade.get_widget("l_is_dc"),_("Is it DC:"),"www.linux-ha.org")
-		make_label_active(self.glade.get_widget("l_shutdown"),_("Shutdown:"),"www.linux-ha.org")
-		make_label_active(self.glade.get_widget("l_online"),_("Online:"),"www.linux-ha.org")
-		make_label_active(self.glade.get_widget("l_type"),_("Type:"),"www.linux-ha.org")
-		make_label_active(self.glade.get_widget("l_unclean"),_("Unclean:"),"www.linux-ha.org")
-		make_label_active(self.glade.get_widget("l_expected_up"),_("Expected up:"),"www.linux-ha.org")
-	
-
 class ClusterView(View) :
 	def update(self, xml_node = None) :
 		self.cluster_info_labels = None
@@ -6008,8 +5978,6 @@ class MainWindow :
 				and manager.xml_nodes["cib"].getElementsByTagName(type) == [] :
 			self.cur_view = ObjectView(type, is_topview = True, missing_opt_obj_parent_type = "configuration",
 					show_mode = last_show_mode)
-		elif type == "node" and status not in [_("never started"),_("ping node"),_("unknown type")]:
-			self.cur_view = NodeView(name)
 		elif type == "management" :
 			self.cur_view = ManageView()
 		elif type in [_("native")] :
