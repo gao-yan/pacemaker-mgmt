@@ -1831,10 +1831,6 @@ class MainTree(ElementList) :
 		if window.cur_type != None and window.cur_view != None :
 			window.view_status[window.cur_type] = window.cur_view.save_status()
 
-		#if not window.can_change_view() :
-		#	if self.last_iter != None :
-		#		selection.select_iter(self.last_iter)
-		#		return
 		if iter == None :
 			window.select_view(None, None, None)
 			return
@@ -1969,7 +1965,7 @@ class MainTree(ElementList) :
 				selection.select_iter(self.treeiter["management"])
 			self.on_cursor_changed(self.widget, self.widget.get_selection())
 	
-class ClusterView() :
+class ClusterView :
 	def update(self, xml_node = None) :
 		self.cluster_info_labels = None
 		self.cib_attrs_labels = None
@@ -4862,20 +4858,6 @@ class MainWindow :
 
 		return False
 
-	def can_change_view(self) :
-		if not self.cur_view.changed :
-			return True
-		ret = confirmbox(_("The data of current view have been changed.")+"\n"+_("Apply the changes?"),
-			(gtk.STOCK_YES, gtk.RESPONSE_YES, 
-			gtk.STOCK_NO, gtk.RESPONSE_NO,
-			gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL))
-		if ret == gtk.RESPONSE_YES :
-			self.cur_view.on_apply(self.cur_view.widget)
-			return True
-		if ret == gtk.RESPONSE_NO :
-			return True
-		return False
-	
 	def select_view(self, type, name = None, status = None) :
 		for child in self.mainview_sw.get_children() :
 			self.mainview_sw.remove(child)
