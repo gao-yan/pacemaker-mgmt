@@ -74,7 +74,6 @@ static char* on_get_running_rsc(char* argv[], int argc);
 
 static char* on_del_rsc(char* argv[], int argc);
 static char* on_cleanup_rsc(char* argv[], int argc);
-static char* on_add_rsc(char* argv[], int argc);
 static char* on_move_rsc(char* argv[], int argc);
 
 static char* on_update_clone(char* argv[], int argc);
@@ -529,7 +528,6 @@ init_crm(int cache_cib)
 	
 	reg_msg(MSG_DEL_RSC, on_del_rsc);
 	reg_msg(MSG_CLEANUP_RSC, on_cleanup_rsc);
-	reg_msg(MSG_ADD_RSC, on_add_rsc);
 	reg_msg(MSG_MOVE_RSC, on_move_rsc);
 	
 	reg_msg(MSG_ALL_RSC, on_get_all_rsc);
@@ -1266,169 +1264,6 @@ on_cleanup_rsc(char* argv[], int argc)
 
 	
 	return strdup(MSG_OK);
-}
-
-/*
-	0	cmd = "add_rsc"
-	1	cmd += "\n"+rsc["id"]
-	2	cmd += "\n"+rsc["class"]
-	3	cmd += "\n"+rsc["type"]
-	4	cmd += "\n"+rsc["provider"]
-	5	cmd += "\n"+rsc["group"]
-	6	cmd += "\n"+rsc["advance"]
-	7	cmd += "\n"+rsc["advance_id"]
-	8	cmd += "\n"+rsc["clone_max"]
-	9	cmd += "\n"+rsc["clone_node_max"]
-	10	cmd += "\n"+rsc["master_max"]
-	11	cmd += "\n"+rsc["master_node_max"]
-	12	cmd += "\n"+rsc["new_group"]
-		for param in rsc["params"] :
-	13,16,19...	cmd += "\n"+param["id"]
-	14,17,20...	cmd += "\n"+param["name"]
-	15,18,21...	cmd += "\n"+param["value"]
-*/
-char*
-on_add_rsc(char* argv[], int argc)
-{
-	int rc, i, in_group, new_group;
-	crm_data_t* fragment = NULL;
-	crm_data_t* cib_object = NULL;
-	crm_data_t* output = NULL;
-	char xml[MAX_STRLEN];
-	char buf[MAX_STRLEN];
-	char meta_attrs_id[MAX_STRLEN];
-	int clone, master, has_param;
-		
-	if (argc < 13) {
-		return strdup(MSG_FAIL);
-	}
-	xml[0]=0;
-	in_group = (strlen(argv[5]) != 0);
-	new_group = (STRNCMP_CONST(argv[12], "True") == 0);
-	clone = (STRNCMP_CONST(argv[6], "clone") == 0);
-	master = (STRNCMP_CONST(argv[6], "master") == 0);
-	has_param = (argc > 13);
-	if (in_group) {
-		snprintf(buf, MAX_STRLEN, "<group id=\"%s\">", argv[5]);
-		strncat(xml, buf, sizeof(xml)-strlen(xml)-1);
-
-		if (new_group){
-			snprintf(buf, MAX_STRLEN,
-				"<meta_attributes id=\"%s_meta_attrs\"><attributes>" \
-				"<nvpair id=\"%s_metaattr_target_role\" name=\"target_role\" value=\"stopped\"/>" \
-				"</attributes> </meta_attributes>",
-				argv[5], argv[5]);
-			strncat(xml, buf, sizeof(xml)-strlen(xml)-1);
-		}
-
-		
-	}
-	if (clone) {
-		get_meta_attributes_id(argv[7], meta_attrs_id);
-		snprintf(buf, MAX_STRLEN,
-			 "<clone id=\"%s\"><meta_attributes id=\"%s\"><attributes>" \
-			 "<nvpair id=\"%s_metaattr_target_role\" name=\"target_role\" value=\"stopped\"/>" \
-			 "<nvpair id=\"%s_metaattr_clone_max\" name=\"clone_max\" value=\"%s\"/>" \
-			 "<nvpair id=\"%s_metaattr_clone_node_max\" name=\"clone_node_max\" value=\"%s\"/>" \
-			 "</attributes>	</meta_attributes> ",
-			 argv[7], meta_attrs_id, argv[7], argv[7], argv[8],argv[7], argv[9]);
-		strncat(xml, buf, sizeof(xml)-strlen(xml)-1);
-	}
-	if (master) {
-		get_meta_attributes_id(argv[7], meta_attrs_id);
-		snprintf(buf, MAX_STRLEN,
-			 "<master_slave id=\"%s\">" \
-			 "<meta_attributes id=\"%s\"><attributes>" \
-			 "<nvpair id=\"%s_metaattr_target_role\" name=\"target_role\" value=\"stopped\"/>" \
-			 "<nvpair id=\"%s_metaattr_clone_max\" name=\"clone_max\" value=\"%s\"/>" \
-			 "<nvpair id=\"%s_metaattr_clone_node_max\" name=\"clone_node_max\" value=\"%s\"/>" \
-			 "<nvpair id=\"%s_metaattr_master_max\" name=\"master_max\" value=\"%s\"/>" \
-			 "<nvpair id=\"%s_metaattr_master_node_max\" name=\"master_node_max\" value=\"%s\"/>" \
-			 "<nvpair id=\"%s_metaattr_notify\" name=\"notify\" value=\"true\"/>" \
-			 "<nvpair id=\"%s_metaattr_globally_unique\" name=\"globally_unique\" value=\"false\"/>" \
-			 "</attributes>	</meta_attributes>",
-			 argv[7], meta_attrs_id, argv[7], argv[7], argv[8], argv[7], argv[9],
-			 argv[7], argv[10], argv[7], argv[11], argv[7], argv[7]);
-		strncat(xml, buf, sizeof(xml)-strlen(xml)-1);
-	}
-	
-	if ((in_group || clone || master) && !has_param){
-			snprintf(buf, MAX_STRLEN,
-				 "<primitive id=\"%s\" class=\"%s\" type=\"%s\" provider=\"%s\"/>"
-						 , argv[1],argv[2], argv[3],argv[4]);
-			strncat(xml, buf, sizeof(xml)-strlen(xml)-1);
-	}
-	else {
-		snprintf(buf, MAX_STRLEN,
-			 "<primitive id=\"%s\" class=\"%s\" type=\"%s\" provider=\"%s\">",
-			 argv[1],argv[2], argv[3],argv[4]);
-		strncat(xml, buf, sizeof(xml)-strlen(xml)-1);
-	}
-
-	if (!in_group && !clone && !master){
-		snprintf(buf, MAX_STRLEN,
-			"<meta_attributes id=\"%s_meta_attrs\"> <attributes>" \
-			"<nvpair id=\"%s_metaattr_target_role\" name=\"target_role\" value=\"stopped\"/>" \
-			"</attributes> </meta_attributes>",
-			argv[1], argv[1]);
-		strncat(xml, buf, sizeof(xml)-strlen(xml)-1);
-	}
-
-	if (has_param) {
-		snprintf(buf, MAX_STRLEN,
-			 "<instance_attributes id=\"%s_instance_attrs\"> <attributes>"
-			 , argv[1]);
-		strncat(xml, buf, sizeof(xml)-strlen(xml)-1);
-	
-		for (i = 13; i < argc; i += 3) {
-			snprintf(buf, MAX_STRLEN,
-				 "<nvpair id=\"%s\" name=\"%s\" value=\"%s\"/>",
-				 argv[i], argv[i+1],argv[i+2]);
-			strncat(xml, buf, sizeof(xml)-strlen(xml)-1);
-		}
-		strncat(xml, "</attributes></instance_attributes>",
-				sizeof(xml)-strlen(xml)-1);
-	}
-
-	if (has_param || (!in_group && !clone && !master)){
-		strncat(xml, "</primitive>", sizeof(xml)-strlen(xml)-1);
-	}
-
-	if (master) {
-		strncat(xml, "</master_slave>", sizeof(xml)-strlen(xml)-1);
-	}
-	if (clone) {
-		strncat(xml, "</clone>", sizeof(xml)-strlen(xml)-1);
-	}
-	
-	if (in_group) {
-		strncat(xml, "</group>", sizeof(xml)-strlen(xml)-1);
-	}
-	
-	cib_object = string2xml(xml);
-	if(cib_object == NULL) {
-		return strdup(MSG_FAIL);
-	}
-	mgmt_log(LOG_INFO, "on_add_rsc:%s",xml);
-	fragment = create_cib_fragment(cib_object, "resources");
-
-	if (in_group || clone || master) {
-		rc = cib_conn->cmds->update(
-			cib_conn, "resources", fragment, cib_sync_call);
-	}
-	else {
-		rc = cib_conn->cmds->create(
-			cib_conn, "resources", fragment, cib_sync_call);
-	}
-	
-	free_xml(fragment);
-	free_xml(cib_object);
-	if (rc < 0) {
-		return crm_failed_msg(output, rc);
-	}
-	free_xml(output);
-	return strdup(MSG_OK);
-
 }
 
 int

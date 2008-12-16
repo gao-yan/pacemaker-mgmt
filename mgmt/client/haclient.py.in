@@ -6086,48 +6086,6 @@ class Manager :
 		return self.query("running_rsc\n%s"%node)	
 
 	# resource functions
-	def add_native(self, rsc) :
-		if self.rsc_exists(rsc["id"]) :
-			msgbox (_("The ID already exists"))
-			return
-			
-		cmd = "add_rsc"
-		cmd += "\n"+rsc["id"]
-		cmd += "\n"+rsc["class"]
-		cmd += "\n"+rsc["type"]
-		cmd += "\n"+rsc["provider"]
-		cmd += "\n"+rsc["group"]
-		cmd += "\n"+rsc["advance"]
-		cmd += "\n"+rsc["advance_id"]
-		cmd += "\n"+rsc["clone_max"]
-		cmd += "\n"+rsc["clone_node_max"]
-		cmd += "\n"+rsc["master_max"]
-		cmd += "\n"+rsc["master_node_max"]
-		cmd += "\n"+rsc["new_group"]
-		for param in rsc["params"] :
-			cmd += "\n"+param["id"]
-			cmd += "\n"+param["name"]
-			cmd += "\n"+param["value"]
-		self.do_cmd(cmd)
-		if self.failed_reason != "" :
-			msgbox (self.failed_reason)
-		group_id = rsc["group"]
-		if group_id != None and group_id != "" :
-			ordered = self.cache_lookup(group_id+"\nordered")
-			if ordered != None :
-				new_metaattrs = [{"id": group_id + "_metaattr_ordered" ,
-                                                "name": "ordered", "value": ordered}]
-				manager.update_attrs("up_rsc_metaattrs\n"+group_id,"del_rsc_metaattr",
-						[], new_metaattrs, ["id","name","value"]);
-				self.cache_delkey(group_id+"\nordered")
-			collocated = self.cache_lookup(group_id+"\ncollocated")
-			if collocated != None :
-				new_metaattrs = [{"id": group_id + "_metaattr_collocated" ,
-                                                "name": "collocated", "value": collocated}]
-				manager.update_attrs("up_rsc_metaattrs\n"+group_id,"del_rsc_metaattr",
-						[], new_metaattrs, ["id","name","value"]);
-				self.cache_delkey(group_id+"\ncollocated")
-				
 	def get_top_rsc(self) :
 		return self.query("all_rsc")
 

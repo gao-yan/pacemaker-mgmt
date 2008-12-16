@@ -419,38 +419,6 @@ return:
 
 /*
 description:
-	add a new resource
-format:
-	MSG_ADD_RSC rsc_id rsc_class rsc_type rsc_provider group("" for NONE)
-		advance(""|"clone"|"master") advance_id clone_max
-		clone_node_max master_max master_node_max
-		param_id1 param_name1 param_value1
-		param_id2 param_name2 param_value2
-		...
-		param_idn param_namen param_valuen
-return:
-	MSG_OK
-or
-	MSG_FAIL
-*/
-#define MSG_ADD_RSC		"add_rsc"
-#define F_MGMT_RSC_ID			1
-#define F_MGMT_RSC_CLASS		2
-#define F_MGMT_RSC_TYPE			3
-#define F_MGMT_RSC_PROVIDER		4
-#define F_MGMT_GROUP			5
-#define F_MGMT_ADVANCE			6
-#define F_MGMT_ADVANCE_ID		7
-#define F_MGMT_CLONE_MAX		8
-#define F_MGMT_CLONE_NODE_MAX		9
-#define F_MGMT_MASTER_MAX		10
-#define F_MGMT_MASTER_NODE_MAX		11
-#define F_MGMT_PARAM_ID1		12
-#define F_MGMT_PARAM_NAME1		13
-#define F_MGMT_PARAM_VALUE1		14
-
-/*
-description:
 	delete a resource
 	notice that the resoruce can be native, group, clone or master
 format:
