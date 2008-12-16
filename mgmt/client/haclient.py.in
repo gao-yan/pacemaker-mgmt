@@ -3706,36 +3706,6 @@ class ElementNotebook :
 				self.elem_lists[i].restore_tree_status(tree_status[page_name])
 		self.on_after_show()
 
-class OrderView(View) :
-	name = "cmnobj_view"
-	save_order = None
-	obj_attrs = None
-	def on_apply(self, widget):
-		passed = self.obj_attrs.verify_values()
-		if passed :
-			order = self.obj_attrs.get_values()
-			manager.update_constraint("rsc_order", order)
-			View.on_apply(self, widget)
-	
-	def update(self) :
-		order = manager.get_constraint("rsc_order", self.param)
-		
-		if self.obj_attrs != None and order != None :
-			self.obj_attrs.show_values(order)
-			self.save_order = order
-		View.update(self)
-
-	def __init__(self, order_id) :
-		View.__init__(self,order_id)
-
-		self.obj_attrs = RscOrder(False)
-		widgets = self.obj_attrs.widgets
-		self.glade.get_widget("cmnobj_attrs").pack_start(self.obj_attrs.attrs_vbox)
-		for widget_type in ("combos", "bool_combos", "combo_entries") :
-			for widget in widgets[widget_type].values() :
-				widget.connect("changed", self.on_changed)
-		self.update()
-
 class ColocationView(View) :
 	name = "cmnobj_view"
 	save_colocation = None
@@ -5745,8 +5715,6 @@ class MainWindow :
 			self.cur_view = RscView(name)
 		elif type == _("location") :
 			self.cur_view = LocationView(name)
-		elif type == _("order") :
-			self.cur_view = OrderView(name)
 		elif type == _("colocation") :
 			self.cur_view = ColocationView(name)
 		elif type in [ _("clone"), _("group"), _("master")] :
