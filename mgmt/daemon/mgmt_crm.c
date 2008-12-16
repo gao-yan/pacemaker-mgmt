@@ -98,7 +98,6 @@ static char* on_del_rsc_attr(char* argv[], int argc);
 static char* on_update_rsc_metaattrs(char* argv[], int argc);
 static char* on_delete_rsc_metaattr(char* argv[], int argc);
 
-static char* on_get_rsc_params(char* argv[], int argc);
 static char* on_update_rsc_params(char* argv[], int argc);
 static char* on_delete_rsc_param(char* argv[], int argc);
 static char* on_set_target_role(char* argv[], int argc);
@@ -544,7 +543,6 @@ init_crm(int cache_cib)
 	reg_msg(MSG_UP_RSC_METAATTRS, on_update_rsc_metaattrs);
 	reg_msg(MSG_DEL_RSC_METAATTR, on_delete_rsc_metaattr);
 	
-	reg_msg(MSG_RSC_PARAMS, on_get_rsc_params);
 	reg_msg(MSG_UP_RSC_PARAMS, on_update_rsc_params);
 	reg_msg(MSG_DEL_RSC_PARAM, on_delete_rsc_param);
 	reg_msg(MSG_SET_TARGET_ROLE, on_set_target_role);
@@ -1778,37 +1776,7 @@ on_del_rsc_attr(char* argv[], int argc)
 	return ret;
 }
 
-/* resource params */
-char*
-on_get_rsc_params(char* argv[], int argc)
-{
-	resource_t* rsc;
-	char* ret;
-	crm_data_t * attrs;
-	pe_working_set_t* data_set;
-	
-	data_set = get_data_set();
-	GET_RESOURCE()
 
-	ret = strdup(MSG_OK);
-	attrs = find_entity(rsc->xml, "instance_attributes", NULL);
-	if(attrs == NULL) {
-		free_data_set(data_set);
-		return ret;
-	}
-	attrs = find_entity(attrs, "attributes", NULL);
-	if(attrs == NULL) {
-		free_data_set(data_set);
-		return ret;
-	}
-	xml_child_iter_filter(attrs, nvpair, "nvpair",
-			ret = mgmt_msg_append(ret, crm_element_value(nvpair, "id"));
-			ret = mgmt_msg_append(ret, crm_element_value(nvpair, "name"));
-			ret = mgmt_msg_append(ret, crm_element_value(nvpair, "value"));
-	    );
-	free_data_set(data_set);
-	return ret;
-}
 char*
 on_update_rsc_attr(char* argv[], int argc)
 {

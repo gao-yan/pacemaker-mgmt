@@ -6208,11 +6208,6 @@ class Manager :
 
 		return (attrs, running_on, metaattrs, params, ops)"""
 
-	def get_rsc_params(self, rsc) :
-		param_attr_names = ["id", "name", "value"]
-		raw_params = self.query("rsc_params\n%s"%rsc)
-		return self.split_attr_list(raw_params, param_attr_names)
-
 	def get_locale_desc(self, node, tag) :
 		desc_en = ""
 		desc_match = ""
