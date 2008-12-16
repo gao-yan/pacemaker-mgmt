@@ -4791,10 +4791,6 @@ class MainWindow :
 		self.set_action_sensitive('logout',manager.connected)
 		self.set_action_sensitive('login',not manager.connected)
 
-		self.set_action_sensitive('cleanuprsc',
-			manager.connected
-			and self.cur_type in all_rsc_type)
-
 		self.set_action_sensitive('migratersc',
 			manager.connected
 			and self.cur_type in [_("native"), _("group"), _("clone"), _("master")])
@@ -4907,48 +4903,6 @@ class MainWindow :
 					+ _("Turn it off ?")))
 			if retval ==  gtk.RESPONSE_YES :
 				manager.do_cmd("crm_attribute\nop_defaults\ndel\nrecord-pending")
-	
-	def on_item_cleanup(self, action) :
-		rsc_list = manager.get_all_rsc()
-		if rsc_list == None :
-			return
-		rsc_options = rsc_list[:]
-		rsc_options.insert(0, _("all resources"))
-
-		node_list = manager.get_normal_nodes()
-		if node_list == None :
-			return
-		node_options = node_list[:]
-		node_options.insert(0, _("all nodes"))
-
-		cleanup = kvbox(_("Cleanup Resource"),
-				[Field("rsc", _("Resource"), self.cur_name, rsc_options, False, entry_editable = False),
-				Field("node", _("Node"), _("all nodes"), node_options, False, entry_editable = False)])
-
-		if cleanup != None :
-			cleanup_rscs = []
-			if cleanup["rsc"] == _("all resources") :
-				for rsc in rsc_list :
-					if manager.get_rsc_type(rsc) == "native" :
-						cleanup_rscs.append(rsc)
-			elif manager.get_rsc_type(cleanup["rsc"]) != "native" :
-				all_subrscs = manager.get_all_subrsc(cleanup["rsc"])
-				if all_subrscs == None :
-					return
-				for rsc in all_subrscs :
-					if manager.get_rsc_type(rsc) == "native" :
-						cleanup_rscs.append(rsc)
-			else :
-				cleanup_rscs.append(cleanup["rsc"])
-			
-			if cleanup["node"] == _("all nodes") :
-				cleanup_nodes = node_list
-			else :
-				cleanup_nodes = [cleanup["node"]]
-					
-			for rsc in cleanup_rscs :
-				for node in cleanup_nodes :
-					manager.do_cmd("cleanup_rsc\n"+ node + "\n" + rsc)
 
 	def on_migrate_rsc(self, action) :
 		node_list = manager.get_normal_nodes()
@@ -5345,7 +5299,6 @@ class MainWindow :
 				</menu>
 			</menubar>
 			<popup name="resource_popup">
-				<menuitem action="cleanuprsc"/>
 				<menuitem action="migratersc"/>
 				<menuitem action="unmigratersc"/>
 			</popup>
@@ -5371,7 +5324,6 @@ class MainWindow :
 				<toolitem action="quit"/>
 			</toolbar>
 			<toolbar name="resource_toolbar">
-				<toolitem action="cleanuprsc"/>
 				<toolitem action="migratersc"/>
 				<toolitem action="unmigratersc"/>
 			</toolbar>
@@ -5396,7 +5348,6 @@ class MainWindow :
 			('logout', logout_icon, _('Logout'), None,_('logout from cluster'), self.on_logout),
 			('quit', gtk.STOCK_QUIT, _('Quit'), None,_('Quit the Program'), self.on_quit),
 			('resource', None, _('Resources')),
-			('cleanuprsc', gtk.STOCK_CLEAR, _('Cleanup Resource'), None,_('cleanup resource'), self.on_item_cleanup),
 			('migratersc', gtk.STOCK_REDO,  _('Migrate Resource'), None, _('migrate a resource to specified node'), 
 				self.on_migrate_rsc),
 			('unmigratersc', gtk.STOCK_UNDO,  _('Clear Migrate Constraints'),
