@@ -4769,9 +4769,7 @@ class MainWindow :
 	cur_status = None
 	cur_name = None
 	cur_view = None
-	main_view = None
 	statusbar = None
-	tree = None
 	view_status = {}
 	
 	# utility functions
@@ -4787,7 +4785,6 @@ class MainWindow :
 		return False
 	
 	def update_ui(self) :
-		all_rsc_type = [_("native"),_("group"),_("clone"),_("master")]
 		self.set_action_sensitive('logout',manager.connected)
 		self.set_action_sensitive('login',not manager.connected)
 
@@ -5253,8 +5250,6 @@ class MainWindow :
 			('login', login_icon, _('Login...'), None,_('login to cluster'), self.on_login),
 			('logout', logout_icon, _('Logout'), None,_('logout from cluster'), self.on_logout),
 			('quit', gtk.STOCK_QUIT, _('Quit'), None,_('Quit the Program'), self.on_quit),
-			('resource', None, _('Resources')),
-			('node', None, _('Nodes')),
 			('view', None, _('View')),
 			('tools', None, _('Tools')),
 			('transition-info', gtk.STOCK_SELECT_COLOR, _('Transition Information'), None,
