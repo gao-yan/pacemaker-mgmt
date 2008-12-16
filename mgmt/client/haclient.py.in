@@ -2167,51 +2167,8 @@ class MainTree(ElementList) :
 			if iter == None :
 				selection.select_iter(self.treeiter["management"])
 			self.on_cursor_changed(self.widget, self.widget.get_selection())
-
-class View :
-	glade = None
-	widget = None
-	name = "emptyview"
-	changed = False
 	
-	def __init__(self, param=None) :
-		self.param = param
-		self.glade = gtk.glade.XML(UI_FILE, self.name, "haclient")
-		self.widget = self.glade.get_widget(self.name)
-		if self.glade.get_widget("apply") != None :
-			self.glade.get_widget("apply").connect("clicked", self.on_apply)
-		if self.glade.get_widget("reset") != None :
-			self.glade.get_widget("reset").connect("clicked", self.on_reset)
-		if self.glade.get_widget("default") != None :
-			self.glade.get_widget("default").connect("clicked", self.on_default)
-			
-	def update(self) :
-		if self.glade.get_widget("apply") != None :
-			self.glade.get_widget("apply").set_property("sensitive", False)
-		if self.glade.get_widget("reset") != None :
-			self.glade.get_widget("reset").set_property("sensitive", False)
-		self.changed = False
-	
-	def on_changed(self, widget) :
-		self.glade.get_widget("apply").set_property("sensitive", True)
-		self.glade.get_widget("reset").set_property("sensitive", True)
-		self.changed = True
-	
-	def on_reset(self, widget):
-		self.update()
-		
-	def on_apply(self, widget):
-		self.glade.get_widget("apply").set_property("sensitive", False)
-		self.glade.get_widget("reset").set_property("sensitive", False)
-		self.changed = False
-
-	def on_default(self, widget):
-		self.on_changed(widget)
-		
-	def on_after_show(self) :
-		pass	
-		
-class ClusterView(View) :
+class ClusterView() :
 	def update(self, xml_node = None) :
 		self.cluster_info_labels = None
 		self.cib_attrs_labels = None
@@ -5422,7 +5379,6 @@ class MainWindow :
 		else :
 			self.cur_view = None
 			return
-			#self.cur_view = View()
 		self.mainview_sw.add_with_viewport(self.cur_view.widget)
 		#self.cur_view.on_after_show()
 		if self.view_status.get(type) != None :
