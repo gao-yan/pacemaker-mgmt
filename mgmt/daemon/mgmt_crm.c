@@ -85,7 +85,6 @@ static char* on_get_master(char* argv[], int argc);
 static char* on_get_all_rsc(char* argv[], int argc);
 static char* on_get_rsc_type(char* argv[], int argc);
 static char* on_get_sub_rsc(char* argv[], int argc);
-static char* on_get_rsc_attrs(char* argv[], int argc);
 static char* on_update_rsc_attr(char* argv[], int argc);
 static char* on_get_rsc_running_on(char* argv[], int argc);
 static char* on_get_rsc_status(char* argv[], int argc);
@@ -532,7 +531,6 @@ init_crm(int cache_cib)
 	
 	reg_msg(MSG_ALL_RSC, on_get_all_rsc);
 	reg_msg(MSG_SUB_RSC, on_get_sub_rsc);
-	reg_msg(MSG_RSC_ATTRS, on_get_rsc_attrs);
 	reg_msg(MSG_RSC_RUNNING_ON, on_get_rsc_running_on);
 	reg_msg(MSG_RSC_STATUS, on_get_rsc_status);
 	reg_msg(MSG_RSC_TYPE, on_get_rsc_type);
@@ -1393,62 +1391,6 @@ on_get_all_rsc(char* argv[], int argc)
 	return ret;
 }
 /* basic information of resource */
-char*
-on_get_rsc_attrs(char* argv[], int argc)
-{
-	resource_t* rsc;
-	char* ret;
-	const char* value;
-	crm_data_t * attrs;
-	pe_working_set_t* data_set;
-	
-	data_set = get_data_set();
-	GET_RESOURCE()
-
-	ret = strdup(MSG_OK);
-	attrs = rsc->xml;
-	ret = mgmt_msg_append(ret, crm_element_value(attrs, "id"));
-	ret = mgmt_msg_append(ret, crm_element_value(attrs, "description"));
-	if (rsc->variant == pe_native) {
-		ret = mgmt_msg_append(ret, crm_element_value(attrs, "class"));
-		ret = mgmt_msg_append(ret, crm_element_value(attrs, "provider"));
-		ret = mgmt_msg_append(ret, crm_element_value(attrs, "type"));
-	}
-	value = crm_element_value(attrs, "is_managed");
-	ret = mgmt_msg_append(ret, value?value:"#default");
-	value = crm_element_value(attrs, "restart_type");
-	ret = mgmt_msg_append(ret, value?value:"#default");
-	value = crm_element_value(attrs, "multiple_active");
-	ret = mgmt_msg_append(ret, value?value:"#default");
-	value = crm_element_value(attrs, "resource_stickiness");
-	ret = mgmt_msg_append(ret, value?value:"#default");
-	value = crm_element_value(attrs, "resource_failure_stickiness");
-	ret = mgmt_msg_append(ret, value?value:"#default");
-	
-	switch (rsc->variant) {
-		case pe_group:
-			value = crm_element_value(attrs, "ordered");
-			ret = mgmt_msg_append(ret, value?value:"#default");
-			value = crm_element_value(attrs, "collocated");
-			ret = mgmt_msg_append(ret, value?value:"#default");
-			break;
-		case pe_clone:
-		case pe_master:
-			value = crm_element_value(attrs, "notify");
-			ret = mgmt_msg_append(ret, value?value:"#default");
-			value = crm_element_value(attrs, "globally_unique");
-			ret = mgmt_msg_append(ret, value?value:"#default");
-			value = crm_element_value(attrs, "ordered");
-			ret = mgmt_msg_append(ret, value?value:"#default");
-			value = crm_element_value(attrs, "interleave");
-			ret = mgmt_msg_append(ret, value?value:"#default");
-			break;
-		default:
-			break;
-	}
-	free_data_set(data_set);
-	return ret;
-}
 char*
 on_get_rsc_running_on(char* argv[], int argc)
 {

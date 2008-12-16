@@ -6216,34 +6216,6 @@ class Manager :
 		param_attr_names = ["id", "name", "value"]
 		raw_params = self.query("rsc_params\n%s"%rsc)
 		return self.split_attr_list(raw_params, param_attr_names)
-	
-	def get_rsc_attrs(self, rsc) :
-		rsc_attr_names = ["id", "description", "class", "provider",
-				"type", "is_managed","restart_type",
-				"multiple_active","resource_stickiness",
-                "resource_failure_stickiness"]
-		grp_attr_names = ["id", "description", "is_managed","restart_type",
-				"multiple_active","resource_stickiness",
-                "resource_failure_stickiness",
-				"ordered", "collocated"]
-		clone_attr_names = ["id", "description", "is_managed","restart_type",
-				"multiple_active","resource_stickiness",
-                "resource_failure_stickiness", 
-				"notify", "globally_unique", "ordered",
-				"interleave"]
-		attr_list = self.query("rsc_attrs\n%s"%rsc)
-		attrs = {}
-		rtype = self.query("rsc_type\n"+rsc)[0]
-		if rtype == "native" :
-			attrs = dict(zip(rsc_attr_names, attr_list))
-		elif rtype == "group" :				
-			attrs = dict(zip(grp_attr_names, attr_list))
-		elif rtype in ["clone","master"] :
-			attrs = dict(zip(clone_attr_names, attr_list))
-		for n in attrs.keys() :
-			if attrs[n] == "#default" or attrs[n] == "" :
-				del attrs[n]
-		return attrs
 
 	def get_locale_desc(self, node, tag) :
 		desc_en = ""

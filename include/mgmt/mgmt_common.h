@@ -348,18 +348,6 @@ or
 
 /*
 description:
-	return the attributes of a given resource
-format:
-	MSG_RSC_ATTRS resource
-return:
-	MSG_OK id class provider type
-or
-	MSG_FAIL
-*/
-#define MSG_RSC_ATTRS		"rsc_attrs"
-
-/*
-description:
 	return the type of a given resource
 format:
 	MSG_RSC_TYPE resource
