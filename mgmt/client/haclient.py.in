@@ -4796,18 +4796,6 @@ class MainWindow :
 			and self.cur_type in [_("native"),_("group"),_("clone"),
 				_("location"),_("order"),_("colocation"),_("master")])
 
-		self.set_action_sensitive('standby',
-			manager.connected
-			and self.cur_type in [_("node")]
-			and string.find(self.cur_status, _("standby")) == -1
-			and string.find(self.cur_status, _("never started")) == -1)
-
-		self.set_action_sensitive('active',
-			manager.connected
-			and self.cur_type in [_("node")]
-			and string.find(self.cur_status, _("standby")) != -1
-			and string.find(self.cur_status, _("never started")) == -1)
-
 		self.set_action_sensitive('cleanuprsc',
 			manager.connected
 			and self.cur_type in all_rsc_type)
@@ -4944,14 +4932,6 @@ class MainWindow :
 					+ _("Turn it off ?")))
 			if retval ==  gtk.RESPONSE_YES :
 				manager.do_cmd("crm_attribute\nop_defaults\ndel\nrecord-pending")
-			 
-	def on_standby(self, action) :
-		if confirmbox(_("Make") +" " +self.cur_name + " " +_("standby")+"?") == gtk.RESPONSE_YES:
-			manager.do_cmd("standby\n"+self.cur_name + "\n" + "on")
-
-	def on_active(self, action) :
-		if confirmbox(_("Make") +" " +self.cur_name + " " + _("active")+"?") == gtk.RESPONSE_YES :
-			manager.do_cmd("standby\n"+self.cur_name + "\n" + "off")
 
 	def on_del_item(self, action) :
 		if confirmbox(_("Delete") + " "+self.cur_type + " " + self.cur_name + "?") == gtk.RESPONSE_YES:
@@ -5474,10 +5454,6 @@ class MainWindow :
 				<menuitem action="logout"/>
 				<menuitem action="quit"/>
 			</popup>
-			<popup action="node_popup">
-				<menuitem action="standby"/>
-				<menuitem action="active"/>
-			</popup>
 			<popup action="tools_popup">
 				<menuitem action="transition-info"/>
 				<menuitem action="report"/>
@@ -5504,10 +5480,6 @@ class MainWindow :
 				<toolitem action="downrsc"/>
 				<toolitem action="migratersc"/>
 				<toolitem action="unmigratersc"/>
-			</toolbar>
-			<toolbar name="node_toolbar">
-				<toolitem action="standby"/>
-				<toolitem action="active"/>
 			</toolbar>
 		</ui>'''
 		uimanager = gtk.UIManager()
@@ -5548,8 +5520,6 @@ class MainWindow :
 				None, _('clear constraints created by migrate'),
 				self.on_unmigrate_rsc),
 			('node', None, _('Nodes')),
-			('standby', "ha-standby-node", _('Standby'), None,_('make the node standby'), self.on_standby),
-			('active', "ha-active-node", _('Active'), None,_('make the node active'), self.on_active),
 			('view', None, _('View')),
 			('tools', None, _('Tools')),
 			('transition-info', gtk.STOCK_SELECT_COLOR, _('Transition Information'), None,
