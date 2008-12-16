@@ -166,38 +166,6 @@ or
 
 /*
 description:
-	return CRM configuration
-format:
-	MSG_CRM_CONFIG config_key
-return:
-	MSG_OK config_value
-or
-	MSG_FAIL
-*/
-#define MSG_CRM_CONFIG		"crm_config"
-#define F_MGMT_TRANSITION_IDEL_TIMEOUT		1
-#define F_MGMT_SYMMETRIC_CLUSTER		2
-#define F_MGMT_STONITH_ENABLED			3
-#define F_MGMT_NO_QUORUM_POLICY			4
-#define F_MGMT_DEFAULT_RESOURCE_STICKINESS	5
-#define F_MGMT_HAVE_QUORUM			6
-#define F_MGMT_RESOURCE_FAILURE_STICKINESS	7
-
-
-/*
-description:
-	update CRM's configuration
-format:
-	MSG_UP_CRM_CONFIG config_id config_key config_value
-return:
-	MSG_OK 
-or
-	MSG_FAIL
-*/
-#define MSG_UP_CRM_CONFIG	"up_crm_config"
-
-/*
-description:
 	return heartbeat configuration
 format:
 	MSG_HB_CONFIG

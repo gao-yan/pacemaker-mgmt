@@ -6035,34 +6035,6 @@ class Manager :
 			config = self.get_hb_config()
 
 		return config
-
-	def get_crm_config(self, metadata):
-		config = {}
-		for parameter in metadata.parameters:
-			value = manager.query("crm_config\n%s"% \
-					str(parameter["name"]))
-			if value == None or value == []:
-				continue
-			if value == [""]:
-				config[parameter["name"]] = str(parameter["content"]["default"])
-			else:
-				config[parameter["name"]] = value[0]
-		return config
-		
-	def update_crm_config(self, metadata, new_crm_config) :
-		for k,v in new_crm_config.iteritems() :
-			value = manager.query("crm_config\n"+str(k))
-			if value == [""]:
-				for parameter in metadata.parameters:
-					if parameter["name"] == k:
-						cur_value = str(parameter["content"]["default"])
-			else:
-				cur_value = value[0]
-			if cur_value != v :
-				self.do_cmd("up_crm_config\n"+str(k)+"\n"+v)
-				if self.failed_reason != "" :
-					msgbox(self.failed_reason)
-
 				
 	# node functions
 	def get_dc(self):

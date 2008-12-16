@@ -63,8 +63,6 @@ static char* on_get_crm_dtd(char* argv[], int argc);
 
 static char* on_get_crm_metadata(char* argv[], int argc);
 static char* on_crm_attribute(char* argv[], int argc);
-static char* on_get_crm_config(char* argv[], int argc);
-static char* on_update_crm_config(char* argv[], int argc);
 static char* on_get_activenodes(char* argv[], int argc);
 static char* on_get_crmnodes(char* argv[], int argc);
 static char* on_get_dc(char* argv[], int argc);
@@ -520,8 +518,6 @@ init_crm(int cache_cib)
 	reg_msg(MSG_CRM_DTD, on_get_crm_dtd);
 	reg_msg(MSG_CRM_METADATA, on_get_crm_metadata);
 	reg_msg(MSG_CRM_ATTRIBUTE, on_crm_attribute);
-	reg_msg(MSG_CRM_CONFIG, on_get_crm_config);
-	reg_msg(MSG_UP_CRM_CONFIG, on_update_crm_config);
 	
 	reg_msg(MSG_DC, on_get_dc);
 	reg_msg(MSG_ACTIVENODES, on_get_activenodes);
@@ -868,116 +864,6 @@ on_get_crm_metadata(char* argv[], int argc)
 		mgmt_log(LOG_WARNING, "failed to close pipe");
 
 	return ret;
-}
-char* 
-on_get_crm_config(char* argv[], int argc)
-{
-	const char* value = NULL;
-	pe_working_set_t* data_set;
-	char* ret = NULL;
-	data_set = get_data_set();
-
-	ARGC_CHECK(2);
-
-	if (data_set == NULL){
-		return strdup(MSG_FAIL);
-	}
-
-	if (STRNCMP_CONST(argv[1], "have_quorum") == 0){
-		ret = strdup(MSG_OK);
-		ret = mgmt_msg_append(ret, is_set(data_set->flags, pe_flag_have_quorum)?"true":"false");
-		free_data_set(data_set);
-		return ret;
-	}
-	
- 	if ( data_set->config_hash == NULL){
-		free_data_set(data_set);
-		return strdup(MSG_FAIL);
-	}
-	value = g_hash_table_lookup(data_set->config_hash, argv[1]);
-
-	ret = strdup(MSG_OK);
-	if (value == NULL){
-		ret = mgmt_msg_append(ret, "");
-	}
-	else{
-		ret = mgmt_msg_append(ret, value);
-	}	
-
-	free_data_set(data_set);
-	return ret;
-}
-
-char*
-on_update_crm_config(char* argv[], int argc)
-{
-	int rc;
-	GList* cur;
-	crm_data_t* attr;
-	crm_data_t* attrs;
-	const char* id = NULL;
-	pe_working_set_t* data_set;
-	
-	ARGC_CHECK(3);
-	data_set = get_data_set();
-	attrs = get_xpath_object("//configuration/crm_config/cluster_property_set/attributes", data_set->input, LOG_DEBUG);
-
-	if (attrs != NULL) {
-		cur = find_xml_node_list(attrs, "nvpair");
-		while (cur != NULL) {
-			attr = (crm_data_t*)cur->data;
-			if(strncmp(crm_element_value(attr,"name"),argv[1], MAX_STRLEN)==0) {
-				id = crm_element_value(attr,"id");
-				break;
-			}
-			cur = g_list_next(cur);
-		}
-		rc = update_attr(cib_conn, cib_sync_call, XML_CIB_TAG_CRMCONFIG, NULL
-				 , 		CIB_OPTIONS_FIRST, id, argv[1], argv[2], FALSE);
-	}
-	else {
-		crm_data_t* fragment = NULL;
-		crm_data_t* cib_object = NULL;
-		crm_data_t* output = NULL;
-		char xml[MAX_STRLEN];
-		
-		snprintf(xml, MAX_STRLEN, 
-			"<cluster_property_set id=\"cib-bootstrap-options\">"
-			"<attributes> <nvpair id=\"cib-bootstrap-options-%s\"name=\"%s\" value=\"%s\"/>"
-			"</attributes> </cluster_property_set>", 
-			argv[1], argv[1], argv[2]);
-
-		cib_object = string2xml(xml);
-		if(cib_object == NULL) {
-			free_data_set(data_set);
-			return strdup(MSG_FAIL);
-		}
-
-		fragment = create_cib_fragment(cib_object, "crm_config");
-
-		mgmt_log(LOG_INFO, "(update)xml:%s",xml);
-
-		rc = cib_conn->cmds->update(
-				cib_conn, "crm_config", fragment, cib_sync_call);
-
-		free_xml(fragment);
-		free_xml(cib_object);
-		if (rc < 0) {
-			free_data_set(data_set);
-			return crm_failed_msg(output, rc);
-		}
-		free_xml(output);
-
-	}
-		
-	
-	free_data_set(data_set);
-	if (rc == cib_ok) {
-		return strdup(MSG_OK);
-	}
-	else {
-		return strdup(MSG_FAIL);
-	}
 }
 
 /* node functions */
