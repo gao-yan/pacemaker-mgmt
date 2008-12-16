@@ -94,13 +94,6 @@ static char* on_set_rsc_attr(char* argv[], int argc);
 static char* on_get_rsc_attr(char* argv[], int argc);
 static char* on_del_rsc_attr(char* argv[], int argc);
 
-static char* on_update_rsc_metaattrs(char* argv[], int argc);
-static char* on_delete_rsc_metaattr(char* argv[], int argc);
-
-static char* on_update_rsc_params(char* argv[], int argc);
-static char* on_delete_rsc_param(char* argv[], int argc);
-static char* on_set_target_role(char* argv[], int argc);
-
 static char* on_get_constraints(char* argv[], int argc);
 static char* on_get_constraint(char* argv[], int argc);
 static char* on_update_constraint(char* argv[], int argc);
@@ -120,8 +113,6 @@ static char* on_gen_pe_graph(char* argv[], int argc);
 static char* on_gen_pe_info(char* argv[], int argc);
 
 static void get_meta_attributes_id(const char* rsc_id, char* id);
-static void get_instance_attributes_id(const char* rsc_id, char* id);
-static void get_attr_id(const char* rsc_id, const char* attr_type, const char* attr, char* id);
 static int delete_object(const char* type, const char* entry, const char* id, crm_data_t** output);
 static GList* find_xml_node_list(crm_data_t *root, const char *search_path);
 static int refresh_lrm(IPC_Channel *crmd_channel, const char *host_uname);
@@ -132,7 +123,6 @@ static void on_cib_connection_destroy(gpointer user_data);
 static char* crm_failed_msg(crm_data_t* output, int rc);
 static const char* uname2id(const char* node);
 static resource_t* get_parent(resource_t* child);
-static int get_fix(const char* rsc_id, char* prefix, char* suffix, char* real_id);
 static const char* get_rsc_tag(resource_t* rsc);
 static int cl_msg_swap_offset(crm_data_t* msg, int offset1, int offset2);
 int regex_match(const char *regex, const char *str);
@@ -310,44 +300,6 @@ get_rsc_tag(resource_t* rsc)
 	}
 	
 }
-static int
-get_fix(const char* rsc_id, char* prefix, char* suffix, char* real_id)
-{
-	resource_t* rsc;
-	resource_t* parent;
-	pe_working_set_t* data_set;
-	char* colon;
-	char parent_tag[MAX_STRLEN];
-	char rsc_tag[MAX_STRLEN];
-		
-	data_set = get_data_set();
-	rsc = pe_find_resource(data_set->resources, rsc_id);	
-	if (rsc == NULL) {
-		free_data_set(data_set);	
-		return -1;
-	}
-	STRNCPY(rsc_tag, get_rsc_tag(rsc), MAX_STRLEN);
-	STRNCPY(real_id, rsc_id, MAX_STRLEN);
-
-	parent = get_parent(rsc);
-	if (parent == NULL) {
-		snprintf(prefix, MAX_STRLEN,"<%s id=\"%s\">",rsc_tag, rsc_id);
-		snprintf(suffix, MAX_STRLEN,"</%s>", rsc_tag);
-	}
-	else {
-		colon = strrchr(real_id, ':');
-		if (colon != NULL) {
-			*colon = '\0';
-		}
-		STRNCPY(parent_tag, get_rsc_tag(parent), MAX_STRLEN);
-		
-		snprintf(prefix, MAX_STRLEN,"<%s id=\"%s\"><%s id=\"%s\">"
-		, 	parent_tag, parent->id, rsc_tag, real_id);
-		snprintf(suffix, MAX_STRLEN,"</%s></%s>",rsc_tag, parent_tag);
-	}
-	free_data_set(data_set);
-	return 0;
-}
 
 static void
 get_meta_attributes_id(const char* rsc_id, char* id)
@@ -380,90 +332,6 @@ get_meta_attributes_id(const char* rsc_id, char* id)
 	free_data_set(data_set);
 	return;					
 
-}
-static void
-get_instance_attributes_id(const char* rsc_id, char* id)
-{
-	resource_t* rsc;
-	const char* cur_id;
-	pe_working_set_t* data_set;
-	crm_data_t * attrs;
-	
-	data_set = get_data_set();
-	rsc = pe_find_resource(data_set->resources, rsc_id);	
-	if (rsc == NULL) {
-		snprintf(id, MAX_STRLEN, "%s_instance_attrs", rsc_id);
-		free_data_set(data_set);
-		return;
-	}
-	attrs = find_entity(rsc->xml, "instance_attributes", NULL);
-	if (attrs == NULL) {
-		snprintf(id, MAX_STRLEN, "%s_instance_attrs", rsc_id);
-		free_data_set(data_set);
-		return;
-	}
-	cur_id = crm_element_value(attrs, "id");
-	if (cur_id == NULL) {
-		snprintf(id, MAX_STRLEN, "%s_instance_attrs", rsc_id);
-		free_data_set(data_set);
-		return;
-	}
-	STRNCPY(id, cur_id, MAX_STRLEN);
-	free_data_set(data_set);
-	return;					
-
-}
-static void
-get_attr_id(const char* rsc_id, const char* attr_type, const char* attr, char* id)
-{
-	resource_t* rsc;
-	const char * name_nvpair;
-	const char * id_nvpair;
-	crm_data_t * attrs;
-	pe_working_set_t* data_set;
-	const char * mid = "";
-
-	if (STRNCMP_CONST(attr_type, "meta_attributes") == 0)
-		mid = "metaattr_";
-	if (STRNCMP_CONST(attr_type, "instance_attributes") == 0)
-		mid = "instattr_";
-	
-	data_set = get_data_set();
-	rsc = pe_find_resource(data_set->resources, rsc_id);	
-	if (rsc == NULL) {
-		snprintf(id, MAX_STRLEN,  "%s_%s%s", rsc_id, mid, attr);
-		free_data_set(data_set);
-		return;
-	}
-
-	attrs = find_entity(rsc->xml, attr_type, NULL);
-	if(attrs == NULL) {
-		snprintf(id, MAX_STRLEN,  "%s_%s%s", rsc_id, mid, attr);
-		free_data_set(data_set);
-		return;
-	}
-	attrs = find_entity(attrs, "attributes", NULL);
-	if(attrs == NULL) {
-		snprintf(id, MAX_STRLEN,  "%s_%s%s", rsc_id, mid, attr);
-		free_data_set(data_set);
-		return;
-	}
-
-	xml_child_iter_filter(attrs, nvpair, "nvpair",
-			name_nvpair = crm_element_value(nvpair, "name");
-			if ( strncmp(name_nvpair,attr,MAX_STRLEN) == 0 ) {
-				id_nvpair = crm_element_value(nvpair,"id");
-				if (id_nvpair != NULL) {
-					STRNCPY(id,id_nvpair,MAX_STRLEN);
-					free_data_set(data_set);
-					return;					
-				}
-			}
-	    );
-	
-	snprintf(id, MAX_STRLEN,  "%s_%s%s", rsc_id, mid, attr);
-	free_data_set(data_set);
-	return;
 }
 
 /* mgmtd functions */
@@ -532,13 +400,6 @@ init_crm(int cache_cib)
 	reg_msg(MSG_GET_RSC_ATTR, on_get_rsc_attr);
 	reg_msg(MSG_DEL_RSC_ATTR, on_del_rsc_attr);
 		
-	reg_msg(MSG_UP_RSC_METAATTRS, on_update_rsc_metaattrs);
-	reg_msg(MSG_DEL_RSC_METAATTR, on_delete_rsc_metaattr);
-	
-	reg_msg(MSG_UP_RSC_PARAMS, on_update_rsc_params);
-	reg_msg(MSG_DEL_RSC_PARAM, on_delete_rsc_param);
-	reg_msg(MSG_SET_TARGET_ROLE, on_set_target_role);
-	
 	reg_msg(MSG_UPDATE_CLONE, on_update_clone);
 	reg_msg(MSG_GET_CLONE, on_get_clone);
 	reg_msg(MSG_UPDATE_MASTER, on_update_master);
@@ -1760,202 +1621,6 @@ on_del_rsc_attr(char* argv[], int argc)
 		mgmt_log(LOG_WARNING, "failed to close pipe");
 
 	return ret;
-}
-
-char*
-on_update_rsc_metaattrs(char* argv[], int argc)
-{
-	int rc, i;
-	crm_data_t* fragment = NULL;
-	crm_data_t* cib_object = NULL;
-	crm_data_t* output = NULL;
-	char xml[MAX_STRLEN];
-	char buf[MAX_STRLEN];
-	char prefix[MAX_STRLEN];
-	char suffix[MAX_STRLEN];
-	char real_id[MAX_STRLEN];
-	char meta_attrs_id[MAX_STRLEN];	
-	
-	if(get_fix(argv[1], prefix, suffix, real_id) == -1) {
-		return strdup(MSG_FAIL);
-	}
-	get_meta_attributes_id(argv[1],meta_attrs_id);
-	snprintf(xml, MAX_STRLEN,
-    		 "%s<meta_attributes id=\"%s\"><attributes>",
-    		 prefix , meta_attrs_id);
-	for (i = 2; i < argc; i += 3) {
-		snprintf(buf, MAX_STRLEN,
-			"<nvpair id=\"%s\" name=\"%s\" value=\"%s\"/>",
-			argv[i], argv[i+1], argv[i+2]);
-		strncat(xml, buf, sizeof(xml)-strlen(xml)-1);
-	}
-	strncat(xml, "</attributes></meta_attributes>",
-			sizeof(xml)-strlen(xml)-1);
-	strncat(xml, suffix, sizeof(xml)-strlen(xml)-1);
-
-	cib_object = string2xml(xml);
-	if(cib_object == NULL) {
-		return strdup(MSG_FAIL);
-	}
-	mgmt_log(LOG_INFO, "on_update_rsc_metaattrs:%s",xml);
-	fragment = create_cib_fragment(cib_object, "resources");
-
-	rc = cib_conn->cmds->update(
-			cib_conn, "resources", fragment, cib_sync_call);
-
-	free_xml(fragment);
-	free_xml(cib_object);
-	if (rc < 0) {
-		return crm_failed_msg(output, rc);
-	}
-	free_xml(output);
-	return strdup(MSG_OK);
-}
-
-char*
-on_update_rsc_params(char* argv[], int argc)
-{
-	int rc, i;
-	crm_data_t* fragment = NULL;
-	crm_data_t* cib_object = NULL;
-	crm_data_t* output = NULL;
-	char xml[MAX_STRLEN];
-	char buf[MAX_STRLEN];
-	char prefix[MAX_STRLEN];
-	char suffix[MAX_STRLEN];
-	char real_id[MAX_STRLEN];
-	char inst_attrs_id[MAX_STRLEN];	
-	
-	if(get_fix(argv[1], prefix, suffix, real_id) == -1) {
-		return strdup(MSG_FAIL);
-	}
-	get_instance_attributes_id(argv[1],inst_attrs_id);
-	snprintf(xml, MAX_STRLEN,
-    		 "%s<instance_attributes id=\"%s\"><attributes>",
-    		 prefix , inst_attrs_id);
-	for (i = 2; i < argc; i += 3) {
-		snprintf(buf, MAX_STRLEN,
-			"<nvpair id=\"%s\" name=\"%s\" value=\"%s\"/>",
-			argv[i], argv[i+1], argv[i+2]);
-		strncat(xml, buf, sizeof(xml)-strlen(xml)-1);
-	}
-	strncat(xml, "</attributes></instance_attributes>",
-			sizeof(xml)-strlen(xml)-1);
-	strncat(xml, suffix, sizeof(xml)-strlen(xml)-1);
-
-	cib_object = string2xml(xml);
-	if(cib_object == NULL) {
-		return strdup(MSG_FAIL);
-	}
-	mgmt_log(LOG_INFO, "on_update_rsc_params:%s",xml);
-	fragment = create_cib_fragment(cib_object, "resources");
-
-	rc = cib_conn->cmds->update(
-			cib_conn, "resources", fragment, cib_sync_call);
-
-	free_xml(fragment);
-	free_xml(cib_object);
-	if (rc < 0) {
-		return crm_failed_msg(output, rc);
-	}
-	free_xml(output);
-	return strdup(MSG_OK);
-}
-
-char*
-on_delete_rsc_metaattr(char* argv[], int argc)
-{
-	crm_data_t * output = NULL;
-	int rc;
-	ARGC_CHECK(2)
-
-	if ((rc=delete_object("resources", "nvpair", argv[1], &output)) < 0) {
-		return crm_failed_msg(output, rc);
-	}
-	return strdup(MSG_OK);
-}
-char*
-on_delete_rsc_param(char* argv[], int argc)
-{
-	crm_data_t * output = NULL;
-	int rc;
-	ARGC_CHECK(2)
-
-	if ((rc=delete_object("resources", "nvpair", argv[1], &output)) < 0) {
-		return crm_failed_msg(output, rc);
-	}
-	return strdup(MSG_OK);
-}
-
-char*
-on_set_target_role(char* argv[], int argc)
-{
-	int rc;
-	crm_data_t* fragment = NULL;
-	crm_data_t* cib_object = NULL;
-	crm_data_t* output = NULL;
-	char xml[MAX_STRLEN];
-	char buf[MAX_STRLEN];
-	char prefix[MAX_STRLEN];
-	char suffix[MAX_STRLEN];
-	char real_id[MAX_STRLEN];
-	char meta_attrs_id[MAX_STRLEN];	
-	char target_role_id[MAX_STRLEN];	
-	
-	if(get_fix(argv[1], prefix, suffix, real_id) == -1) {
-		return strdup(MSG_FAIL);
-	}
-
-	get_attr_id(argv[1], "instance_attributes", "target_role", target_role_id);
-	snprintf(buf, MAX_STRLEN, "%s", target_role_id);
-	rc = delete_object("resources", "nvpair", buf, &output);
-	if (rc < 0) {
-		return crm_failed_msg(output, rc);
-	}
-	
-	get_meta_attributes_id(argv[1], meta_attrs_id);
-	get_attr_id(argv[1], "meta_attributes", "target_role", target_role_id);
-	
-	if (STRNCMP_CONST(argv[2],"#default") == 0) {
-		snprintf(buf, MAX_STRLEN, "%s", target_role_id);
-		rc = delete_object("resources", "nvpair", buf, &output);
-		if (rc < 0) {
-			return crm_failed_msg(output, rc);
-		}
-		return strdup(MSG_OK);
-	}
-		
-
-	snprintf(xml, MAX_STRLEN,
-    		 "%s<meta_attributes id=\"%s\"><attributes>",
-    		 prefix,meta_attrs_id);
-	snprintf(buf, MAX_STRLEN,
-		"<nvpair id=\"%s\" " \
-		"name=\"target_role\" value=\"%s\"/>",
-		target_role_id, argv[2]);
-	strncat(xml, buf, sizeof(xml)-strlen(xml)-1);
-	
-	strncat(xml, "</attributes></meta_attributes>",
-			sizeof(xml)-strlen(xml)-1);
-	strncat(xml, suffix, sizeof(xml)-strlen(xml)-1);
-
-	cib_object = string2xml(xml);
-	if(cib_object == NULL) {
-		return strdup(MSG_FAIL);
-	}
-	mgmt_log(LOG_INFO, "on_set_target_role:%s",xml);
-	fragment = create_cib_fragment(cib_object, "resources");
-
-	rc = cib_conn->cmds->update(
-			cib_conn, "resources", fragment, cib_sync_call);
-
-	free_xml(fragment);
-	free_xml(cib_object);
-	if (rc < 0) {
-		return crm_failed_msg(output, rc);
-	}
-	free_xml(output);
-	return strdup(MSG_OK);
 }
 
 /* clone functions */

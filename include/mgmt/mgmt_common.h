@@ -492,68 +492,6 @@ or
 
 /*
 description:
-	update meta_attributes of a given resource
-format:
-	MSG_UP_RSC_METAATTRS resource id1 name1 value1 id2 name2 value2 
-		... idn namen valuen
-return:
-	MSG_OK
-or
-	MSG_FAIL
-*/
-#define MSG_UP_RSC_METAATTRS	"up_rsc_metaattrs"
-
-/*
-description:
-	delete the given meta_attribute 
-format:
-	MSG_DEL_RSC_METAATTR meta_id
-return:
-	MSG_OK
-or
-	MSG_FAIL
-*/
-#define MSG_DEL_RSC_METAATTR	"del_rsc_metaattr"
-
-/*
-description:
-	update params of a given resource
-format:
-	MSG_UP_RSC_PARAMS resource id1 name1 value1 id2 name2 value2 
-		... idn namen valuen
-return:
-	MSG_OK
-or
-	MSG_FAIL
-*/
-#define MSG_UP_RSC_PARAMS	"up_rsc_params"
-
-/*
-description:
-	delete the given param 
-format:
-	MSG_DEL_RSC_PARAM param_id
-return:
-	MSG_OK
-or
-	MSG_FAIL
-*/
-#define MSG_DEL_RSC_PARAM	"del_rsc_param"
-
-/*
-description:
-	set the target_role of resource
-format:
-	MSG_SET_TARGET_ROLE resource "started"|"stopped"|"default"
-return:
-	MSG_OK
-or
-	MSG_FAIL
-*/
-#define MSG_SET_TARGET_ROLE	"set_target_role"
-
-/*
-description:
 	update the clone
 format:
 	MSG_UPDATE_CLONE clone_id clone_max clone_node_max
