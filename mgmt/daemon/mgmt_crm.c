@@ -76,7 +76,6 @@ static char* on_del_rsc(char* argv[], int argc);
 static char* on_cleanup_rsc(char* argv[], int argc);
 static char* on_add_rsc(char* argv[], int argc);
 static char* on_move_rsc(char* argv[], int argc);
-static char* on_add_grp(char* argv[], int argc);
 
 static char* on_update_clone(char* argv[], int argc);
 static char* on_get_clone(char* argv[], int argc);
@@ -532,7 +531,6 @@ init_crm(int cache_cib)
 	reg_msg(MSG_CLEANUP_RSC, on_cleanup_rsc);
 	reg_msg(MSG_ADD_RSC, on_add_rsc);
 	reg_msg(MSG_MOVE_RSC, on_move_rsc);
-	reg_msg(MSG_ADD_GRP, on_add_grp);
 	
 	reg_msg(MSG_ALL_RSC, on_get_all_rsc);
 	reg_msg(MSG_SUB_RSC, on_get_sub_rsc);
@@ -1538,44 +1536,6 @@ on_move_rsc(char* argv[], int argc)
 	return strdup(MSG_OK);
 }
 
-char*
-on_add_grp(char* argv[], int argc)
-{
-	int rc, i;
-	crm_data_t* fragment = NULL;
-	crm_data_t* cib_object = NULL;
-	crm_data_t* output = NULL;
-	char xml[MAX_STRLEN];
-	char buf[MAX_STRLEN];
-	
-	snprintf(xml, MAX_STRLEN,"<group id=\"%s\">" \
-		"<instance_attributes id=\"%s_instance_attrs\">" \
-		"<attributes>", argv[1], argv[1]);
-	for (i = 2; i < argc; i += 3) {
-		snprintf(buf, MAX_STRLEN,
-			 "<nvpair id=\"%s\" name=\"%s\" value=\"%s\"/>",
-			 argv[i], argv[i+1],argv[i+2]);
-		strncat(xml, buf, sizeof(xml)-strlen(xml)-1);
-	}
-	strncat(xml,"</attributes></instance_attributes> ", 
-			sizeof(xml)-strlen(xml)-1);
-	strncat(xml,"</group>", sizeof(xml)-strlen(xml)-1);
-	cib_object = string2xml(xml);
-	if(cib_object == NULL) {
-		return strdup(MSG_FAIL);
-	}
-	mgmt_log(LOG_INFO, "on_add_grp:%s",xml);
-	fragment = create_cib_fragment(cib_object, "resources");
-	rc = cib_conn->cmds->create(cib_conn, "resources", fragment, cib_sync_call);
-	
-	free_xml(fragment);
-	free_xml(cib_object);
-	if (rc < 0) {
-		return crm_failed_msg(output, rc);
-	}
-	free_xml(output);
-	return strdup(MSG_OK);
-}
 /* get all resources*/
 char*
 on_get_all_rsc(char* argv[], int argc)

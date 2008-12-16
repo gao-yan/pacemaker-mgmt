@@ -6086,23 +6086,6 @@ class Manager :
 		return self.query("running_rsc\n%s"%node)	
 
 	# resource functions
-	def add_group(self, group) :
-		if len(group["id"]) == 0 :
-			msgbox (_("The ID can't be empty"))
-			return
-		if self.rsc_exists(group["id"]):
-			msgbox (_("The ID already exists"))
-			return
-		cmd = "add_grp\n"+group["id"]
-		for param in group["params"] :
-			cmd += "\n"+param["id"]
-			cmd += "\n"+param["name"]
-			cmd += "\n"+param["value"]
-
-		self.do_cmd(cmd)
-		if self.failed_reason != "" :
-			msgbox(self.failed_reason)
-		
 	def add_native(self, rsc) :
 		if self.rsc_exists(rsc["id"]) :
 			msgbox (_("The ID already exists"))
