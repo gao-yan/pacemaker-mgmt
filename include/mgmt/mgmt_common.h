@@ -504,19 +504,6 @@ or
 
 /*
 description:
-	return the meta_attributes of a given resource
-format:
-	MSG_RSC_METAATTRS resource
-return:
-	MSG_OK id1 name1 value1 id2 name2 value2 ... idn namen valuen
-or
-	MSG_FAIL
-*/
-
-#define MSG_RSC_METAATTRS	"rsc_metaattrs"
-
-/*
-description:
 	update meta_attributes of a given resource
 format:
 	MSG_UP_RSC_METAATTRS resource id1 name1 value1 id2 name2 value2 

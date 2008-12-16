@@ -6208,10 +6208,6 @@ class Manager :
 
 		return (attrs, running_on, metaattrs, params, ops)"""
 
-	def get_rsc_metaattrs(self, rsc) :
-		meta_attr_names = ["id", "name", "value"]
-		raw_metaattrs = self.query("rsc_metaattrs\n%s"%rsc)
-		return self.split_attr_list(raw_metaattrs, meta_attr_names)
 	def get_rsc_params(self, rsc) :
 		param_attr_names = ["id", "name", "value"]
 		raw_params = self.query("rsc_params\n%s"%rsc)
