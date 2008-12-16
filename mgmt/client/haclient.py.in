@@ -4791,11 +4791,6 @@ class MainWindow :
 		self.set_action_sensitive('logout',manager.connected)
 		self.set_action_sensitive('login',not manager.connected)
 
-		self.set_action_sensitive('migratersc',
-			manager.connected
-			and self.cur_type in [_("native"), _("group"), _("clone"), _("master")])
-
-		self.set_action_sensitive('unmigratersc', manager.connected)
 		self.set_action_sensitive('transition-info', manager.connected)
 		self.set_action_sensitive('report', manager.connected)
 
@@ -4903,87 +4898,6 @@ class MainWindow :
 					+ _("Turn it off ?")))
 			if retval ==  gtk.RESPONSE_YES :
 				manager.do_cmd("crm_attribute\nop_defaults\ndel\nrecord-pending")
-
-	def on_migrate_rsc(self, action) :
-		node_list = manager.get_normal_nodes()
-		node_list.insert(0, "")
-		
-		migrate = kvbox(_("Migrate Resource"),
-				[Field("rsc", _("Resource"), self.cur_name, manager.get_all_rsc(), False, entry_editable = False),
-				Field("to_node", _("To Node"), "", node_list, True, entry_editable = False),
-				Field("force", _("Force"), "", ["", "True", "False"], True, entry_editable = False)])
-
-		if migrate != None :
-			running_on = manager.query("rsc_running_on\n%s"%migrate["rsc"])
-			if running_on == None or running_on == [] :
-				if migrate["to_node"] == "" :
-					msgbox(migrate["rsc"]+_(" not migrated: not-active and no prefered node specified."))
-					return
-
-			if migrate["to_node"] in running_on :
-				msgbox(migrate["rsc"]+_(" is already running on ")+migrate["to_node"])
-				return
-
-			if migrate["to_node"] != None and len(migrate["to_node"]) > 0 :
-				location = {}
-				location["id"] = "cli-prefer-" + migrate["rsc"]
-				location["rsc"] = migrate["rsc"]
-				location["score"] = "INFINITY"
-				location["boolean_op"] = ""
-				location["exprs"] = []
-				expr = {}
-				expr["id"] = gen_uuid() 
-				expr["attribute"] = "#uname"
-				expr["operation"] = "eq"
-				expr["value"] = migrate["to_node"]
-				location["exprs"].append(expr)
-
-				manager.update_constraint("rsc_location", location)
-
-			if running_on != None and len(running_on) > 0 :
-				if migrate["force"] == "True" or migrate["to_node"] == "" :
-					location = {}
-					location["id"] = "cli-standby-" + migrate["rsc"]
-					location["rsc"] = migrate["rsc"]
-					location["score"] = "-INFINITY"
-					location["boolean_op"] = ""
-					location["exprs"] = []
-					expr = {}
-					expr["id"] = gen_uuid() 
-					expr["attribute"] = "#uname"
-					expr["operation"] = "eq"
-					expr["value"] = running_on[0]
-					location["exprs"].append(expr)
-					manager.update_constraint("rsc_location", location)
-
-	def on_unmigrate_rsc(self, action) :
-		location_ids = manager.query("get_cos\nrsc_location")
-		migrate_ids = {}
-		rsc_ids = []
-		for id in location_ids :
-			for prefix in ["cli-prefer-", "cli-standby-"] :
-				if id.startswith(prefix) :
-					split_id = id.split(prefix)
-					if len(split_id) > 1 :
-						rsc_id = split_id[1]
-						if not migrate_ids.has_key(rsc_id) :
-							migrate_ids[rsc_id] = []
-						migrate_ids[rsc_id].append(id)
-
-		all_str = _("all migrated resources")
-		rsc_list = migrate_ids.keys()[:]
-		rsc_list.insert(0, all_str)
-		unmigrate = kvbox(_("Clear Migrate Constraints"),
-				[Field("rsc", _("Resource"), all_str, rsc_list, False, entry_editable = False)])
-
-		if unmigrate != None :
-			if unmigrate["rsc"] == all_str :
-				for rsc_id in migrate_ids.keys() :
-					for id in migrate_ids[rsc_id] :
-						manager.do_cmd("del_co\nrsc_location\n"+id)
-			else :
-				for id in migrate_ids[unmigrate["rsc"]] :
-					manager.do_cmd("del_co\nrsc_location\n"+id)
 
 	def on_transition_info(self, action) :
 		input_list = manager.do_cmd("get_pe_inputs")
@@ -5298,10 +5212,6 @@ class MainWindow :
 					<menuitem action="report"/>
 				</menu>
 			</menubar>
-			<popup name="resource_popup">
-				<menuitem action="migratersc"/>
-				<menuitem action="unmigratersc"/>
-			</popup>
 			<popup name="connection_popup">
 				<menuitem action="login"/>
 				<menuitem action="logout"/>
@@ -5322,10 +5232,6 @@ class MainWindow :
 				<toolitem action="report"/>
 				<separator/>
 				<toolitem action="quit"/>
-			</toolbar>
-			<toolbar name="resource_toolbar">
-				<toolitem action="migratersc"/>
-				<toolitem action="unmigratersc"/>
 			</toolbar>
 		</ui>'''
 		uimanager = gtk.UIManager()
@@ -5348,11 +5254,6 @@ class MainWindow :
 			('logout', logout_icon, _('Logout'), None,_('logout from cluster'), self.on_logout),
 			('quit', gtk.STOCK_QUIT, _('Quit'), None,_('Quit the Program'), self.on_quit),
 			('resource', None, _('Resources')),
-			('migratersc', gtk.STOCK_REDO,  _('Migrate Resource'), None, _('migrate a resource to specified node'), 
-				self.on_migrate_rsc),
-			('unmigratersc', gtk.STOCK_UNDO,  _('Clear Migrate Constraints'),
-				None, _('clear constraints created by migrate'),
-				self.on_unmigrate_rsc),
 			('node', None, _('Nodes')),
 			('view', None, _('View')),
 			('tools', None, _('Tools')),
