@@ -3705,56 +3705,6 @@ class ElementNotebook :
 			if tree_status.get(page_name) != None :
 				self.elem_lists[i].restore_tree_status(tree_status[page_name])
 		self.on_after_show()
-
-class LocationView(View) :
-	name = "locationview"
-	expr_list = None
-	save_location = None
-	
-	def on_apply(self, widget):
-		glade = self.glade
-		location = self.save_location
-		location["rsc"] = glade.get_widget("resource").child.get_text()
-		location["score"] = glade.get_widget("score").child.get_text()
-		location["boolean_op"] = glade.get_widget("boolean_op").child.get_text()
-		location["exprs"] = self.expr_list.get_data()
-		manager.update_constraint("rsc_location",location)
-		View.on_apply(self, widget)
-							   
-	def update(self) :
-		glade = self.glade
-		self.expr_list.clear()
-		location = manager.get_constraint("rsc_location", self.param)
-		if location != None :
-			glade.get_widget("id").set_text(location["id"])
-			glade.get_widget("resource").child.set_text(location["rsc"])
-			glade.get_widget("resource").child.set_editable(False)
-			glade.get_widget("score").child.set_text(location["score"])
-			glade.get_widget("boolean_op").child.set_text(location["boolean_op"])
-			glade.get_widget("boolean_op").child.set_editable(False)
-			for expr in location["exprs"] :
-				self.expr_list.insert(expr)
-			store = gtk.ListStore(str)
-			for rsc in manager.get_all_rsc():
-				store.append([rsc])
-			glade.get_widget("resource").set_model(store)
-			self.save_location = location
-		View.update(self)
-		
-	def __init__(self, rsc) :
-		View.__init__(self, rsc)
-		glade = self.glade
-		glade.get_widget("resource").connect("changed", self.on_changed)
-		glade.get_widget("score").connect("changed", self.on_changed)
-		glade.get_widget("boolean_op").connect("changed", self.on_changed)
-		self.expr_list = ListWithAddDel(glade.get_widget("expr_list"),
-			glade.get_widget("add_expr"),
-			glade.get_widget("del_expr"),
-			_("Add Expression"),
-			"expression",
-			None,
-			self.on_changed)
-		self.update()
 		
 class RscView(View) :
 
@@ -5683,8 +5633,6 @@ class MainWindow :
 			self.cur_view = ManageView()
 		elif type in [_("native")] :
 			self.cur_view = RscView(name)
-		elif type == _("location") :
-			self.cur_view = LocationView(name)
 		elif type in [ _("clone"), _("group"), _("master")] :
 			self.cur_view = CompoundRscView((name,type))
 		else :
