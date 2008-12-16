@@ -4795,14 +4795,6 @@ class MainWindow :
 			manager.connected
 			and self.cur_type in all_rsc_type)
 
-		self.set_action_sensitive('uprsc',
-			manager.connected
-			and self.cur_type in [_("native")])
-
-		self.set_action_sensitive('downrsc',
-			manager.connected
-			and self.cur_type in [_("native")])
-
 		self.set_action_sensitive('migratersc',
 			manager.connected
 			and self.cur_type in [_("native"), _("group"), _("clone"), _("master")])
@@ -4915,12 +4907,6 @@ class MainWindow :
 					+ _("Turn it off ?")))
 			if retval ==  gtk.RESPONSE_YES :
 				manager.do_cmd("crm_attribute\nop_defaults\ndel\nrecord-pending")
-	
-	def on_item_move(self, action) :
-		if action.get_name() == "uprsc" :
-			manager.do_cmd("move_rsc\n%s\nup"%self.cur_name)
-		elif action.get_name() == "downrsc" :
-			manager.do_cmd("move_rsc\n%s\ndown"%self.cur_name)
 	
 	def on_item_cleanup(self, action) :
 		rsc_list = manager.get_all_rsc()
@@ -5360,8 +5346,6 @@ class MainWindow :
 			</menubar>
 			<popup name="resource_popup">
 				<menuitem action="cleanuprsc"/>
-				<menuitem action="uprsc"/>
-				<menuitem action="downrsc"/>
 				<menuitem action="migratersc"/>
 				<menuitem action="unmigratersc"/>
 			</popup>
@@ -5388,8 +5372,6 @@ class MainWindow :
 			</toolbar>
 			<toolbar name="resource_toolbar">
 				<toolitem action="cleanuprsc"/>
-				<toolitem action="uprsc"/>
-				<toolitem action="downrsc"/>
 				<toolitem action="migratersc"/>
 				<toolitem action="unmigratersc"/>
 			</toolbar>
@@ -5415,9 +5397,6 @@ class MainWindow :
 			('quit', gtk.STOCK_QUIT, _('Quit'), None,_('Quit the Program'), self.on_quit),
 			('resource', None, _('Resources')),
 			('cleanuprsc', gtk.STOCK_CLEAR, _('Cleanup Resource'), None,_('cleanup resource'), self.on_item_cleanup),
-			('uprsc', gtk.STOCK_GO_UP, _('Move Up'), None,_('move the resource up in the group'), self.on_item_move),
-			('downrsc', gtk.STOCK_GO_DOWN, _('Move Down'), None,_('move the resource down in the group'),
-				self.on_item_move),
 			('migratersc', gtk.STOCK_REDO,  _('Migrate Resource'), None, _('migrate a resource to specified node'), 
 				self.on_migrate_rsc),
 			('unmigratersc', gtk.STOCK_UNDO,  _('Clear Migrate Constraints'),
