@@ -4944,9 +4944,6 @@ class MainWindow :
 					+ _("Turn it off ?")))
 			if retval ==  gtk.RESPONSE_YES :
 				manager.do_cmd("crm_attribute\nop_defaults\ndel\nrecord-pending")
-	
-	def on_test(self, action) :
-		print gen_uuid()
 			 
 	def on_standby(self, action) :
 		if confirmbox(_("Make") +" " +self.cur_name + " " +_("standby")+"?") == gtk.RESPONSE_YES:
