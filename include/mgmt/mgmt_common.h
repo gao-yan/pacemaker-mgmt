@@ -492,18 +492,6 @@ or
 
 /*
 description:
-	update attribute of a given resource
-format:
-	MSG_UP_RSC_ATTR resource name value
-return:
-	MSG_OK
-or
-	MSG_FAIL
-*/
-#define MSG_UP_RSC_ATTR		"up_rsc_attr"
-
-/*
-description:
 	update meta_attributes of a given resource
 format:
 	MSG_UP_RSC_METAATTRS resource id1 name1 value1 id2 name2 value2 

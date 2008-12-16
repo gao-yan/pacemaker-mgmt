@@ -6288,34 +6288,6 @@ class Manager :
 
 	def rsc_exists(self, rsc_id) :
 		return rsc_id in self.get_all_rsc()
-
-	def update_attrs(self, up_cmd, del_cmd, old_attrs, new_attrs, keys):
-		oldkeys = []
-		if old_attrs != None :
-			for attr in old_attrs :
-				oldkeys.append(attr["id"])
-			
-		newkeys = []
-		if new_attrs != None :
-			for attr in new_attrs :
-				newkeys.append(attr["id"])
-			
-		for key in oldkeys :
-			if key not in newkeys :
-				self.do_cmd(del_cmd+"\n"+key)
-				if self.failed_reason != "" :
-					msgbox(self.failed_reason)
-
-		if new_attrs != [] :		
-			for attr in new_attrs:
-				cmd = up_cmd
-				for key in keys :
-					cmd += "\n" + attr[key]
-				self.do_cmd(cmd)
-				if self.failed_reason != "" :
-					msgbox(self.failed_reason)
-	def update_rsc_attr(self, rid, name, value) :
-		self.do_cmd("up_rsc_attr\n%s\n%s\n%s"%(rid,name,value))
 			
 	# clone functions
 	def get_clone(self, clone_id) :

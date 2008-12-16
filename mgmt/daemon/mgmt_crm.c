@@ -85,7 +85,6 @@ static char* on_get_master(char* argv[], int argc);
 static char* on_get_all_rsc(char* argv[], int argc);
 static char* on_get_rsc_type(char* argv[], int argc);
 static char* on_get_sub_rsc(char* argv[], int argc);
-static char* on_update_rsc_attr(char* argv[], int argc);
 static char* on_get_rsc_running_on(char* argv[], int argc);
 static char* on_get_rsc_status(char* argv[], int argc);
 static char* on_op_status2str(char* argv[], int argc);
@@ -526,7 +525,6 @@ init_crm(int cache_cib)
 	reg_msg(MSG_RSC_RUNNING_ON, on_get_rsc_running_on);
 	reg_msg(MSG_RSC_STATUS, on_get_rsc_status);
 	reg_msg(MSG_RSC_TYPE, on_get_rsc_type);
-	reg_msg(MSG_UP_RSC_ATTR, on_update_rsc_attr);
 	reg_msg(MSG_OP_STATUS2STR, on_op_status2str);
 
 	reg_msg(MSG_CRM_RSC_CMD, on_crm_rsc_cmd);
@@ -1762,72 +1760,6 @@ on_del_rsc_attr(char* argv[], int argc)
 		mgmt_log(LOG_WARNING, "failed to close pipe");
 
 	return ret;
-}
-
-
-char*
-on_update_rsc_attr(char* argv[], int argc)
-{
-	int rc;
-	crm_data_t* fragment = NULL;
-	crm_data_t* cib_object = NULL;
-	crm_data_t* output = NULL;
-	char xml[MAX_STRLEN];
-	char real_id[MAX_STRLEN];
-	char parent_tag[MAX_STRLEN];
-	char rsc_tag[MAX_STRLEN];
-	pe_working_set_t* data_set;
-	resource_t* rsc;
-	resource_t* parent;
-	
-	data_set = get_data_set();
-	rsc = pe_find_resource(data_set->resources, argv[1]);	
-	if (rsc == NULL) {
-		free_data_set(data_set);
-		return strdup(MSG_FAIL);;
-	}
-	parent = get_parent(rsc);
-	
-	STRNCPY(rsc_tag, get_rsc_tag(rsc), MAX_STRLEN);
-	STRNCPY(real_id, argv[1], MAX_STRLEN);
-
-	parent = get_parent(rsc);
-	if (parent == NULL) {
-		snprintf(xml, MAX_STRLEN,"<%s id=\"%s\" %s=\"%s\"/>"
-		,	rsc_tag, argv[1], argv[2], argv[3]);
-	}
-	else {
-		char* colon = strrchr(real_id, ':');
-		if (colon != NULL) {
-			*colon = '\0';
-		}
-		STRNCPY(parent_tag, get_rsc_tag(parent), MAX_STRLEN);
-		
-		snprintf(xml, MAX_STRLEN,"<%s id=\"%s\">" \
-			"<%s id=\"%s\" %s=\"%s\"/></%s>" \
-			,parent_tag, parent->id, rsc_tag, real_id
-			, argv[2],argv[3],parent_tag);
-	}
-
-	cib_object = string2xml(xml);
-	if(cib_object == NULL) {
-		free_data_set(data_set);
-		return strdup(MSG_FAIL);
-	}
-	mgmt_log(LOG_INFO, "on_update_rsc_attr:%s",xml);
-	fragment = create_cib_fragment(cib_object, "resources");
-
-	rc = cib_conn->cmds->update(
-			cib_conn, "resources", fragment, cib_sync_call);
-
-	free_xml(fragment);
-	free_xml(cib_object);
-	free_data_set(data_set);
-	if (rc < 0) {
-		return crm_failed_msg(output, rc);
-	}
-	free_xml(output);
-	return strdup(MSG_OK);
 }
 
 char*
