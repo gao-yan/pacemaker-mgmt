@@ -4795,18 +4795,6 @@ class MainWindow :
 			manager.connected
 			and self.cur_type in all_rsc_type)
 
-		self.set_action_sensitive('startrsc',
-			manager.connected
-			and self.cur_type in all_rsc_type)
-		
-		self.set_action_sensitive('stoprsc',
-			manager.connected
-			and self.cur_type in all_rsc_type)
-
-		self.set_action_sensitive('defaultrsc',
-			manager.connected
-			and self.cur_type in all_rsc_type)
-
 		self.set_action_sensitive('uprsc',
 			manager.connected
 			and self.cur_type in [_("native")])
@@ -4927,45 +4915,6 @@ class MainWindow :
 					+ _("Turn it off ?")))
 			if retval ==  gtk.RESPONSE_YES :
 				manager.do_cmd("crm_attribute\nop_defaults\ndel\nrecord-pending")
-
-	def on_item_action(self, action) :
-		if action.get_name() == "startrsc" :
-			target_role = "started"
-		elif action.get_name() == "stoprsc" :
-			target_role = "stopped"
-		else :
-			target_role = "#default"
-				
-		(attrs, running_on, metaattrs, params, ops) = \
-			manager.get_rsc_info(self.cur_name)
-		for param in params :
-			if param["name"] == "target_role" and param["value"] == target_role :
-				return
-
-		for subrsc in manager.get_sub_rsc(self.cur_name) :
-			(attrs, running_on, metaattrs, params, ops) = \
-				manager.get_rsc_info(subrsc)
-			for metaattr in metaattrs :
-				if metaattr["name"] == "target_role":
-					retval = confirmbox(_("Caused by your previous action, this attribute has been set to \"")
-								+metaattr["value"]
-								+_("\".")+"\n\n"
-								+_("Recommended:")+"\n"
-								+_("Select \"Clear\" to remove the set.")+"\n"
-								+_("The sub-resource will inherit this attribute from current resource."),
-								(gtk.STOCK_CLEAR, gtk.RESPONSE_NO,
-								gtk.STOCK_YES, gtk.RESPONSE_YES,
-								gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL),
-								_("Do you want to retain the \"target_role\" set for sub-resource \"")
-								+subrsc+_("\"?"))
-					if retval in [gtk.RESPONSE_CANCEL, gtk.RESPONSE_DELETE_EVENT] :
-						return	
-					if retval == gtk.RESPONSE_NO:
-						new_metaattrs = metaattrs[:]
-						new_metaattrs.remove(metaattr)
-						manager.update_attrs("up_rsc_metaattrs\n"+subrsc ,"del_rsc_metaattr",
-							metaattrs, new_metaattrs, ["id","name","value"]);
-		manager.do_cmd("set_target_role\n%s\n%s"%(self.cur_name,target_role))
 	
 	def on_item_move(self, action) :
 		if action.get_name() == "uprsc" :
@@ -5411,9 +5360,6 @@ class MainWindow :
 			</menubar>
 			<popup name="resource_popup">
 				<menuitem action="cleanuprsc"/>
-				<menuitem action="startrsc"/>
-				<menuitem action="stoprsc"/>
-				<menuitem action="defaultrsc"/>
 				<menuitem action="uprsc"/>
 				<menuitem action="downrsc"/>
 				<menuitem action="migratersc"/>
@@ -5442,9 +5388,6 @@ class MainWindow :
 			</toolbar>
 			<toolbar name="resource_toolbar">
 				<toolitem action="cleanuprsc"/>
-				<toolitem action="startrsc"/>
-				<toolitem action="stoprsc"/>
-				<toolitem action="defaultrsc"/>
 				<toolitem action="uprsc"/>
 				<toolitem action="downrsc"/>
 				<toolitem action="migratersc"/>
@@ -5461,13 +5404,9 @@ class MainWindow :
 		if pygtk_newer(2, 6) :
 			login_icon = gtk.STOCK_CONNECT
 			logout_icon = gtk.STOCK_DISCONNECT
-			startrsc_icon = gtk.STOCK_MEDIA_PLAY
-			stoprsc_icon = gtk.STOCK_MEDIA_STOP
 		else :
 			login_icon = "ha-login"
 			logout_icon = "ha-logout"
-			startrsc_icon = "ha-start-resource"
-			stoprsc_icon = "ha-stop-resource"
 			
 		actiongroup.add_actions([
 			('connection', None, _('Connection')),
@@ -5476,9 +5415,6 @@ class MainWindow :
 			('quit', gtk.STOCK_QUIT, _('Quit'), None,_('Quit the Program'), self.on_quit),
 			('resource', None, _('Resources')),
 			('cleanuprsc', gtk.STOCK_CLEAR, _('Cleanup Resource'), None,_('cleanup resource'), self.on_item_cleanup),
-			('startrsc', startrsc_icon, _('Start'), None,_('start resource'), self.on_item_action),
-			('stoprsc', stoprsc_icon, _('Stop'), None,_('stop resource'), self.on_item_action),
-			('defaultrsc', gtk.STOCK_EXECUTE, _('Default'), None,_('work as default'), self.on_item_action),
 			('uprsc', gtk.STOCK_GO_UP, _('Move Up'), None,_('move the resource up in the group'), self.on_item_move),
 			('downrsc', gtk.STOCK_GO_DOWN, _('Move Down'), None,_('move the resource down in the group'),
 				self.on_item_move),
