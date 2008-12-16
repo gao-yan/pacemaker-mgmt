@@ -6166,7 +6166,17 @@ class Manager :
 		else :
 			return ""
 
-	def get_rsc_info(self, rsc) :
+	def get_rsc_info(self, rsc_id) :
+		for resources_node in manager.xml_nodes["cib"].getElementsByTagName("resources") :
+			for primitive_node in resources_node.getElementsByTagName("primitive") :
+				if primitive_node.getAttribute("id") == rsc_id :
+					rsc_class = str(primitive_node.getAttribute("class"))
+					rsc_type = str(primitive_node.getAttribute("type"))
+					rsc_provider = str(primitive_node.getAttribute("provider"))
+					return (rsc_class, rsc_type, rsc_provider)
+		return None
+
+	"""def get_rsc_info(self, rsc) :
 		rsc_attr_names = ["id", "description", "class", "provider", 
 				"type", "is_managed","restart_type",
 				"multiple_active","resource_stickiness",
@@ -6196,7 +6206,7 @@ class Manager :
 			raw_ops = raw_ops[1:]
 		ops = self.split_attr_list(raw_ops, op_attr_names)
 
-		return (attrs, running_on, metaattrs, params, ops)
+		return (attrs, running_on, metaattrs, params, ops)"""
 
 	def get_rsc_metaattrs(self, rsc) :
 		meta_attr_names = ["id", "name", "value"]
@@ -6275,9 +6285,10 @@ class Manager :
 			
 	def get_rsc_meta(self, rsc_class, rsc_type, rsc_provider) :
 		if rsc_class == None or rsc_class == "" \
-				or rsc_type == None or rsc_type == "" \
-				or rsc_provider == None or rsc_provider == "" :
+				or rsc_type == None or rsc_type == "" :
 			return None
+		if rsc_provider == None or rsc_provider == "" :
+			rsc_provider = "heartbeat"
 
 		lines = self.query("rsc_metadata\n%s\n%s\n%s"% \
 				(rsc_class, rsc_type, rsc_provider),True)
@@ -8066,18 +8077,16 @@ class RscOrder(ObjectAttrs) :
 		object = self.get_values()
 		actions_list = ["start", "stop", "reload", "monitor", "status", "migrate_from", "migrate_to", "promote", "demote"]
 
+		actions = actions_list
 		if object.has_key(key_pair[0]) :
-			(attrs, running_on, metaattrs, params, ops) = manager.get_rsc_info(object[key_pair[0]])
-			meta = manager.get_rsc_meta(attrs.get("class"), attrs.get("type"), attrs.get("provider"))
-			if meta != None :
-				actions = []
-				for f in meta.actions :
-					if not f["name"] in actions : 
-						actions.append(f["name"])
-			else :
-				actions = actions_list
-		else :
-			actions = actions_list
+			rsc_info = manager.get_rsc_info(object[key_pair[0]])
+			if rsc_info != None :
+				meta = manager.get_rsc_meta(*rsc_info)
+				if meta != None :
+					actions = []
+					for f in meta.actions :
+						if not f["name"] in actions : 
+							actions.append(f["name"])
 
 		action_store = [[action, ""] for action in actions]
 
