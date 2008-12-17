@@ -6289,67 +6289,6 @@ class Manager :
 	def rsc_exists(self, rsc_id) :
 		return rsc_id in self.get_all_rsc()
 		
-	# constraint functions
-	def get_constraints(self, type) :
-		id_list = manager.query("get_cos\n"+type)
-		
-		constraints = []
-		for id in id_list :
-			constraints.append(self.get_constraint(type, id))
-							
-		return constraints
-			
-	def get_constraint(self, type, id) :
-		if type == "rsc_location" :
-			location_attr_names = ["id","rsc","score", "boolean_op"]
-			expr_attr_names = ["id","attribute","operation","value"]
-			attrs = manager.query("get_co\nrsc_location\n"+id)
-			if attrs == None :
-				return None
-			location = dict(zip(location_attr_names,attrs[:4]))
-			location["exprs"] = []
-			for i in range((len(attrs)-len(location_attr_names))/len(expr_attr_names)) :
-				expr = dict(zip(expr_attr_names,attrs[4+i*4:8+i*4]))
-				location["exprs"].append(expr)
-			return location
-		elif type == "rsc_order" or type == "rsc_colocation" :
-			constraint_attr_names = self.get_dtd_elem(type).get_attr_list()
-			cmd = "get_co\n" + type + "\n" + id
-			for attr in constraint_attr_names:
-				cmd = cmd + "\n" + str(attr)
-			attrs = manager.query(cmd)
-			if attrs == None :
-				return None
-			constraint = {}
-			for i in range(len(constraint_attr_names)) :
-				if attrs[i] != "" :
-					constraint[constraint_attr_names[i]] = attrs[i]
-			return constraint
-			
-	def update_constraint(self, type, constraint) :
-		for current_cos in manager.get_constraints(type):
-			if constraint["id"] == current_cos["id"] :
-				self.do_cmd("del_co\n"+type+"\n" + constraint["id"])
-				break
-		if type == "rsc_location" :
-			manager.do_cmd("del_co\nrsc_location\n"+constraint["id"])
-			if self.failed_reason != "" :
-				msgbox(self.failed_reason)
-			cmd = "up_co\nrsc_location\n%s\n%s\n%s\n%s"% \
-					(constraint["id"],constraint["rsc"],constraint["score"],constraint["boolean_op"])
-			for expr in constraint["exprs"] :
-				cmd = cmd + "\n" + expr["id"] + "\n" + expr["attribute"] + \
-					"\n" + expr["operation"] + "\n" + expr["value"]
-		elif type == "rsc_order" or type == "rsc_colocation":
-			cmd = "up_co\n%s\nid\n%s"%(type, constraint["id"])
-			attrlist = constraint.keys()[:]
-			attrlist.remove("id")
-			for attr in attrlist:
-				cmd = cmd + "\n%s\n%s"%(str(attr),constraint[attr])
-		self.do_cmd(cmd)
-		if self.failed_reason != "" :
-			msgbox(self.failed_reason)
-
 class WidgetGroup :
 	def __init__(self, widgets) :
 		self.widgets = widgets

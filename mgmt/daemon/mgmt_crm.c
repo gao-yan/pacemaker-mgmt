@@ -88,11 +88,6 @@ static char* on_set_rsc_attr(char* argv[], int argc);
 static char* on_get_rsc_attr(char* argv[], int argc);
 static char* on_del_rsc_attr(char* argv[], int argc);
 
-static char* on_get_constraints(char* argv[], int argc);
-static char* on_get_constraint(char* argv[], int argc);
-static char* on_update_constraint(char* argv[], int argc);
-static char* on_delete_constraint(char* argv[], int argc);
-
 /* new CRUD protocol */
 static char* on_cib_create(char* argv[], int argc);
 static char* on_cib_query(char* argv[], int argc);
@@ -106,8 +101,10 @@ static char* on_get_pe_inputs(char* argv[], int argc);
 static char* on_gen_pe_graph(char* argv[], int argc);
 static char* on_gen_pe_info(char* argv[], int argc);
 
+/*
 static int delete_object(const char* type, const char* entry, const char* id, crm_data_t** output);
 static GList* find_xml_node_list(crm_data_t *root, const char *search_path);
+*/
 static int refresh_lrm(IPC_Channel *crmd_channel, const char *host_uname);
 static int delete_lrm_rsc(IPC_Channel *crmd_channel, const char *host_uname, const char *rsc_id);
 static pe_working_set_t* get_data_set(void);
@@ -130,6 +127,7 @@ int cib_cache_enable = FALSE;
 	}
 
 /* internal functions */
+/*
 GList* find_xml_node_list(crm_data_t *root, const char *child_name)
 {
 	GList* list = NULL;
@@ -159,6 +157,7 @@ delete_object(const char* type, const char* entry, const char* id, crm_data_t** 
 	free_xml(cib_object);
 	return rc;
 }
+*/
 
 pe_working_set_t*
 get_data_set(void) 
@@ -360,11 +359,6 @@ init_crm(int cache_cib)
 	reg_msg(MSG_GET_RSC_ATTR, on_get_rsc_attr);
 	reg_msg(MSG_DEL_RSC_ATTR, on_del_rsc_attr);
 		
-	reg_msg(MSG_GET_CONSTRAINTS, on_get_constraints);
-	reg_msg(MSG_GET_CONSTRAINT, on_get_constraint);
-	reg_msg(MSG_DEL_CONSTRAINT, on_delete_constraint);
-	reg_msg(MSG_UP_CONSTRAINT, on_update_constraint);
-
 	reg_msg(MSG_GEN_CLUSTER_REPORT, on_gen_cluster_report);
 	reg_msg(MSG_GET_PE_INPUTS, on_get_pe_inputs);
 	reg_msg(MSG_GEN_PE_GRAPH, on_gen_pe_graph);
@@ -1576,162 +1570,6 @@ on_del_rsc_attr(char* argv[], int argc)
 		mgmt_log(LOG_WARNING, "failed to close pipe");
 
 	return ret;
-}
-
-/* constraints functions */
-char*
-on_get_constraints(char* argv[], int argc)
-{
-	char* ret;
-	GList* list;
-	GList* cur;
-	crm_data_t* cos = NULL;
-	pe_working_set_t* data_set;
-	
-	ARGC_CHECK(2);
-	
-	data_set = get_data_set();
-	cos = get_xpath_object("//configuration/constraints", data_set->input, LOG_DEBUG);
-	if (cos == NULL) {
-		free_data_set(data_set);
-		return  strdup(MSG_FAIL);
-	}
-	ret = strdup(MSG_OK);
-	list = find_xml_node_list(cos, argv[1]);
-	cur = list;
-	while (cur != NULL) {
-		crm_data_t* location = (crm_data_t*)cur->data;
-		ret = mgmt_msg_append(ret, crm_element_value(location, "id"));
-		
-		cur = g_list_next(cur);
-	}
-	g_list_free(list);
-	free_data_set(data_set);
-	return ret;
-}
-
-char*
-on_get_constraint(char* argv[], int argc)
-{
-	char* ret;
-	GList* list;
-	GList* cur;
-	crm_data_t* rule;
-	
-	GList* expr_list, *expr_cur;
-	crm_data_t* cos = NULL;
-	pe_working_set_t* data_set;
-	int i;
-	
-	data_set = get_data_set();
-	cos = get_xpath_object("//configuration/constraints", data_set->input, LOG_DEBUG);
-	if (cos == NULL) {
-		free_data_set(data_set);
-		return  strdup(MSG_FAIL);
-	}
-	ret = strdup(MSG_OK);
-	list = find_xml_node_list(cos, argv[1]);
-	cur = list;
-	while (cur != NULL) {
-		crm_data_t* constraint = (crm_data_t*)cur->data;
-		if (strncmp(argv[2],crm_element_value(constraint, "id"), MAX_STRLEN)==0) {
-			if (STRNCMP_CONST(argv[1],"rsc_location")==0) {
-				ret = mgmt_msg_append(ret, crm_element_value(constraint, "id"));
-				ret = mgmt_msg_append(ret, crm_element_value(constraint, "rsc"));
-				rule = find_xml_node(constraint,"rule",TRUE);
-				ret = mgmt_msg_append(ret, crm_element_value(rule, "score"));
-				ret = mgmt_msg_append(ret, crm_element_value(rule, "boolean_op"));
-				expr_list = find_xml_node_list(rule, "expression");
-				expr_cur = expr_list;
-				while(expr_cur) {
-					crm_data_t* expr = (crm_data_t*)expr_cur->data;
-					ret = mgmt_msg_append(ret, crm_element_value(expr, "id"));
-					ret = mgmt_msg_append(ret, crm_element_value(expr, "attribute"));
-					ret = mgmt_msg_append(ret, crm_element_value(expr, "operation"));
-					ret = mgmt_msg_append(ret, crm_element_value(expr, "value"));
-					expr_cur = g_list_next(expr_cur);
-				}
-				g_list_free(expr_list);
-			}
-			else if (STRNCMP_CONST(argv[1],"rsc_order")==0 ||
-					STRNCMP_CONST(argv[1],"rsc_colocation")==0) {
-				for(i = 3; i < argc; i++){
-					ret = mgmt_msg_append(ret, crm_element_value(constraint, argv[i]));
-				}
-			}
-			break;
-		}
-		cur = g_list_next(cur);
-	}
-	g_list_free(list);
-	free_data_set(data_set);
-	return ret;
-}
-char*
-on_delete_constraint(char* argv[], int argc)
-{
-	int rc;
-	crm_data_t * output = NULL;
-	ARGC_CHECK(3)
-
-	if ((rc=delete_object("constraints", argv[1], argv[2], &output)) < 0) {
-		return crm_failed_msg(output, rc);
-	}
-	return strdup(MSG_OK);
-}
-
-char*
-on_update_constraint(char* argv[], int argc)
-{
-	int rc;
-	crm_data_t* fragment = NULL;
-	crm_data_t* cib_object = NULL;
-	crm_data_t* output = NULL;
-	int i;
-	char xml[MAX_STRLEN];
-	char buf[MAX_STRLEN];
-
-	if (STRNCMP_CONST(argv[1],"rsc_location")==0) {
-		snprintf(xml, MAX_STRLEN,
-			 "<rsc_location id=\"%s\" rsc=\"%s\">" \
-				"<rule id=\"prefered_%s\" score=\"%s\" boolean_op=\"%s\">",
-		 	 argv[2], argv[3], argv[2], argv[4], argv[5]);
-		for (i = 0; i < (argc-6)/4; i++) {
-			char expr[MAX_STRLEN];
-			snprintf(expr, MAX_STRLEN,
-				 "<expression attribute=\"%s\" id=\"%s\" operation=\"%s\" value=\"%s\"/>",
-			 	 argv[6+i*4+1],argv[6+i*4],argv[6+i*4+2],argv[6+i*4+3]);
-			strncat(xml, expr, sizeof(xml)-strlen(xml)-1);
-		}
-		strncat(xml, "</rule></rsc_location>",
-				sizeof(xml)-strlen(xml)-1);
-	}
-	else if (STRNCMP_CONST(argv[1],"rsc_order")==0 ||
-			STRNCMP_CONST(argv[1],"rsc_colocation")==0) {
-		snprintf(xml, MAX_STRLEN, "<%s", argv[1]);
-		for (i = 2; i < argc-1; i += 2){
-			snprintf(buf, MAX_STRLEN, " %s=\"%s\"", argv[i], argv[i+1]);
-			strncat(xml, buf, sizeof(xml)-strlen(xml)-1);
-		}
-		strncat(xml, " />", sizeof(xml)-strlen(xml)-1);
-	}
-	cib_object = string2xml(xml);
-	if(cib_object == NULL) {
-		return strdup(MSG_FAIL);
-	}
-	mgmt_log(LOG_INFO, "on_update_constraint:%s",xml);
-	fragment = create_cib_fragment(cib_object, "constraints");
-
-	rc = cib_conn->cmds->update(
-			cib_conn, "constraints", fragment, cib_sync_call);
-
-	free_xml(fragment);
-	free_xml(cib_object);
-	if (rc < 0) {
-		return crm_failed_msg(output, rc);
-	}
-	free_xml(output);
-	return strdup(MSG_OK);
 }
 
 char*

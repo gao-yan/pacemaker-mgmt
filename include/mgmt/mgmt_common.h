@@ -492,69 +492,6 @@ or
 
 /*
 description:
-	get the name list of a given type of constraints
-format:
-	MSG_GET_CONSTRAINTS type(rsc_location|rsc_colocation|rsc_order)
-return:
-	MSG_OK constraint_id1 constraint_id2 ... constraint_idn
-or
-	MSG_FAIL
-*/
-#define MSG_GET_CONSTRAINTS	"get_cos"
-
-/*
-description:
-	get the parameters of a given constraint
-format:
-	MSG_GET_CONSTRAINT (rsc_location|rsc_colocation|rsc_order) id
-return:
-	rsc_location:
-		MSG_OK id resource score expr_id1 attribute1 operation1 value1
-			expr_id2 attribute2 operation2 value2 ...
-			expr_idn attributen operationn valuen
-	rsc_order:
-		MSG_OK id from_rsc type to_rsc
-	rsc_colocation:
-		MSG_OK id from_rsc to_rsc score
-or
-	MSG_FAIL
-*/
-#define MSG_GET_CONSTRAINT	"get_co"
-
-/*
-description:
-	delete a given constraint
-format:
-	MSG_DEL_CONSTRAINT (rsc_location|rsc_colocation|rsc_order) id
-return:
-	MSG_OK
-or
-	MSG_FAIL
-*/
-#define MSG_DEL_CONSTRAINT	"del_co"
-
-/*
-description:
-	update a constraint. if the constraint doesn't exist, create one
-format:
-	rsc_location:
-		MSG_UP_CONSTRAINT "rsc_location" id resource score expr_id1 
-			attribute1 operation1 value1 expr_id2 attribute2 
-			operation2 value2 ... expr_idn attributen operationn
- 			valuen
-	rsc_order:
-		MSG_UP_CONSTRAINT "rsc_order" id from_rsc type to_rsc
-	rsc_colocation:
-		MSG_UP_CONSTRAINT "rsc_colocation" id from_rsc to_rsc score
-return:
-	MSG_OK
-or
-	MSG_FAIL
-*/
-#define MSG_UP_CONSTRAINT	"up_co"
-
-/*
-description:
 	return all resource classes of resource agents
 format:
 	MSG_RSC_CLASSES
