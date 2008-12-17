@@ -419,18 +419,6 @@ or
 
 /*
 description:
-	move a resource in group
-format:
-	MSG_MOVE_RSC resource up|down
-return:
-	MSG_OK
-or
-	MSG_FAIL
-*/
-#define MSG_MOVE_RSC		"move_rsc"
-
-/*
-description:
 	execute specified crm_resource command
 format:
 	MSG_CRM_RSC_CMD command [host_uname]

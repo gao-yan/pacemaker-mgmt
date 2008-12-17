@@ -73,7 +73,6 @@ static char* on_get_node_config(char* argv[], int argc);
 static char* on_get_running_rsc(char* argv[], int argc);
 
 static char* on_cleanup_rsc(char* argv[], int argc);
-static char* on_move_rsc(char* argv[], int argc);
 
 static char* on_get_all_rsc(char* argv[], int argc);
 static char* on_get_rsc_type(char* argv[], int argc);
@@ -111,8 +110,9 @@ static void free_data_set(pe_working_set_t* data_set);
 static void on_cib_connection_destroy(gpointer user_data);
 static char* crm_failed_msg(crm_data_t* output, int rc);
 static const char* uname2id(const char* node);
+/*
 static resource_t* get_parent(resource_t* child);
-static int cl_msg_swap_offset(crm_data_t* msg, int offset1, int offset2);
+*/
 int regex_match(const char *regex, const char *str);
 
 pe_working_set_t* cib_cached = NULL;
@@ -250,6 +250,7 @@ uname2id(const char* uname)
 	free_data_set(data_set);
 	return NULL;
 }
+/*
 static resource_t* 
 get_parent(resource_t* child)
 {
@@ -272,6 +273,7 @@ get_parent(resource_t* child)
 	free_data_set(data_set);
 	return NULL;
 }
+*/
 
 /* mgmtd functions */
 int
@@ -324,7 +326,6 @@ init_crm(int cache_cib)
 	reg_msg(MSG_STANDBY, on_set_node_standby);
 	
 	reg_msg(MSG_CLEANUP_RSC, on_cleanup_rsc);
-	reg_msg(MSG_MOVE_RSC, on_move_rsc);
 	
 	reg_msg(MSG_ALL_RSC, on_get_all_rsc);
 	reg_msg(MSG_SUB_RSC, on_get_sub_rsc);
@@ -998,111 +999,6 @@ on_cleanup_rsc(char* argv[], int argc)
 		    XML_CIB_TAG_CRMCONFIG, NULL, NULL, NULL, "last-lrm-refresh", now_s, FALSE);
 	crm_free(now_s);
 
-	
-	return strdup(MSG_OK);
-}
-
-int
-cl_msg_swap_offset(crm_data_t* msg, int offset1, int offset2)
-{
-#if 0
-    /* this code doesn't work when crm_data_t is an alias for xmlNode */
-	char* name;
-	int nlen;
-	void* value;
-	int vlen;
-	int type;
-	
-	name = msg->names[offset1];
-	nlen = msg->nlens[offset1];
-	value = msg->values[offset1];
-	vlen = msg->vlens[offset1];
-	type = msg->types[offset1];
-		
-	msg->names[offset1] = msg->names[offset2];
-	msg->nlens[offset1] = msg->nlens[offset2];
-	msg->values[offset1] = msg->values[offset2];
-	msg->vlens[offset1] = msg->vlens[offset2];
-	msg->types[offset1] = msg->types[offset2];
-		
-	msg->names[offset2] = name;
-	msg->nlens[offset2] = nlen;
-	msg->values[offset2] = value;
-	msg->vlens[offset2] = vlen;
-	msg->types[offset2] = type;
-	
-	return HA_OK;
-#else
-	return HA_FAIL;;
-#endif
-}
-
-char*
-on_move_rsc(char* argv[], int argc)
-{
-	int i = 0, rc, pos = -1;
-	int first_child = -1;
-	int last_child = -1;
-	const char* child_id;
-	resource_t* rsc;
-	resource_t* parent;
-	pe_working_set_t* data_set;
-	crm_data_t* output = NULL;
-	
-	data_set = get_data_set();
-	GET_RESOURCE()
-	parent = get_parent(rsc);
-	if (parent == NULL || parent->variant != pe_group) {
-		free_data_set(data_set);
-		return strdup(MSG_FAIL);
-	}
-	xml_child_iter(
-		parent->xml, child,
-		const char *name = crm_element_name(child);
-		if (STRNCMP_CONST(name, "primitive") == 0) {
-		    if (first_child == -1) {
-			first_child = i;
-		    }
-		    last_child = i;
-		    child_id = crm_element_value(child, "id");
-		    if (strcmp(child_id, argv[1]) == 0) {
-			mgmt_log(LOG_INFO,"find %s !", child_id);
-			pos = i;
-		    }
-		}
-		i++;
-	    );
-	
-	if (STRNCMP_CONST(argv[2],"up")==0) {
-		if (pos-1<first_child) {
-			free_data_set(data_set);
-			return strdup(MSG_FAIL);
-		}
-		cl_msg_swap_offset(parent->xml, pos-1, pos);
-	}
-	else if (STRNCMP_CONST(argv[2],"down")==0) {
-		if (pos+1>last_child) {
-			free_data_set(data_set);
-			return strdup(MSG_FAIL);
-		}
-		cl_msg_swap_offset(parent->xml, pos, pos+1);
-	}
-	else {
-		free_data_set(data_set);
-		return strdup(MSG_FAIL);
-	}
-	mgmt_log(LOG_INFO, "on_move_rsc:%s", dump_xml_formatted(parent->xml)); /* Memory leak! */
-	
-	rc = cib_conn->cmds->variant_op(
-			cib_conn, CIB_OP_REPLACE, NULL,"resources",
-			parent->xml, &output, cib_sync_call);
-
-	free_data_set(data_set);
-	
-	if (rc < 0) {
-		return crm_failed_msg(output, rc);
-	}
-	free_xml(output);
 	
 	return strdup(MSG_OK);
 }
