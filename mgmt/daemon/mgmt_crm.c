@@ -76,9 +76,6 @@ static char* on_del_rsc(char* argv[], int argc);
 static char* on_cleanup_rsc(char* argv[], int argc);
 static char* on_move_rsc(char* argv[], int argc);
 
-static char* on_update_master(char* argv[], int argc);
-static char* on_get_master(char* argv[], int argc);
-
 static char* on_get_all_rsc(char* argv[], int argc);
 static char* on_get_rsc_type(char* argv[], int argc);
 static char* on_get_sub_rsc(char* argv[], int argc);
@@ -109,7 +106,6 @@ static char* on_get_pe_inputs(char* argv[], int argc);
 static char* on_gen_pe_graph(char* argv[], int argc);
 static char* on_gen_pe_info(char* argv[], int argc);
 
-static void get_meta_attributes_id(const char* rsc_id, char* id);
 static int delete_object(const char* type, const char* entry, const char* id, crm_data_t** output);
 static GList* find_xml_node_list(crm_data_t *root, const char *search_path);
 static int refresh_lrm(IPC_Channel *crmd_channel, const char *host_uname);
@@ -298,39 +294,6 @@ get_rsc_tag(resource_t* rsc)
 	
 }
 
-static void
-get_meta_attributes_id(const char* rsc_id, char* id)
-{
-	resource_t* rsc;
-	const char* cur_id;
-	pe_working_set_t* data_set;
-	crm_data_t* attrs;
-	
-	data_set = get_data_set();
-	rsc = pe_find_resource(data_set->resources, rsc_id);	
-	if (rsc == NULL) {
-		snprintf(id, MAX_STRLEN, "%s_meta_attrs", rsc_id);
-		free_data_set(data_set);
-		return;
-	}
-	attrs = find_entity(rsc->xml, "meta_attributes", NULL);
-	if (attrs == NULL) {
-		snprintf(id, MAX_STRLEN, "%s_meta_attrs", rsc_id);
-		free_data_set(data_set);
-		return;
-	}
-	cur_id = crm_element_value(attrs, "id");
-	if (cur_id == NULL) {
-		snprintf(id, MAX_STRLEN, "%s_meta_attrs", rsc_id);
-		free_data_set(data_set);
-		return;
-	}
-	STRNCPY(id, cur_id, MAX_STRLEN);
-	free_data_set(data_set);
-	return;					
-
-}
-
 /* mgmtd functions */
 int
 init_crm(int cache_cib)
@@ -397,9 +360,6 @@ init_crm(int cache_cib)
 	reg_msg(MSG_GET_RSC_ATTR, on_get_rsc_attr);
 	reg_msg(MSG_DEL_RSC_ATTR, on_del_rsc_attr);
 		
-	reg_msg(MSG_UPDATE_MASTER, on_update_master);
-	reg_msg(MSG_GET_MASTER, on_get_master);
-
 	reg_msg(MSG_GET_CONSTRAINTS, on_get_constraints);
 	reg_msg(MSG_GET_CONSTRAINT, on_get_constraint);
 	reg_msg(MSG_DEL_CONSTRAINT, on_delete_constraint);
@@ -1616,91 +1576,6 @@ on_del_rsc_attr(char* argv[], int argc)
 		mgmt_log(LOG_WARNING, "failed to close pipe");
 
 	return ret;
-}
-
-/* master functions */
-char*
-on_get_master(char* argv[], int argc)
-{
-	resource_t* rsc;
-	char* ret;
-	char* parameter=NULL;
-	pe_working_set_t* data_set;
-	
-	data_set = get_data_set();
-	GET_RESOURCE()
-	
-	ret = strdup(MSG_OK);
-	ret = mgmt_msg_append(ret, rsc->id);
-	
-	parameter = rsc->fns->parameter(rsc, NULL, FALSE
-	,	XML_RSC_ATTR_INCARNATION_MAX, data_set);
-	ret = mgmt_msg_append(ret, parameter);
-	if (parameter != NULL) {
-		free(parameter);
-	}
-
-	parameter = rsc->fns->parameter(rsc, NULL, FALSE
-	,	XML_RSC_ATTR_INCARNATION_NODEMAX, data_set);
-	ret = mgmt_msg_append(ret, parameter);
-	if (parameter != NULL) {
-		free(parameter);
-	}
-
-	parameter = rsc->fns->parameter(rsc, NULL, FALSE
-	,	XML_RSC_ATTR_MASTER_MAX, data_set);
-	ret = mgmt_msg_append(ret, parameter);
-	if (parameter != NULL) {
-		free(parameter);
-	}
-
-	parameter = rsc->fns->parameter(rsc, NULL, FALSE
-	,	XML_RSC_ATTR_MASTER_NODEMAX, data_set);
-	ret = mgmt_msg_append(ret, parameter);
-	if (parameter != NULL) {
-		free(parameter);
-	}
-
-	free_data_set(data_set);
-	return ret;
-}
-char*
-on_update_master(char* argv[], int argc)
-{
-	int rc;
-	crm_data_t* fragment = NULL;
-	crm_data_t* cib_object = NULL;
-	crm_data_t* output = NULL;
-	char xml[MAX_STRLEN];
-	char meta_attrs_id[MAX_STRLEN];	
-
-	ARGC_CHECK(6);
-	get_meta_attributes_id(argv[1], meta_attrs_id);
-	snprintf(xml,MAX_STRLEN,
-		 "<master_slave id=\"%s\"><meta_attributes id=\"%s\"><attributes>" \
-		 "<nvpair id=\"%s_clone_max\" name=\"clone_max\" value=\"%s\"/>" \
-		 "<nvpair id=\"%s_clone_node_max\" name=\"clone_node_max\" value=\"%s\"/>" \
-		 "<nvpair id=\"%s_master_max\" name=\"master_max\" value=\"%s\"/>" \
-		 "<nvpair id=\"%s_master_node_max\" name=\"master_node_max\" value=\"%s\"/>" \
-		 "</attributes></meta_attributes></master_slave>",
-		 argv[1],meta_attrs_id,argv[1],argv[2],argv[1],
-		 argv[3],argv[1],argv[4],argv[1],argv[5]);
-
-	cib_object = string2xml(xml);
-	if(cib_object == NULL) {
-		return strdup(MSG_FAIL);
-	}
-	mgmt_log(LOG_INFO, "on_update_master:%s",xml);
-	fragment = create_cib_fragment(cib_object, "resources");
-	rc = cib_conn->cmds->update(cib_conn, "resources", fragment, cib_sync_call);
-	free_xml(fragment);
-	free_xml(cib_object);
-	if (rc < 0) {
-		return crm_failed_msg(output, rc);
-	}
-	free_xml(output);
-	return strdup(MSG_OK);
-
 }
 
 /* constraints functions */

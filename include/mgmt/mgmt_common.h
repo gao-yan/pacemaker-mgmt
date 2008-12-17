@@ -492,32 +492,6 @@ or
 
 /*
 description:
-	update the master_slave
-format:
-	MSG_UPDATE_MASTER master_id clone_max clone_node_max
-		master_max master_max_node
-return:
-	MSG_OK
-or
-	MSG_FAIL
-*/
-#define MSG_UPDATE_MASTER	"up_master"
-
-/*
-description:
-	get the information of a given master_slave
-format:
-	MSG_GET_MASTER master_id
-return:
-	MSG_OK master_id  clone_max clone_node_max
-		master_max master_max_node
-or
-	MSG_FAIL
-*/
-#define MSG_GET_MASTER		"get_master"
-
-/*
-description:
 	get the name list of a given type of constraints
 format:
 	MSG_GET_CONSTRAINTS type(rsc_location|rsc_colocation|rsc_order)

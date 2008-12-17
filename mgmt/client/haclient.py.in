@@ -6289,23 +6289,6 @@ class Manager :
 	def rsc_exists(self, rsc_id) :
 		return rsc_id in self.get_all_rsc()
 		
-	# master functions
-	def get_master(self, master_id) :
-		attrs = manager.query("get_master\n"+master_id)
-		if attrs == None :
-			return None
-		attrs_name = ["id","clone_max","clone_node_max","master_max","master_node_max"]
-		master = dict(zip(attrs_name,attrs))
-		return master
-	
-	def update_master(self, master) :
-		cmd = "up_master\n%s\n%s\n%s\n%s\n%s"%(master["id"],
-			master["clone_max"],master["clone_node_max"],
-			master["master_max"],master["master_node_max"])
-		self.do_cmd(cmd)
-		if self.failed_reason != "" :
-			msgbox(self.failed_reason)
-		
 	# constraint functions
 	def get_constraints(self, type) :
 		id_list = manager.query("get_cos\n"+type)
