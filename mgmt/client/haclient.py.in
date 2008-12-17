@@ -6288,22 +6288,6 @@ class Manager :
 
 	def rsc_exists(self, rsc_id) :
 		return rsc_id in self.get_all_rsc()
-			
-	# clone functions
-	def get_clone(self, clone_id) :
-		attrs = manager.query("get_clone\n"+clone_id)
-		if attrs == None :
-			return None
-		attrs_name = ["id","clone_max","clone_node_max"]
-		clone = dict(zip(attrs_name,attrs))
-		return clone
-	
-	def update_clone(self, clone) :
-		cmd = "up_clone\n%s\n%s\n%s"% \
-			(clone["id"],clone["clone_max"],clone["clone_node_max"])
-		self.do_cmd(cmd)
-		if self.failed_reason != "" :
-			msgbox(self.failed_reason)
 		
 	# master functions
 	def get_master(self, master_id) :

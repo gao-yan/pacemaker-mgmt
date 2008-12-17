@@ -76,9 +76,6 @@ static char* on_del_rsc(char* argv[], int argc);
 static char* on_cleanup_rsc(char* argv[], int argc);
 static char* on_move_rsc(char* argv[], int argc);
 
-static char* on_update_clone(char* argv[], int argc);
-static char* on_get_clone(char* argv[], int argc);
-
 static char* on_update_master(char* argv[], int argc);
 static char* on_get_master(char* argv[], int argc);
 
@@ -400,8 +397,6 @@ init_crm(int cache_cib)
 	reg_msg(MSG_GET_RSC_ATTR, on_get_rsc_attr);
 	reg_msg(MSG_DEL_RSC_ATTR, on_del_rsc_attr);
 		
-	reg_msg(MSG_UPDATE_CLONE, on_update_clone);
-	reg_msg(MSG_GET_CLONE, on_get_clone);
 	reg_msg(MSG_UPDATE_MASTER, on_update_master);
 	reg_msg(MSG_GET_MASTER, on_get_master);
 
@@ -1623,73 +1618,6 @@ on_del_rsc_attr(char* argv[], int argc)
 	return ret;
 }
 
-/* clone functions */
-char*
-on_get_clone(char* argv[], int argc)
-{
-	resource_t* rsc;
-	char* ret;
-	char* parameter=NULL;
-	pe_working_set_t* data_set;
-	
-	data_set = get_data_set();
-	GET_RESOURCE()
-
-	ret = strdup(MSG_OK);
-	ret = mgmt_msg_append(ret, rsc->id);
-	
-	parameter = rsc->fns->parameter(rsc, NULL, FALSE
-	,	XML_RSC_ATTR_INCARNATION_MAX, data_set);
-	ret = mgmt_msg_append(ret, parameter);
-	if (parameter != NULL) {
-		free(parameter);
-	}
-	
-	parameter = rsc->fns->parameter(rsc, NULL, FALSE
-	,	XML_RSC_ATTR_INCARNATION_NODEMAX, data_set);
-	ret = mgmt_msg_append(ret, parameter);
-	if (parameter != NULL) {
-		free(parameter);
-	}
-
-	free_data_set(data_set);
-	return ret;
-}
-char*
-on_update_clone(char* argv[], int argc)
-{
-	int rc;
-	crm_data_t* fragment = NULL;
-	crm_data_t* cib_object = NULL;
-	crm_data_t* output = NULL;
-	char xml[MAX_STRLEN];
-	char meta_attrs_id[MAX_STRLEN];	
-
-	ARGC_CHECK(4);
-	
-	get_meta_attributes_id(argv[1], meta_attrs_id);
-	snprintf(xml,MAX_STRLEN,
-		 "<clone id=\"%s\"><meta_attributes id=\"%s\"><attributes>" \
-		 "<nvpair id=\"%s_clone_max\" name=\"clone_max\" value=\"%s\"/>" \
-		 "<nvpair id=\"%s_clone_node_max\" name=\"clone_node_max\" value=\"%s\"/>" \
-		 "</attributes></meta_attributes></clone>",
-		 argv[1],meta_attrs_id,argv[1],argv[2],argv[1],argv[3]);
-
-	cib_object = string2xml(xml);
-	if(cib_object == NULL) {
-		return strdup(MSG_FAIL);
-	}
-	mgmt_log(LOG_INFO, "on_update_clone:%s",xml);
-	fragment = create_cib_fragment(cib_object, "resources");
-	rc = cib_conn->cmds->update(cib_conn, "resources", fragment, cib_sync_call);
-	free_xml(fragment);
-	free_xml(cib_object);
-	if (rc < 0) {
-		return crm_failed_msg(output, rc);
-	}
-	free_xml(output);
-	return strdup(MSG_OK);
-}
 /* master functions */
 char*
 on_get_master(char* argv[], int argc)

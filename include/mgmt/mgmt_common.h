@@ -492,30 +492,6 @@ or
 
 /*
 description:
-	update the clone
-format:
-	MSG_UPDATE_CLONE clone_id clone_max clone_node_max
-return:
-	MSG_OK
-or
-	MSG_FAIL
-*/
-#define MSG_UPDATE_CLONE	"up_clone"
-
-/*
-description:
-	get the clone
-format:
-	MSG_GET_CLONE clone_id 
-return:
-	MSG_OK clone_id clone_max clone_node_max
-or
-	MSG_FAIL
-*/
-#define MSG_GET_CLONE		"get_clone"
-
-/*
-description:
 	update the master_slave
 format:
 	MSG_UPDATE_MASTER master_id clone_max clone_node_max
