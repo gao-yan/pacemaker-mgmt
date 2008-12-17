@@ -72,7 +72,6 @@ static char* on_set_node_standby(char* argv[], int argc);
 static char* on_get_node_config(char* argv[], int argc);
 static char* on_get_running_rsc(char* argv[], int argc);
 
-static char* on_del_rsc(char* argv[], int argc);
 static char* on_cleanup_rsc(char* argv[], int argc);
 static char* on_move_rsc(char* argv[], int argc);
 
@@ -113,7 +112,6 @@ static void on_cib_connection_destroy(gpointer user_data);
 static char* crm_failed_msg(crm_data_t* output, int rc);
 static const char* uname2id(const char* node);
 static resource_t* get_parent(resource_t* child);
-static const char* get_rsc_tag(resource_t* rsc);
 static int cl_msg_swap_offset(crm_data_t* msg, int offset1, int offset2);
 int regex_match(const char *regex, const char *str);
 
@@ -274,24 +272,6 @@ get_parent(resource_t* child)
 	free_data_set(data_set);
 	return NULL;
 }
-static const char* 
-get_rsc_tag(resource_t* rsc)
-{
-	switch (rsc->variant) {
-		case pe_native:
-			return "primitive";
-		case pe_group:
-			return "group";
-		case pe_clone:
-			return "clone";
-		case pe_master:
-			return "master_slave";
-		case pe_unknown:
-		default:
-			return "unknown";
-	}
-	
-}
 
 /* mgmtd functions */
 int
@@ -343,7 +323,6 @@ init_crm(int cache_cib)
 	reg_msg(MSG_MIGRATE, on_migrate_rsc);
 	reg_msg(MSG_STANDBY, on_set_node_standby);
 	
-	reg_msg(MSG_DEL_RSC, on_del_rsc);
 	reg_msg(MSG_CLEANUP_RSC, on_cleanup_rsc);
 	reg_msg(MSG_MOVE_RSC, on_move_rsc);
 	
@@ -925,39 +904,6 @@ on_set_node_standby(char* argv[], int argc)
 }
 */
 /* resource functions */
-/* add/delete resource */
-char*
-on_del_rsc(char* argv[], int argc)
-{
-	int rc;
-	resource_t* rsc;
-	crm_data_t* cib_object = NULL;
-	crm_data_t* output = NULL;
-	char xml[MAX_STRLEN];
-	pe_working_set_t* data_set;
-	
-	data_set = get_data_set();
-	GET_RESOURCE()
-
-	snprintf(xml, MAX_STRLEN, "<%s id=\"%s\"/>",get_rsc_tag(rsc), rsc->id);
-	free_data_set(data_set);
-
-	cib_object = string2xml(xml);
-	if(cib_object == NULL) {
-		return strdup(MSG_FAIL);
-	}
-
-	mgmt_log(LOG_INFO, "(delete resources)xml:%s",xml);
-	rc = cib_conn->cmds->delete(
-			cib_conn, "resources", cib_object, cib_sync_call);
-	
-	free_xml(cib_object);
-	if (rc < 0) {
-		return crm_failed_msg(output, rc);
-	}
-	free_xml(output);
-	return strdup(MSG_OK);
-}
 static int
 delete_lrm_rsc(IPC_Channel *crmd_channel, const char *host_uname, const char *rsc_id)
 {

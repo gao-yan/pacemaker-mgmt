@@ -407,19 +407,6 @@ return:
 
 /*
 description:
-	delete a resource
-	notice that the resoruce can be native, group, clone or master
-format:
-	MSG_DEL_RSC resource
-return:
-	MSG_OK
-or
-	MSG_FAIL
-*/
-#define MSG_DEL_RSC		"del_rsc"
-
-/*
-description:
 	clean up a unmanaged resource
 format:
 	MSG_CLEANUP_RSC node resource
