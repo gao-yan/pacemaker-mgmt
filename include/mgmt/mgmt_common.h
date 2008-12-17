@@ -30,7 +30,7 @@
 description
    increased, if daemon-client communication changes in an incompatible way
 */	
-#define MGMT_PROTOCOL_VERSION "1.0"
+#define MGMT_PROTOCOL_VERSION "2.0"
 
 
 /*************************MESSAGES*******************************************/
