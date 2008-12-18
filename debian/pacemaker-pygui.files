@@ -19,7 +19,6 @@ usr/share/heartbeat-gui/default-resource.png
 usr/share/heartbeat-gui/down-resource.png
 usr/share/heartbeat-gui/exit.png
 usr/share/heartbeat-gui/ha.png
-usr/share/heartbeat-gui/haclient.glade
 usr/share/heartbeat-gui/haclient.py
 usr/share/heartbeat-gui/login.png
 usr/share/heartbeat-gui/logout.png

@@ -23,7 +23,7 @@ MAINTAINERCLEANFILES    = Makefile.in
 halibdir		= $(libdir)/@HB_PKG@
 guilibdir              = @HA_DATADIR@/heartbeat-gui
 guilib_SCRIPTS         = haclient.py mgmtcmd.py
-guilib_DATA            = haclient.glade ha.png login.png logout.png exit.png \
+guilib_DATA            = ha.png login.png logout.png exit.png \
 			  standby-node.png active-node.png add-resource.png remove-resource.png \
 			  start-resource.png stop-resource.png master-resource.png slave-resource.png \
 			  default-resource.png up-resource.png down-resource.png cleanup-resource.png \
