@@ -586,8 +586,8 @@ class ManageView :
 				<menuitem action="cleanuprsc"/>
 				<menuitem action="migratersc"/>
 				<menuitem action="unmigratersc"/>
-				<menuitem action="managersc"/>
 				<menuitem action="unmanagersc"/>
+				<menuitem action="managersc"/>
 			</popup>
 			<popup action="node_popup">
 				<menuitem action="standby"/>
@@ -608,8 +608,8 @@ class ManageView :
 				<toolitem action="cleanuprsc"/>
 				<toolitem action="migratersc"/>
 				<toolitem action="unmigratersc"/>
-				<toolitem action="managersc"/>
 				<toolitem action="unmanagersc"/>
+				<toolitem action="managersc"/>
 				<separator/>
 				<toolitem action="standby"/>
 				<toolitem action="active"/>
@@ -643,9 +643,9 @@ class ManageView :
 			('unmigratersc', gtk.STOCK_GO_BACK, _('Clear Migrate Constraints'),
 				None, _('Clear constraints created by migrate'),
 				self.on_unmigrate_rsc),
-			('managersc', "ha-manage-resource", _('Manage Resource'), None, _('Put a resource into managed mode'), 
-				self.on_manage_rsc),
 			('unmanagersc', "ha-unmanage-resource", _('Unmanage Resource'), None, _('Put a resource into unmanaged mode'), 
+				self.on_manage_rsc),
+			('managersc', "ha-manage-resource", _('Manage Resource'), None, _('Put a resource into managed mode'), 
 				self.on_manage_rsc),
 			('refresh', gtk.STOCK_REFRESH, _('Refresh Resources'), None, _('Refresh CIB from the LRM status'), 
 				self.on_crm_rsc_cmd),
