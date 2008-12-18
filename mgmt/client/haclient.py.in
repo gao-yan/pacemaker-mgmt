@@ -322,57 +322,6 @@ class RAMeta :
 	parameters = []
 	actions = []
 
-def NVBox(option_dict) :
-	def on_name_change(name_combo, value_combo, option_dict) :
-		name = name_combo.child.get_text()
-		value_combo.get_model().clear()
-		value_combo.child.set_text("")
-		if name in option_dict.keys() :
-			for option in option_dict[name] :
-				value_combo.append_text(option)
-			if option_dict[name] != [] :
-				value_combo.child.set_text(option_dict[name][0])
-		
-	global top_window
-	dialog = gtk.Dialog(_("Add Name/Value Pair"), top_window, gtk.DIALOG_MODAL,
-		(gtk.STOCK_OK, gtk.RESPONSE_OK, gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL))
-	dialog.set_border_width(5)
-	table = gtk.Table(2, 1, False)
-	
-	label = gtk.Label(_("Value")+":")
-	label.set_alignment(0, 0.5)
-	table.attach(label, 0, 1, 1, 2, xpadding=5, ypadding=2)
-	value_combo = gtk.combo_box_entry_new_text()
-	table.attach(value_combo, 1, 2, 1, 2, xpadding=5, ypadding=2)
-	
-	label = gtk.Label(_("Name")+":")
-	label.set_alignment(0, 0.5)
-	table.attach(label, 0, 1, 0, 1, xpadding=5, ypadding=2)
-	name_combo = gtk.combo_box_entry_new_text()
-	for name in option_dict.keys() :
-		name_combo.append_text(name)
-	table.attach(name_combo, 1, 2, 0, 1, xpadding=5, ypadding=2)
-	name_combo.connect("changed", on_name_change, value_combo, option_dict)
-	name_combo.child.set_text(option_dict.keys()[0])
-	
-	dialog.vbox.pack_start(table)
-	dialog.vbox.show_all()
-	save_top_window = top_window
-	top_window = dialog
-
-	while True :
-		ret = dialog.run()
-		if ret in [gtk.RESPONSE_CANCEL, gtk.RESPONSE_DELETE_EVENT] :
-			top_window = save_top_window
-			dialog.destroy()
-			return (None,None)
-		else :
-			name = name_combo.child.get_text()
-			value = value_combo.child.get_text()
-			top_window = save_top_window
-			dialog.destroy()
-			return (name, value)
-
 class ElementList:
 	store = None
 	widget = None
