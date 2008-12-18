@@ -40,9 +40,7 @@ from pymgmt import *
 
 import pygtk
 pygtk.require('2.0')
-import gtk, gtk.glade, gobject
-
-UI_FILE = "@HA_DATADIR@/heartbeat-gui/haclient.glade"
+import gtk, gobject
 
 validate_type = "dtd"
 expert_mode = False
@@ -93,14 +91,6 @@ def edited_cb(cell, path, new_text, user_data):
 	      call_back(None)
       return
 
-def check_entry_value(glade, entry, label=None) :
-	if label == None :
-		label = entry
-	if glade.get_widget(entry).get_text() == "":
-		msgbox(label + _(" can't be empty"))
-		return False
-	return True
-	
 def pygtk_newer(major, minor) :
 	if gtk.pygtk_version[0] > major :
 		return True
@@ -5338,9 +5328,6 @@ class MainWindow :
 		#mainview_frame = gtk.Frame()
 		#mainview_frame.add(mainview_sw)
 		hpaned.add2(mainview_sw)
-		#glade = gtk.glade.XML(UI_FILE, "mainwin_main", "haclient")
-		#main = glade.get_widget("mainwin_main")
-		#vbox.pack_start(main, True)
 			
 		self.statusbar = gtk.Statusbar()
 		vbox.pack_end(self.statusbar, False)
@@ -5351,7 +5338,6 @@ class MainWindow :
 		self.win_widget = win_widget
 		self.actiongroup = actiongroup
 		self.uimanager = uimanager
-		#self.view_widget = glade.get_widget("mainwin_view")
 		self.maintree_sw = maintree_sw
 		self.mainview_sw = mainview_sw
 		self.update_ui()
@@ -8175,8 +8161,6 @@ if __name__ == '__main__' :
 	locale.setlocale(locale.LC_ALL, '')
 	gettext.bindtextdomain(app_name)
 	gettext.textdomain(app_name)
-	gtk.glade.bindtextdomain(app_name)
-	gtk.glade.textdomain(app_name)
 	gettext.install(app_name,"/usr/share/locale",unicode=1)
 	if "-v" in sys.argv :
 		debug_level = 1
