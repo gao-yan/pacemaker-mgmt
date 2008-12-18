@@ -4853,24 +4853,55 @@ class MainWindow :
 	def on_login(self, action) :
 		dialog = gtk.Dialog(_("Login"),self.win_widget, gtk.DIALOG_MODAL,
 			(gtk.STOCK_OK, gtk.RESPONSE_OK, gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL))
+		dialog.set_default_response(gtk.RESPONSE_OK)
 		dialog.set_border_width(5)
 		
-		glade = gtk.glade.XML(UI_FILE, "logindlg_main", "haclient")
-		main = glade.get_widget("logindlg_main")
-		dialog.vbox.add(main)
 		(server,user) = manager.last_login_info()
-		glade.get_widget("server").set_text(server)
-		glade.get_widget("username").set_text(user)
-		glade.get_widget("password").set_text("")
-		glade.get_widget("server").set_activates_default(True)
-		glade.get_widget("username").set_activates_default(True)
-		glade.get_widget("password").set_activates_default(True)
-		dialog.set_default_response(gtk.RESPONSE_OK)
+
+		widgets = {}
+		name_labels = []
+		name_label_max_len = 0
+		for key in ["server:(port)", "user_name", "password"] :
+			hbox = gtk.HBox()
+			name_label = gtk.Label(_(name_cap(key)+":"))
+			name_label.set_alignment(0, 0.5)
+			hbox.pack_start(name_label, False, padding=5)
+
+
+			name_labels.append(name_label)
+			name_label_len = len(name_label.get_text())
+			if name_label_len > name_label_max_len :
+				name_label_max_len = name_label_len
+
+			if key == "server:(port)" :
+				widget = gtk.combo_box_entry_new_text()
+				widget.append_text(server)
+				widget.child.set_text(server)
+				widget.child.set_activates_default(True)
+			elif key == "user_name" :
+				widget = gtk.combo_box_entry_new_text()
+				widget.append_text(user)
+				widget.child.set_text(user)
+				widget.child.set_activates_default(True)
+			if key == "password" :
+				widget = gtk.Entry()
+				widget.set_visibility(False)
+				widget.set_activates_default(True)
+				
+			widgets[key] = widget
+			hbox.pack_start(widget, True, padding=2)
+			dialog.vbox.pack_start(hbox, False, padding=2)
+
+		for name_label in name_labels :
+			name_label.set_width_chars(name_label_max_len)
+
+		dialog.show_all()
 		ret =  dialog.run()
-		server = glade.get_widget("server").get_text()
-		user = glade.get_widget("username").get_text()
-		password = glade.get_widget("password").get_text()
-		
+
+		server = widgets["server:(port)"].child.get_text()
+		user = widgets["user_name"].child.get_text()
+		password = widgets["password"].get_text()
+
 		dialog.destroy()
 
 		if ret == gtk.RESPONSE_OK:
