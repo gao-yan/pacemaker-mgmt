@@ -157,7 +157,7 @@ def msgbox(msg) :
 	top_window = save_top_window
 	dialog.destroy()
 
-def confirmbox(msg, button=(gtk.STOCK_YES, gtk.RESPONSE_YES, gtk.STOCK_NO, gtk.RESPONSE_NO), title ="") :
+def confirmbox(msg, button=(gtk.STOCK_NO, gtk.RESPONSE_NO, gtk.STOCK_YES, gtk.RESPONSE_YES), title ="") :
 	global top_window
 	dialog = gtk.Dialog(_("Confirm"),  top_window, gtk.DIALOG_MODAL,button)
 	dialog.set_border_width(5)
@@ -199,7 +199,7 @@ def make_label_active(label, text, url) :
 def kvbox(title, fields, auto_fill = None) :
 	global top_window
 	dialog = gtk.Dialog(title, top_window, gtk.DIALOG_MODAL,
-		(gtk.STOCK_OK, gtk.RESPONSE_OK, gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL))
+		(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK))
 	dialog.set_border_width(5)
 	table = gtk.Table(2, 1, False)
 	widgets = []
@@ -1133,9 +1133,9 @@ class ManageView :
 						+_("Recommended:")+"\n"
 						+_("Select \"Clear\" to remove the set.")+"\n"
 						+_("The sub-resource will inherit this attribute from its parent."),
-						(gtk.STOCK_CLEAR, gtk.RESPONSE_NO,
+						(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
 						gtk.STOCK_YES, gtk.RESPONSE_YES,
-						gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL),
+						gtk.STOCK_CLEAR, gtk.RESPONSE_NO),
 						_("Retain the \"%s\" set for sub-resource \"")%metaattr_name
 						+subrsc+_("\"?"))
 			if retval in [gtk.RESPONSE_CANCEL, gtk.RESPONSE_DELETE_EVENT] :
@@ -1198,7 +1198,7 @@ class ManageView :
 		(cur_type, cur_name) = self.manage_tree.get_selected_node()
 
 		dialog = gtk.Dialog(_("Migrate Resource"), top_window, gtk.DIALOG_MODAL,
-			(gtk.STOCK_OK, gtk.RESPONSE_OK, gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL))
+			(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK))
 		dialog.set_border_width(5)
 
 		duration_elems = ["yrs", "mths", "wks", "days", "hrs", "mins", "secs"]
@@ -2334,7 +2334,7 @@ class EditXMLDlg:
 		self.xml_node = xml_node
 
 		dialog = gtk.Dialog(_("Edit XML"), top_window, gtk.DIALOG_MODAL,
-			(gtk.STOCK_OK, gtk.RESPONSE_OK, str(_("Reset")), gtk.RESPONSE_APPLY, gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL))
+			(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, str(_("Reset")), gtk.RESPONSE_APPLY, gtk.STOCK_OK, gtk.RESPONSE_OK))
 		dialog.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_NORMAL)
 		dialog.set_size_request(700, 600)
 
@@ -2921,7 +2921,7 @@ class ElementNotebook :
 			obj_type = option_list[0]
 		else :
 			dialog = gtk.Dialog(_("Add"), top_window, gtk.DIALOG_MODAL,
-				(gtk.STOCK_OK, gtk.RESPONSE_OK, gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL))
+				(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK))
 			dialog.set_border_width(5)
 
 			if append_title != "" :
@@ -3118,7 +3118,7 @@ class ElementNotebook :
 
 		if not invoked_by_wizard and obj_type_name in manager.get_supported_rsc_types() :
 			dialog = gtk.Dialog("Select Mode", top_window, gtk.DIALOG_MODAL,
-				(gtk.STOCK_OK, gtk.RESPONSE_OK, gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL))
+				(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK))
 			dialog.set_border_width(5)
 
 			wizard_radio_btn = gtk.RadioButton(None, _("Wizards"))
@@ -3266,7 +3266,7 @@ class ElementNotebook :
 		if selected_node == None :
 			return
 		ret = confirmbox(_("This will delete the %s \"%s\"")%(_(name_cap(selected_node.tagName)), selected_node.getAttribute("id")),
-				(gtk.STOCK_YES, gtk.RESPONSE_YES, gtk.STOCK_NO, gtk.RESPONSE_NO),
+				(gtk.STOCK_NO, gtk.RESPONSE_NO, gtk.STOCK_YES, gtk.RESPONSE_YES),
 				_("Delete the selected object?"))
 		if ret == gtk.RESPONSE_YES :
 			if not self.is_topview :
@@ -3935,7 +3935,7 @@ class ObjectViewDlg :
 
 		title = _(title_prefix) + " " + _(name_cap(xml_node.tagName))
 		dialog = gtk.Dialog(title, top_window, gtk.DIALOG_MODAL,
-			(gtk.STOCK_OK, gtk.RESPONSE_OK, str(_("Reset")), gtk.RESPONSE_APPLY, gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL))
+			(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, str(_("Reset")), gtk.RESPONSE_APPLY, gtk.STOCK_OK, gtk.RESPONSE_OK))
 		dialog.set_border_width(5)
 		dialog.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_NORMAL)
 		self.dialog = dialog
@@ -3973,7 +3973,7 @@ class ObjectViewDlg :
 
 	def on_reset(self) :
 		ret = confirmbox(_("This will reset the current object attributes and all sub-objects to the initial configurations."),
-				(gtk.STOCK_YES, gtk.RESPONSE_YES, gtk.STOCK_NO, gtk.RESPONSE_NO),
+				(gtk.STOCK_NO, gtk.RESPONSE_NO, gtk.STOCK_YES, gtk.RESPONSE_YES),
 				_("Reset the configurations?"))
 		if ret == gtk.RESPONSE_YES :
 			self.obj_view.reset()
@@ -4305,7 +4305,7 @@ class ClusterReportDlg :
 	def set_params(self) :
 		global top_window
 		dialog = gtk.Dialog(_("Cluster Report"), top_window, gtk.DIALOG_MODAL,
-			(gtk.STOCK_OK, gtk.RESPONSE_OK, gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL))
+			(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK))
 		dialog.set_border_width(5)
 		self.dialog = dialog
 
@@ -4411,8 +4411,8 @@ class SelectFileDlg :
 						retval = confirmbox(_("A file with the same name already exists: ")
 								+ os.path.basename(save_file) + "\n"
 								+_("Do you want to overwrite it?"),
-								(gtk.STOCK_YES, gtk.RESPONSE_YES,
-								gtk.STOCK_NO, gtk.RESPONSE_NO),
+								(gtk.STOCK_NO, gtk.RESPONSE_NO,
+								gtk.STOCK_YES, gtk.RESPONSE_YES),
 								_("Replace it?"))
 						if retval in [gtk.RESPONSE_NO, gtk.RESPONSE_DELETE_EVENT] :
 							passed = False
@@ -4587,7 +4587,8 @@ class DesReportDlg:
 		self.des_file_lines = des_file_lines
 
 		dialog = gtk.Dialog(_("Description of Cluster Report"), top_window, gtk.DIALOG_MODAL,
-				(gtk.STOCK_OK, gtk.RESPONSE_OK, gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL))
+				(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK))
+		dialog.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_NORMAL)
 		dialog.set_border_width(5)
 
 		entries = {}
@@ -4791,7 +4792,7 @@ class MainWindow :
 	
 	def on_login(self, action) :
 		dialog = gtk.Dialog(_("Login"),self.win_widget, gtk.DIALOG_MODAL,
-			(gtk.STOCK_OK, gtk.RESPONSE_OK, gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL))
+			(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK))
 		dialog.set_default_response(gtk.RESPONSE_OK)
 		dialog.set_border_width(5)
 		
