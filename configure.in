@@ -2018,32 +2018,24 @@ AM_CONDITIONAL(USE_PAM_COMMON, test -f $sysconfdir/pam.d/common-account -a \
 				    -f /etc/pam.d/common-auth)
 
 	if test "x${PYTHON_INCLUDES}" = "x"; then
-  		$MISSING_FN "Python.h" \
+  		FatalMissingThing "Python.h" \
 		  "The GUI managment module needs Python.h (Linux: python-devel package)"
-		enable_mgmt="no"
-		MGMT_ENABLED=0
 	fi
 
 	if test "$ac_cv_header_security_pam_appl_h" = "no" -a "$ac_cv_header_pam_pam_appl_h" = "no"; then
-  		$MISSING_FN "security/pam_appl.h" \
+  		FatalMissingThing "security/pam_appl.h" \
 		  "The GUI managment module needs the pam-devel package"
-		enable_mgmt="no"
-		MGMT_ENABLED=0
 	fi
 
 	if test "$ac_cv_header_gnutls_gnutls_h" = "no"; then
-  		$MISSING_FN "gnutls/gnutls.h" \
+  		FatalMissingThing "gnutls/gnutls.h" \
 		  "The GUI managment module needs GNU/TLS header files"
-		enable_mgmt="no"
-		MGMT_ENABLED=0
 	fi
 
 	if test -z "$SWIG"; then
-		$MISSING_FN "swig" \
+		FatalMissingThing "swig" \
 		  "The GUI managment module needs swig" \
 		  "You can get it from http://swig.org/"
-		enable_mgmt="no"
-		MGMT_ENABLED=0
 	fi
 
 dnl **********************************************
