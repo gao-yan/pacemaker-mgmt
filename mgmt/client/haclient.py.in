@@ -1403,22 +1403,70 @@ class ManageView :
 				msgbox(manager.failed_reason)
 
 	def on_crm_rsc_cmd(self, action) :
+		global top_window
 		cmd = action.get_name()
 		node_list = manager.get_normal_nodes()
 		if node_list == None :
 			node_list = []
-		node_options = node_list[:]
-		node_options.insert(0, "")
+		#node_options = node_list[:]
+		#node_options.insert(0, "")
 
-		cmd_args = kvbox(_("%s Resources")%_(name_cap(cmd)) ,
-				[Field("node", _("Node"), "", node_options, True, entry_editable = False)])
+		title = _("%s Resources")%_(name_cap(cmd))
+		dialog = gtk.Dialog(title, top_window, gtk.DIALOG_MODAL,
+			(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK))
+		dialog.set_border_width(5)
 
-		if cmd_args == None :
+		combos ={}
+		for key in ["node"] :
+			hbox = gtk.HBox()
+			name_label = gtk.Label(_(name_cap(key)) + _(":"))
+			name_label.set_alignment(0, 0.5)
+
+			checkbutton = gtk.CheckButton()
+			checkbutton.add(name_label)
+			hbox.pack_start(checkbutton, False, padding=2)
+
+			value_widget = gtk.combo_box_new_text()
+			for node in node_list :
+				value_widget.append_text(node)
+			value_widget.set_sensitive(False)
+			hbox.pack_start(value_widget, True, padding=2)
+			combos[key] = value_widget
+
+			checkbutton.connect("toggled", self.on_checkbutton_toggled, value_widget)
+			dialog.vbox.pack_start(hbox, False, padding=2)
+
+		widgets = {}
+		widgets["combos"] = combos
+		widget_group = WidgetGroup(widgets)
+
+		dialog.show_all()
+
+		save_top_window = top_window
+		top_window = dialog
+
+		ret = dialog.run()
+		if ret in [gtk.RESPONSE_CANCEL, gtk.RESPONSE_DELETE_EVENT] :
+			top_window = save_top_window
+			dialog.destroy()
 			return
+
+		cmd_args = widget_group.get_values()
+		top_window = save_top_window
+		dialog.destroy()
+
+		#cmd_args = kvbox(_("%s Resources")%_(name_cap(cmd)) ,
+		#		[Field("node", _("Node"), "", node_options, True, entry_editable = False)])
+
+		#if cmd_args == None :
+		#	return
 
 		manager.do_cmd("crm_rsc_cmd\n%s\n%s"%(cmd, cmd_args.get("node", "")))
 		if manager.failed_reason != "" :
 			msgbox(manager.failed_reason)
+
+	def on_checkbutton_toggled(self, checkbutton, widget) :
+		widget.set_sensitive(checkbutton.get_active())
 
 	def on_standby(self, action) :
 		(cur_type, cur_name) = self.manage_tree.get_selected_node()
