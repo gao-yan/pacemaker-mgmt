@@ -493,8 +493,6 @@ on_get_crm_dtd(char* argv[], int argc)
 	char* ret = NULL;
 	FILE *fstream = NULL;
 
-	ARGC_CHECK(1);
-
 	if ((fstream = fopen(dtd_file, "r")) == NULL){
 		mgmt_log(LOG_ERR, "error on fopen %s: %s",
 			 dtd_file, strerror(errno));
@@ -528,6 +526,7 @@ on_crm_attribute(char* argv[], int argc)
 	const char* nv_regex = "^[A-Za-z0-9_-]+$";
 	FILE *fstream = NULL;
 
+	ARGC_CHECK(5);
 
 	snprintf(cmd, sizeof(cmd), "crm_attribute -t %s", argv[1]);
 
@@ -1145,6 +1144,7 @@ on_op_status2str(char* argv[], int argc)
 	int op_status;
 	char* ret = strdup(MSG_OK);
 
+	ARGC_CHECK(2);
 	op_status = atoi(argv[1]);
 	ret = mgmt_msg_append(ret, op_status2text(op_status));
 	return ret;
@@ -1547,8 +1547,8 @@ on_cib_replace(char* argv[], int argc)
 	/*crm_data_t* fragment = NULL;*/
 	crm_data_t* cib_object = NULL;
 	crm_data_t* output = NULL;
-	const char* type = argv[0];
-	const char* xmls = argv[1];
+	const char* type = NULL;
+	const char* xmls = NULL;
 	ARGC_CHECK(3)
 
 	type = argv[1];
@@ -1578,8 +1578,8 @@ on_cib_delete(char* argv[], int argc)
 	int rc;
 	crm_data_t* cib_object = NULL;
 	crm_data_t* output = NULL;
-	const char* type = argv[0];
-	const char* xmls = argv[1];	
+	const char* type = NULL;
+	const char* xmls = NULL;	
 	ARGC_CHECK(3)
 	
 	type = argv[1];

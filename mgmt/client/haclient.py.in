@@ -767,13 +767,13 @@ class ManageView :
 		if action.get_active() :
 			manager.do_cmd("crm_attribute\ncrm_config\nset\nmaintenance-mode\ntrue")
 		else :
-			manager.do_cmd("crm_attribute\ncrm_config\ndel\nmaintenance-mode")
+			manager.do_cmd("crm_attribute\ncrm_config\ndel\nmaintenance-mode\n\"\"")
 
 	def change_record_pending(self, action) :
 		if action.get_active() :
 			manager.do_cmd("crm_attribute\nop_defaults\nset\nrecord-pending\ntrue")
 		else :
-			manager.do_cmd("crm_attribute\nop_defaults\ndel\nrecord-pending")
+			manager.do_cmd("crm_attribute\nop_defaults\ndel\nrecord-pending\n\"\"")
 
 	def on_after_show(self, treeview = None) :
 		for child in self.sub_vbox.get_children() :
@@ -1499,7 +1499,7 @@ class ManageView :
 		self.on_after_show()
 
 	def update_tool_button(self) :
-		#value = manager.do_cmd("crm_attribute\ncrm_config\nget\nmaintenance-mode")
+		#value = manager.do_cmd("crm_attribute\ncrm_config\nget\nmaintenance-mode\n\"\"")
 		#if value != None and len(value) > 0 and value[0].count("true") :
 		value = manager.find_attribute("crm_config", "maintenance-mode")
 		action = self.toggle_tool_action_group.get_action("maintenance-mode")
@@ -1516,7 +1516,7 @@ class ManageView :
 		if pygtk_newer(2, 10) and pygobject_newer(2, 12, 3) :
 			action.connect("toggled", self.change_maintenance_mode)
 
-		#value = manager.do_cmd("crm_attribute\nop_defaults\nget\nrecord-pending")
+		#value = manager.do_cmd("crm_attribute\nop_defaults\nget\nrecord-pending\n\"\"")
 		#if value != None and len(value) > 0 and value[0].count("true") :
 		value = manager.find_attribute("op_defaults", "record-pending")
 		action = self.toggle_tool_action_group.get_action("record-pending")
@@ -5347,7 +5347,6 @@ class Manager :
 	'''
 	connected = False
 	window = None
-	selected_type = None
 	server = None
 	username = None
 	password = None
