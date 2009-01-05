@@ -7309,7 +7309,7 @@ class ObjectAttrs(WidgetGroup) :
 		ref_decl_nodes_list = []
 		for key in object_attrs :
 			for attr_rng_node in attr_rng_node_dict.get(key, []) :
-				decl_rng_nodes = self.get_decl_rng_nodes(attr_rng_node)
+				decl_rng_nodes = manager.get_decl_rng_nodes(attr_rng_node)
 				value_list = []
 				sub_rng_nodes = manager.sorted_sub_rng_nodes_by_node(*attr_rng_node[0])
 				for value_node in sub_rng_nodes.get("value", []) :
@@ -7324,12 +7324,12 @@ class ObjectAttrs(WidgetGroup) :
 
 		ref_sorted_nodes = {}
 		for decl_type in ["choice", "first_choice", "group", "first_group"] :
-			ref_sorted_nodes[decl_type] = self.get_sorted_decl_nodes(ref_decl_nodes_list, decl_type)
+			ref_sorted_nodes[decl_type] = manager.get_sorted_decl_nodes(ref_decl_nodes_list, decl_type)
 			
 		match_value_decl_nodes_list = []
 		decl_nodes_list = []
 		for attr_rng_node in attr_rng_nodes :
-			decl_rng_nodes = self.get_decl_rng_nodes(attr_rng_node)
+			decl_rng_nodes = manager.get_decl_rng_nodes(attr_rng_node)
 			if decl_rng_nodes.get("choice") == None :
 				return
 
@@ -7354,7 +7354,7 @@ class ObjectAttrs(WidgetGroup) :
 
 		sorted_nodes = {}
 		for decl_type in ["choice", "first_choice", "group", "first_group"] :
-			sorted_nodes[decl_type] = self.get_sorted_decl_nodes(decl_nodes_list, decl_type)
+			sorted_nodes[decl_type] = manager.get_sorted_decl_nodes(decl_nodes_list, decl_type)
 
 		friend_attrs = []
 		opposite_attrs = []
@@ -7368,7 +7368,7 @@ class ObjectAttrs(WidgetGroup) :
 				if match_value :
 					continue
 
-				decl_rng_nodes = self.get_decl_rng_nodes(attr_rng_node)
+				decl_rng_nodes = manager.get_decl_rng_nodes(attr_rng_node)
 				if decl_rng_nodes.get("choice") == None or \
 						decl_rng_nodes.get("choice") not in sorted_nodes["choice"] :
 					continue
@@ -7417,34 +7417,6 @@ class ObjectAttrs(WidgetGroup) :
 			self.set_sensibility(opposite_attrs, False)
 			self.set_sensibility(sub_opposite_attrs, False)
 			self.set_sensibility(friend_attrs, True)
-
-	def get_decl_rng_nodes(self, attr_rng_node) :
-		decl_rng_nodes = {}
-		choice_index = manager.find_decl(attr_rng_node, "choice", False)
-		if choice_index != 0 :
-			decl_rng_nodes["choice"] = attr_rng_node[choice_index]
-
-		first_choice_index = manager.find_decl(attr_rng_node, "choice")
-		if first_choice_index != choice_index :
-			decl_rng_nodes["first_choice"] = attr_rng_node[first_choice_index]
-
-		group_index = manager.find_decl(attr_rng_node, "group", False)
-		if group_index != 0 :
-			decl_rng_nodes["group"] = attr_rng_node[group_index]
-
-		first_group_index = manager.find_decl(attr_rng_node, "group")
-		if first_group_index != group_index :
-			decl_rng_nodes["first_group"] = attr_rng_node[first_group_index]
-
-		return decl_rng_nodes
-
-	def get_sorted_decl_nodes(self, decl_nodes_list, decl_type) :
-		sorted_nodes = []
-		for rng_nodes in decl_nodes_list :
-			rng_node = rng_nodes.get(decl_type)
-			if rng_node != None and rng_node not in sorted_nodes :
-				sorted_nodes.append(rng_node)
-		return sorted_nodes
 
 	def set_sensibility(self, keys, sensibility) :
 		widgets = self.widgets
