@@ -2977,7 +2977,9 @@ class ElementNotebook :
 
 		if len(option_list) == 0 and not elem_is_any_name :
 			return 0
-		elif len(option_list) == 1 and not elem_is_any_name and not invoked_by_wizard :
+		elif len(option_list) == 1 and not elem_is_any_name and not invoked_by_wizard \
+				and ((validate_type == "dtd" and option_list[0] != "lifetime")
+					or (validate_type != "dtd" and option_list[0][0][1].getAttribute("name") != "lifetime")) :
 			obj_type = option_list[0]
 		else :
 			dialog = gtk.Dialog(_("Add"), top_window, gtk.DIALOG_MODAL,
