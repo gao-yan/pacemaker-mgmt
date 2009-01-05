@@ -2697,16 +2697,28 @@ class ElementNotebook :
 				elem_node_dict[name].append(elem_node)
 
 			sorted_rng_nodes = manager.sorted_sub_rng_nodes_by_name(self.obj_type)
+			self.elem_rng_node_dict = {}
+			self.attr_rng_node_dict = {}
 			is_any_name = False
 			elem_type_list = []
 			if sorted_rng_nodes != None :
 				self.elem_rng_nodes = sorted_rng_nodes.get("element", [])
+				attr_rng_nodes = sorted_rng_nodes.get("attribute", [])
 				for rng_node in self.elem_rng_nodes :
 					name = rng_node[0][1].getAttribute("name")
 					if name == "" :
 						is_any_name = True
-					elif elem_type_list.count(name) == 0 :
-						elem_type_list.append(name)
+					else :
+						if elem_type_list.count(name) == 0 :
+							elem_type_list.append(name)
+							self.elem_rng_node_dict[name] = []
+						self.elem_rng_node_dict[name].append(rng_node)
+
+				for rng_node in attr_rng_nodes :
+					name = rng_node[0][1].getAttribute("name")
+					if not self.attr_rng_node_dict.has_key(name) :
+						self.attr_rng_node_dict[name] = []
+					self.attr_rng_node_dict[name].append(rng_node)
 			else :
 				self.elem_rng_nodes = []
 				is_any_name = True
@@ -3261,18 +3273,96 @@ class ElementNotebook :
 		return option_list
 
 	def get_elem_options_rng(self) :
+		attr_rng_node_dict = self.attr_rng_node_dict
+		elem_rng_node_dict = self.elem_rng_node_dict
+
+		object_attrs = {}
+		for (k, v) in self.xml_node.attributes.items() :
+			object_attrs[k] = v
+
+		ref_match_value_decl_nodes_list = []
+		ref_decl_nodes_list = []
+		for key in object_attrs :
+			for attr_rng_node in attr_rng_node_dict.get(key, []) :
+				decl_rng_nodes = manager.get_decl_rng_nodes(attr_rng_node)
+				value_list = []
+				sub_rng_nodes = manager.sorted_sub_rng_nodes_by_node(*attr_rng_node[0])
+				for value_node in sub_rng_nodes.get("value", []) :
+					value_list.append(value_node[0][1].childNodes[0].data)
+				if object_attrs.get(key, "") in value_list :
+					ref_match_value_decl_nodes_list.append(decl_rng_nodes)
+				elif len(sub_rng_nodes.get("data", [])) > 0 or len(sub_rng_nodes.get("text", [])) > 0 :
+					ref_decl_nodes_list.append(decl_rng_nodes)
+
+		if len(ref_match_value_decl_nodes_list) > 0 :
+			ref_decl_nodes_list = ref_match_value_decl_nodes_list
+
+		ref_sorted_nodes = {}
+		for decl_type in ["choice", "first_choice", "group", "first_group"] :
+			ref_sorted_nodes[decl_type] = manager.get_sorted_decl_nodes(ref_decl_nodes_list, decl_type)
+
+		elem_node_dict = {}
+		for elem_node in self.xml_node.childNodes :
+			if elem_node.nodeType != xml.dom.Node.ELEMENT_NODE :
+				continue
+			elem_type = elem_node.tagName
+			if not elem_node_dict.has_key(elem_type) :
+				elem_node_dict[elem_type] = []
+			elem_node_dict[elem_type].append(elem_node)
+
+		exist_elem_rng_nodes = []
+		ref_elem_decl_nodes_list = []
+		for key in elem_node_dict :
+			for elem_rng_node in elem_rng_node_dict.get(key, []):
+				if len(elem_node_dict[key]) > 1 and manager.find_decl(elem_rng_node, "oneOrMore") == 0 \
+						and manager.find_decl(elem_rng_node, "zeroOrMore") == 0 :
+					continue
+				exist_elem_rng_nodes.append(elem_rng_node)
+				decl_rng_nodes = manager.get_decl_rng_nodes(elem_rng_node)
+				ref_elem_decl_nodes_list.append(decl_rng_nodes)
+
+		ref_elem_sorted_nodes = {}
+		for decl_type in ["choice", "first_choice", "group", "first_group"] :
+			ref_elem_sorted_nodes[decl_type] = manager.get_sorted_decl_nodes(ref_elem_decl_nodes_list, decl_type)
+
 		option_list = []
 		for rng_node in self.elem_rng_nodes :
 			name = rng_node[0][1].getAttribute("name")
+
+			if option_list.count(name) > 0 :
+				continue
+
+			can_add = True 
+			
+			if rng_node not in exist_elem_rng_nodes :
+				decl_rng_nodes = manager.get_decl_rng_nodes(rng_node)
+				if decl_rng_nodes.get("choice") != None :
+					for sorted_nodes in [ref_sorted_nodes, ref_elem_sorted_nodes] :
+						if decl_rng_nodes["choice"] in sorted_nodes["choice"] :
+							if (manager.find_decl(rng_node, "zeroOrMore", False) != 0 and
+									manager.find_decl(rng_node, "zeroOrMore", False) >
+										manager.find_decl(rng_node, "choice", False)) \
+									or (manager.find_decl(rng_node, "oneOrMore", False) != 0 and
+									manager.find_decl(rng_node, "oneOrMore", False) >
+										manager.find_decl(rng_node, "choice", False)) :
+								continue
+							if len(sorted_nodes["group"]) == 0 :
+									can_add = False
+							else :
+								if decl_rng_nodes.get("group") not in sorted_nodes["group"] :
+									can_add = False
+								elif decl_rng_nodes.get("first_choice") in sorted_nodes["first_choice"] and \
+										decl_rng_nodes.get("first_group") not in sorted_nodes["first_group"] :
+									can_add = False
+
+			if not can_add :
+				continue
+
 			if manager.find_decl(rng_node, "zeroOrMore") != 0 or manager.find_decl(rng_node, "oneOrMore") != 0 :
 				option_list.append(rng_node)
 			else :
-				elem_node_list = []
-				for elem_node in self.xml_node.getElementsByTagName(name) :
-					if elem_node in self.xml_node.childNodes :
-						elem_node_list.append(elem_node)
 				sub_rng_nodes = manager.sorted_sub_rng_nodes_by_node(*rng_node[0])
-				if len(elem_node_list) < 1 or len(sub_rng_nodes.get("attribute", [])) == 0 \
+				if len(elem_node_dict.get(name, [])) < 1 or len(sub_rng_nodes.get("attribute", [])) == 0 \
 						or (not expert_mode and name in ["operations"]):
 					option_list.append(rng_node)
 		return option_list
@@ -5809,6 +5899,34 @@ class Manager :
 					break
 		return decl_node_index
 
+	def get_decl_rng_nodes(self, rng_node) :
+		decl_rng_nodes = {}
+		choice_index = manager.find_decl(rng_node, "choice", False)
+		if choice_index != 0 :
+			decl_rng_nodes["choice"] = rng_node[choice_index]
+
+		first_choice_index = manager.find_decl(rng_node, "choice")
+		if first_choice_index != choice_index :
+			decl_rng_nodes["first_choice"] = rng_node[first_choice_index]
+
+		group_index = manager.find_decl(rng_node, "group", False)
+		if group_index != 0 :
+			decl_rng_nodes["group"] = rng_node[group_index]
+
+		first_group_index = manager.find_decl(rng_node, "group")
+		if first_group_index != group_index :
+			decl_rng_nodes["first_group"] = rng_node[first_group_index]
+
+		return decl_rng_nodes
+
+	def get_sorted_decl_nodes(self, decl_nodes_list, decl_type) :
+		sorted_nodes = []
+		for rng_nodes in decl_nodes_list :
+			rng_node = rng_nodes.get(decl_type)
+			if rng_node != None and rng_node not in sorted_nodes :
+				sorted_nodes.append(rng_node)
+		return sorted_nodes
+
 	def real_add_obj_type(self, xml_node, obj_type_name, is_wizard = False) :
 		if validate_type == "dtd" :
 			dtd_elem = manager.get_dtd_elem(obj_type_name)
@@ -7188,7 +7306,7 @@ class ObjectAttrs(WidgetGroup) :
 		ref_match_value_decl_nodes_list = []
 		ref_decl_nodes_list = []
 		for key in object_attrs :
-			for attr_rng_node in attr_rng_node_dict[key] :
+			for attr_rng_node in attr_rng_node_dict.get(key, []) :
 				decl_rng_nodes = self.get_decl_rng_nodes(attr_rng_node)
 				value_list = []
 				sub_rng_nodes = manager.sorted_sub_rng_nodes_by_node(*attr_rng_node[0])
