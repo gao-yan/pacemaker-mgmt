@@ -3032,6 +3032,9 @@ class ElementNotebook :
 				dialog.vbox.pack_start(hbox, False, padding=2)
 				radio_btns[radio_btn] = entry
 
+			if len(radio_btns) == 0 :
+				return 0
+
 			save_top_window = top_window
 			top_window = dialog
 			dialog.vbox.show_all()
@@ -4010,8 +4013,8 @@ class AddWizard :
 			while True :
 				if elem_notebook.on_add(invoked_by_wizard = True, append_title = append_title) == 0 :
 					break
-				if self.obj_type in ["clone", "master"] :
-					break
+				#if self.obj_type in ["clone", "master"] :
+				#	break
 				append_title = later_title
 
 		if self.obj_type == "primitive" :
