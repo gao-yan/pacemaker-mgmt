@@ -3062,119 +3062,27 @@ class ElementNotebook :
 			if obj_type == None :
 				return 0
 
-		impl = getDOMImplementation()
 		if validate_type == "dtd" :
-			dtd_elem = manager.get_dtd_elem(obj_type)
-			sub_attr_list = dtd_elem.get_attr_list()
 			obj_type_name = obj_type
 		else :
 			if type(obj_type) == str or type(obj_type) == unicode :
 				obj_type_name = obj_type
-				sorted_rng_nodes = manager.sorted_sub_rng_nodes_by_name(obj_type_name)
+				#sorted_rng_nodes = manager.sorted_sub_rng_nodes_by_name(obj_type_name)
 			elif type(obj_type) == gtk.Entry :
 				obj_type_name = obj_type.get_text()
-				sorted_rng_nodes = manager.sorted_sub_rng_nodes_by_name(obj_type_name)
+				#sorted_rng_nodes = manager.sorted_sub_rng_nodes_by_name(obj_type_name)
 			else :
 				obj_type_name = obj_type[0][1].getAttribute("name")
-				sorted_rng_nodes = manager.sorted_sub_rng_nodes_by_node(*obj_type[0])
+				#sorted_rng_nodes = manager.sorted_sub_rng_nodes_by_node(*obj_type[0])
 
-			sub_attr_list = []
-			sub_elem_type_list = []
-			sub_attr_is_any_name = False 
-			sub_elem_is_any_name = False
-			if sorted_rng_nodes != None :
-				sub_attr_rng_nodes = sorted_rng_nodes.get("attribute", [])
-				sub_elem_rng_nodes = sorted_rng_nodes.get("element", [])
-				for rng_node in sub_attr_rng_nodes :
-					name = rng_node[0][1].getAttribute("name")
-					if name == "" :
-						sub_attr_is_any_name = True
-					elif sub_attr_list.count(name) == 0 :
-						sub_attr_list.append(name)
-				for rng_node in sub_elem_rng_nodes :
-					name = rng_node[0][1].getAttribute("name")
-					if name == "" :
-						sub_elem_is_any_name = True
-					elif sub_elem_type_list.count(name) == 0 :
-						sub_elem_type_list.append(name)
-			else :
-				sub_attr_is_any_name = True
-				sub_elem_is_any_name = True
-				sub_elem_rng_nodes = []
-					
-		if not sub_attr_is_any_name and (len(sub_attr_list) == 0 \
-				or (not expert_mode and obj_type_name in
-				["meta_attributes", "instance_attributes", "operations",
-				"cluster_property_set"])) :
-			elem_node_list = []
-			for elem_node in self.xml_node.getElementsByTagName(obj_type_name) :
-				if elem_node in self.xml_node.childNodes :
-					elem_node_list.append(elem_node)
-			if len(elem_node_list) == 0 :
-				newdoc = impl.createDocument(None, obj_type_name, None)
-				mid_elem = newdoc.documentElement
-				self.xml_node.appendChild(mid_elem)
-
-				if self.obj_type == "crm_config" :
-					mid_id = "cib-bootstrap-options"
-				elif self.obj_type in ["rsc_defaults", "op_defaults"] :
-					mid_id = self.obj_type + "-options"
-				elif self.obj_type == "node" :
-					mid_id = "nodes-" + self.xml_node.getAttribute("id")
-				else :
-					parent_id = self.xml_node.getAttribute("id")
-					if parent_id != "" and sub_attr_list.count("id") > 0 :
-						mid_id = self.xml_node.getAttribute("id") + "-" + obj_type_name
-					else :
-						mid_id = ""
-
-				if mid_id != "" :
-					mid_elem.setAttribute("id", mid_id)
+		(parent_xml_node, add_obj_type) = manager.real_add_obj_type(self.xml_node, obj_type_name)
+		if parent_xml_node == None :
+			return 1
 				
-			else :
-				mid_elem = elem_node_list[0]
-
-			if validate_type == "dtd" :
-				(sep,cont,mod) = dtd_elem.get_content_model()
-				if len(cont) > 0 :
-					if len(sub_attr_list) == 0 :
-						sub_obj_type = cont[0][0]
-					else :
-						sub_obj_type = cont[1][0]
-						sub_elem_node_list = []
-						for sub_elem_node in mid_elem.getElementsByTagName(sub_obj_type) :
-							if sub_elem_node in mid_elem.childNodes :
-								sub_elem_node_list.append(sub_elem_node)
-						if len(sub_elem_node_list) == 0 :
-							newdoc = impl.createDocument(None, sub_obj_type, None)
-							sub_mid_elem = newdoc.documentElement
-							mid_elem.appendChild(sub_mid_elem)
-							mid_elem = sub_mid_elem
-						else :
-							mid_elem = sub_elem_node_list[0]
-							
-						sub_dtd_elem = manager.get_dtd_elem(sub_obj_type)
-						(sub_obj_type, mod) = sub_dtd_elem.get_content_model()[1][0]
-				else :
-					return 1
-			else:
-				sub_obj_type = None
-				for sub_elem_rng_node in sub_elem_rng_nodes :
-					if manager.find_decl(sub_elem_rng_node, "optional") != 0  :
-						continue
-					sub_obj_type = sub_elem_rng_node[0][1].getAttribute("name")
-					break
-
-				if sub_obj_type == None :
-					return 1
-				
-			newdoc = impl.createDocument(None, sub_obj_type, None)
-			new_elem = newdoc.documentElement
-			mid_elem.appendChild(new_elem)
-		else :
-			newdoc = impl.createDocument(None, obj_type_name, None)
-			new_elem = newdoc.documentElement
-			self.xml_node.appendChild(new_elem)
+		impl = getDOMImplementation()
+		newdoc = impl.createDocument(None, add_obj_type, None)
+		new_elem = newdoc.documentElement
+		parent_xml_node.appendChild(new_elem)
 
 		if invoked_by_wizard :
 			add_mode = "wizard"
