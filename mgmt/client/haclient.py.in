@@ -7131,6 +7131,12 @@ class ObjectAttrs(WidgetGroup) :
 		rsc_store = gtk.ListStore(str, str)
 		for rsc in manager.get_all_true_rsc() :
 			rsc_store.append([rsc, ""])
+
+		node_list = manager.get_normal_nodes()
+		if node_list == None :
+			node_list = []
+		node_store = [[node, ""] for node in node_list]
+
 		if widgets.has_key("combo_entries") :
 			for key in ["rsc", "with-rsc", "first", "then", "from", "to"] :
 				if widgets["combo_entries"].has_key(key) :
@@ -7138,6 +7144,10 @@ class ObjectAttrs(WidgetGroup) :
 			if widgets["combo_entries"].has_key("id") and self.id_is_idref :
 				self.combobox_store_append(widgets["combo_entries"]["id"], rsc_store)
 
+			for key in ["node"] :
+				if widgets["combo_entries"].has_key(key) :
+					self.combobox_store_append(widgets["combo_entries"][key], node_store)
+					
 		if validate_type != "dtd" :
 			return
 
