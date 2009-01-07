@@ -7884,6 +7884,19 @@ class OP(ObjectAttrs) :
 								self.combobox_store_append(widgets["combo_entries"][attr_name], attr_store)
 								widgets["combo_entries"][attr_name].child.set_text(action.get(attr_name, ""))
 						break
+
+			if op["name"] != "monitor" and widgets["combo_entries"].has_key("interval") \
+					and widgets["combo_entries"]["interval"].get_property("sensitive") \
+					and widgets["combo_entries"]["interval"].child.get_text() == "" :
+				is_required = False
+				for child_widget in self.required_vbox.get_children() :
+					if type(child_widget) == gtk.HBox \
+							and widgets["combo_entries"]["interval"] in child_widget.get_children() :
+						is_required = True
+						break
+				if is_required :
+					widgets["combo_entries"]["interval"].child.set_text("0")
+
 		else :
 			for attr_name in widgets["combo_entries"].keys() :
 				if attr_name != "name" :
