@@ -2269,11 +2269,14 @@ class ObjectView :
 			else :
 				obj_attrs = ObjectAttrs(self.xml_node, is_newobj, self.change_call_back)
 
+			obj_attrs.dynamic_choice_elem()
+			obj_attrs.update()
+
 			obj_box.pack_start(obj_attrs.attrs_vbox, False)
 			self.obj_attrs = obj_attrs
 			
 		if has_elem :
-			self.elem_notebook = ElementNotebook(self.xml_node, self.is_topview, self.change_call_back,
+			self.elem_notebook = ElementNotebook(self.xml_node, self.is_topview, self.elem_change_call_back,
 						self.show_mode, self.is_fake_xml_node, self.missing_opt_obj_parent_type)
 			if self.elem_notebook.update(self.xml_node) :
 				obj_box.pack_start(self.elem_notebook.widget, True, padding = 5)
@@ -2290,6 +2293,13 @@ class ObjectView :
 		if not has_elem :
 			self.label.hide_all()
 			self.mode_combobox.hide_all()
+
+	def elem_change_call_back(self) :
+		if self.obj_attrs != None :
+			self.obj_attrs.dynamic_choice_elem()
+
+		if self.change_call_back != None :
+			self.change_call_back()
 
 	def save_status(self) :
 		attrs_status = None
@@ -6533,8 +6543,6 @@ class ObjectAttrs(WidgetGroup) :
 				widget.connect("changed", self.on_changed_later)
 				self.widgets["anyname_combo_entries"][widget].connect("changed", self.on_changed_later)
 
-		self.update(xml_node)
-
 	def on_after_show(self) :
 		if self.auto_id == True :
 			if self.is_newobj :
@@ -6759,6 +6767,7 @@ class ObjectAttrs(WidgetGroup) :
 
 
 		self.attr_rng_node_dict = {}
+		self.elem_rng_node_dict = {}
 		attr_is_any_name = False
 		any_attr_decl = []
 		elem_is_any_name = False
@@ -6792,8 +6801,11 @@ class ObjectAttrs(WidgetGroup) :
 				name = rng_node[0][1].getAttribute("name")
 				if name == "" :
 					elem_is_any_name = True
-				elif elem_type_list.count(name) == 0 :
-					elem_type_list.append(name)
+				else :
+					if elem_type_list.count(name) == 0 :
+						elem_type_list.append(name)
+						self.elem_rng_node_dict[name] = []
+					self.elem_rng_node_dict[name].append(rng_node)
 		else :
 			attr_is_any_name = True
 			any_attr_decl.append("zeroOrMore")
@@ -7338,6 +7350,114 @@ class ObjectAttrs(WidgetGroup) :
 			self.set_sensibility(opposite_attrs, False)
 			self.set_sensibility(sub_opposite_attrs, False)
 			self.set_sensibility(friend_attrs, True)
+
+	def dynamic_choice_elem(self) :
+		elem_rng_node_dict = self.elem_rng_node_dict
+		attr_rng_node_dict = self.attr_rng_node_dict
+
+		object_attrs = self.get_values()
+
+		ref_match_value_decl_nodes_list = []
+		ref_decl_nodes_list = []
+		for key in object_attrs :
+			for attr_rng_node in attr_rng_node_dict.get(key, []) :
+				decl_rng_nodes = manager.get_decl_rng_nodes(attr_rng_node)
+				value_list = []
+				sub_rng_nodes = manager.sorted_sub_rng_nodes_by_node(*attr_rng_node[0])
+				for value_node in sub_rng_nodes.get("value", []) :
+					value_list.append(value_node[0][1].childNodes[0].data)
+				if object_attrs.get(key, "") in value_list :
+					ref_match_value_decl_nodes_list.append(decl_rng_nodes)
+				elif len(sub_rng_nodes.get("data", [])) > 0 or len(sub_rng_nodes.get("text", [])) > 0 :
+					ref_decl_nodes_list.append(decl_rng_nodes)
+
+		if len(ref_match_value_decl_nodes_list) > 0 :
+			ref_decl_nodes_list = ref_match_value_decl_nodes_list
+
+		ref_sorted_nodes = {}
+		for decl_type in ["choice", "first_choice", "group", "first_group"] :
+			ref_sorted_nodes[decl_type] = manager.get_sorted_decl_nodes(ref_decl_nodes_list, decl_type)
+			
+		elem_node_dict = {}
+		for elem_node in self.xml_node.childNodes :
+			if elem_node.nodeType != xml.dom.Node.ELEMENT_NODE :
+				continue
+			elem_type = elem_node.tagName
+			if not elem_node_dict.has_key(elem_type) :
+				elem_node_dict[elem_type] = []
+			elem_node_dict[elem_type].append(elem_node)
+
+		decl_nodes_list = []
+		for key in elem_node_dict :
+			for elem_rng_node in elem_rng_node_dict.get(key, []):
+				if len(elem_node_dict[key]) > 1 and manager.find_decl(elem_rng_node, "oneOrMore") == 0 \
+						and manager.find_decl(elem_rng_node, "zeroOrMore") == 0 :
+					continue
+
+				decl_rng_nodes = manager.get_decl_rng_nodes(elem_rng_node)
+				if decl_rng_nodes.get("choice") == None :
+					return
+
+				if decl_rng_nodes.get("choice") in ref_sorted_nodes["choice"] and \
+						decl_rng_nodes.get("group") != None and \
+						len(ref_sorted_nodes["group"]) > 0 and \
+						decl_rng_nodes.get("group") not in ref_sorted_nodes["group"] :
+					continue
+
+				decl_nodes_list.append(decl_rng_nodes)
+
+		sorted_nodes = {}
+		for decl_type in ["choice", "first_choice", "group", "first_group"] :
+			sorted_nodes[decl_type] = manager.get_sorted_decl_nodes(decl_nodes_list, decl_type)
+
+		friend_attrs = []
+		opposite_attrs = []
+		sub_opposite_attrs = []
+		for key in attr_rng_node_dict :
+			match_value = False
+			for attr_rng_node in attr_rng_node_dict[key] :
+				decl_rng_nodes = manager.get_decl_rng_nodes(attr_rng_node)
+				if decl_rng_nodes.get("choice") == None or \
+						decl_rng_nodes.get("choice") not in sorted_nodes["choice"] :
+					friend_attrs.append(key)
+					continue
+
+				value_list = []
+				sub_rng_nodes = manager.sorted_sub_rng_nodes_by_node(*attr_rng_node[0])
+				for value_node in sub_rng_nodes.get("value", []) :
+					value_list.append(value_node[0][1].childNodes[0].data)
+				if object_attrs.get(key, "") in value_list :
+					if key in friend_attrs :
+						friend_attrs.remove(key)
+					if key in opposite_attrs :
+						opposite_attrs.remove(key)
+					if key in sub_opposite_attrs :
+						sub_opposite_attrs.remove(key)
+					match_value = True
+
+				if len(sorted_nodes["group"]) == 0 :
+					opposite_attrs.append(key)
+				else :
+					if decl_rng_nodes.get("group") not in sorted_nodes["group"] :
+						if key not in opposite_attrs :
+							opposite_attrs.append(key)
+					elif decl_rng_nodes.get("first_choice") in sorted_nodes["first_choice"] and \
+							decl_rng_nodes.get("first_group") not in sorted_nodes["first_group"] :
+						if key not in sub_opposite_attrs :
+							sub_opposite_attrs.append(key)
+					else :
+						if key not in friend_attrs :
+							friend_attrs.append(key)
+
+				if match_value :
+					break
+
+		if len(opposite_attrs) == 0 and len(sub_opposite_attrs) == 0 and len(friend_attrs) == 0 :
+			return
+
+		self.set_sensibility(opposite_attrs, False)
+		self.set_sensibility(sub_opposite_attrs, False)
+		self.set_sensibility(friend_attrs, True)
 
 	def set_sensibility(self, keys, sensibility) :
 		widgets = self.widgets
