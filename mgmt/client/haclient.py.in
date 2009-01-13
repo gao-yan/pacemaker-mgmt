@@ -7480,34 +7480,49 @@ class Primitive(ObjectAttrs) :
 		if widgets.has_key("combos") and widgets["combos"].has_key("class") \
 				and widget == widgets["combos"]["class"] :
 			ra_list = manager.get_rsc_types(primitive_class)
-			if ra_list != None :
-				ra_list.sort()
-				type_store = [[ra, ""] for ra in ra_list]
-				if widgets.has_key("combo_entries") and widgets["combo_entries"].has_key("type") :
-					self.combobox_store_append(widgets["combo_entries"]["type"], type_store)
+			self.fill_provider(primitive, ra_list)
+			self.fill_type(primitive, ra_list)
 
-			self.fill_provider(primitive)
+		elif widgets.has_key("combo_entries") and widgets["combo_entries"].has_key("provider") \
+				and widget == widgets["combo_entries"]["provider"] :
+			ra_list = manager.get_rsc_types(primitive_class)
+			self.fill_type(primitive, ra_list)
 
-		elif widgets.has_key("combo_entries") and widgets["combo_entries"].has_key("type") \
-				and widget == widgets["combo_entries"]["type"] :
-			self.fill_provider(primitive)
-
-	def fill_provider(self, primitive) :
+	def fill_provider(self, primitive, ra_list = None) :
 		widgets = self.widgets
 		primitive_class = primitive.get("class", "")
-		primitive_type = primitive.get("type", "")
-		if primitive_class == "ocf" and primitive_type != "" :
-			provider_list = manager.get_rsc_providers(primitive_class, primitive_type)
-		else :
-			provider_list = None
-		if provider_list == None :
-			providers_store = []
-		else :	
-			providers_store = [[provider, ""] for provider in provider_list]
+
+		provider_list = []
+		if primitive_class == "ocf" and ra_list != None :
+			for ra in ra_list :
+				providers = manager.get_rsc_providers(primitive_class, ra)
+				for provider in providers :
+					if provider_list.count(provider) == 0 :
+						provider_list.append(provider)
+
+		providers_store = [[provider, ""] for provider in provider_list]
 		if widgets.has_key("combo_entries") and widgets["combo_entries"].has_key("provider") :
 			self.combobox_store_append(widgets["combo_entries"]["provider"], providers_store)
-			if provider_list != None and len(provider_list) > 0 :
-				widgets["combo_entries"]["provider"].child.set_text(provider_list[0])
+		#	if provider_list != None and len(provider_list) > 0 :
+		#		widgets["combo_entries"]["provider"].child.set_text(provider_list[0])
+
+	def fill_type(self, primitive, ra_list = None) :
+		widgets = self.widgets
+		primitive_class = primitive.get("class", "")
+		primitive_provider = primitive.get("provider", "")
+		if ra_list != None :
+			ra_list.sort()
+			if primitive_class != "ocf" or primitive_provider == "" :
+				type_store = [[ra, ""] for ra in ra_list]
+			else :
+				type_store = []
+				for ra in ra_list :
+					provider_list = manager.get_rsc_providers(primitive_class, ra)
+					if provider_list != None and primitive_provider in provider_list :
+						type_store.append([ra, ""])
+
+			if widgets.has_key("combo_entries") and widgets["combo_entries"].has_key("type") :
+				self.combobox_store_append(widgets["combo_entries"]["type"], type_store)
 
 	def dynamic_desc(self, widget) :
 		widgets = self.widgets
