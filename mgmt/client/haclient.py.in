@@ -3533,6 +3533,7 @@ class AddWizard :
 			obj_attrs = Primitive(self.xml_node, True, hide_optional = True)
 		else :
 			obj_attrs = obj_attrs = ObjectAttrs(self.xml_node, True, hide_optional = True)
+		obj_attrs.update()
 		obj_attrs.on_after_show()
 
 		dialog.vbox.pack_start(obj_attrs.attrs_vbox, False)
