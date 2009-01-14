@@ -1617,7 +1617,7 @@ class ManageTree :
 		elif type == "node" :
 			if status == _("ping node") :
 				iter_status = -1				
-			elif string.find(status, _("running")) != -1 :
+			elif string.find(status, _("online")) != -1 :
 				iter_status = 0
 			else :
 				iter_status = 1
@@ -1781,13 +1781,13 @@ class ManageTree :
 				status = _("unknown type")
 		else :
 			if not active :
-				status = _("stopped")
+				status = _("offline")
 			else :		
 				dc = manager.get_dc()
 				if dc != None and node in dc :
-					status = _("running(dc)")
+					status = _("online(dc)")
 				else :
-					status = _("running")
+					status = _("online")
 			if manager.get_node_config(node)["standby"] == "True" :
 				status = status + "-"+ _("standby")
 
