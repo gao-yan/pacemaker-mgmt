@@ -1692,11 +1692,17 @@ class ManageTree :
 		if crm_nodes == None :
 			return
 		
-		config = manager.get_crm_info()
-		if config.has_key("have_quorum") and config["have_quorum"] == "true" :
-			status = _("with quorum")
+		have_quorum = False
+		for attr_name in ["have-quorum", "have_quorum"] :
+			attr_value = manager.xml_nodes["cib"].getAttribute(attr_name)
+			if attr_value != "" :
+				if attr_value in ["true", "yes", "1"] :
+					have_quorum = True
+				break
+		if have_quorum :
+			status = _("have quorum")
 		else :
-			status = _("without quorum")
+			status = _("no quorum")
 		
 		cluster_type = manager.get_cluster_type().capitalize()
 		if len(cluster_type) > 0 :
@@ -6076,13 +6082,6 @@ class Manager :
 				hb_config[values[i]] = values[i+1]
 				i += 2
 		return hb_config
-
-	def get_crm_info(self) :
-		crm_info = {}
-		value = manager.query("crm_config\nhave_quorum")
-		if value != None and value != []:
-			crm_info["have_quorum"] = value[0]
-		return crm_info
 
 	def get_cluster_config(self) :
 		config = {}
