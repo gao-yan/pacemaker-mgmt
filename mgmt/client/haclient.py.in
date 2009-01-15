@@ -4927,7 +4927,7 @@ class MainWindow :
 					+ _("It could affect the performance.") + "\n"
 					+ _("Turn it off ?")))
 			if retval ==  gtk.RESPONSE_YES :
-				manager.do_cmd("crm_attribute\nop_defaults\ndel\nrecord-pending")
+				manager.do_cmd("crm_attribute\nop_defaults\ndel\nrecord-pending\n\"\"")
 
 	def on_transition_info(self, action) :
 		input_list = manager.do_cmd("get_pe_inputs")
