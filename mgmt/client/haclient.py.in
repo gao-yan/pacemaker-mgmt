@@ -7299,9 +7299,6 @@ class ObjectAttrs(WidgetGroup) :
 
 			match_value = False
 			for attr_rng_node in attr_rng_node_dict[key] :
-				if match_value :
-					continue
-
 				decl_rng_nodes = manager.get_decl_rng_nodes(attr_rng_node)
 				if decl_rng_nodes.get("choice") == None or \
 						decl_rng_nodes.get("choice") not in sorted_nodes["choice"] :
@@ -7333,6 +7330,9 @@ class ObjectAttrs(WidgetGroup) :
 					else :
 						if key not in friend_attrs :
 							friend_attrs.append(key)
+
+				if match_value :
+					break
 
 		if len(opposite_attrs) == 0 and len(sub_opposite_attrs) == 0 and len(friend_attrs) == 0 :
 			return
