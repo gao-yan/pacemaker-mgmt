@@ -7068,15 +7068,14 @@ class ObjectAttrs(WidgetGroup) :
 				if widgets["combo_entries"].has_key(key) :
 					self.combobox_store_append(widgets["combo_entries"][key], node_store)
 					
-		if validate_type != "dtd" :
-			return
-
-		try :
-			op_dtd_elem = manager.get_dtd_elem("op")
-			role_attr = op_dtd_elem.get_attr("role")
-			role_attr_type = role_attr.get_type()
-		except KeyError :
-			role_attr_type = None
+		role_attr_type = None
+		if validate_type == "dtd" :
+			try :
+				op_dtd_elem = manager.get_dtd_elem("op")
+				role_attr = op_dtd_elem.get_attr("role")
+				role_attr_type = role_attr.get_type()
+			except KeyError :
+				pass
 
 		if role_attr_type != None and type(role_attr_type) == list :
 			roles = role_attr_type
@@ -7088,6 +7087,9 @@ class ObjectAttrs(WidgetGroup) :
 			for key in ["role", "from_role", "to_role"] :
 				if widgets["combo_entries"].has_key(key) :
 					self.combobox_store_append(widgets["combo_entries"][key], role_store)
+
+		if validate_type != "dtd" :
+			return
 
 		scores = ["INFINITY", "-INFINITY"]
 		score_store = [[score, ""] for score in scores]
