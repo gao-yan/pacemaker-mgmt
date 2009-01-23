@@ -1056,7 +1056,7 @@ class ManageView :
 						else :
 							last_rc_change_time = ""
 
-						operations[node_id][call_id] = [
+						operations[node_id][int(call_id)] = [
 										call_id,
 										operation,
 										interval_time,
