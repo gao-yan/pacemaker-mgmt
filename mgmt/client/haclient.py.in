@@ -24,7 +24,7 @@ Copyright (C) 2005 International Business Machines
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 
-import sys, os, string, socket, syslog, webbrowser, pickle, xml, gc, time, binascii, thread, tarfile, gv
+import sys, os, string, socket, syslog, webbrowser, pickle, xml, gc, time, binascii, thread, tarfile
 from stat import *
 from xml.dom.minidom import parseString
 from xml.dom.minidom import getDOMImplementation
@@ -41,6 +41,13 @@ from pymgmt import *
 import pygtk
 pygtk.require('2.0')
 import gtk, gobject
+
+support_gv = False
+try :
+	import gv
+	support_gv = True
+except ImportError :
+	pass
 
 validate_type = "dtd"
 expert_mode = False
@@ -4170,6 +4177,10 @@ class TransitionInfoDlg :
 		self.on_refresh()
 
 		dialog.show_all()
+
+		if not support_gv :
+			notebook.get_nth_page(0).hide_all()
+
 		save_top_window = top_window
 		top_window = dialog
 
@@ -4213,6 +4224,8 @@ class TransitionInfoDlg :
 		self.detail_refresh_btn.set_sensitive(False)
 
 	def show_pe_graph(self) :
+		if not support_gv :
+			return
 		if self.live_radio_btn.get_active() :
 			pe_input = "live"
 		else :
@@ -4281,6 +4294,9 @@ class TransitionInfoDlg :
 	def save_transition_info(self) :
 		page_num = self.notebook.get_current_page()
 		if page_num == 0 :
+			if not support_gv :
+				msgbox(_("Cannot save the graph for specified transition"))
+				return
 			default_name = "pe-graph.png"
 			filter_list = ((_("PNG Image"), (".png",)),
 					(_("JPEG Image"), (".jpg", ".jpeg", ".jpe")),
