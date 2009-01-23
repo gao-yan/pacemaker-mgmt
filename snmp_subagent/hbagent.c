@@ -1512,8 +1512,8 @@ main(int argc, char ** argv)
 		/* 0 == don't block */
 		/* agent_check_and_process(1); */
 
-#if SUPPORT_HEARTBEAT
 		FD_ZERO(&fdset);
+#if SUPPORT_HEARTBEAT
                 FD_SET(hb_fd, &fdset);
 		numfds = hb_fd + 1;
 
