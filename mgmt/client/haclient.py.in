@@ -8332,6 +8332,8 @@ if __name__ == '__main__' :
 	except RuntimeError :
 		print "Could not open display"
 		sys.exit()
+	except AttributeError :
+		pass
 	if not pygtk_newer(2, 4) :
 		print "the pygtk 2.4 or newer is needed."
 		sys.exit()
