@@ -13,6 +13,10 @@
 
 #include <errno.h>
 
+#ifdef SUPPORT_AIS
+#undef SUPPORT_AIS
+#endif
+
 #ifdef SUPPORT_HEARTBEAT
 #undef SUPPORT_HEARTBEAT
 #endif

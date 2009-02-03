@@ -30,7 +30,11 @@
 #endif
 
 #include <glib.h>
-/* #include "saf/ais.h" */
+
+#if SUPPORT_HEARTBEAT
+#include "saf/ais.h"
+#endif
+
 #include "snmp-config-resolve.h"
 #include <clplumbing/cl_uuid.h>
 
