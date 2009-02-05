@@ -24,12 +24,12 @@ Copyright (C) 2005 International Business Machines
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 
-import sys, os, string, socket, syslog, webbrowser, pickle, xml, gc, time, binascii, thread, tarfile
+import sys, os, string, socket, syslog, webbrowser, pickle, xml, gc, time, binascii, thread, tarfile, tempfile
 from stat import *
 from xml.dom.minidom import parseString
 from xml.dom.minidom import getDOMImplementation
 from xml.parsers.xmlproc.xmldtd import load_dtd_string
-from tempfile import mkstemp
+from lxml import etree
 
 import locale, gettext
 app_name = "haclient"
@@ -114,7 +114,31 @@ def pygobject_newer(major, minor, rel) :
 		if gobject.pygobject_version[1] == minor and gobject.pygobject_version[2] >= rel :
 			return True
 	return False
-	
+		
+def delete_dir(dir_path) :
+	real_path = os.path.realpath(dir_path)
+	if real_path.count(os.sep) == len(real_path) :
+		msgbox(_("Do not delete the root directory"))
+		return
+
+	for root, dirs, files in os.walk(dir_path, False) :
+    		for name in files :
+			try :
+				os.unlink(os.path.join(root, name))
+			except OSError, msg :
+				msgbox(_("System error: ") + str(msg))
+				continue
+		for name in dirs :
+			try :
+				os.rmdir(os.path.join(root, name))
+			except OSError, msg :
+				msgbox(_("System error: ") + str(msg))
+				continue
+	try :
+		os.rmdir(dir_path)
+	except OSError, msg :
+		msgbox(_("System error: ") + str(msg))
+
 def add_column(widget, label, value, icon_cell_func = None, editable = False
 		, options=None, call_back=None, visible = True, is_enum = False) :
 	tvcolumn = gtk.TreeViewColumn(label)
@@ -2350,14 +2374,22 @@ class ObjectView :
 		self.mode_combobox.set_active(self.show_mode)
 
 	def edit_xml(self) :
+		init_cib_xml_node = manager.xml_nodes["cib"]
+		orig_xml_node = self.xml_node.cloneNode(True)
+		replace_xml_node = self.xml_node
 		xml_dlg = EditXMLDlg(self.xml_node)
 		while True :
 			new_xml_node = xml_dlg.run()
 			if new_xml_node == None :
+				replace_xml_node.parentNode.replaceChild(orig_xml_node, replace_xml_node)
+				self.xml_node = orig_xml_node
+				self.update()
 				break
+			replace_xml_node.parentNode.replaceChild(new_xml_node, replace_xml_node)
+			replace_xml_node = new_xml_node
 			if not self.is_topview :
 				xml_dlg.destroy()
-				self.xml_node.parentNode.replaceChild(new_xml_node, self.xml_node)
+				#self.xml_node.parentNode.replaceChild(new_xml_node, self.xml_node)
 				self.xml_node = new_xml_node
 				self.update()
 				if self.change_call_back != None :
@@ -2374,11 +2406,13 @@ class ObjectView :
 						xml_dlg.destroy()
 						break
 				else :
+					if not manager.validate_cib(init_cib_xml_node) :
+						continue
 					manager.cib_do_cmd("cib_replace\n%s\n%s"%(str(self.xml_node.tagName), str(xml_str)))
 					if manager.failed_reason != "" :
 						msgbox(manager.failed_reason)
 					else :
-						self.xml_node.parentNode.replaceChild(new_xml_node, self.xml_node)
+						#self.xml_node.parentNode.replaceChild(new_xml_node, self.xml_node)
 						self.xml_node = new_xml_node
 						self.update()
 						xml_dlg.destroy()
@@ -2973,6 +3007,7 @@ class ElementNotebook :
 
 	def on_add(self, widget = None, invoked_by_wizard = False, append_title = "") :
 		global top_window
+		init_cib_xml_node = manager.xml_nodes["cib"]
 
 		elem_rng_nodes = []
 		if validate_type == "dtd" :
@@ -3172,6 +3207,8 @@ class ElementNotebook :
 							parent_type = "status"
 					manager.cib_do_cmd("cib_create\n%s\n%s"%(str(parent_type), str(xml_str)))
 				else :
+					if not manager.validate_cib(init_cib_xml_node) :
+						continue
 					#xml_str = new_xml_node.toxml().replace("\n", "")
 					#parent_type = self.obj_type
 					xml_str = self.xml_node.toxml().replace("\n", "")
@@ -3305,6 +3342,8 @@ class ElementNotebook :
 							
 
 	def on_edit(self, widget) :
+		init_cib_xml_node = manager.xml_nodes["cib"]
+
 		selected_node = self.get_selected_node()
 		if selected_node == None :
 			return
@@ -3321,6 +3360,8 @@ class ElementNotebook :
 					self.change_call_back()
 				return
 			else :
+				if not manager.validate_cib(init_cib_xml_node) :
+					continue
 				#if new_xml_node.getAttribute("id") != "" :
 				#	xml_str = new_xml_node.toxml().replace("\n", "")
 				#else :
@@ -3343,12 +3384,13 @@ class ElementNotebook :
 				(gtk.STOCK_NO, gtk.RESPONSE_NO, gtk.STOCK_YES, gtk.RESPONSE_YES),
 				_("Delete the selected object?"))
 		if ret == gtk.RESPONSE_YES :
+			selected_node.parentNode.removeChild(selected_node)
 			if not self.is_topview :
-				selected_node.parentNode.removeChild(selected_node)
 				self.on_changed()
 				if self.change_call_back != None :
 					 self.change_call_back()
 			else :
+				manager.validate_cib()
 				xml_str = selected_node.toxml().replace("\n", "")
 				manager.cib_do_cmd("cib_delete\n%s\n%s"%(str(self.obj_type), str(xml_str)))
 				if manager.failed_reason != "" :
@@ -3386,6 +3428,7 @@ class ElementNotebook :
 		selected_node.parentNode.removeChild(selected_node)
 
 		if self.is_topview :
+			manager.validate_cib()
 			xml_str = self.xml_node.toxml().replace("\n", "")
 			manager.cib_do_cmd("cib_replace\n%s\n%s"%(str(self.obj_type), str(xml_str)))
 			if manager.failed_reason != "" :
@@ -3425,6 +3468,7 @@ class ElementNotebook :
 		selected_node.parentNode.removeChild(selected_node)
 
 		if self.is_topview :
+			manager.validate_cib()
 			xml_str = self.xml_node.toxml().replace("\n", "")
 			manager.cib_do_cmd("cib_replace\n%s\n%s"%(str(self.obj_type), str(xml_str)))
 			if manager.failed_reason != "" :
@@ -4236,7 +4280,7 @@ class TransitionInfoDlg :
 		if graph_str != None :
 			G = gv.readstring(graph_str)
 			gv.layout(G, "dot")
-			(fd, tmp_png) = mkstemp(suffix=".png")
+			(fd, tmp_png) = tempfile.mkstemp(suffix=".png")
 			os.close(fd)
 			gv.render(G, "png", tmp_png)
 			self.G = G
@@ -5010,7 +5054,7 @@ class MainWindow :
 			msgbox(_("Incomplete data: ") + str(msg))
 			return
 
-		(fd, tmp_file) = mkstemp(suffix = ".tar." + default_filetype, prefix = "cluster-report-")
+		(fd, tmp_file) = tempfile.mkstemp(suffix = ".tar." + default_filetype, prefix = "cluster-report-")
 
 		#try :
 		#	fd = os.open(save_file, os.O_RDWR|os.O_CREAT|os.O_TRUNC, 0644)
@@ -5180,31 +5224,7 @@ class MainWindow :
 
 		for dir_path in dir_list :
 			if os.access(dir_path, os.F_OK) :
-				self.delete_dir(dir_path)
-		
-	def delete_dir(self, dir_path) :
-		real_path = os.path.realpath(dir_path)
-		if real_path.count(os.sep) == len(real_path) :
-			msgbox(_("Do not delete the root directory"))
-			return
-
-		for root, dirs, files in os.walk(dir_path, False) :
-    			for name in files :
-				try :
-					os.unlink(os.path.join(root, name))
-				except OSError, msg :
-					msgbox(_("System error: ") + str(msg))
-					continue
-			for name in dirs :
-				try :
-					os.rmdir(os.path.join(root, name))
-				except OSError, msg :
-					msgbox(_("System error: ") + str(msg))
-					continue
-		try :
-			os.rmdir(dir_path)
-		except OSError, msg :
-			msgbox(_("System error: ") + str(msg))
+				delete_dir(dir_path)
 
 	def change_expert_mode(self, action) :
 		global expert_mode
@@ -5690,6 +5710,7 @@ class Manager :
 		else :
 			if self.validate_name != saved_validate_name :
 				self.rng_docs = {}
+				self.rng_str_docs = {}
 				self.update_rng_docs(self.validate_name, self.validate_name+".rng")
 				self.supported_rsc_types = self.get_supported_rsc_types()
 
@@ -5749,6 +5770,76 @@ class Manager :
 				return node_name
 		return ""
 
+	def validate_cib(self, cib_xml_node = None) :
+		if cib_xml_node == None :
+			 cib_xml_node = manager.xml_nodes["cib"]
+
+		if validate_type == "dtd" :
+			is_valid = True
+		else :
+			is_valid = self.validate_with_rng(cib_xml_node)
+
+		return is_valid
+
+	def validate_with_rng(self, cib_xml_node) :
+		rng_doc = self.tmp_rng_doc()
+		if rng_doc == None :
+			msgbox(_("Cannot get the Relax-NG schema"))
+			return False
+		
+		try :
+			cib_doc = etree.fromstring(cib_xml_node.toxml())
+		except etree.Error, msg :
+			msgbox(_("Failed to parse the CIB XML: ") + _(msg))
+			return False
+			
+		try :
+			relaxng = etree.RelaxNG(file = rng_doc)
+		except etree.Error, msg :
+			msgbox(_("Failed to parse the Relax-NG schema: ") + _(msg))
+			return False
+		#try :
+		#	relaxng.assertValid(cib_doc)
+		#except etree.DocumentInvalid, err_msg :
+		#	print err_msg
+		#	print relaxng.error_log
+		etree.clear_error_log()
+		is_valid = relaxng.validate(cib_doc)
+		if not is_valid :
+			error_msg = ""
+			for error_entry in relaxng.error_log :
+				error_msg += error_entry.level_name + ": " + error_entry.message + "\n"
+			msgbox(_(error_msg))
+
+		delete_dir(os.path.dirname(rng_doc))
+
+		return is_valid
+
+	def tmp_rng_doc(self) :
+		tmp_dir = tempfile.mkdtemp()
+		for rng_doc_name in self.rng_str_docs :
+			rng_doc_filename = os.path.join(tmp_dir, rng_doc_name)
+			try :
+				fd = os.open(rng_doc_filename, os.O_RDWR|os.O_CREAT|os.O_TRUNC, 0644)
+			except OSError, msg :
+				msgbox(_("System error: ") + str(msg))
+				return None
+
+			rng_doc_str = self.rng_str_docs[rng_doc_name]
+
+			try :
+				os.write(fd, rng_doc_str)
+			except OSError, msg :
+				msgbox(_("System error: ") + str(msg))
+				os.close(fd)
+				return None
+			os.close(fd)
+
+		if self.validate_name + ".rng" in  self.rng_str_docs :
+			return os.path.join(tmp_dir, self.validate_name + ".rng")
+		else :
+			return None
+
 	def update_rng_docs(self, validate_name = "", file= "") :
 		self.rng_docs[file] = self.get_start_rng_node(validate_name, file)
 		if self.rng_docs[file] == None :
@@ -5763,6 +5854,9 @@ class Manager :
 		crm_schema = self.get_crm_schema(validate_name, file)
 		if crm_schema == None :
 			msgbox(_("Cannot get Relax-NG schema: ") + schema_info)
+			return None
+
+		self.rng_str_docs[file] = crm_schema
 
 		try :
 			rng_doc = parseString(crm_schema).documentElement
