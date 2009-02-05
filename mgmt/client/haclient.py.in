@@ -5803,7 +5803,14 @@ class Manager :
 		#except etree.DocumentInvalid, err_msg :
 		#	print err_msg
 		#	print relaxng.error_log
-		etree.clear_error_log()
+		try :
+			etree.clear_error_log()
+		except :
+			try :
+				etree.clearErrorLog()
+			except :
+				pass
+
 		is_valid = relaxng.validate(cib_doc)
 		if not is_valid :
 			error_msg = ""
