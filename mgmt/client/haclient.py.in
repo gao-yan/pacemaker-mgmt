@@ -969,8 +969,8 @@ class ManageView :
 		return rsc_summary
 
 	def show_operations(self, rsc_id) :
-		op_fields = ["Call ID", "Operation", "Interval", "Result", "Status", 
-				"Last Run", "Exec Time", "Queue Time", "Last Result Change"]
+		op_fields = ["Call ID", "Operation", "Interval", "Return Code", "Status", 
+				"Last Run", "Exec Time", "Queue Time", "Last Return Code Change"]
 			
 		store = gtk.TreeStore(*(tuple(str for i in range(len(op_fields)))))
 		tree = gtk.TreeView(store)
