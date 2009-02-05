@@ -120,8 +120,12 @@ int cib_cache_enable = FALSE;
 
 #define GET_RESOURCE()	rsc = pe_find_resource(data_set->resources, argv[1]);	\
 	if (rsc == NULL) {						\
-		free_data_set(data_set);				\
-		return strdup(MSG_FAIL"\nno such resource");		\
+		char *as_clone = crm_concat(argv[1], "0", ':');		\
+		rsc = pe_find_resource(data_set->resources, as_clone);	\
+		if (rsc == NULL) {					\
+			free_data_set(data_set);			\
+			return strdup(MSG_FAIL"\nno such resource");	\
+		}							\
 	}
 
 /* internal functions */

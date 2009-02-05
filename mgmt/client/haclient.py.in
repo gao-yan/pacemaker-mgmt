@@ -1154,9 +1154,9 @@ class ManageView :
 		else :
 			metaattr_name = "target-role"
 
-		for subrsc in manager.get_all_subrsc(cur_name) :
+		for subrsc in manager.get_all_real_subrsc(cur_name) :
 			value = manager.do_cmd("get_rsc_attr\n%s\nmeta\n%s"%(subrsc, metaattr_name))
-			if len(value) == 0 :
+			if value == None or len(value) == 0 :
 				continue
 			retval = confirmbox(_("Caused by your previous action, this attribute has been set to \"")
 						+value[0]
@@ -1175,9 +1175,9 @@ class ManageView :
 				manager.do_cmd("del_rsc_attr\n%s\nmeta\n%s"%(subrsc, metaattr_name))
 
 		if target_role == "#default" :
-			manager.do_cmd("del_rsc_attr\n%s\nmeta\n%s"%(cur_name, metaattr_name))
+			manager.do_cmd("del_rsc_attr\n%s\nmeta\n%s"%(manager.obj_real_id(cur_name), metaattr_name))
 		else :
-			manager.do_cmd("set_rsc_attr\n%s\nmeta\n%s\n%s"%(cur_name, metaattr_name, target_role))
+			manager.do_cmd("set_rsc_attr\n%s\nmeta\n%s\n%s"%(manager.obj_real_id(cur_name), metaattr_name, target_role))
 			if manager.failed_reason != "" :
 				msgbox(manager.failed_reason)
 
@@ -1254,13 +1254,13 @@ class ManageView :
 
 			if key == "rsc" :
 				widget = gtk.combo_box_new_text()
-				for rsc in manager.get_all_rsc() :
+				for rsc in manager.get_all_real_rsc() :
 					widget.append_text(rsc)
 
 				model = widget.get_model()
 				iter = model.get_iter_first()
 				while iter != None :
-					if model.get_value(iter,0) == cur_name :
+					if model.get_value(iter,0) == manager.obj_real_id(cur_name) :
 						widget.set_active_iter(iter)
 						break
 					iter = model.iter_next(iter)
@@ -1427,9 +1427,9 @@ class ManageView :
 			metaattr_name = "is-managed"
 
 		if is_managed == "#default" :
-			manager.do_cmd("del_rsc_attr\n%s\nmeta\n%s"%(cur_name, metaattr_name))
+			manager.do_cmd("del_rsc_attr\n%s\nmeta\n%s"%(manager.obj_real_id(cur_name), metaattr_name))
 		else :
-			manager.do_cmd("set_rsc_attr\n%s\nmeta\n%s\n%s"%(cur_name, metaattr_name, is_managed))
+			manager.do_cmd("set_rsc_attr\n%s\nmeta\n%s\n%s"%(manager.obj_real_id(cur_name), metaattr_name, is_managed))
 			if manager.failed_reason != "" :
 				msgbox(manager.failed_reason)
 
@@ -6325,16 +6325,25 @@ class Manager :
 					all_rscs.extend(all_subrscs)
 		return all_rscs
 
-	def get_all_true_rsc(self) :
+	def get_all_real_rsc(self) :
 		all_rscs = self.get_all_rsc()
-		all_true_rsc = []
+		all_real_rsc = []
 		for rsc in all_rscs :
-			true_rsc_id = self.true_obj_id(rsc)
-			if all_true_rsc.count(true_rsc_id) == 0 :
-				all_true_rsc.append(true_rsc_id)
-		return all_true_rsc
+			rsc_real_id = self.obj_real_id(rsc)
+			if all_real_rsc.count(rsc_real_id) == 0 :
+				all_real_rsc.append(rsc_real_id)
+		return all_real_rsc
 
-	def true_obj_id(self, obj_id) :
+	def get_all_real_subrsc(self, rsc_id) :
+		all_subrscs = self.get_all_subrsc(rsc_id)
+		all_real_subrsc = []
+		for rsc in all_subrscs :
+			rsc_real_id = self.obj_real_id(rsc)
+			if all_real_subrsc.count(rsc_real_id) == 0 :
+				all_real_subrsc.append(rsc_real_id)
+		return all_real_subrsc
+
+	def obj_real_id(self, obj_id) :
 		return obj_id.split(":")[0]
 
 	def op_status2str(self, op_status) :
@@ -7185,7 +7194,7 @@ class ObjectAttrs(WidgetGroup) :
 	def auto_fill(self) :
 		widgets = self.widgets
 		rsc_store = gtk.ListStore(str, str)
-		for rsc in manager.get_all_true_rsc() :
+		for rsc in manager.get_all_real_rsc() :
 			rsc_store.append([rsc, ""])
 
 		node_list = manager.get_normal_nodes()
