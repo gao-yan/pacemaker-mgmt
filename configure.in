@@ -1342,7 +1342,7 @@ if test $AIS_VERSION != "none"; then
 fi
 
 dnl continue?
-if test $AIS_VERSION != "none"; then
+if test x$AIS_VERSION = "none"; then
      dnl Don't add the messaging library to LIBS since most daemons don't need/use it
      saveLIBS="$LIBS"
      LIBS="$LIBS -L${AISLIB} -R${AISLIB}"
