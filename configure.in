@@ -45,7 +45,7 @@ if test -z "$HAPKGVERSION" ; then
 fi
 
 HB_PKG=heartbeat
-PKG_NAME=pygui
+PKG_NAME=pacemaker-mgmt
 AM_INIT_AUTOMAKE($PKG_NAME, $HAPKGVERSION)
 
 dnl ===============================================

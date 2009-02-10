@@ -26,8 +26,8 @@ MAINTAINERCLEANFILES    = Makefile.in aclocal.m4 configure DRF/config-h.in \
 coredir = 		@HA_COREDIR@
 hauser = 		@HA_CCMUSER@
 
-TARFILE			= pygui.tar.gz
-LAST_RELEASE		= pacemaker-pygui-1.4
+TARFILE			= pacemaker-mgmt.tar.gz
+LAST_RELEASE		= pacemaker-mgmt-1.99.0
 
 if CIM_PROVIDER_BUILD
 CIM_PROVIDER_DIR = cim
