@@ -1,3 +1,4 @@
+usr/bin/crm_gui
 usr/bin/hb_gui
 usr/lib/heartbeat-gui/_pymgmt.so.0
 usr/lib/heartbeat-gui/_pymgmt.so.0.0.0

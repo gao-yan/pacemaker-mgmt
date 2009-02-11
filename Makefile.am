@@ -74,6 +74,7 @@ unstable:	tgz
 install-exec-local:
 	-mkdir -p $(DESTDIR)$(bindir)
 	-cd $(DESTDIR)$(libdir)/heartbeat-gui && rm -f haclient.py && ln -s $(datadir)/heartbeat-gui/haclient.py .
+	-cd $(DESTDIR)$(bindir) && rm -f crm_gui && ln -s $(datadir)/heartbeat-gui/haclient.py crm_gui
 	-cd $(DESTDIR)$(bindir) && rm -f hb_gui && ln -s $(datadir)/heartbeat-gui/haclient.py hb_gui
 
 dist-clean-local:
