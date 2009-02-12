@@ -27,7 +27,7 @@ NET-SNMP version is 5.1.
 
     You need to turn on the Agentx support in the SNMP daemon.
 Also you need to define at least one trap sink in order to receive
-the traps.  Also, the LINUX-HA-MIB.mib file needs to be installed
+the traps.  Also, the LINUX-HA-MIB.txt file needs to be installed
 to your default mib location so the SNMP daemon can parse it. 
 This should be taken care of by the 'make install' though.  
 
@@ -57,7 +57,7 @@ This should be taken care of by the 'make install' though.
         -mLINUX-HA-MIB enterprises.4682
 
       (if you get a error message you may have to copy 
-       /usr/share/snmp/mibs/LINUX-HA-MIB.mib from one of
+       /usr/share/snmp/mibs/LINUX-HA-MIB.txt from one of
        the cluster machines to your management station 
        to /usr/share/snmp/mibs/)
 
