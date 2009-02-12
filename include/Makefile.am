@@ -26,7 +26,7 @@ EXTRA_DIST = ha_version.h
 topdir=$(includedir)/heartbeat
 
 noinst_HEADERS	        = config.h pygui_internal.h ha_version.h portability.h
-top_HEADERS	        = pygui_config.h
+top_HEADERS	        = mgmt_config.h
 
 SUBDIRS                 = mgmt	
 

@@ -31,7 +31,7 @@ dnl   - Manually edit include/hb_config.h.in to have configure include
 dnl     new defines
 dnl   - Should not include HAVE_* defines
 dnl   - Safe to include anywhere
-AM_CONFIG_HEADER(include/config.h include/pygui_config.h)
+AM_CONFIG_HEADER(include/config.h include/mgmt_config.h)
 ALL_LINGUAS="en fr"
 
 AC_ARG_WITH(hapkgversion,
