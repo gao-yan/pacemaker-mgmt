@@ -57,10 +57,11 @@ test_scrs	=	SNMPAgentSanityCheck
 mibsdir			= @MIBS_DIR@
 mibs_DATA		= LINUX-HA-MIB.txt
 DIST_LIST		= SNMPAgentSanityCheck.in $(mibs_DATA)
-doc_DATA		= README.hbagent README.hbagentv2
 
 EXTRA_DIST		= $(DIST_LIST)
 
+docdir			= $(datadir)/doc/packages/@PKG_NAME@
+doc_DATA		= README.hbagent README.hbagentv2
 
 INCLUDES                = -I$(top_builddir)/include -I$(top_srcdir)/include \
 			-I$(top_builddir)/libltdl -I$(top_srcdir)/libltdl
