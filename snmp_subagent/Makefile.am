@@ -55,8 +55,9 @@ test_scrs	=	SNMPAgentSanityCheck
 
 
 mibsdir			= @MIBS_DIR@
-mibs_DATA		= LINUX-HA-MIB.mib
+mibs_DATA		= LINUX-HA-MIB.txt
 DIST_LIST		= SNMPAgentSanityCheck.in $(mibs_DATA)
+doc_DATA		= README.hbagent README.hbagentv2
 
 EXTRA_DIST		= $(DIST_LIST)
 
