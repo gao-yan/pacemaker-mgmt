@@ -65,11 +65,11 @@ changes:
 
 stable:	tgz
 	make changes > .changes
-	scp .changes $(TARFILE) c001n16.suse.de:Development/obs/server:ha-clustering/pygui/
+	scp .changes $(TARFILE) c001n16.suse.de:Development/obs/server:ha-clustering/pacemaker-mgmt/
 
 unstable:	tgz
 	make changes > .changes
-	scp .changes $(TARFILE) c001n16.suse.de:Development/obs/server:ha-clustering:UNSTABLE/pygui/
+	scp .changes $(TARFILE) c001n16.suse.de:Development/obs/server:ha-clustering:UNSTABLE/pacemaker-mgmt/
 
 install-exec-local:
 	-mkdir -p $(DESTDIR)$(bindir)
