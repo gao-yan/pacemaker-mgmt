@@ -4,15 +4,6 @@
 #include "crm/msg_xml.h"
 #include "crm/transition.h"
 
-#include <net-snmp/net-snmp-config.h>
-#include <net-snmp/net-snmp-includes.h>
-#include <net-snmp/agent/net-snmp-agent-includes.h>
-#include <sys/wait.h>
-
-#include <unistd.h>
-
-#include <errno.h>
-
 #ifdef SUPPORT_AIS
 #undef SUPPORT_AIS
 #endif
@@ -23,6 +14,9 @@
 
 #include <pygui_internal.h>
 
+#include "hbagent.h"
+#include "hbagentv2.h"
+
 #if SUPPORT_HEARTBEAT
 #include "hb_api.h"
 #include "heartbeat.h"
@@ -30,8 +24,14 @@
 #include "clplumbing/cl_log.h"
 #include "clplumbing/coredumps.h"
 
-#include "hbagent.h"
-#include "hbagentv2.h"
+#include <net-snmp/net-snmp-config.h>
+#include <net-snmp/net-snmp-includes.h>
+#include <net-snmp/agent/net-snmp-agent-includes.h>
+#include <sys/wait.h>
+
+#include <unistd.h>
+
+#include <errno.h>
 
 #include "LHAResourceTable.h"
 #include "LHAResourceStatusUpdate.h"
