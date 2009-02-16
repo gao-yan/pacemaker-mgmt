@@ -3133,7 +3133,7 @@ class ElementNotebook :
 				obj_type_name = obj_type[0][1].getAttribute("name")
 				#sorted_rng_nodes = manager.sorted_sub_rng_nodes_by_node(*obj_type[0])
 
-		(parent_xml_node, add_obj_type) = manager.real_add_obj_type(self.xml_node, obj_type_name)
+		(parent_xml_node, add_obj_type, new_mid_elem) = manager.real_add_obj_type(self.xml_node, obj_type_name)
 		if parent_xml_node == None :
 			return 1
 				
@@ -3186,6 +3186,8 @@ class ElementNotebook :
 			if new_xml_node == None :
 				tmp_elem = objdlg.obj_view.xml_node
 				tmp_elem.parentNode.removeChild(tmp_elem)
+				if new_mid_elem != None :
+					new_mid_elem.parentNode.removeChild(new_mid_elem)
 				return 2
 			if not self.is_topview :
 				objdlg.destroy()
@@ -3761,7 +3763,7 @@ class AddWizard :
 	def set_meta_attributes(self) :
 		meta_attributes = self.widget_group.get_values()
 
-		(parent_xml_node, add_obj_type) = manager.real_add_obj_type(self.xml_node, "meta_attributes", True)
+		(parent_xml_node, add_obj_type, new_mid_elem) = manager.real_add_obj_type(self.xml_node, "meta_attributes", True)
 		if parent_xml_node == None :
 			return
 
@@ -3824,7 +3826,7 @@ class AddWizard :
 			return
 
 		monitors = self.get_monitors()
-		(parent_xml_node, add_obj_type) = manager.real_add_obj_type(self.xml_node, "operations", True)
+		(parent_xml_node, add_obj_type, new_mid_elem) = manager.real_add_obj_type(self.xml_node, "operations", True)
 		if parent_xml_node == None :
 			return
 
@@ -3885,7 +3887,7 @@ class AddWizard :
 		if self.obj_type != "primitive" or meta == None :
 			return
 
-		(parent_xml_node, add_obj_type) = manager.real_add_obj_type(self.xml_node, "instance_attributes", True)
+		(parent_xml_node, add_obj_type, new_mid_elem) = manager.real_add_obj_type(self.xml_node, "instance_attributes", True)
 		if parent_xml_node == None :
 			return
 
@@ -6014,6 +6016,7 @@ class Manager :
 				or ((not expert_mode or is_wizard) and obj_type_name in
 				["meta_attributes", "instance_attributes", "operations",
 				"cluster_property_set"])) :
+			new_mid_elem = None
 			impl = getDOMImplementation()
 			elem_node_list = []
 			for elem_node in xml_node.getElementsByTagName(obj_type_name) :
@@ -6023,6 +6026,7 @@ class Manager :
 				newdoc = impl.createDocument(None, obj_type_name, None)
 				mid_elem = newdoc.documentElement
 				xml_node.appendChild(mid_elem)
+				new_mid_elem = mid_elem
 
 				obj_type = xml_node.tagName
 				if obj_type == "crm_config" :
@@ -6060,13 +6064,15 @@ class Manager :
 							sub_mid_elem = newdoc.documentElement
 							mid_elem.appendChild(sub_mid_elem)
 							mid_elem = sub_mid_elem
+							if new_mid_elem == None :
+								new_mid_elem = mid_elem
 						else :
 							mid_elem = sub_elem_node_list[0]
 							
 						sub_dtd_elem = manager.get_dtd_elem(sub_obj_type)
 						(sub_obj_type, mod) = sub_dtd_elem.get_content_model()[1][0]
 				else :
-					return (None, None)
+					return (None, None, None)
 			else:
 				sub_obj_type = None
 				for sub_elem_rng_node in sub_elem_rng_nodes :
@@ -6076,11 +6082,11 @@ class Manager :
 					break
 
 				if sub_obj_type == None :
-					return (None, None)
+					return (None, None, None)
 
-			return (mid_elem, sub_obj_type)
+			return (mid_elem, sub_obj_type, new_mid_elem)
 		else :
-			return (xml_node, obj_type_name)
+			return (xml_node, obj_type_name, None)
 
 	def update(self) :
 		self.cache_clear()
