@@ -51,6 +51,7 @@ except ImportError :
 
 validate_type = "dtd"
 expert_mode = False
+mode_level = "simple"
 name_cap = lambda name: name.replace("-"," ").replace("_"," ").title().replace("Crmd","CRMD").\
 				replace("Crm","CRM").replace("Pe ", "PE ").replace("Dc ","DC ").\
 				replace("Cib", "CIB").replace("Ccm", "CCM").replace("Ha", "HA").\
@@ -2141,6 +2142,398 @@ class ClusterView :
 	def restore_status(self, view_status) :
 		#if view_status == None :
 		#	return
+		(page_num,) = view_status
+		self.notebook.set_current_page(page_num)
+
+class View :
+	changed = False
+	
+	def __init__(self, param=None) :
+
+		bbox = gtk.HButtonBox()
+		bbox.set_layout(gtk.BUTTONBOX_END)
+		bbox.set_spacing(5)
+		default_btn = gtk.Button(_("Default"))
+		bbox.add(default_btn)
+		reset_btn = gtk.Button(_("Reset"))
+		bbox.add(reset_btn)
+		apply_btn = gtk.Button(stock=gtk.STOCK_APPLY)
+		bbox.add(apply_btn)
+		self.bbox = bbox
+
+		self.default_btn_handler = default_btn.connect("clicked", self.on_default)
+		self.reset_btn_handler = reset_btn.connect("clicked", self.on_reset)
+		self.apply_btn_handler = apply_btn.connect("clicked", self.on_apply)
+
+		self.default_btn = default_btn
+		self.reset_btn = reset_btn
+		self.apply_btn = apply_btn
+
+		self.widget.pack_start(self.bbox, False, padding = 2)
+
+	def update(self) :
+		self.apply_btn.set_property("sensitive", False)
+		self.reset_btn.set_property("sensitive", False)
+		self.changed = False
+	
+	def on_changed(self, widget) :
+		self.apply_btn.set_property("sensitive", True)
+		self.reset_btn.set_property("sensitive", True)
+		self.changed = True
+	
+	def on_reset(self, widget):
+		self.update()
+		
+	def on_apply(self, widget):
+		self.apply_btn.set_property("sensitive", False)
+		self.reset_btn.set_property("sensitive", False)
+		self.changed = False
+
+	def on_default(self, widget):
+		self.on_changed(widget)
+		
+	def on_after_show(self) :
+		pass	
+
+class CRMConfigView(View) :
+	pengine_metadata = None
+	crmd_metadata = None
+	pengine_widgetgroup = None
+	crmd_widgetgroup = None
+	
+	def on_apply(self, widget):
+		current_page = self.notebook.get_current_page()
+		if current_page == 0 :
+			(widgetgroup, metadata) = (self.pengine_widgetgroup, self.pengine_metadata)
+		else :
+			(widgetgroup, metadata) = (self.crmd_widgetgroup, self.crmd_metadata)
+
+		new_crm_config = widgetgroup.get_values()
+		self.update_crm_config(metadata, new_crm_config)
+
+		self.update()
+		View.on_apply(self, widget)
+
+	def on_default(self, widget):
+		current_page = self.notebook.get_current_page()
+		if current_page == 0 :
+			(widgetgroup, metadata) = (self.pengine_widgetgroup, self.pengine_metadata)
+		else :
+			(widgetgroup, metadata) = (self.crmd_widgetgroup, self.crmd_metadata)
+
+		default_crm_config = {}
+		for parameter in metadata.parameters:
+			default_crm_config[parameter["name"]] = str(parameter["content"]["default"])
+
+		if default_crm_config != {}:
+			widgetgroup.show_values(default_crm_config)
+
+		View.on_default(self, widget)
+	
+	def update(self, xml_node = None) :
+		for (widgetgroup, metadata) in ((self.pengine_widgetgroup, self.pengine_metadata),
+						(self.crmd_widgetgroup, self.crmd_metadata)):
+			if metadata != None and widgetgroup != None:
+				crm_config = self.get_crm_config(metadata)
+				if crm_config != None :
+					widgetgroup.show_values(crm_config)
+
+		View.update(self)
+		self.on_after_show()
+
+	def get_crm_config(self, metadata) :
+		global mode_level
+		config = {}
+		for parameter in metadata.parameters :
+			config[parameter["name"]] = str(parameter["content"]["default"])
+
+		cluster_property_sets = manager.xml_nodes["cib"].getElementsByTagName("cluster_property_set")
+		if len(cluster_property_sets) == 0 :
+			return config
+		elif len(cluster_property_sets) == 1 :
+			for nvpair in cluster_property_sets[0].getElementsByTagName("nvpair") :
+				name = nvpair.getAttribute("name")
+				value = nvpair.getAttribute("value")
+				if value != "" :
+					config[nvpair.getAttribute("name")] = nvpair.getAttribute("value")
+			return config
+		else :
+			mode_level = "hack"
+			msg_box(_("Multiple \"cluster_property_set\" in CIB.\nChange to \"Hack Mode\" to see it"))
+			return None
+
+	def update_crm_config(self, metadata, new_crm_config) :
+		crm_config_xml_nodes = manager.xml_nodes["cib"].getElementsByTagName("crm_config")
+		if len(crm_config_xml_nodes) < 1 :
+			msg_box("Cannot update the crm configuration: No \"crm_config\" in CIB")
+			return
+
+		(parent_xml_node, add_obj_type, new_mid_elem) = \
+				manager.real_add_obj_type(crm_config_xml_nodes[0], "cluster_property_set")
+
+		if parent_xml_node == None :
+			msg_box("Cannot update the crm configuration")
+			return
+
+		nv_xml_nodes = {}
+		for nv_xml_node in parent_xml_node.getElementsByTagName("nvpair") :
+			nv_name = nv_xml_node.getAttribute("name")
+			nv_xml_nodes[nv_name] = nv_xml_node
+
+		default_crm_config = {}
+		for parameter in metadata.parameters :
+			default_crm_config[parameter["name"]] = str(parameter["content"]["default"])
+
+		impl = getDOMImplementation()
+		for attr_name, value in new_crm_config.iteritems() :
+			nv_xml_node = nv_xml_nodes.get(attr_name)
+
+			if nv_xml_node != None :
+				if value != default_crm_config.get(attr_name) :
+					nv_xml_node.setAttribute("value", value)
+				else :
+					nv_xml_node.parentNode.removeChild(nv_xml_node)
+			else :
+				if value != default_crm_config.get(attr_name) :
+					newdoc = impl.createDocument(None, "nvpair", None)
+					nv = newdoc.documentElement
+					parent_xml_node.appendChild(nv)
+
+					nv.setAttribute("id", "nvpair" + "-" + gen_uuid())
+					nv.setAttribute("name", attr_name)
+					nv.setAttribute("value", value)
+
+		xml_str = parent_xml_node.toxml().replace("\n", "")
+		if new_mid_elem == None :
+			manager.cib_do_cmd("cib_replace\ncrm_config\n%s"%(str(xml_str)))
+		else :
+			manager.cib_do_cmd("cib_create\ncrm_config\n%s"%(str(xml_str)))
+			
+		if manager.failed_reason != "" :
+			msgbox(manager.failed_reason)
+	
+	def on_after_show(self) :
+		target_site = "www.clusterlabs.org"
+		for widgets in (self.pengine_widgetgroup.widgets, self.crmd_widgetgroup.widgets):
+			if widgets != None:
+				name_label_max_len = 0
+				for key in widgets["name_labels"].keys():
+					make_label_active(widgets["name_labels"][key], _(name_cap(key)+":"), target_site)
+					name_label_len = len(widgets["name_labels"][key].get_text())
+					if name_label_len >  name_label_max_len :
+						name_label_max_len = name_label_len
+
+				for name_label in widgets["name_labels"].values() :
+					name_label.set_width_chars(name_label_max_len)
+							
+	def on_notebook_event(self, widget, page, page_num) :
+		global last_cluster_view_page_num
+
+		if self.changed == True:
+			ret = confirmbox(_("There are unsaved changes in current page.")+"\n"+_("Apply the changes?"),
+					(gtk.STOCK_YES, gtk.RESPONSE_YES, 
+					gtk.STOCK_NO, gtk.RESPONSE_NO))
+			if ret == gtk.RESPONSE_YES :
+				self.on_apply(widget)
+			else :
+				self.update()
+
+	def __init__(self) :
+		vbox = gtk.VBox()
+		self.widget = vbox
+
+		notebook = gtk.Notebook()
+		self.notebook = notebook
+		vbox.pack_start(notebook)
+
+		pe_vbox = gtk.VBox()
+		pe_vbox.set_border_width(5)
+		tab_label = gtk.Label(_("Policy Engine"))
+
+		sw = gtk.ScrolledWindow()
+		sw.set_shadow_type(gtk.SHADOW_NONE)
+		sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+		sw.add_with_viewport(pe_vbox)
+		sw.child.set_shadow_type(gtk.SHADOW_NONE)
+		notebook.append_page(sw, tab_label)
+		self.pe_vbox = pe_vbox
+
+		crmd_vbox = gtk.VBox()
+		crmd_vbox.set_border_width(5)
+		tab_label = gtk.Label(_("CRM Daemon"))
+
+		sw = gtk.ScrolledWindow()
+		sw.set_shadow_type(gtk.SHADOW_NONE)
+		sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+		sw.add_with_viewport(crmd_vbox)
+		sw.child.set_shadow_type(gtk.SHADOW_NONE)
+		notebook.append_page(sw, tab_label)
+		self.crmd_vbox = crmd_vbox
+
+		self.pengine_metadata = manager.get_crm_metadata("pengine")
+		self.crmd_metadata = manager.get_crm_metadata("crmd")
+
+		if self.pengine_metadata != None:
+			pengine_widgets = self.render_crmconf_widgets(self.pengine_metadata)
+			self.pengine_widgetgroup = WidgetGroup(pengine_widgets)
+		if self.crmd_metadata != None:
+			crmd_widgets = self.render_crmconf_widgets(self.crmd_metadata)
+			self.crmd_widgetgroup = WidgetGroup(crmd_widgets)
+
+		notebook.connect("switch-page", self.on_notebook_event)
+
+		View.__init__(self)
+
+		self.widget.show_all()
+		self.update()
+
+	def render_crmconf_widgets(self, metadata):
+		if metadata.name == "Policy Engine":
+			vbox = self.pe_vbox
+		elif metadata.name == "CRM Daemon":
+			vbox = self.crmd_vbox
+
+		widgets = {}
+		name_labels = {}
+		combos = {}
+		combo_entries = {}
+		checkbuttons = {}
+		spinbuttons = {}
+		entries = {}
+		parameters = metadata.parameters
+
+		for row in range(len(parameters)):
+			param_name = parameters[row]["name"]
+			param_type =  parameters[row]["content"]["type"]
+			param_default =  parameters[row]["content"]["default"]
+
+			hbox = gtk.HBox()
+			label = gtk.Label(param_name + ":")
+			label.set_alignment(0, 0.5)
+			eventbox = gtk.EventBox()
+			eventbox.add(label)
+			hbox.pack_start(eventbox, False, padding=5)
+			name_labels[param_name] = label
+
+			longdesc = parameters[row].get("longdesc")
+			shortdesc = parameters[row].get("shortdesc")
+			if len(longdesc) == 0 :
+				tip = shortdesc
+			elif longdesc.find(shortdesc) > -1 :
+				tip = longdesc
+			else :
+				if shortdesc.endswith(_(".")) :
+					tip = shortdesc + "\n" + longdesc
+				else :
+					tip = shortdesc + _(".") + "\n" + longdesc
+
+			if param_default != "" :
+				default_str =  _("Default: ") + param_default
+				if len(tip) > 0 :
+					tip += "\n\n" + default_str
+				else :
+					tip = default_str 
+				
+
+			tooltips = gtk.Tooltips()
+			tooltips.set_tip(label, tip)
+
+			if param_type == "enum" and parameters[row]["content"].has_key("values"):
+				store = gtk.ListStore(str, str)
+				for option in parameters[row]["content"]["values"]:
+					if param_default != None and option == param_default :
+						store.insert(0, [option, "[ "+ _("default") + " ]"])
+					else :
+						store.append([option, ""])
+					
+				combo = gtk.ComboBox(store)
+				cell0 = gtk.CellRendererText()
+				cell1 = gtk.CellRendererText()
+				combo.pack_start(cell0, True)
+				combo.pack_start(cell1, True)
+				combo.add_attribute(cell0, 'text', 0)
+				combo.add_attribute(cell1, 'text', 1)
+
+				combo.connect("changed", self.on_changed)
+				hbox.pack_start(combo, False, padding=3)
+				combos[param_name] = combo
+			elif param_type == "boolean":
+				checkbutton = gtk.CheckButton()
+				checkbutton.connect("toggled", self.on_changed)
+				hbox.pack_start(checkbutton, False)
+				checkbuttons[param_name] = checkbutton
+			elif param_type == "integer":
+				try :
+					default_value = int(param_default)
+				except :
+					try :
+						default_value = int(param_default.replace("s", ""))
+					except :
+						default_value = 0
+
+				if default_value < 0 :
+					adj = gtk.Adjustment(default_value, default_value, 9999, 1, 100)
+					spinbutton = gtk.SpinButton(adj, 0, 0)
+					spinbutton.set_width_chars(4)
+				elif param_name.count("stickiness") :
+					adj = gtk.Adjustment(default_value, 0000000, 1000000, 1, 100)
+					spinbutton = gtk.SpinButton(adj, 0, 0)
+					spinbutton.set_width_chars(7)
+				else :
+					adj = gtk.Adjustment(default_value, 0000, 9999, 1, 10)
+					spinbutton = gtk.SpinButton(adj, 0, 0)
+					spinbutton.set_width_chars(4)
+
+				spinbutton.set_wrap(True)
+
+				spinbutton.connect("changed", self.on_changed)
+				hbox.pack_start(spinbutton, False, padding=3)
+				spinbuttons[param_name] = spinbutton
+			elif param_default != "" or  parameters[row]["content"].has_key("values") :
+				store = gtk.ListStore(str, str)
+
+				if parameters[row]["content"].has_key("values") :
+					for option in parameters[row]["content"]["values"] :
+						if param_default != None and option == param_default :
+							store.insert(0, [option, "[ "+ _("default") + " ]"])
+						else :
+							store.append([option, ""])
+				else :
+					store.insert(0, [param_default, "[ "+ _("default") + " ]"])
+					
+				combo_entry = gtk.ComboBoxEntry(store)
+				cell = gtk.CellRendererText()
+				combo_entry.pack_start(cell, True)
+				combo_entry.add_attribute(cell, 'text', 1)
+
+				combo_entry.connect("changed", self.on_changed)
+				hbox.pack_start(combo_entry, False, padding=3)
+				combo_entries[param_name] = combo_entry
+
+			else:
+				entry = gtk.Entry()
+				entry.connect("changed", self.on_changed)
+				hbox.pack_start(entry, False, padding=3)
+				entries[param_name] = entry 
+
+			vbox.pack_start(hbox, False, padding=1)
+	
+		vbox.show_all()
+
+		widgets["name_labels"] = name_labels
+		widgets["combos"] = combos
+		widgets["combo_entries"] = combo_entries
+		widgets["checkbuttons"] = checkbuttons
+		widgets["spinbuttons"] = spinbuttons
+		widgets["entries"] = entries
+	
+		return widgets
+
+	def save_status(self) :
+		page_num = self.notebook.get_current_page()
+		return (page_num,)
+
+	def restore_status(self, view_status) :
 		(page_num,) = view_status
 		self.notebook.set_current_page(page_num)
 
@@ -4898,6 +5291,8 @@ class MainWindow :
 		self.update_ui()
 		if type == "configuration" :
 			self.cur_view = ClusterView()
+		elif type == "crm_config" and mode_level == "simple" :
+			self.cur_view = CRMConfigView()
 		elif type in ["crm_config", "nodes", "resources", "constraints", "status", "rsc_defaults", "op_defaults"] \
 				and manager.xml_nodes["cib"].getElementsByTagName(type) != [] :
 			self.cur_view = ObjectView(manager.xml_nodes["cib"].getElementsByTagName(type)[0],
@@ -6550,7 +6945,7 @@ class WidgetGroup :
 			for key in widgets["spinbuttons"].keys() :
 				if widgets["spinbuttons"][key].get_property("sensitive") == False :
 					continue
-				object[key] = str(widgets["spinbuttons"][key].get_value())
+				object[key] = str(int(widgets["spinbuttons"][key].get_value()))
 				if object[key] == ""  or object[key] == None :
 					object.pop(key)
 
