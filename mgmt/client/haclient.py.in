@@ -6586,7 +6586,7 @@ class Manager :
 		meta.longdesc = self.get_locale_desc(doc_xml, "longdesc");
 		meta.shortdesc = self.get_locale_desc(doc_xml, "shortdesc");
 		
-		meta.parameters = []
+		params = {}
 		for param_xml in doc_xml.getElementsByTagName("parameter") :
 			param = {}
 			param["name"] = param_xml.getAttribute("name")
@@ -6607,7 +6607,16 @@ class Manager :
 						content["values"].append(string.strip())
 				
 			param["content"] = content
-			meta.parameters.append(param)
+
+			params[param["name"]] = param
+
+		param_names = params.keys()
+		param_names.sort()
+
+		meta.parameters = []
+		for param_name in  param_names :
+			meta.parameters.append(params[param_name])
+
 		return meta
 
 	def get_cluster_type(self) :
