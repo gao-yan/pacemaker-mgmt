@@ -3964,8 +3964,8 @@ class AddWizard :
 		clone_other_options = [
 		("notify", [["false", _("[ default ]")], ["true", ""]],
 		 _("Notify all the other copies before stopping or starting a copy and when the action was successful (Defaults to false)")),
-		("globally-unique", [["true", _("[ default ]")], ["false", ""]],
-		 _("Globally Unique (Does each copy of the clone perform a different function? Defaults to true)")),
+		("globally-unique", [["false", _("[ default ]")], ["true", ""]],
+		 _("Globally Unique (Does each copy of the clone perform a different function? Defaults to false)")),
 		]
 
 		master_basic_options = [
@@ -4211,7 +4211,7 @@ class AddWizard :
 				#else :
 				#	nv_xml_node.parentNode.removeChild(nv_xml_node)
 			else :
-				#if value != self.default_meta_attributes.get(attr_name) :
+				if value != self.default_meta_attributes.get(attr_name) :
 					newdoc = impl.createDocument(None, "nvpair", None)
 					nv = newdoc.documentElement
 					parent_xml_node.appendChild(nv)
@@ -8216,7 +8216,7 @@ class MetaAttrsNV(ObjectAttrs) :
 		clone_other_options = [
 		("notify", [["false", _("[ default ]")], ["true", ""]],
 		 _("When stopping or starting a copy of the clone, tell all the other copies beforehand and when the action was successful.")),
-		("globally-unique", [["true", _("[ default ]")], ["false", ""]],
+		("globally-unique", [["false", _("[ default ]")], ["true", ""]],
 		 _("Does each copy of the clone perform a different function?")),
 		("ordered", [["false", _("[ default ]")], ["true", ""]],
 		 _("Should the copies be started in series (instead of in parallel)")),
