@@ -5725,7 +5725,7 @@ class MainWindow :
 		self.load_icon("starting","@HA_DATADIR@/heartbeat-gui/starting.png")
 		self.load_icon("stopping","@HA_DATADIR@/heartbeat-gui/stopping.png")
 
-		self.load_icon("expert-mode","@HA_DATADIR@/heartbeat-gui/expert-mode.png")
+		#self.load_icon("expert-mode","@HA_DATADIR@/heartbeat-gui/expert-mode.png")
 
 		# create ui-manager
 		ui_xml = '''

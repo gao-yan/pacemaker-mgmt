@@ -28,7 +28,7 @@ guilib_DATA            = ha.png login.png logout.png exit.png \
 			  start-resource.png stop-resource.png master-resource.png slave-resource.png \
 			  default-resource.png up-resource.png down-resource.png cleanup-resource.png \
 			  dirty-stopped.png failed.png running.png stopped.png starting.png stopping.png \
-			  nodes.png node.png administration.png record-pending.png expert-mode.png \
+			  nodes.png node.png administration.png record-pending.png \
 			  manage-resource.png unmanage-resource.png
 
 INCLUDES 	      	= -I$(top_builddir)/include  -I$(top_srcdir)/include \

@@ -50,7 +50,6 @@ usr/share/heartbeat-gui/nodes.png
 usr/share/heartbeat-gui/node.png
 usr/share/heartbeat-gui/administration.png
 usr/share/heartbeat-gui/record-pending.png
-usr/share/heartbeat-gui/expert-mode.png
 usr/share/locale/zh_CN/LC_MESSAGES/haclient.mo
 usr/include/heartbeat/mgmt/mgmt_client.h
 usr/include/heartbeat/mgmt/mgmt_common.h
