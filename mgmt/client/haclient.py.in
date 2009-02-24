@@ -5790,7 +5790,7 @@ class MainWindow :
 			('quit', gtk.STOCK_QUIT, _('Quit'), None,_('Quit the Program'), self.on_quit),
 			('view', None, _('View')),
 			('tools', None, _('Tools')),
-			('transition-info', gtk.STOCK_SELECT_COLOR, _('Transition Information'), None,
+			('transition-info', gtk.STOCK_CONVERT, _('Transition Information'), None,
 				_('Show Transition Information'), self.on_transition_info),
 			('report', gtk.STOCK_FIND_AND_REPLACE, _('Cluster Report'), None, _('generate a cluster report'), self.on_cluster_report)
 			])
