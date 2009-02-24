@@ -3556,11 +3556,6 @@ class ElementNotebook :
 		if parent_xml_node == None :
 			return 1
 				
-		impl = getDOMImplementation()
-		newdoc = impl.createDocument(None, add_obj_type, None)
-		new_elem = newdoc.documentElement
-		parent_xml_node.appendChild(new_elem)
-
 		if obj_type_name not in manager.get_supported_rsc_types() :
 			add_mode = "dialog"
 		elif invoked_by_wizard or mode_level == 0 :
@@ -3595,6 +3590,11 @@ class ElementNotebook :
 
 			if add_mode == None :
 				return 1
+
+		impl = getDOMImplementation()
+		newdoc = impl.createDocument(None, add_obj_type, None)
+		new_elem = newdoc.documentElement
+		parent_xml_node.appendChild(new_elem)
 
 		if add_mode == "wizard" :
 			objdlg = AddWizard(new_elem)
