@@ -50,8 +50,7 @@ except ImportError :
 	pass
 
 validate_type = "dtd"
-expert_mode = False
-mode_level = "simple"
+mode_level = 0
 name_cap = lambda name: name.replace("-"," ").replace("_"," ").title().replace("Crmd","CRMD").\
 				replace("Crm","CRM").replace("Pe ", "PE ").replace("Dc ","DC ").\
 				replace("Cib", "CIB").replace("Ccm", "CCM").replace("Ha", "HA").\
@@ -1951,7 +1950,7 @@ class MainTree(ElementList) :
 			self.dtd_elem = manager.get_dtd_elem(obj_type)
 			for (name, mod) in self.dtd_elem.get_content_model()[1] :
 				if mod == '' :
-					if not expert_mode and name == "status" :
+					if mode_level != 2 and name == "status" :
 						continue
 					treeiter[name] = self.store.append(None, [_(name_cap(name)), name])
 					sub_dtd_elem = manager.get_dtd_elem(name)
@@ -1963,7 +1962,7 @@ class MainTree(ElementList) :
 			sorted_rng_nodes = manager.sorted_sub_rng_nodes_by_name("cib")
 			for rng_node in sorted_rng_nodes.get("element", []) :
 					name = rng_node[0][1].getAttribute("name")
-					if not expert_mode and name == "status" :
+					if mode_level != 2 and name == "status" :
 						continue
 					treeiter[name] = self.store.append(None, [_(name_cap(name)), name])
 					sub_rng_nodes = manager.sorted_sub_rng_nodes_by_node(*rng_node[0])
@@ -1986,7 +1985,7 @@ class MainTree(ElementList) :
 
 		selection = self.widget.get_selection()
 		(model, iter) = selection.get_selected()
-		if iter != None and window.cur_view != None :
+		if iter != None and window.cur_view != None and window.cur_type.count("crm_config") == 0 :
 			cur_xml_nodes = manager.xml_nodes["cib"].getElementsByTagName(window.cur_type)
 			if len(cur_xml_nodes) > 0 :
 				cur_xml_node = cur_xml_nodes[0] 
@@ -2145,11 +2144,14 @@ class ClusterView :
 
 	def save_status(self) :
 		page_num = self.notebook.get_current_page()
-		return (page_num,)
+		if page_num < 0 :
+			return None
+		else :
+			return (page_num,)
 
 	def restore_status(self, view_status) :
-		#if view_status == None :
-		#	return
+		if view_status == None :
+			return
 		(page_num,) = view_status
 		self.notebook.set_current_page(page_num)
 
@@ -2245,9 +2247,12 @@ class CRMConfigView(View) :
 				crm_config = self.get_crm_config(metadata)
 				if crm_config != None :
 					widgetgroup.show_values(crm_config)
+				else :
+					return False
 
 		View.update(self)
 		self.on_after_show()
+		return True
 
 	def get_crm_config(self, metadata) :
 		global mode_level
@@ -2266,8 +2271,10 @@ class CRMConfigView(View) :
 					config[nvpair.getAttribute("name")] = nvpair.getAttribute("value")
 			return config
 		else :
-			mode_level = "hack"
-			msg_box(_("Multiple \"cluster_property_set\" in CIB.\nChange to \"Hack Mode\" to see it"))
+			mode_level = 2
+			window.radio_tool_action_group.get_action("hack-mode").set_active(True)
+			msgbox(_("Multiple \"Cluster Property Set\" in \"CRM Config\" .") + "\n"
+					+ _("We are switching to \"Hack Mode\" to view them properly."))
 			return None
 
 	def update_crm_config(self, metadata, new_crm_config) :
@@ -2393,7 +2400,7 @@ class CRMConfigView(View) :
 		View.__init__(self)
 
 		self.widget.show_all()
-		self.update()
+		#self.update()
 
 	def render_crmconf_widgets(self, metadata):
 		if metadata.name == "Policy Engine":
@@ -2539,9 +2546,14 @@ class CRMConfigView(View) :
 
 	def save_status(self) :
 		page_num = self.notebook.get_current_page()
-		return (page_num,)
+		if page_num < 0 :
+			return None
+		else :
+			return (page_num,)
 
 	def restore_status(self, view_status) :
+		if view_status == None :
+			return
 		(page_num,) = view_status
 		self.notebook.set_current_page(page_num)
 
@@ -2720,6 +2732,8 @@ class ObjectView :
 				obj_box.pack_start(self.elem_notebook.widget, True, padding = 5)
 				self.vbox.pack_start(self.elem_notebook.bbox, False, padding = 2)
 			else :
+				#if not self.is_topview :
+				#	self.update()
 				self.update()
 				return
 
@@ -3066,7 +3080,7 @@ class ElementNotebook :
 		self.del_btn = del_btn
 
 	def update(self, xml_node = None) :
-		global expert_mode
+		global mode_level
 		if xml_node != None :
 			self.xml_node = xml_node
 		self.elem_lists = []
@@ -3090,16 +3104,17 @@ class ElementNotebook :
 					tab_label = gtk.Label(_(name_cap(name)))
 					sub_dtd_elem = manager.get_dtd_elem(name)
 					if len(sub_dtd_elem.get_attr_list()) == 0 \
-							or (not expert_mode and name in
+							or (mode_level != 2 and name in
 							["meta_attributes", "instance_attributes", "operations",
 							"cluster_property_set"]) :
 						if len(elem_node_list) > 1 and len(sub_dtd_elem.get_attr_list()) > 0 :
-							expert_mode = True
-							window.toggle_tool_action_group.get_action("expert-mode").set_active(True)
-							if not self.is_topview :
+							mode_level = 2
+							window.radio_tool_action_group.get_action("hack-mode").set_active(True)
+							#if not self.is_topview :
+							if True :
 								msgbox(_("The \"%s\" has multiple \"%s\" sets.")
 									%(_(name_cap(self.obj_type)), _(name_cap(name))) + "\n"
-									+_("We now switch to expert mode to view them properly."))
+									+ _("We are switching to \"Hack Mode\" to view them properly."))
 							return False
 
 						if len(sub_dtd_elem.get_attr_list()) == 0 :
@@ -3114,13 +3129,14 @@ class ElementNotebook :
 								if sub_elem_node.tagName == name :
 									sub_elem_node_list.append(sub_elem_node)
 								else :
-									expert_mode = True
-									window.toggle_tool_action_group.get_action("expert-mode").set_active(True)
-									if not self.is_topview :
+									mode_level = 2
+									window.radio_tool_action_group.get_action("hack-mode").set_active(True)
+									#if not self.is_topview :
+									if True :
 										msgbox(_("The \"%s\" has a \"%s\".")
 											%(_(name_cap(elem_node.tagName)),
 											name_cap(sub_elem_node.tagName)) + "\n"
-											+_("We now switch to expert mode to view them properly."))
+											+ _("We are switching to \"Hack Mode\" to view them properly."))
 									return False
 
 						if len(sub_dtd_elem.get_attr_list()) == 0 :
@@ -3202,16 +3218,17 @@ class ElementNotebook :
 					sub_elem_rng_nodes = sub_rng_nodes.get("element", [])
 
 					if len(sub_attr_rng_nodes) == 0 \
-							or (not expert_mode and name in 
+							or (mode_level != 2 and name in 
 							["meta_attributes", "instance_attributes", "operations",
 							"cluster_property_set"]) :
 						if len(elem_node_list) > 1 and len(sub_attr_rng_nodes) > 0 :
-							expert_mode = True
-							window.toggle_tool_action_group.get_action("expert-mode").set_active(True)
-							if not self.is_topview :
+							mode_level = 2
+							window.radio_tool_action_group.get_action("hack-mode").set_active(True)
+							#if not self.is_topview :
+							if True :
 								msgbox(_("The \"%s\" has multiple \"%s\" sets.")
 									%(_(name_cap(self.obj_type)), _(name_cap(name))) + "\n"
-									+_("We now switch to expert mode to view them properly."))
+									+ _("We are switching to \"Hack Mode\" to view them properly."))
 							return False
 						sub_elem_node_list = []
 						for sub_elem_rng_node in sub_elem_rng_nodes :
@@ -3225,13 +3242,14 @@ class ElementNotebook :
 									if sub_elem_node.tagName == name :
 										sub_elem_node_list.append(sub_elem_node)
 									else :
-										expert_mode = True
-										window.toggle_tool_action_group.get_action("expert-mode").set_active(True)
-										if not self.is_topview :
+										mode_level = 2
+										window.radio_tool_action_group.get_action("hack-mode").set_active(True)
+										#if not self.is_topview :
+										if True :
 											msgbox(_("The \"%s\" has a \"%s\".")
 												%(_(name_cap(elem_node.tagName)),
 												name_cap(sub_elem_node.tagName)) + "\n"
-												+_("We now switch to expert mode to view them properly."))
+												+ _("We are switching to \"Hack Mode\" to view them properly."))
 										return False
 
 							elem_node_list = sub_elem_node_list
@@ -3543,20 +3561,19 @@ class ElementNotebook :
 		new_elem = newdoc.documentElement
 		parent_xml_node.appendChild(new_elem)
 
-		if invoked_by_wizard :
+		if obj_type_name not in manager.get_supported_rsc_types() :
+			add_mode = "dialog"
+		elif invoked_by_wizard or mode_level == 0 :
 			add_mode = "wizard"
 		else :
-			add_mode = "dialog"
-
-		if not invoked_by_wizard and obj_type_name in manager.get_supported_rsc_types() :
 			dialog = gtk.Dialog("Select Mode", top_window, gtk.DIALOG_MODAL,
 				(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK))
 			dialog.set_border_width(5)
 
-			wizard_radio_btn = gtk.RadioButton(None, _("Wizards"))
+			wizard_radio_btn = gtk.RadioButton(None, _("Wizard"))
 			dialog.vbox.pack_start(wizard_radio_btn, False, padding=2)
 
-			dialog_radio_btn = gtk.RadioButton(wizard_radio_btn, _("Dialogs"))
+			dialog_radio_btn = gtk.RadioButton(wizard_radio_btn, _("Dialog"))
 			dialog.vbox.pack_start(dialog_radio_btn, False, padding=2)
 
 			save_top_window = top_window
@@ -3568,6 +3585,8 @@ class ElementNotebook :
 			if ret == gtk.RESPONSE_OK :
 				if wizard_radio_btn.get_active() :
 					add_mode = "wizard"
+				else :
+					add_mode = "dialog"
 			else :
 				add_mode = None
 
@@ -3589,6 +3608,8 @@ class ElementNotebook :
 				tmp_elem.parentNode.removeChild(tmp_elem)
 				if new_mid_elem != None :
 					new_mid_elem.parentNode.removeChild(new_mid_elem)
+				if self.is_topview :
+					window.cur_view.update()
 				return 2
 			if not self.is_topview :
 				objdlg.destroy()
@@ -3739,7 +3760,7 @@ class ElementNotebook :
 			else :
 				sub_rng_nodes = manager.sorted_sub_rng_nodes_by_node(*rng_node[0])
 				if len(elem_node_dict.get(name, [])) < 1 or len(sub_rng_nodes.get("attribute", [])) == 0 \
-						or (not expert_mode and name in ["operations"]):
+						or (mode_level != 2 and name in ["operations"]):
 					option_list.append(rng_node)
 		return option_list
 							
@@ -3754,7 +3775,10 @@ class ElementNotebook :
 		while True :
 			new_xml_node = objdlg.run()
 			if new_xml_node == None :
-				self.on_changed()
+				if not self.is_topview :
+					self.on_changed()
+				else :
+					window.cur_view.update()
 				return
 			if not self.is_topview :
 				objdlg.destroy()
@@ -3775,7 +3799,7 @@ class ElementNotebook :
 				if manager.failed_reason != "" :
 					msgbox(manager.failed_reason)
 				else :
-					self.on_changed()
+					window.cur_view.update()
 					objdlg.destroy()
 					return
 
@@ -5253,8 +5277,8 @@ class MainWindow :
 	def set_action_sensitive(self, action, sensitive) :
 		if self.actiongroup.get_action(action) != None :
 			self.actiongroup.get_action(action).set_property("sensitive", sensitive)
-		elif self.toggle_tool_action_group.get_action(action) != None :
-			self.toggle_tool_action_group.get_action(action).set_property("sensitive", sensitive)
+		elif self.radio_tool_action_group.get_action(action) != None :
+			self.radio_tool_action_group.get_action(action).set_property("sensitive", sensitive)
 
 	# system event handler
 	def on_delete_event(self, widget, event, data=None) :
@@ -5278,10 +5302,12 @@ class MainWindow :
 			status_str = _("Connected to ") + manager.server
 		else :
 			status_str = _("Not connected")
-		if expert_mode :
+		if mode_level == 0 :
+			status_str += " " + _("(Simple mode)")
+		elif mode_level == 1 :
 			status_str += " " + _("(Expert mode)")
 		else :
-			status_str += " " + _("(Simple mode)")
+			status_str += " " + _("(Hack mode)")
 		window.statusbar.push(1, status_str)
 
 		return False
@@ -5301,9 +5327,6 @@ class MainWindow :
 		return False
 
 	def select_view(self, type, name = None, status = None) :
-		for child in self.mainview_sw.get_children() :
-			self.mainview_sw.remove(child)
-
 		if self.view_status.get(type) != None :
 			last_show_mode = self.view_status[type][0]
 		else :
@@ -5313,8 +5336,11 @@ class MainWindow :
 		self.update_ui()
 		if type == "configuration" :
 			self.cur_view = ClusterView()
-		elif type == "crm_config" and mode_level == "simple" :
+		elif type == "crm_config" and mode_level == 0 :
+			self.cur_type = "crm_config_simple"
 			self.cur_view = CRMConfigView()
+			if not self.cur_view.update() :
+				return
 		elif type in ["crm_config", "nodes", "resources", "constraints", "status", "rsc_defaults", "op_defaults"] \
 				and manager.xml_nodes["cib"].getElementsByTagName(type) != [] :
 			self.cur_view = ObjectView(manager.xml_nodes["cib"].getElementsByTagName(type)[0],
@@ -5328,10 +5354,14 @@ class MainWindow :
 		else :
 			self.cur_view = None
 			return
+
+		for child in self.mainview_sw.get_children() :
+			self.mainview_sw.remove(child)
+
 		self.mainview_sw.add_with_viewport(self.cur_view.widget)
 		#self.cur_view.on_after_show()
-		if self.view_status.get(type) != None :
-			self.cur_view.restore_status(self.view_status[type])
+		if self.view_status.get(self.cur_type) != None :
+			self.cur_view.restore_status(self.view_status[self.cur_type])
 			
 	# ui event handler	
 	def on_quit(self, action) :
@@ -5645,9 +5675,9 @@ class MainWindow :
 			if os.access(dir_path, os.F_OK) :
 				delete_dir(dir_path)
 
-	def change_expert_mode(self, action) :
-		global expert_mode
-		expert_mode = action.get_active()
+	def change_mode_level(self, action, current) :
+		global mode_level
+		mode_level = action.get_current_value()
 			
 		self.update()
 
@@ -5702,7 +5732,9 @@ class MainWindow :
 					<menuitem action="quit"/>
 				</menu>
 				<menu action="view">
+					<menuitem action="simple-mode"/>
 					<menuitem action="expert-mode"/>
+					<menuitem action="hack-mode"/>
 				</menu>
 				<menu action="tools">
 					<menuitem action="transition-info"/>
@@ -5717,13 +5749,14 @@ class MainWindow :
 			<popup action="tools_popup">
 				<menuitem action="transition-info"/>
 				<menuitem action="report"/>
+				<separator/>
+				<menuitem action="simple-mode"/>
 				<menuitem action="expert-mode"/>
+				<menuitem action="hack-mode"/>
 			</popup>
 			<toolbar name="toolbar">
 				<toolitem action="login"/>
 				<toolitem action="logout"/>
-				<separator/>
-				<toolitem action="expert-mode"/>
 				<separator/>
 				<toolitem action="transition-info"/>
 				<toolitem action="report"/>
@@ -5759,14 +5792,15 @@ class MainWindow :
 
 		uimanager.insert_action_group(actiongroup, 0)
 
-		toggle_tool_actions = [
-			('expert-mode', "expert-mode", _('Expert Mode'), None,
-				_('Switch to expert mode'), self.change_expert_mode),
+		radio_tool_actions = [
+			('simple-mode', None, _('Simple Mode'), None, _('Switch to simple mode'), 0),
+			('expert-mode', None, _('Expert Mode'), None, _('Switch to expert mode'), 1),
+			('hack-mode', None, _('Hack Mode'), None, _('Switch to hack mode'), 2),
 			]
 
-		self.toggle_tool_action_group = gtk.ActionGroup("toggle_tools")
-		self.toggle_tool_action_group.add_toggle_actions(toggle_tool_actions)
-		uimanager.insert_action_group(self.toggle_tool_action_group, 1)
+		self.radio_tool_action_group = gtk.ActionGroup("radio_mode_level")
+		self.radio_tool_action_group.add_radio_actions(radio_tool_actions, 0, self.change_mode_level)
+		uimanager.insert_action_group(self.radio_tool_action_group, 1)
 
 		uimanager.add_ui_from_string(ui_xml)
 
@@ -6430,7 +6464,7 @@ class Manager :
 				sub_elem_rng_nodes = []
 					
 		if not sub_attr_is_any_name and (len(sub_attr_list) == 0 \
-				or ((not expert_mode or is_wizard) and obj_type_name in
+				or ((mode_level != 2 or is_wizard) and obj_type_name in
 				["meta_attributes", "instance_attributes", "operations",
 				"cluster_property_set"])) :
 			new_mid_elem = None
