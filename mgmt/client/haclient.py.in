@@ -4533,9 +4533,9 @@ class ObjectViewDlg :
 			self.dialog.set_response_sensitive(gtk.RESPONSE_APPLY, False)
 
 class TransitionInfoDlg :
-	def __init__(self, input_dict) :
+	def __init__(self, input_info_list) :
 		global top_window
-		self.input_dict = input_dict
+		self.input_info_list = input_info_list
 		dialog = gtk.Dialog("Transition Information", top_window, gtk.DIALOG_MODAL,
 			(gtk.STOCK_HELP, gtk.RESPONSE_HELP, gtk.STOCK_SAVE, gtk.RESPONSE_APPLY, 
 			gtk.STOCK_CLOSE, gtk.RESPONSE_CLOSE))
@@ -4554,22 +4554,16 @@ class TransitionInfoDlg :
 		history_radio_btn = gtk.RadioButton(self.live_radio_btn, _("History:"))
 		hbox.pack_start(history_radio_btn, False, padding=2)
 
-		min_num = int(input_dict.keys()[0])
-		max_num = 0
-		for input_num in input_dict :
-			if int(input_num) < min_num :
-				min_num = int(input_num)
-			if int(input_num) > max_num :
-				max_num = int(input_num)
+		max_num = len(input_info_list) - 1
 
-		adj = gtk.Adjustment(float(max_num), float(min_num), float(max_num), 1, 5)
+		adj = gtk.Adjustment(float(max_num), 0, float(max_num), 1, 5)
 		self.spin_btn = gtk.SpinButton(adj, 0, 0)
 		self.spin_btn.set_width_chars(len(str(max_num)))
 		self.spin_btn.set_wrap(True)
 		self.spin_btn.set_sensitive(False)
 		hbox.pack_start(self.spin_btn, False, padding=2)
 
-		self.time_label = gtk.Label(input_dict[str(max_num)])
+		self.time_label = gtk.Label(input_info_list[-1][1])
 		self.time_label.set_alignment(0, 0.5)
 		self.time_label.set_sensitive(False)
 		hbox.pack_start(self.time_label, False, padding=2)
@@ -4676,7 +4670,7 @@ class TransitionInfoDlg :
 
 	def on_value_changed(self, spin_btn) :
 		value = int(spin_btn.get_value())
-		self.time_label.set_text(self.input_dict.get(str(value), ""))
+		self.time_label.set_text(self.input_info_list[value][1])
 
 		self.refresh_btn.set_sensitive(True)
 
@@ -4700,7 +4694,7 @@ class TransitionInfoDlg :
 		if self.live_radio_btn.get_active() :
 			pe_input = "live"
 		else :
-			pe_input = int(self.spin_btn.get_value())
+			pe_input = self.input_info_list[int(self.spin_btn.get_value())][0]
 
 		self.image.clear()
 		graph_str = self.gen_pe_graph(pe_input)
@@ -4730,7 +4724,7 @@ class TransitionInfoDlg :
 		if self.live_radio_btn.get_active() :
 			pe_input = "live"
 		else :
-			pe_input = int(self.spin_btn.get_value())
+			pe_input = self.input_info_list[int(self.spin_btn.get_value())][0]
 
 		verbosity = int(self.detail_spin_btn.get_value())
 
@@ -4749,7 +4743,7 @@ class TransitionInfoDlg :
 		if self.live_radio_btn.get_active() :
 			pe_input = "live"
 		else :
-			pe_input = int(self.spin_btn.get_value())
+			pe_input = self.input_info_list[int(self.spin_btn.get_value())][0]
 
 		self.pe_scores_textbuffer.set_text("")
 		scores_lines = manager.do_cmd("gen_pe_info\n%s\nscores"%pe_input)
@@ -5462,10 +5456,21 @@ class MainWindow :
 		input_dict = {}
 		for input in input_list :
 			(input_file, input_time) = input.split()
-			input_num = input_file.replace("pe-input-", "").replace(".bz2", "")
-			input_dict[input_num] = time.ctime(float(input_time))
+			input_dict[float(input_time)] = input_file
 
-		tidlg = TransitionInfoDlg(input_dict)
+		input_time_list = input_dict.keys()
+		input_time_list.sort()
+
+		input_info_list = []
+		for i in range(len(input_time_list)) :
+			input_time = input_time_list[i]
+
+			input_file = input_dict[input_time]
+			info_text = input_file.split("-")[1].replace("input", "info").upper()
+			info_text += ": " + time.ctime(input_time)
+			input_info_list.append([input_file, info_text])
+
+		tidlg = TransitionInfoDlg(input_info_list)
 
 	def on_cluster_report(self, action) :
 		rpdlg = ClusterReportDlg()

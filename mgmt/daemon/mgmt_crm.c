@@ -1731,7 +1731,7 @@ on_get_pe_inputs(char* argv[], int argc)
 
 	ret = strdup(MSG_OK);
 	while ((dirp = readdir(dp)) != NULL) {
-		if (dirp->d_type == DT_REG && strstr(dirp->d_name, "pe-input-") != NULL
+		if (dirp->d_type == DT_REG && strstr(dirp->d_name, "pe-") != NULL
 				&& strstr(dirp->d_name, "bz2") != NULL){
 			memset(fullpath, 0, sizeof(fullpath));
 			snprintf(fullpath, sizeof(fullpath), "%s/%s", pe_working_dir, dirp->d_name);
@@ -1767,7 +1767,7 @@ on_gen_pe_graph(char* argv[], int argc)
 		strncpy(cmd, "ptest -L", sizeof(cmd)-1);
 	}
 	else{
-		snprintf(cmd, sizeof(cmd), "ptest -x %s/pe-input-%s.bz2", pe_working_dir, argv[1]);
+		snprintf(cmd, sizeof(cmd), "ptest -x %s/%s", pe_working_dir, argv[1]);
 	}
 
 	strncat(cmd, " -D ", sizeof(cmd)-strlen(cmd)-1);
@@ -1822,7 +1822,7 @@ on_gen_pe_info(char* argv[], int argc)
 		strncpy(cmd, "ptest -L", sizeof(cmd)-1);
 	}
 	else{
-		snprintf(cmd, sizeof(cmd), "ptest -x %s/pe-input-%s.bz2", pe_working_dir, argv[1]);
+		snprintf(cmd, sizeof(cmd), "ptest -x %s/%s", pe_working_dir, argv[1]);
 	}
 	
 	if (STRNCMP_CONST(argv[2], "scores") == 0){
