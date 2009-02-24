@@ -6648,7 +6648,7 @@ class Manager :
 		param_names.sort()
 
 		meta.parameters = []
-		for param_name in  param_names :
+		for param_name in param_names :
 			meta.parameters.append(params[param_name])
 
 		return meta
@@ -8437,6 +8437,15 @@ class CRMConfNV(MetaNV) :
 		if self.meta != None :
 			if crmd_meta != None:
 				self.meta.parameters.extend(crmd_meta.parameters)
+				params = {}
+				for param in self.meta.parameters :
+					params[param["name"]] = param
+
+				param_names = params.keys()
+				param_names.sort()
+				self.meta.parameters = []
+				for param_name in param_names :
+					self.meta.parameters.append(params[param_name]) 
 		else :
 			self.meta = crmd_meta
 		MetaNV.__init__(self, xml_node, is_newobj, change_call_back)
