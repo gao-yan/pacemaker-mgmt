@@ -2477,7 +2477,7 @@ class CRMConfigView(View) :
 				checkbutton.connect("toggled", self.on_changed)
 				hbox.pack_start(checkbutton, False)
 				checkbuttons[param_name] = checkbutton
-			elif param_type == "integer":
+			elif param_type == "integer" and param_name.count("time") == 0 :
 				try :
 					default_value = int(param_default)
 				except :
