@@ -1947,7 +1947,7 @@ class MainTree(ElementList) :
 
 		treeiter = {}
 		if validate_type == "dtd" :
-			self.dtd_elem = manager.get_dtd_elem(obj_type)
+			self.dtd_elem = manager.get_dtd_elem("cib")
 			for (name, mod) in self.dtd_elem.get_content_model()[1] :
 				if mod == '' :
 					if mode_level != 2 and name == "status" :
@@ -6127,16 +6127,17 @@ class Manager :
 		cib_xml = self.cib_do_cmd("cib_query\ncib")
 		if self.failed_reason != "" :
 			msgbox(self.failed_reason)
-			return None
+			return False 
 
 		if cib_xml == None or cib_xml == "" :
-			return None
+			msgbox(_("Cannot get the CIB"))
+			return False
 
 		try :
 			xml_nodes["cib"] = parseString(cib_xml).documentElement
 		except xml.parsers.expat.ExpatError, msg :
 			msgbox(_("Failed to parse the CIB: ") + _(msg))
-			return None
+			return False 
 			
 		"""xml_status = self.cib_do_cmd("cib_query\nstatus")
 		xml_rscs = self.cib_do_cmd("cib_query\nresources")
@@ -6145,7 +6146,8 @@ class Manager :
 		xml_crm_config = self.cib_do_cmd("cib_query\ncrm_config")"""
 
 		if xml_nodes.get("cib") == None :
-			return None
+			msgbox(_("Cannot parse the CIB"))
+			return False
 
 		validate_type = self.get_validate_type()
 		saved_validate_name = self.validate_name
@@ -6171,6 +6173,8 @@ class Manager :
 				self.rng_str_docs = {}
 				self.update_rng_docs(self.validate_name, self.validate_name+".rng")
 				self.supported_rsc_types = self.get_supported_rsc_types()
+
+		return True
 
 		"""config_xml = self.cib_xml.getElementsByTagName("configuration")
 		self.crm_xml = config_xml.getElementsByTagName("crm_config")
@@ -6546,9 +6550,9 @@ class Manager :
 
 	def update(self) :
 		self.cache_clear()
-		self.update_cib_xml()
-		self.parent = {}
-		window.update()
+		if self.update_cib_xml() :
+			self.parent = {}
+			window.update()
 		gc.collect()
 		self.update_timer = -1
 
