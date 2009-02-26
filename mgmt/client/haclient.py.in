@@ -3099,7 +3099,23 @@ class ElementNotebook :
 				for elem_node in self.xml_node.getElementsByTagName(name) :
 					if elem_node in self.xml_node.childNodes :
 						elem_node_list.append(elem_node)
-				if len(elem_node_list) > 0 :
+
+				if len(elem_node_list) == 0 :
+					if self.is_topview :
+						continue
+					elif mode_level != 0 :
+						continue
+					elif name in ["resource_set", "rule", "lifetime", "expression", "date_expression", "duration", "date_spec"] \
+							or (self.obj_type in ["group"]
+								and name in ["instance_attributes"]) \
+							or (self.obj_type in ["clone", "master"]
+								and name in ["primitive", "group", "instance_attributes"]) \
+							or (self.obj_type in ["op"] 
+								and name in ["meta_attributes", "instance_attributes"]) :
+						continue
+
+				#if len(elem_node_list) > 0 :
+				if True :
 					self.pages.append(name)
 					tab_label = gtk.Label(_(name_cap(name)))
 					sub_dtd_elem = manager.get_dtd_elem(name)
@@ -3208,7 +3224,18 @@ class ElementNotebook :
 				name = rng_node[0][1].getAttribute("name")
 				elem_node_list = elem_node_dict.get(name, [])
 				if len(elem_node_list) == 0 :
-					continue
+					if self.is_topview :
+						continue
+					elif mode_level != 0 :
+						continue
+					elif name in ["resource_set", "rule", "lifetime", "expression", "date_expression", "duration", "date_spec"] \
+							or (self.obj_type in ["group"]
+								and name in ["instance_attributes"]) \
+							or (self.obj_type in ["clone", "master"] 
+								and name in ["primitive", "group", "instance_attributes"]) \
+							or (self.obj_type in ["op"] 
+								and name in ["meta_attributes", "instance_attributes"]) :
+						continue
 
 				self.pages.append(name)
 				tab_label = gtk.Label(_(name_cap(name)))
@@ -3452,12 +3479,29 @@ class ElementNotebook :
 					if option_list.count(elem_name) == 0 :
 						option_list.append(elem_name)
 
+		page_num = self.notebook.get_current_page()
+		if page_num >= 0 :
+			current_type = self.pages[page_num]
+		else :
+			current_type = None
+
 		if len(option_list) == 0 and not elem_is_any_name :
 			return 0
 		elif len(option_list) == 1 and not elem_is_any_name and not invoked_by_wizard \
 				and ((validate_type == "dtd" and option_list[0] != "lifetime")
 					or (validate_type != "dtd" and option_list[0][0][1].getAttribute("name") != "lifetime")) :
 			obj_type = option_list[0]
+		elif not invoked_by_wizard and mode_level == 0 and (
+					self.obj_type in ["primitive", "group"]
+					or (self.obj_type in ["clone", "master"]
+						and (self.pages.count("primitive") > 0 
+							or self.pages.count("group") > 0))
+					) :
+			if self.obj_type in ["clone", "master"] \
+					and (self.pages.count("primitive") > 0 or self.pages.count("group") > 0) \
+					and current_type in ["primitive", "group"] :
+				return 0
+			obj_type = current_type
 		else :
 			dialog = gtk.Dialog(_("Add"), top_window, gtk.DIALOG_MODAL,
 				(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK))
@@ -3472,11 +3516,6 @@ class ElementNotebook :
 				separator = gtk.HSeparator()
 				dialog.vbox.pack_start(separator, False, padding = 2)
 
-			page_num = self.notebook.get_current_page()
-			if page_num >= 0 :
-				current_type = self.pages[page_num]
-			else :
-				current_type = None
 
 			radio_btns = {}
 			radio_btn = None
@@ -4230,6 +4269,10 @@ class AddWizard :
 			if nv_xml_node != None and meta_attributes.get(attr_name, "") == "" :
 				nv_xml_node.parentNode.removeChild(nv_xml_node)
 
+
+		if len(parent_xml_node.getElementsByTagName("nvpair")) == 0 :
+			parent_xml_node.parentNode.removeChild(parent_xml_node)
+
 	def get_monitors(self) :
 		monitors = []
 		for operations_node in self.xml_node.getElementsByTagName("operations") :
@@ -4308,6 +4351,14 @@ class AddWizard :
 			for monitor in monitors :
 				monitor.parentNode.removeChild(monitor)
 
+		ops = []
+		for operations_node in self.xml_node.getElementsByTagName("operations") :
+			for op_node in operations_node.getElementsByTagName("op") :
+				op_name = op_node.getAttribute("name")
+				ops.append(op_node)
+		if len(ops) == 0 :
+			parent_xml_node.parentNode.removeChild(parent_xml_node)
+
 	def set_inst_attributes(self, meta) :
 		if self.obj_type != "primitive" or meta == None :
 			return
@@ -4345,6 +4396,9 @@ class AddWizard :
 		for nv_name in nv_xml_nodes :
 			if nv_name not in param_list :
 				nv_xml_nodes[nv_name].parentNode.removeChild(nv_xml_nodes[nv_name])
+
+		if len(parent_xml_node.getElementsByTagName("nvpair")) == 0 :
+			parent_xml_node.parentNode.removeChild(parent_xml_node)
 
 	def first_page_init_run(self) :
 		self.first_page_render()
