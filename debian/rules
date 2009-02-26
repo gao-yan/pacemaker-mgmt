@@ -78,7 +78,7 @@ install-stamp:
 
 	dh_installdirs
 	dh_install --source=$(DTMP) --list-missing
-	dh_movefiles --source=debian/tmp
+	#dh_movefiles --source=debian/tmp
 
 binary-indep: build install
 
