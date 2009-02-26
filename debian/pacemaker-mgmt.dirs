@@ -1,1 +1,6 @@
-usr/lib/heartbeat-gui
+etc/pam.d
+usr/lib
+usr/lib/heartbeat
+usr/share/heartbeat
+usr/share/snmp/mibs
+usr/share/doc/pacemaker-mgmt

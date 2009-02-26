@@ -8,7 +8,7 @@
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
-cfg:=--prefix=/usr --sysconfdir=/etc --localstatedir=/var	\
+cfg:=--prefix=/usr --libdir=/usr/lib --sysconfdir=/etc --localstatedir=/var	\
   --enable-snmp-subagent --with-mibsdir=/usr/share/snmp/mibs	\
   --disable-fatal-warnings --enable-glib-malloc			\
   --mandir=/usr/share/man
@@ -59,13 +59,11 @@ clean:
 	-find . -name '*.py[co]' | xargs rm -f
 	dh_clean build-stamp install-stamp
 	rm -f debian/init debian/*.debhelper debian/*.substvars config.log
-	rm -r -f debian/heartbeat debian/heartbeat-dev debian/ldirectord \
-		debian/libpils0 debian/libpils-dev \
-		debian/libstonith0 debian/libstonith-dev debian/stonith \
-		debian/tmp
+	rm -r -f debian/pacemaker-mgmt debian/pacemaker-mgmt-client \
+		debian/pacemaker-mgmt-dev debian/tmp
 
 	# Zero autoconf foo
-	rm -f config.status libltdl/config.log libltdl/config.status 
+	rm -f config.status libltdl/config.log libltdl/config.status
 
 
 install: build install-stamp
@@ -73,11 +71,13 @@ install-stamp:
 	dh_testdir
 	dh_testroot
 	dh_clean -k
-	dh_installdirs
+
 	$(MAKE) install DESTDIR=$(DTMP) \
 	  MAKE=make \
-	  docdir=/usr/share/doc/heartbeat
+	  docdir=/usr/share/doc/pacemaker-mgmt
 
+	dh_installdirs
+	dh_install --source=$(DTMP) --list-missing
 	dh_movefiles --source=debian/tmp
 
 binary-indep: build install

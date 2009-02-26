@@ -1,0 +1,11 @@
+usr/bin/crm_gui
+usr/bin/hb_gui
+usr/lib/heartbeat-gui
+usr/lib/heartbeat-gui/_pymgmt.so*
+usr/lib/heartbeat-gui/haclient.py
+usr/lib/heartbeat-gui/pymgmt.py
+usr/share/heartbeat-gui
+usr/share/heartbeat-gui/*.png
+usr/share/heartbeat-gui/haclient.py
+usr/share/heartbeat-gui/mgmtcmd.py
+usr/share/locale/zh_CN/LC_MESSAGES/haclient.mo

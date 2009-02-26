@@ -1,8 +1,8 @@
 Source: pacemaker-mgmt
 Section: admin
 Priority: optional
-Maintainer: Simon Horman <horms@debian.org>
-Build-Depends: debhelper (>= 5.0.37.2), libglib2.0-dev, net-tools, python, libtool, libcurl4-openssl-dev | libcurl3-openssl-dev, libxml2-dev, bison, flex, uuid-dev, lynx, libbz2-dev, zlib1g-dev, uuid-dev, libltdl3-dev, swig, openssh-client, libgnutls-dev, python-central (>= 0.5), python-dev, libpam0g-dev, libncurses5-dev, pacemaker-dev, heartbeat-dev
+Maintainer: Yan Gao <ygao@novell.com>
+Build-Depends: debhelper (>= 5.0.37.2), libsnmp10-dev | libsnmp-dev, libglib2.0-dev, net-tools, python, libtool, libcurl4-openssl-dev | libcurl3-openssl-dev, libxml2-dev, bison, flex, uuid-dev, lynx, libbz2-dev, zlib1g-dev, uuid-dev, libltdl3-dev, swig, openssh-client, libgnutls-dev, python-central (>= 0.5), python-dev, libpam0g-dev, libncurses5-dev, pacemaker-dev, heartbeat-dev
 Standards-Version: 3.7.3
 XS-Python-Version: current
 
@@ -10,8 +10,32 @@ Package: pacemaker-mgmt
 Section: admin
 Priority: optional
 Architecture: any
-Depends: ${shlibs:Depends}, ${python:Depends}, pacemaker, heartbeat, libxml2-utils, libpam-runtime (>= 0.76-14), python-xml, python-gtk2, python-lxml
+Depends: pacemaker, heartbeat (>= 2.99), snmpd, libxml2-utils, libpam-runtime (>= 0.76-14)
 XB-Python-Version: ${python:Versions}
 Description: Pacemaker Management Tools
  A client/server GUI and a SNMP subagent for configuring, managing and monitoring
  the Pacemaker High-Availability cluster resource manager
+
+Package: pacemaker-mgmt-client
+Section: admin
+Priority: optional
+Architecture: any
+Depends: ${python:Depends}, python-xml, python-gtk2, python-lxml
+XB-Python-Version: ${python:Versions}
+Description: Pacemaker Management Tools
+ A client/server GUI and a SNMP subagent for configuring, managing and monitoring
+ the Pacemaker High-Availability cluster resource manager
+ .
+ This package contains the front-end of GUI
+
+Package: pacemaker-mgmt-dev
+Section: devel
+Priority: optional
+Architecture: any
+Depends: pacemaker-mgmt (= ${binary:Version})
+XB-Python-Version: ${python:Versions}
+Description: Pacemaker Management Tools
+ A client/server GUI and a SNMP subagent for configuring, managing and monitoring
+ the Pacemaker High-Availability cluster resource manager
+ .
+ This package contains development files

@@ -1,0 +1,10 @@
+usr/include/heartbeat/mgmt
+usr/include/heartbeat/mgmt/mgmt_client.h
+usr/include/heartbeat/mgmt/mgmt_common.h
+usr/include/heartbeat/mgmt/mgmt.h
+usr/include/heartbeat/mgmt/mgmt_tls.h
+usr/include/heartbeat/mgmt_config.h
+usr/lib/libhbmgmt.so
+usr/lib/libhbmgmttls.so
+usr/lib/libhbmgmtcommon.so
+usr/lib/libhbmgmtclient.so

@@ -22,18 +22,10 @@ MAINTAINERCLEANFILES    = Makefile.in
 
 EXTRA_DIST		= apply changelog compat control copyright \
 			  dpkg-checkbuild rules \
-			  heartbeat.dirs heartbeat.files \
-			  heartbeat.postinst heartbeat.postrm \
-			  heartbeat.preinst \
-			  heartbeat-dev.dirs heartbeat-dev.files \
-			  heartbeat-gui.dirs heartbeat-gui.files \
-			  heartbeat-2.prerm \
-			  ldirectord.files ldirectord.postinst \
-			  ldirectord.postrm \
-			  patches/ipv6-check.patch \
-			  patches/series/2.1.3-1
+			  pacemaker-mgmt.install pacemaker-mgmt.dirs \
+			  pacemaker-mgmt-client.install pacemaker-mgmt-client.dirs \
+			  pacemaker-mgmt-dev.install pacemaker-mgmt-dev.dirs
 
 clean-local:
 	rm -f *.substvars *.debhelper files
-	rm -r -f heartbeat heartbeat-dev ldirectord \
-		libpils0 libpils-dev libstonith0 libstonith-dev stonith tmp
+	rm -r -f pacemaker-mgmt pacemaker-mgmt-client pacemaker-mgmt-dev tmp
