@@ -353,11 +353,14 @@ hbagentv2_update_diff(const char *event, crm_data_t *msg)
             free_xml(diff);
             return;
         }
+
+#if SUPPORT_HEARTBEAT
         if (STRNCMP_CONST(node_id, myuuid) != 0) {
             /* This change is not at my node */
             free_xml(diff);
             return;
         }
+#endif
 
         /* get the head pointer of <lrm_resource>  */
         lrm_rsc = find_xml_node(node_state, XML_CIB_TAG_LRM, FALSE);
@@ -432,7 +435,11 @@ hbagentv2_update_diff(const char *event, crm_data_t *msg)
             struct hb_rsinfov2 resource;
 
             resource.resourceid = strdup(rsc_id);
+#if SUPPORT_HEARTBEAT
             resource.node = strdup(myid);
+#else
+            resource.node = strdup(node_id);
+#endif
 
             /* LHAResourceStatus is ... */
             if (safe_str_eq(operation, CRMD_ACTION_STOP)) {
@@ -547,12 +554,13 @@ get_cib_fd(void)
 /* Beekhof: Uh yeah, for a _reason_ */
 
 gboolean cib_native_dispatch(IPC_Channel *channel, gpointer user_data);
+IPC_Channel *cib_native_channel(cib_t* cib);
 
 int
 handle_cib_msg(void)
 {
     /* call callback function. */
-    if (!cib_native_dispatch(NULL, cib_conn)) {
+    if (!cib_native_dispatch(cib_native_channel(cib_conn), cib_conn)) {
         cl_log(LOG_ERR, "cib_native_dispatch() failed.");
         return HA_FAIL;
     }
