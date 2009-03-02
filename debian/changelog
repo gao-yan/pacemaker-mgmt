@@ -1,7 +1,7 @@
 pacemaker-mgmt (1.99.0-1) unstable; urgency=medium
   * Update to pacemaker-mgmt-1.99.0
 
- -- Yan Gao <ygao@novell.com>  Thu, 26 Feb 2009 19:14:18 +0800
+ -- Yan Gao <ygao@novell.com>  Mon, 02 Mar 2009 16:10:14 +0800
 
 pygui (2.0-1) stable; urgency=medium
   * Update source tarball to revision: 1485861613b7 tip
