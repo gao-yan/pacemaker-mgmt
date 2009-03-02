@@ -355,10 +355,12 @@ hbagentv2_update_diff(const char *event, crm_data_t *msg)
         }
 
 #if SUPPORT_HEARTBEAT
-        if (STRNCMP_CONST(node_id, myuuid) != 0) {
-            /* This change is not at my node */
-            free_xml(diff);
-            return;
+        if (is_heartbeat_cluster()) {
+            if (STRNCMP_CONST(node_id, myuuid) != 0) {
+                /* This change is not at my node */
+                free_xml(diff);
+                return;
+            }
         }
 #endif
 
@@ -436,7 +438,11 @@ hbagentv2_update_diff(const char *event, crm_data_t *msg)
 
             resource.resourceid = strdup(rsc_id);
 #if SUPPORT_HEARTBEAT
-            resource.node = strdup(myid);
+            if (is_heartbeat_cluster()) {
+                resource.node = strdup(myid);
+            } else {
+                resource.node = strdup(node_id);
+            }
 #else
             resource.node = strdup(node_id);
 #endif

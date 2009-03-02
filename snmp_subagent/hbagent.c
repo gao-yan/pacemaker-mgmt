@@ -21,6 +21,16 @@
  *
  */
 
+#include <crm/crm.h>
+
+#ifdef SUPPORT_AIS
+#undef SUPPORT_AIS
+#endif
+
+#ifdef SUPPORT_HEARTBEAT
+#undef SUPPORT_HEARTBEAT
+#endif
+
 #include <pygui_internal.h>
 
 #include "hbagent.h"
@@ -78,10 +88,8 @@
 #if SUPPORT_HEARTBEAT
 static unsigned long hbInitialized = 0;
 static ll_cluster_t * hb = NULL; /* heartbeat handle */
-#endif
 char * myid = NULL; /* my node id */
 char * myuuid = NULL; /* my node uuid */
-#if SUPPORT_HEARTBEAT
 static SaClmHandleT clm = 0;
 static unsigned long clmInitialized = 0;
 
@@ -1436,25 +1444,27 @@ main(int argc, char ** argv)
 	/* initialize mib code here */
 
 #if SUPPORT_HEARTBEAT
-	if ((ret = init_storage()) != HA_OK) {
-	    	return -2;
+	if (is_heartbeat_cluster()) {
+		if ((ret = init_storage()) != HA_OK) {
+		    	return -2;
+		}
+
+		if ((ret = init_heartbeat()) != HA_OK ||
+		    	(hb_fd = get_heartbeat_fd()) <=0) {
+       		        return -1;
+	        }
+
+		if ((ret = init_resource_table()) != HA_OK) {
+		    	cl_log(LOG_ERR, "resource table initialization failure.");
+		}
+
+		ret = init_membership();
+		mem_fd = get_membership_fd();
+
+		if (ret != HA_OK) {
+			cl_log(LOG_ERR, "fatal error during membership initialization. ");
+		}  
 	}
-
-	if ((ret = init_heartbeat()) != HA_OK ||
-	    	(hb_fd = get_heartbeat_fd()) <=0) {
-                return -1;
-        }
-
-	if ((ret = init_resource_table()) != HA_OK) {
-	    	cl_log(LOG_ERR, "resource table initialization failure.");
-	}
-
-	ret = init_membership();
-	mem_fd = get_membership_fd();
-
-	if (ret != HA_OK) {
-		cl_log(LOG_ERR, "fatal error during membership initialization. ");
-	}  
 #endif
 
 	/*
@@ -1465,17 +1475,19 @@ main(int argc, char ** argv)
 	*/
 
 #if SUPPORT_HEARTBEAT
-	/* LHAHeartbeatConfigInfo partial-mode */
-	if ((ret = init_hbconfig()) != HA_OK) {
-	    	return -3;
-	}
+	if (is_heartbeat_cluster()) {
+		/* LHAHeartbeatConfigInfo partial-mode */
+		if ((ret = init_hbconfig()) != HA_OK) {
+		    	return -3;
+		}
 
-	init_LHAClusterInfo();
-	init_LHANodeTable();
-	init_LHAIFStatusTable();
-	init_LHAResourceGroupTable();
-	init_LHAMembershipTable();
-	init_LHAHeartbeatConfigInfo();
+		init_LHAClusterInfo();
+		init_LHANodeTable();
+		init_LHAIFStatusTable();
+		init_LHAResourceGroupTable();
+		init_LHAMembershipTable();
+		init_LHAHeartbeatConfigInfo();
+	}
 #endif
 
 	/* now implementing: hbagentv2 */
@@ -1499,7 +1511,9 @@ main(int argc, char ** argv)
 	snmp_log(LOG_INFO,"LHA-agent is up and running.\n");
 
 #if SUPPORT_HEARTBEAT
-	hbagent_trap(1, myid);
+	if (is_heartbeat_cluster()) {
+		hbagent_trap(1, myid);
+	}
 #endif
 
 	hbconfig_refresh_cnt = 0;
@@ -1514,14 +1528,16 @@ main(int argc, char ** argv)
 
 		FD_ZERO(&fdset);
 #if SUPPORT_HEARTBEAT
-                FD_SET(hb_fd, &fdset);
-		numfds = hb_fd + 1;
+		if (is_heartbeat_cluster()) {
+        	        FD_SET(hb_fd, &fdset);
+			numfds = hb_fd + 1;
 
-		if (clmInitialized) {
-			FD_SET(mem_fd, &fdset);
+			if (clmInitialized) {
+				FD_SET(mem_fd, &fdset);
 
-			if (mem_fd > hb_fd)
-				numfds = mem_fd + 1;
+				if (mem_fd > hb_fd)
+					numfds = mem_fd + 1;
+			}
 		}
 #endif
 		FD_SET(cib_fd, &fdset);
@@ -1570,14 +1586,16 @@ main(int argc, char ** argv)
 		} else if (ret == 0) {
 			/* timeout */
 #if SUPPORT_HEARTBEAT
-			ping_membership(&mem_fd);
+			if (is_heartbeat_cluster()) {
+				ping_membership(&mem_fd);
 
-			/* LHAHeartbeatConfigInfo partial-mode */
-			if (hbconfig_refresh_timing
-			&& ++hbconfig_refresh_cnt >= hbconfig_refresh_timing) {
-				free_hbconfig();
-				init_hbconfig();
-				hbconfig_refresh_cnt = 0;
+				/* LHAHeartbeatConfigInfo partial-mode */
+				if (hbconfig_refresh_timing
+				&& ++hbconfig_refresh_cnt >= hbconfig_refresh_timing) {
+					free_hbconfig();
+					init_hbconfig();
+					hbconfig_refresh_cnt = 0;
+				}
 			}
 #endif
 			snmp_timeout();
@@ -1585,34 +1603,48 @@ main(int argc, char ** argv)
 		} 
 
 #if SUPPORT_HEARTBEAT
-		if (FD_ISSET(hb_fd, &fdset)) {
-			/* heartbeat */
+		if (is_heartbeat_cluster()) {
+			if (FD_ISSET(hb_fd, &fdset)) {
+				/* heartbeat */
 
-			if ((ret = handle_heartbeat_msg()) == HA_FAIL) {
-				cl_log(LOG_DEBUG, "no heartbeat. quit now.");
-				hb_already_dead = 1;
-				break;
-			}
-		} else  if (clmInitialized && FD_ISSET(mem_fd, &fdset)) {
-		    	/* membership events */
+				if ((ret = handle_heartbeat_msg()) == HA_FAIL) {
+					cl_log(LOG_DEBUG, "no heartbeat. quit now.");
+					hb_already_dead = 1;
+					break;
+				}
+			} else  if (clmInitialized && FD_ISSET(mem_fd, &fdset)) {
+			    	/* membership events */
 
-		    	if ((ret = handle_membership_msg()) == HA_FAIL) {
-			    	cl_log(LOG_DEBUG, "unrecoverable membership error. quit now.");
-				break;
-			}
-		} else  if (FD_ISSET(cib_fd, &fdset)) {
-#else
-		if (FD_ISSET(cib_fd, &fdset)) {
-#endif
-			/* change cib info events */
-			if ((ret = handle_cib_msg()) == HA_FAIL) {
-		  		cl_log(LOG_DEBUG, "unrecoverable CIB error. quit now.");
-				break;
+			    	if ((ret = handle_membership_msg()) == HA_FAIL) {
+				    	cl_log(LOG_DEBUG, "unrecoverable membership error. quit now.");
+					break;
+				}
+			} else  if (FD_ISSET(cib_fd, &fdset)) {
+				/* change cib info events */
+				if ((ret = handle_cib_msg()) == HA_FAIL) {
+			  		cl_log(LOG_DEBUG, "unrecoverable CIB error. quit now.");
+					break;
+				}
+			} else {
+
+				/* snmp request */
+				snmp_read(&fdset);
 			}
 		} else {
-
-			/* snmp request */
-			snmp_read(&fdset);
+			if (FD_ISSET(cib_fd, &fdset)) {
+#else
+		if (TRUE) {
+			if (FD_ISSET(cib_fd, &fdset)) {
+#endif
+				/* change cib info events */
+				if ((ret = handle_cib_msg()) == HA_FAIL) {
+			  		cl_log(LOG_DEBUG, "unrecoverable CIB error. quit now.");
+					break;
+				}
+			} else {
+				/* snmp request */
+				snmp_read(&fdset);
+			}
 		}
 
 process_pending:
@@ -1624,29 +1656,35 @@ process_pending:
 	/* at shutdown time */
 	
 #if SUPPORT_HEARTBEAT
-	hbagent_trap(0, myid);
+	if (is_heartbeat_cluster()) {
+		hbagent_trap(0, myid);
+	}
 #endif
 	snmp_shutdown("LHA-agent");
 
 	free_hbagentv2();
 #if SUPPORT_HEARTBEAT
- 	free_hbconfig();
-	free(myid);
-	free(myuuid);
-	free_storage();
+        if (is_heartbeat_cluster()) {
+ 		free_hbconfig();
+		free(myid);
+		free(myuuid);
+		free_storage();
+	}
 #endif
 
 #if SUPPORT_HEARTBEAT
-        if (!hb_already_dead && hb->llc_ops->signoff(hb, TRUE) != HA_OK) {
-                cl_log(LOG_ERR, "Cannot sign off from heartbeat.");
-                cl_log(LOG_ERR, "REASON: %s", hb->llc_ops->errmsg(hb));
-                exit(10);
-        }
-        if (hb->llc_ops->delete(hb) != HA_OK) {
-                cl_log(LOG_ERR, "Cannot delete API object.");
-                cl_log(LOG_ERR, "REASON: %s", hb->llc_ops->errmsg(hb));
-                exit(11);
-        }
+        if (is_heartbeat_cluster()) {
+		if (!hb_already_dead && hb->llc_ops->signoff(hb, TRUE) != HA_OK) {
+			cl_log(LOG_ERR, "Cannot sign off from heartbeat.");
+			cl_log(LOG_ERR, "REASON: %s", hb->llc_ops->errmsg(hb));
+			exit(10);
+		}
+		if (hb->llc_ops->delete(hb) != HA_OK) {
+			cl_log(LOG_ERR, "Cannot delete API object.");
+			cl_log(LOG_ERR, "REASON: %s", hb->llc_ops->errmsg(hb));
+			exit(11);
+		}
+	}
 #endif
 
 	return 0;
