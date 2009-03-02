@@ -5375,6 +5375,9 @@ class MainWindow :
 		return False
 
 	def select_view(self, type, name = None, status = None) :
+		for child in self.mainview_sw.get_children() :
+			self.mainview_sw.remove(child)
+
 		if self.view_status.get(type) != None :
 			last_show_mode = self.view_status[type][0]
 		else :
@@ -5402,9 +5405,6 @@ class MainWindow :
 		else :
 			self.cur_view = None
 			return
-
-		for child in self.mainview_sw.get_children() :
-			self.mainview_sw.remove(child)
 
 		self.mainview_sw.add_with_viewport(self.cur_view.widget)
 		#self.cur_view.on_after_show()
