@@ -7325,6 +7325,7 @@ class ObjectAttrs(WidgetGroup) :
 		optional_row = 0
 		name_label_max_len = 0
 
+		self.hboxes = {}
 		for attr_name in self.attr_list :
 			attr = dtd_elem.get_attr(attr_name)
 			label_text = _(name_cap(attr_name)+":")
@@ -7393,6 +7394,8 @@ class ObjectAttrs(WidgetGroup) :
 				required_vbox.pack_start(hbox, False, padding=2)
 			else:
 				optional_vbox.pack_start(hbox, False, padding=2)
+
+			self.hboxes[attr_name] = hbox
 
 		attrs_vbox.show_all()
 
