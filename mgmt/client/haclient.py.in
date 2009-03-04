@@ -7160,6 +7160,7 @@ class WidgetGroup :
 					widgets["anyname_combo_entries"][key].child.set_text("")
 
 class ObjectAttrs(WidgetGroup) :
+	dynamic_layout = None
 	dynamic_fill = None
 	dynamic_desc = None
 	static_desc = None
@@ -7228,7 +7229,7 @@ class ObjectAttrs(WidgetGroup) :
 		#				id_prefix = parent_id + "-" + self.obj_type
 		#			self.widgets["combo_entries"]["id"].child.set_text(id_prefix)
 
-		if self.pref_expand :
+		if self.pref_expand and (mode_level != 0 or self.obj_type not in ["op"] ) :
 			self.optional_expander.set_expanded(True)
 
 		self.auto_fill()
@@ -7521,6 +7522,7 @@ class ObjectAttrs(WidgetGroup) :
 		else :
 			self.pref_expand = False
 
+		self.hboxes = {}
 		store_list = {}
 		for attr_node in attr_rng_nodes :
 			attr_name = attr_node[0][1].getAttribute("name")
@@ -7632,6 +7634,8 @@ class ObjectAttrs(WidgetGroup) :
 				required_vbox.pack_start(hbox, False, padding=2)
 			else:
 				optional_vbox.pack_start(hbox, False, padding=2)
+
+			self.hboxes[attr_name] = hbox
 
 		anyname_combo_entries = {}
 		for attr_name in other_attrs :
@@ -7772,6 +7776,9 @@ class ObjectAttrs(WidgetGroup) :
 
 
 	def on_changed(self, widget) :
+		if self.dynamic_layout != None :
+			self.dynamic_layout(widget)
+
 		if self.dynamic_choice != None and validate_type != "dtd" :
 			self.dynamic_choice(widget)
 
@@ -7785,6 +7792,9 @@ class ObjectAttrs(WidgetGroup) :
 		self.save()
 
 	def on_changed_later(self, widget) :
+		if self.dynamic_layout != None :
+			self.dynamic_layout(widget)
+
 		if self.dynamic_choice != None and validate_type != "dtd" :
 			self.dynamic_choice(widget)
 
@@ -8646,6 +8656,8 @@ class Expression(ObjectAttrs) :
 
 class OP(ObjectAttrs) :
 	def __init__(self, xml_node, is_newobj = False, change_call_back = None) :
+		if mode_level == 0 :
+			self.dynamic_layout = self.dynamic_layout_simple
 		primitive_node = xml_node.parentNode.parentNode
 		primitive_class = str(primitive_node.getAttribute("class"))
 		primitive_type = str(primitive_node.getAttribute("type"))
@@ -8714,7 +8726,7 @@ class OP(ObjectAttrs) :
 							and widgets["combo_entries"]["interval"] in child_widget.get_children() :
 						is_required = True
 						break
-				if is_required :
+				if is_required or mode_level == 0 :
 					widgets["combo_entries"]["interval"].child.set_text("0")
 
 		else :
@@ -8722,6 +8734,35 @@ class OP(ObjectAttrs) :
 				if attr_name != "name" :
 					self.combobox_store_append(widgets["combo_entries"][attr_name], [])
 					widgets["combo_entries"][attr_name].child.set_text("")
+
+	def dynamic_layout_simple(self, widget) :
+		widgets = self.widgets
+		required_vbox = self.required_vbox
+		optional_vbox = self.optional_vbox
+
+		if not widgets.has_key("combo_entries") :
+			return
+		elif widget != widgets["combo_entries"].get("name") :
+			return
+
+		op = self.get_values()
+		if op["name"] in ["monitor"] :
+			required_attrs = ["id", "name", "interval", "timeout"]
+		else :
+			required_attrs = ["id", "name", "timeout"]
+
+		for vbox in [required_vbox, optional_vbox] :
+			for child in vbox.get_children() :
+				vbox.remove(child)
+
+		for attr_name in self.attr_list :
+			if attr_name in required_attrs :
+				required_vbox.pack_start(self.hboxes[attr_name], False, padding=2)
+			else :
+				optional_vbox.pack_start(self.hboxes[attr_name], False, padding=2)
+
+		required_vbox.show_all()
+		optional_vbox.show_all()
 
 class RscOrder(ObjectAttrs) :
 	def __init__(self, xml_node, is_newobj = False, change_call_back = None) :
