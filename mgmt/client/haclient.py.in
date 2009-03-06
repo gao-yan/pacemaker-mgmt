@@ -7231,7 +7231,7 @@ class ObjectAttrs(WidgetGroup) :
 		#				id_prefix = parent_id + "-" + self.obj_type
 		#			self.widgets["combo_entries"]["id"].child.set_text(id_prefix)
 
-		if self.pref_expand and (mode_level != 0 or self.obj_type not in ["op"] ) :
+		if self.pref_expand and (mode_level != 0 or self.obj_type not in ["op", "rsc_order"] ) :
 			self.optional_expander.set_expanded(True)
 
 		self.auto_fill()
