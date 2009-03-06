@@ -4005,6 +4005,8 @@ class AddWizard :
 		 _("Notify all the other copies before stopping or starting a copy and when the action was successful (Defaults to false)")),
 		("globally-unique", [["false", _("[ default ]")], ["true", ""]],
 		 _("Globally Unique (Does each copy of the clone perform a different function? Defaults to false)")),
+		("interleave", [["false", _("[ default ]")], ["true", ""]],
+		 _("Interleave (Changes the behavior of ordering constraints (between clones/masters) so that instances can start/stop as soon as their peer instance has (rather than waiting for every instance of the other clone has). Defaults to false)")),
 		]
 
 		master_basic_options = [
