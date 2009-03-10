@@ -266,7 +266,7 @@ get_parent(resource_t* child)
 	while (cur != NULL) {
 		resource_t* rsc = (resource_t*)cur->data;
 		if(is_not_set(rsc->flags, pe_rsc_orphan) || rsc->role != RSC_ROLE_STOPPED) {
-			GList* child_list = rsc->fns->children(rsc);
+			GList* child_list = rsc->children;
 			if (g_list_find(child_list, child) != NULL) {
 				free_data_set(data_set);
 				return rsc;
@@ -610,7 +610,7 @@ on_get_crm_metadata(char* argv[], int argc)
 		return strdup(MSG_FAIL);
 	}
 
-	snprintf(cmd, sizeof(cmd), BIN_DIR"/%s metadata", argv[1]);
+	snprintf(cmd, sizeof(cmd), CRM_DAEMON_DIR"/%s metadata", argv[1]);
 	if ((fstream = popen(cmd, "r")) == NULL){
 		mgmt_log(LOG_ERR, "error on popen %s: %s",
 			 cmd, strerror(errno));
@@ -1165,7 +1165,7 @@ on_get_sub_rsc(char* argv[], int argc)
 	data_set = get_data_set();
 	GET_RESOURCE()
 		
-	cur = rsc->fns->children(rsc);
+	cur = rsc->children;
 	
 	ret = strdup(MSG_OK);
 	while (cur != NULL) {

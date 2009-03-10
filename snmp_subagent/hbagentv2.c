@@ -168,7 +168,7 @@ update_resources_recursively(GListPtr reslist, GListPtr nodelist, int index)
         }); /* end slist_iter(node) */
 
         /* add resources recursively for group/clone/master */
-        index = update_resources_recursively(rsc->fns->children(rsc),
+        index = update_resources_recursively(rsc->children,
             nodelist, index);
 
     }); /* end slist_iter(rsc) */
