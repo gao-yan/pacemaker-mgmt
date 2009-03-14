@@ -10,6 +10,8 @@ Package: pacemaker-mgmt
 Section: admin
 Priority: optional
 Architecture: any
+Conflicts: pacemaker-pygui
+Replaces: pacemaker-pygui
 Depends: pacemaker, heartbeat (>= 2.99), snmpd, libxml2-utils, libpam-runtime (>= 0.76-14)
 XB-Python-Version: ${python:Versions}
 Description: Pacemaker Management Tools
@@ -20,6 +22,8 @@ Package: pacemaker-mgmt-client
 Section: admin
 Priority: optional
 Architecture: any
+Conflicts: pacemaker-pygui
+Replaces: pacemaker-pygui
 Depends: ${python:Depends}, python-xml, python-gtk2, python-lxml
 XB-Python-Version: ${python:Versions}
 Description: Pacemaker Management Tools
@@ -32,6 +36,8 @@ Package: pacemaker-mgmt-dev
 Section: devel
 Priority: optional
 Architecture: any
+Conflicts: pacemaker-pygui-dev
+Replaces: pacemaker-pygui-dev
 Depends: pacemaker-mgmt (= ${binary:Version})
 XB-Python-Version: ${python:Versions}
 Description: Pacemaker Management Tools
