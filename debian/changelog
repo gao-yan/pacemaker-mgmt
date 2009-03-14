@@ -1,5 +1,26 @@
+pacemaker-mgmt (1.99.0-2) unstable; urgency=medium
+  * Update source tarball to revision: 19e662ce6447+ tip
+  * Statistics:
+      Changesets:      7
+      Diff:            4 files changed, 58 insertions(+), 6 deletions(-)
+
+  * Changes since pacemaker-mgmt-1.99.0
+  + Dev: haclient: Hide less used attributes of "op" in simple mode
+  + Low: Build: Improve debian/control file
+  + Low: haclient: Add "interleave" setting in wizard
+  + Low: haclient: Hide optional attributes for "rsc_order" in simple mode
+  + Medium: Build: Fix compilation
+
+ -- Yan Gao <ygao@novell.com>  Sat, 14 Mar 2009 10:05:12 +0800 
+
 pacemaker-mgmt (1.99.0-1) unstable; urgency=medium
-  * Update to pacemaker-mgmt-1.99.0
+  * Update source tarball to pacemaker-mgmt-1.99.0 (revision: 286f917a201f+ tip)
+  * Statistics:
+      Changesets:      317
+      Diff:            57 files changed, 9929 insertions(+), 6936 deletions(-)
+
+  * Changes since pacemaker-pygui-1.4
+  + Complete rewrite
 
  -- Yan Gao <ygao@novell.com>  Mon, 02 Mar 2009 16:10:14 +0800
 
