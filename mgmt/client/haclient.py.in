@@ -4470,7 +4470,7 @@ class AddWizard :
 		else :
 			target_role_widget = self.widget_group.widgets["combos"].get("target-role")
 		if target_role_widget != None :
-			if self.xml_node.parentNode.tagName == "resources" :
+			if self.xml_node.parentNode.tagName == "resources" and manager.active_cib == "" :
 				default_value = "Stopped"
 			else :
 				default_value = ""
