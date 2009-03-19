@@ -55,21 +55,33 @@ changes:
 	printf "      Changesets: `hg log -M --template "{desc|firstline|strip}\n" -r $(LAST_RELEASE):tip | wc -l`\n"
 	printf "      Diff:           "
 	hg diff -r $(LAST_RELEASE):tip | diffstat | tail -n 1
-	printf "\n  * Testing Notes:\n"
-	printf "\n  + Test hardware:\n"
-	printf "\n  + All testing was performed with STONITH enabled\n"
-	printf "\n  + Pending bugs encountered during testing:\n"
+#	printf "\n  * Testing Notes:\n"
+#	printf "\n  + Test hardware:\n"
+#	printf "\n  + All testing was performed with STONITH enabled\n"
+#	printf "\n  + Pending bugs encountered during testing:\n"
 	printf "\n  * Changes since $(LAST_RELEASE)\n"
-	hg log -M --template "  + {desc|firstline|strip}\n" -r $(LAST_RELEASE):tip | grep -v Low: | sort -uf 
-	printf "\n -- Andrew Beekhof <abeekhof@suse.de>  `date +"%a, %d %b %Y %T %z"`\n"
+#	hg log -M --template "  + {desc|firstline|strip}\n" -r $(LAST_RELEASE):tip | grep -v Low: | sort -uf 
+	hg log -M --template "  + {desc|firstline|strip}\n" -r $(LAST_RELEASE):tip | sort -uf 
+	printf "\n -- Yan Gao <ygao@novell.com>  `date +"%a, %d %b %Y %T %z"`\n"
+
+OBS_PROJECT	= pacemaker-mgmt
+OBS_SERVER	= c001n16.suse.de
+OBS_PREFIX	= Development/obs
+OBS_FILES	= .changes $(TARFILE)
 
 stable:	tgz
 	make changes > .changes
-	scp .changes $(TARFILE) c001n16.suse.de:Development/obs/server:ha-clustering/pacemaker-mgmt/
+	scp $(OBS_FILES) $(OBS_SERVER):$(OBS_PREFIX)/server:ha-clustering/$(OBS_PROJECT)/
 
 unstable:	tgz
 	make changes > .changes
-	scp .changes $(TARFILE) c001n16.suse.de:Development/obs/server:ha-clustering:UNSTABLE/pacemaker-mgmt/
+	scp $(OBS_FILES) $(OBS_SERVER):$(OBS_PREFIX)/server:ha-clustering:UNSTABLE/$(OBS_PROJECT)/
+
+factory:	tgz
+	make changes > .changes
+	ssh $(OBS_SERVER) -- 'cd $(OBS_PREFIX)/server:ha-clustering:Factory/$(OBS_PROJECT) ; /usr/bin/osc up'
+	scp $(OBS_FILES) $(OBS_SERVER):$(OBS_PREFIX)/server:ha-clustering:Factory/$(OBS_PROJECT)/
+	ssh $(OBS_SERVER) -- "cd $(OBS_PREFIX)/server:ha-clustering:Factory/$(OBS_PROJECT); /usr/bin/osc commit -m \"New $(OBS_PROJECT) snapshot - $(shell $(HG) id)\""
 
 install-exec-local:
 	-mkdir -p $(DESTDIR)$(bindir)
