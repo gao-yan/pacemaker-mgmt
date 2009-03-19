@@ -4878,11 +4878,11 @@ class TransitionInfoDlg :
 				msgbox(_("Cannot save the graph for specified transition"))
 				return
 			default_name = "pe-graph.png"
-			filter_list = ((_("PNG Image"), (".png",)),
-					(_("JPEG Image"), (".jpg", ".jpeg", ".jpe")),
-					(_("GIF Image"), (".gif",)),
-					(_("TIFF Image"), (".tiff", ".tif")),
-					(_("Dot File"), (".dot",)),
+			filter_list = ((_("PNG Image"), ("*.png",)),
+					(_("JPEG Image"), ("*.jpg", "*.jpeg", "*.jpe")),
+					(_("GIF Image"), ("*.gif",)),
+					(_("TIFF Image"), ("*.tiff", "*.tif")),
+					(_("Dot File"), ("*.dot",)),
 					)
 		elif page_num == 1 :
 			default_name = "pe-detail"
@@ -4900,7 +4900,7 @@ class TransitionInfoDlg :
 		if page_num == 0 :
 			for (filter_name, filter_pattern) in filter_list :
 				if filter_name == save_type :
-					format = filter_pattern[0][1:]
+					format = filter_pattern[0][2:]
 					if format != "dot" :
 						gv.render(self.G, format, save_file)
 						return
