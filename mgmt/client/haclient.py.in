@@ -4652,8 +4652,8 @@ class TransitionInfoDlg :
 		global top_window
 		self.input_info_list = input_info_list
 		dialog = gtk.Dialog("Transition Information", top_window, gtk.DIALOG_MODAL,
-			(gtk.STOCK_HELP, gtk.RESPONSE_HELP, gtk.STOCK_SAVE, gtk.RESPONSE_APPLY, 
-			gtk.STOCK_CLOSE, gtk.RESPONSE_CLOSE))
+			(gtk.STOCK_HELP, gtk.RESPONSE_HELP, gtk.STOCK_CLOSE, gtk.RESPONSE_CLOSE, 
+			gtk.STOCK_SAVE, gtk.RESPONSE_APPLY))
 		dialog.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_NORMAL)
 		dialog.set_size_request(750, 600)
 
