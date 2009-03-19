@@ -1217,15 +1217,12 @@ HA_NOARCHDATAHBDIR="${datadir}/heartbeat"
 AC_DEFINE_UNQUOTED(HA_NOARCHDATAHBDIR,"$HA_NOARCHDATAHBDIR", Heartbeat noarch data directory)
 AC_SUBST(HA_NOARCHDATAHBDIR)
 
-dnl
+dnl ========================================================================
 dnl    Cluster infrastructure - Heartbeat
-dnl
+dnl ========================================================================
 
 dnl On Debian, AC_CHECK_LIBS fail if a library has any unresolved symbols
 dnl So check for all the depenancies (so they're added to LIBS) before checking for -lplumb
-
-AC_CHECK_LIB(uuid, uuid_parse)	dnl e2fsprogs
-AC_CHECK_LIB(uuid, uuid_create)	dnl ossp
 
 AC_CHECK_LIB(pils, PILLoadPlugin)
 AC_CHECK_LIB(plumb, G_main_add_IPC_Channel)
@@ -1236,17 +1233,11 @@ fi
 
 dnl Compatability checks
 AC_CHECK_FUNCS(msgfromIPC_timeout)
+AC_CHECK_MEMBERS([struct lrm_ops.fail_rsc],,,[[#include <lrm/lrm_api.h>]])
 
-HAVE_ASYNC_FAIL=0
-if check_for_type_member "struct lrm_ops" "fail_rsc" "#include <lrm/lrm_api.h>"; then
-   HAVE_ASYNC_FAIL=1
-fi
-AC_DEFINE_UNQUOTED(HAVE_LRM_ASYNC_FAIL, $HAVE_ASYNC_FAIL, LRM Supports asynchronous resource failures)
-
-
-dnl
+dnl ========================================================================
 dnl    Cluster stack - Heartbeat
-dnl
+dnl ========================================================================
 
 case $SUPPORT_HEARTBEAT in
      1|yes|true) 
@@ -1262,9 +1253,9 @@ AM_CONDITIONAL(BUILD_HEARTBEAT_SUPPORT, test $SUPPORT_HEARTBEAT = 1)
 AC_DEFINE_UNQUOTED(SUPPORT_HEARTBEAT, $SUPPORT_HEARTBEAT, Support the Heartbeat messaging and membership layer)
 
 
-dnl
+dnl ========================================================================
 dnl    Cluster stack - OpenAIS
-dnl
+dnl ========================================================================
 
 AISLIB=""
 
@@ -1286,9 +1277,9 @@ else
    AC_MSG_RESULT($SUPPORT_AIS, with '$AISPREFIX')
 
    dnl headers...
-   AC_CHECK_HEADERS(corosync/ais_util.h)
+   AC_CHECK_HEADERS(corosync/coroipc.h)
    AC_CHECK_HEADERS(openais/saAis.h)
-   if test "$ac_cv_header_corosync_ais_util_h" = "yes"; then
+   if test "$ac_cv_header_corosync_coroipc_h" = "yes"; then
        AIS_VERSION="corosync"
    elif test "$ac_cv_header_openais_saAis_h" = "yes"; then
        AIS_VERSION="whitetank"
@@ -1342,18 +1333,22 @@ if test $AIS_VERSION != "none"; then
 fi
 
 dnl continue?
-if test x$AIS_VERSION = "none"; then
+if test $AIS_VERSION != "none"; then
      dnl Don't add the messaging library to LIBS since most daemons don't need/use it
      saveLIBS="$LIBS"
      LIBS="$LIBS -L${AISLIB} -R${AISLIB}"
 
-     AC_CHECK_LIB(coroutil, saSendReceiveReply, [])
+     AC_CHECK_LIB(coroipc, cslib_msg_send_reply_receive, [])
      AC_CHECK_LIB(SaMsg, saSendReceiveReply, [])
+     AC_CHECK_LIB(SaMsg, openais_msg_send_reply_receive, [])
 
-     if test $ac_cv_lib_coroutil_saSendReceiveReply = yes; then
+     if test $ac_cv_lib_coroutil_cslib_msg_send_reply_receive = yes; then
        :  CoroSync
+     elif test $ac_cv_lib_SaMsg_openais_msg_send_reply_receive = yes; then
+       :  OpenAIS
      elif test $ac_cv_lib_SaMsg_saSendReceiveReply = yes; then
        :  OpenAIS
+	AC_DEFINE_UNQUOTED(TRADITIONAL_AIS_IPC, 1, "Use the 'old' AIS IPC interface")
      else
         AC_MSG_RESULT(Cannot locate AIS messaging library)
 	aisreason="requred libraries not found"
@@ -1366,11 +1361,11 @@ SUPPORT_AIS=1
 case $AIS_VERSION in
     trunk)
 	AC_DEFINE_UNQUOTED(AIS_TRUNK, 1, "AIS target is the latest development series")
-	AISMSGLIB=-lcoroutil
+	AISMSGLIB=-lcoroipc
 	;;
     corosync)
 	AC_DEFINE_UNQUOTED(AIS_COROSYNC, 1, "AIS target is the corosync series")
-	AISMSGLIB=-lcoroutil
+	AISMSGLIB=-lcoroipc
 	;;
     whitetank) 
 	AC_DEFINE_UNQUOTED(AIS_WHITETANK, 1, "AIS target is the whitetank series")
@@ -1404,8 +1399,8 @@ if test $SUPPORT_HEARTBEAT = 1; then
 fi
 
 if test $SUPPORT_AIS = 1; then
-   STACKS="$STACKS openais"
-   CLUSTERLIBS="$CLUSTERLIBS ${AISMSGLIB}"
+   STACKS="$STACKS $AIS_VERSION"
+   #CLUSTERLIBS="$CLUSTERLIBS ${AISMSGLIB}"
    LIBS="$LIBS -L${AISLIB} -R${AISLIB}"
 else
    AISPREFIX=""
