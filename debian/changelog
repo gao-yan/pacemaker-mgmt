@@ -1,3 +1,18 @@
+pacemaker-mgmt (1.99.0-3) unstable; urgency=medium
+  * Update source tarball to revision: f07b59e49f79 tip
+  * Statistics:
+      Changesets:      9
+      Diff:            6 files changed, 929 insertions(+), 95 deletions(-)
+
+  * Changes since 1.99.0-2
+  + Dev: mgmt: Implement shadow configuration support
+  + Low: haclient: Change the layout of buttons for TransitionInfoDlg()
+  + Low: haclient: Do not set "target-role" in add wizard if working on a shadow CIB
+  + Low: haclient: Fix file filters for saving transition graph
+  + Medium: haclient: Get and cache CRM metadata in advance
+
+ -- Yan Gao <ygao@novell.com>  Fri, 20 Mar 2009 02:00:41 +0800
+
 pacemaker-mgmt (1.99.0-2) unstable; urgency=medium
   * Update source tarball to revision: 19e662ce6447+ tip
   * Statistics:
