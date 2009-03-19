@@ -30,13 +30,16 @@
 description
    increased, if daemon-client communication changes in an incompatible way
 */	
-#define MGMT_PROTOCOL_VERSION "2.0"
+#define MGMT_PROTOCOL_VERSION "2.1"
 
 
 /*************************MESSAGES*******************************************/
 
-#define MSG_OK  		"ok"
-#define MSG_FAIL		"fail"
+#define MSG_OK  		"o"
+#define MSG_FAIL		"f"
+
+#define CHR_OK  		'o'
+#define CHR_FAIL		'f'
 
 /*
 description:
@@ -90,6 +93,75 @@ or
 */
 #define MSG_REGEVT		"regevt"
 
+/*
+description:
+	get the active CIB name
+format:
+	MSG_ACTIVE_CIB
+return:
+	MSG_OK <""|shadow_name>
+*/
+#define MSG_ACTIVE_CIB		"active_cib"
+
+/*
+description:
+	shutdown working CIB.
+format:
+	MSG_SHUTDOWN_CIB 
+return:
+	MSG_OK
+or
+	MSG_FAIL REASON
+*/
+#define MSG_SHUTDOWN_CIB	"shutdown_cib"
+
+/*
+description:
+	initiate working CIB.
+format:
+	MSG_INIT_CIB <""|shadow_name>
+return:
+	MSG_OK
+or
+	MSG_FAIL REASON
+*/
+#define MSG_INIT_CIB		"init_cib"
+
+/*
+description:
+	change working CIB.
+format:
+	MSG_SWITCH_CIB <""|shadow_name>
+return:
+	MSG_OK
+or
+	MSG_FAIL REASON
+*/
+#define MSG_SWITCH_CIB		"switch_cib"
+
+/*
+description:
+	get shadow CIB list
+format:
+	MSG_GET_SHADOWS
+return:
+	MSG_OK SHADOWNAME1 SHADOWNAME2 ... SHADOWNAMEn
+or
+	MSG_FAIL REASON
+*/
+#define MSG_GET_SHADOWS		"get_shadows"
+
+/*
+description:
+	execute specified crm_shadow command
+format:
+	MSG_CRM_SHADOW command <""|shadow_name> is_force
+return:
+	MSG_OK
+or
+	MSG_FAIL REASON
+*/
+#define MSG_CRM_SHADOW		"crm_shadow"
 
 /*
 description:

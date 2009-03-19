@@ -23,6 +23,7 @@
 #include <glib.h>
 #include <regex.h>
 #include <dirent.h>
+#include <sys/wait.h>
 
 #include <hb_config.h>
 #include <clplumbing/cl_log.h>
@@ -55,6 +56,13 @@ int init_crm(int cache_cib);
 void final_crm(void);
 
 static void on_cib_diff(const char *event, crm_data_t *msg);
+
+static char* on_active_cib(char* argv[], int argc);
+static char* on_shutdown_cib(char* argv[], int argc);
+static char* on_init_cib(char* argv[], int argc);
+static char* on_switch_cib(char* argv[], int argc);
+static char* on_get_shadows(char* argv[], int argc);
+static char* on_crm_shadow(char* argv[], int argc);
 
 static char* on_get_cluster_type(char* argv[], int argc);
 static char* on_get_cib_version(char* argv[], int argc);
@@ -114,9 +122,18 @@ static const char* uname2id(const char* node);
 static resource_t* get_parent(resource_t* child);
 */
 int regex_match(const char *regex, const char *str);
+pid_t popen2(const char *command, FILE **fp_in, FILE **fp_out);
+int pclose2(FILE *fp_in, FILE *fp_out, pid_t pid);
 
 pe_working_set_t* cib_cached = NULL;
 int cib_cache_enable = FALSE;
+
+#define GET_CIB_NAME(cib_name) \
+	if (getenv("CIB_shadow") == NULL) { \
+		strncpy(cib_name, "live", sizeof(cib_name)-1); \
+	} else { \
+		snprintf(cib_name, sizeof(cib_name),"shadow.%s", getenv("CIB_shadow")); \
+	} 
 
 #define GET_RESOURCE()	rsc = pe_find_resource(data_set->resources, argv[1]);	\
 	if (rsc == NULL) {						\
@@ -285,8 +302,11 @@ init_crm(int cache_cib)
 {
 	int ret = cib_ok;
 	int i, max_try = 5;
-	
-	mgmt_log(LOG_INFO,"init_crm");
+	char cib_name[MAX_STRLEN];
+
+	GET_CIB_NAME(cib_name)
+
+	mgmt_log(LOG_INFO,"init_crm: %s", cib_name);
 	crm_log_level = LOG_ERR;
 	cib_conn = cib_new();
 	in_shutdown = FALSE;
@@ -299,11 +319,11 @@ init_crm(int cache_cib)
 		if (ret == cib_ok) {
 			break;
 		}
-		mgmt_log(LOG_INFO,"login to cib: %d, ret:%d",i,ret);
+		mgmt_log(LOG_INFO,"login to cib %s: %d, ret:%d",cib_name,i,ret);
 		sleep(1);
 	}
 	if (ret != cib_ok) {
-		mgmt_log(LOG_INFO,"login to cib failed");
+		mgmt_log(LOG_INFO,"login to cib failed: %s", cib_name);
 		cib_conn = NULL;
 		return -1;
 	}
@@ -312,6 +332,13 @@ init_crm(int cache_cib)
 						  , on_cib_diff);
 	ret = cib_conn->cmds->set_connection_dnotify(cib_conn
 			, on_cib_connection_destroy);
+
+	reg_msg(MSG_ACTIVE_CIB, on_active_cib);
+	reg_msg(MSG_SHUTDOWN_CIB, on_shutdown_cib);
+	reg_msg(MSG_INIT_CIB, on_init_cib);
+	reg_msg(MSG_SWITCH_CIB, on_switch_cib);
+	reg_msg(MSG_GET_SHADOWS, on_get_shadows);
+	reg_msg(MSG_CRM_SHADOW, on_crm_shadow);
 
 	reg_msg(MSG_CLUSTER_TYPE, on_get_cluster_type);
 	reg_msg(MSG_CIB_VERSION, on_get_cib_version);
@@ -358,6 +385,11 @@ init_crm(int cache_cib)
 void
 final_crm(void)
 {
+	char cib_name[MAX_STRLEN];
+	
+	GET_CIB_NAME(cib_name)
+
+	mgmt_log(LOG_INFO,"final_crm: %s", cib_name);
 	if(cib_conn != NULL) {
 		in_shutdown = TRUE;
 		cib_conn->cmds->signoff(cib_conn);
@@ -382,6 +414,7 @@ on_cib_diff(const char *event, crm_data_t *msg)
 	
 	fire_event(EVT_CIB_CHANGED);
 }
+
 void
 on_cib_connection_destroy(gpointer user_data)
 {
@@ -390,6 +423,225 @@ on_cib_connection_destroy(gpointer user_data)
 		cib_conn = NULL;
 	}
 	return;
+}
+
+char*
+on_active_cib(char* argv[], int argc)
+{
+	char* ret = strdup(MSG_OK);
+	const char *active_cib = getenv("CIB_shadow");
+
+	if (active_cib != NULL) {
+		ret = mgmt_msg_append(ret, active_cib);
+	} else {
+		ret = mgmt_msg_append(ret, "");
+	}
+	return ret;
+}
+
+char*
+on_shutdown_cib(char* argv[], int argc)
+{
+	final_crm();
+	return strdup(MSG_OK);
+}
+
+char*
+on_init_cib(char* argv[], int argc)
+{
+	char buf[MAX_STRLEN];
+	char* ret = NULL;
+	char cib_name[MAX_STRLEN];
+
+	ARGC_CHECK(2);
+
+	if (strnlen(argv[1], MAX_STRLEN) == 0) {
+		unsetenv("CIB_shadow");
+		strncpy(cib_name, "live", sizeof(cib_name)-1);
+	} else {
+		setenv("CIB_shadow", argv[1], 1);
+		snprintf(cib_name, sizeof(cib_name), "shadow.%s", argv[1]);
+	}
+
+	if (init_crm(TRUE) != 0 ) {
+		ret = strdup(MSG_FAIL);
+		snprintf(buf, sizeof(buf), "Cannot initiate CIB: %s", cib_name);
+		ret = mgmt_msg_append(ret, buf);
+	} else {
+		ret = strdup(MSG_OK);
+	}
+
+	return ret;
+}
+
+char*
+on_switch_cib(char* argv[], int argc)
+{
+	char cib_name[MAX_STRLEN];
+	char buf[MAX_STRLEN];
+	char* ret = NULL;
+	const char* saved_env = getenv("CIB_shadow");
+
+	ARGC_CHECK(2)
+
+	final_crm();
+
+	if (strnlen(argv[1], MAX_STRLEN) == 0) {
+		unsetenv("CIB_shadow");
+		strncpy(cib_name, "live", sizeof(cib_name)-1);
+	} else {
+		setenv("CIB_shadow", argv[1], 1);
+		snprintf(cib_name, sizeof(cib_name), "shadow.%s", argv[1]);
+	}
+
+	mgmt_log(LOG_INFO, "Switch to the specified CIB: %s", cib_name);
+
+	if (init_crm(TRUE) != 0 ) {
+		mgmt_log(LOG_ERR, "Cannot switch to the specified CIB: %s", cib_name);
+		ret = strdup(MSG_FAIL);
+		snprintf(buf, sizeof(buf), "Cannot switch to the specified CIB: %s", cib_name);
+		ret = mgmt_msg_append(ret, buf);
+
+		if (saved_env == NULL) {
+			unsetenv("CIB_shadow");
+		} else {
+			setenv("CIB_shadow", saved_env, 1);
+		}
+		if (init_crm(TRUE) != 0) {
+			mgmt_log(LOG_ERR, "Cannot switch back to the previous CIB: %s", cib_name);
+			memset(buf, 0, sizeof(buf));
+			snprintf(buf, sizeof(buf), "Cannot switch back to the previous CIB: %s", cib_name);
+			ret = mgmt_msg_append(ret, buf);
+			
+		}
+	} else {
+		ret = strdup(MSG_OK);
+	}
+
+	return ret;
+}
+
+char*
+on_get_shadows(char* argv[], int argc)
+{
+	char* ret = NULL;
+	struct dirent *dirp;
+	DIR *dp;
+
+	if ((dp = opendir(CRM_CONFIG_DIR)) == NULL){
+		mgmt_log(LOG_ERR, "error on opendir \"%s\": %s", CRM_CONFIG_DIR, strerror(errno));
+		return strdup(MSG_FAIL"\nCannot open the crm working directory");
+	}
+
+	ret = strdup(MSG_OK);
+	while ((dirp = readdir(dp)) != NULL) {
+		if (dirp->d_type == DT_REG && strstr(dirp->d_name, "shadow.") == dirp->d_name) {
+			ret = mgmt_msg_append(ret, dirp->d_name);
+		}
+	}
+
+	if (closedir(dp) < 0){
+		mgmt_log(LOG_WARNING, "failed to closedir \"%s\": %s", CRM_CONFIG_DIR, strerror(errno) );
+	}
+	return ret;
+}
+char*
+on_crm_shadow(char* argv[], int argc)
+{
+	char cmd[MAX_STRLEN];
+	char buf[MAX_STRLEN];
+	char* ret = NULL;
+	int require_name = 0;
+	const char* name = "";
+	FILE *fp_in = NULL;
+	FILE *fp_out = NULL;
+	pid_t childpid = 0;
+	int stat;
+	
+
+	ARGC_CHECK(4);
+
+	strncpy(cmd, "/usr/bin/xargs -0 crm_shadow 2>&1", sizeof(cmd)-1);
+
+	if (STRNCMP_CONST(argv[3], "true") == 0) {
+		strncat(cmd, " --force", sizeof(cmd)-strlen(cmd)-1);
+	}
+
+	if (STRNCMP_CONST(argv[1], "create") == 0) {
+		strncat(cmd, " -b -c", sizeof(cmd)-strlen(cmd)-1);
+		require_name = 1; 
+	}
+	else if (STRNCMP_CONST(argv[1], "create-empty") == 0) {
+		strncat(cmd, " -b --create-empty", sizeof(cmd)-strlen(cmd)-1);
+		require_name = 1; 
+	}
+	else if (STRNCMP_CONST(argv[1], "delete") == 0) {
+		strncat(cmd, " -D", sizeof(cmd)-strlen(cmd)-1);
+		require_name = 1; 
+	}
+	else if (STRNCMP_CONST(argv[1], "reset") == 0) {
+		strncat(cmd, " -r", sizeof(cmd)-strlen(cmd)-1);
+		require_name = 1; 
+	}
+	else if (STRNCMP_CONST(argv[1], "commit") == 0) {
+		strncat(cmd, " -C", sizeof(cmd)-strlen(cmd)-1);
+		require_name = 1; 
+	}
+	else if (STRNCMP_CONST(argv[1], "diff") == 0) {
+		strncat(cmd, " -d", sizeof(cmd)-strlen(cmd)-1);
+	}
+	else {
+		mgmt_log(LOG_ERR, "invalid arguments specified: \"%s\"", argv[1]);
+		return strdup(MSG_FAIL"\nInvalid arguments");
+	}
+
+	if (require_name) {
+		if (strnlen(argv[2], MAX_STRLEN) != 0) {
+			name = argv[2];
+		} else if (getenv("CIB_shadow") != NULL) {
+			name = getenv("CIB_shadow");
+		}
+
+		/*strncat(cmd, " ", sizeof(cmd)-strlen(cmd)-1);
+		strncat(cmd, name, sizeof(cmd)-strlen(cmd)-1);*/
+	}
+
+	if ((childpid = popen2(cmd, &fp_in, &fp_out)) < 0){
+		mgmt_log(LOG_ERR, "error on popen2 \"%s\": %s",
+			 cmd, strerror(errno));
+		return strdup(MSG_FAIL"\nInvoke crm_shadow failed");
+	}
+
+	if (fputs(name, fp_in) == EOF) {
+		mgmt_log(LOG_ERR, "error on fputs arguments to \"%s\": %s",
+			 cmd, strerror(errno));
+		return strdup(MSG_FAIL"\nPut arguments to crm_shadow failed");
+	}
+
+	if (fclose(fp_in) == EOF) {
+		mgmt_log(LOG_WARNING, "failed to close input pipe");
+	}
+
+	ret = strdup(MSG_FAIL);
+	while (!feof(fp_out)){
+		memset(buf, 0, sizeof(buf));
+		if (fgets(buf, sizeof(buf), fp_out) != NULL){
+			ret = mgmt_msg_append(ret, buf);
+			ret[strlen(ret)-1] = '\0';
+		}
+		else{
+			sleep(1);
+		}
+	}
+
+	/*if (pclose2(fp_in, fp_out, childpid) == -1) {*/
+	if ((stat = pclose2(NULL, fp_out, childpid)) == -1) {
+		mgmt_log(LOG_WARNING, "failed to close pipe");
+	/*} else if (WIFEXITED(stat) && WEXITSTATUS(stat) == 0) {
+		ret[0] = CHR_OK;*/
+	}
+
+	return ret;
 }
 
 /* cluster  functions */
@@ -1883,4 +2135,83 @@ regex_match(const char *regex, const char *str)
 
 	regfree(&preg);
 	return (ret == 0);
+}
+
+pid_t
+popen2(const char *command, FILE **fp_in, FILE **fp_out)
+{
+	int pfd_in[2];
+	int pfd_out[2];
+	pid_t pid;
+
+	if (fp_in != NULL) {
+		if (pipe(pfd_in) < 0) {
+			return -1;	/* errno set by pipe() */
+		}
+	}
+	if (fp_out != NULL) {
+		if (pipe(pfd_out) < 0) {
+			return -1;
+		}
+	}
+
+	if ((pid = fork()) < 0) {
+		return -1;	/* errno set by fork() */
+	} else if (pid == 0) {	/* child */
+		if (fp_in != NULL) {
+			close(pfd_in[1]);
+			if (pfd_in[0] != STDIN_FILENO) {
+				dup2(pfd_in[0], STDIN_FILENO);
+				close(pfd_in[0]);
+			}
+		}
+
+		if (fp_out != NULL) {
+			close(pfd_out[0]);
+			if (pfd_out[1] != STDOUT_FILENO) {
+				dup2(pfd_out[1], STDOUT_FILENO);
+				close(pfd_out[1]);
+			}
+		}
+
+		execl("/bin/sh", "sh", "-c", command, NULL);
+		_exit(127);
+	}
+
+	/* parent continues... */
+	if (fp_in != NULL) {
+		close(pfd_in[0]);
+		if ((*fp_in = fdopen(pfd_in[1], "w")) == NULL) {
+			return -1;
+		}
+	}
+	if (fp_out != NULL) {
+		close(pfd_out[1]);
+		if ((*fp_out = fdopen(pfd_out[0], "r")) == NULL) {
+			return -1;
+		}
+	}
+
+	return pid;
+}
+
+int
+pclose2(FILE *fp_in, FILE *fp_out, pid_t pid)
+{
+	int stat;
+
+	if (fp_in != NULL && fclose(fp_in) != 0) {
+		return -1;
+	}
+
+	if (fp_out != NULL && fclose(fp_out) != 0) {
+		return -1;
+	}
+
+	while (waitpid(pid, &stat, 0) < 0) {
+		if (errno != EINTR)
+			return -1;	/* error other than EINTR from waitpid() */
+	}
+
+	return stat;	/* return child's termination status */
 }

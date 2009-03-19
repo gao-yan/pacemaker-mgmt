@@ -227,11 +227,25 @@ def make_label_active(label, text, url) :
 	label.get_parent().connect("button_press_event", on_label_active, url)
 	#label.get_parent().window.set_cursor(gtk.gdk.Cursor(gtk.gdk.HAND1))
 
-def kvbox(title, fields, auto_fill = None) :
+def kvbox(title, description, fields, auto_fill = None) :
 	global top_window
 	dialog = gtk.Dialog(title, top_window, gtk.DIALOG_MODAL,
 		(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK))
 	dialog.set_border_width(5)
+
+	if description != None :
+		label = gtk.Label()
+		#label.set_markup('<span size="medium" weight="bold">' + action_des + '</span>')
+		label.set_markup('<b>' + description + '</b>')
+		label.set_alignment(0, 0)
+		#label.show()
+
+		dialog.vbox.pack_start(label, False, padding = 2)
+
+		separator = gtk.HSeparator()
+		#separator.show()
+		dialog.vbox.pack_start(separator, False, padding = 2)
+
 	table = gtk.Table(2, 1, False)
 	widgets = []
 	combos = {}
@@ -1195,7 +1209,7 @@ class ManageView :
 		node_options = node_list[:]
 		node_options.insert(0, _("all nodes"))
 
-		cleanup = kvbox(_("Cleanup Resource"),
+		cleanup = kvbox(_("Cleanup Resource"), None,
 				[Field("rsc", _("Resource"), cur_name, rsc_options, False, entry_editable = False),
 				Field("node", _("Node"), _("all nodes"), node_options, False, entry_editable = False)])
 
@@ -1397,7 +1411,7 @@ class ManageView :
 			default_option = cur_name
 		else :
 			default_option = all_str
-		unmigrate = kvbox(_("Clear Migrate Constraints"),
+		unmigrate = kvbox(_("Clear Migrate Constraints"), None,
 				[Field("rsc", _("Resource"), default_option, rsc_list, False, entry_editable = False)])
 
 		if unmigrate != None :
@@ -1486,7 +1500,7 @@ class ManageView :
 		top_window = save_top_window
 		dialog.destroy()
 
-		#cmd_args = kvbox(_("%s Resources")%_(name_cap(cmd)) ,
+		#cmd_args = kvbox(_("%s Resources")%_(name_cap(cmd)), None,
 		#		[Field("node", _("Node"), "", node_options, True, entry_editable = False)])
 
 		#if cmd_args == None :
@@ -1841,13 +1855,17 @@ class MainTree(ElementList) :
 		self.store = gtk.TreeStore(str, str)
 
 		widget = gtk.TreeView(self.store)
-		widget.set_headers_visible(False)
-		add_column(widget, _("Type"), 0, self.render_icon)
+		#widget.set_headers_visible(False)
+		add_column(widget, None, 0, self.render_icon)
+		title_label = gtk.Label()
+		title_label.show()
+		widget.get_column(0).set_widget(title_label)
 		widget.set_size_request(180, 200)
 		widget.connect("cursor-changed", self.on_cursor_changed, widget.get_selection())
 		#widget.connect("event-after", self.on_right_click)
 		self.tree = widget
 		self.widget = widget
+		self.title_label = title_label
 
 	def on_cursor_changed(self, treeview, selection) :
 		try :
@@ -1940,10 +1958,18 @@ class MainTree(ElementList) :
 	def update(self) :
 		tree_status = self.save_tree_status()
 
+		self.title_label.set_text("")
 		self.store.clear()
 		if not manager.connected :
 			window.select_view(None, None, None)
 			return
+
+		if manager.active_cib == "" :
+			title_str = _("Live")
+		else :
+			title_str = _("Shadow: ") + manager.active_cib
+
+		self.title_label.set_markup('<b>'+title_str+'</b>')
 
 		treeiter = {}
 		if validate_type == "dtd" :
@@ -1975,7 +2001,9 @@ class MainTree(ElementList) :
 					
 
 			#(u',', [(u'configuration', ''), (u'status', '')], '')
-		treeiter["management"] = self.store.append(None, ["Management", "management"])
+		if manager.active_cib == "" :
+			treeiter["management"] = self.store.append(None, ["Management", "management"])
+
 		self.treeiter = treeiter
 
 		self.restore_tree_status(tree_status)
@@ -1994,7 +2022,10 @@ class MainTree(ElementList) :
 			window.cur_view.update(cur_xml_node)
 		else :
 			if iter == None :
-				selection.select_iter(self.treeiter["management"])
+				if manager.active_cib == "" :
+					selection.select_iter(self.treeiter["management"])
+				else :
+					selection.select_path("0")
 			self.on_cursor_changed(self.widget, self.widget.get_selection())
 	
 class ClusterView :
@@ -2326,7 +2357,7 @@ class CRMConfigView(View) :
 			
 		if manager.failed_reason != "" :
 			msgbox(manager.failed_reason)
-	
+
 	def on_after_show(self) :
 		target_site = "www.clusterlabs.org"
 		for widgets in (self.pengine_widgetgroup.widgets, self.crmd_widgetgroup.widgets):
@@ -2346,8 +2377,8 @@ class CRMConfigView(View) :
 
 		if self.changed == True:
 			ret = confirmbox(_("There are unsaved changes in current page.")+"\n"+_("Apply the changes?"),
-					(gtk.STOCK_YES, gtk.RESPONSE_YES, 
-					gtk.STOCK_NO, gtk.RESPONSE_NO))
+					(gtk.STOCK_NO, gtk.RESPONSE_NO, 
+					gtk.STOCK_YES, gtk.RESPONSE_YES))
 			if ret == gtk.RESPONSE_YES :
 				self.on_apply(widget)
 			else :
@@ -2818,6 +2849,8 @@ class ObjectView :
 					if manager.failed_reason != "" :
 						msgbox(manager.failed_reason)
 					else :
+						if manager.active_cib != "" :
+							manager.update()
 						xml_dlg.destroy()
 						break
 				else :
@@ -3676,10 +3709,12 @@ class ElementNotebook :
 					#parent_type = self.obj_type
 					xml_str = self.xml_node.toxml().replace("\n", "")
 					manager.cib_do_cmd("cib_replace\n%s\n%s"%(str(self.obj_type), str(xml_str)))
-					
+
 				if manager.failed_reason != "" :
 					msgbox(manager.failed_reason)
 				else :
+					if manager.active_cib != "" :
+						manager.update()
 					objdlg.destroy()
 					self.new_page_type = obj_type_name
 					return 3
@@ -3856,11 +3891,23 @@ class ElementNotebook :
 				if self.change_call_back != None :
 					 self.change_call_back()
 			else :
-				manager.validate_cib()
-				xml_str = selected_node.toxml().replace("\n", "")
-				manager.cib_do_cmd("cib_delete\n%s\n%s"%(str(self.obj_type), str(xml_str)))
-				if manager.failed_reason != "" :
-					msgbox(manager.failed_reason)
+				#manager.validate_cib()
+				#xml_str = selected_node.toxml().replace("\n", "")
+				#manager.cib_do_cmd("cib_delete\n%s\n%s"%(str(self.obj_type), str(xml_str)))
+				#if manager.failed_reason != "" :
+				#	msgbox(manager.failed_reason)
+
+				if manager.validate_cib() :
+					xml_str = selected_node.toxml().replace("\n", "")
+					manager.cib_do_cmd("cib_delete\n%s\n%s"%(str(self.obj_type), str(xml_str)))
+					if manager.failed_reason != "" :
+						msgbox(manager.failed_reason)
+						if manager.active_cib != "" :
+							manager.update()
+					elif manager.active_cib != "" :
+						self.on_changed()
+				else :
+					manager.update()
 
 	def on_up(self, widget) :
 		elem_list = self.get_elem_list()
@@ -3894,15 +3941,21 @@ class ElementNotebook :
 		selected_node.parentNode.removeChild(selected_node)
 
 		if self.is_topview :
-			manager.validate_cib()
-			xml_str = self.xml_node.toxml().replace("\n", "")
-			manager.cib_do_cmd("cib_replace\n%s\n%s"%(str(self.obj_type), str(xml_str)))
-			if manager.failed_reason != "" :
-				msgbox(manager.failed_reason)
+			if manager.validate_cib() :
+				xml_str = self.xml_node.toxml().replace("\n", "")
+				manager.cib_do_cmd("cib_replace\n%s\n%s"%(str(self.obj_type), str(xml_str)))
+				if manager.failed_reason != "" :
+					msgbox(manager.failed_reason)
+					if manager.active_cib != "" :
+						manager.update()
+				else :
+					self.on_changed()
+			else :
+				manager.update()
 		else :
+			self.on_changed()
 			if self.change_call_back != None :
 				self.change_call_back()
-		self.on_changed()
 
 	def on_down(self, widget) :
 		elem_list = self.get_elem_list()
@@ -3934,15 +3987,21 @@ class ElementNotebook :
 		selected_node.parentNode.removeChild(selected_node)
 
 		if self.is_topview :
-			manager.validate_cib()
-			xml_str = self.xml_node.toxml().replace("\n", "")
-			manager.cib_do_cmd("cib_replace\n%s\n%s"%(str(self.obj_type), str(xml_str)))
-			if manager.failed_reason != "" :
-				msgbox(manager.failed_reason)
+			if manager.validate_cib() :
+				xml_str = self.xml_node.toxml().replace("\n", "")
+				manager.cib_do_cmd("cib_replace\n%s\n%s"%(str(self.obj_type), str(xml_str)))
+				if manager.failed_reason != "" :
+					msgbox(manager.failed_reason)
+					if manager.active_cib != "" :
+						manager.update()
+				else :
+					self.on_changed()
+			else :
+				manager.update()
 		else :
+			self.on_changed()
 			if self.change_call_back != None :
 				self.change_call_back()
-		self.on_changed()
 
 	def on_changed(self) :
 		notebook_status = self.save_status()
@@ -5342,6 +5401,10 @@ class MainWindow :
 		self.set_action_sensitive('transition-info', manager.connected)
 		self.set_action_sensitive('report', manager.connected)
 
+		for action in ["new", "reset", "delete", "commit", "switch"] :
+			self.set_action_sensitive(action, manager.connected)
+		self.set_action_sensitive("diff", manager.connected and manager.active_cib != None and manager.active_cib != "")
+
 	# functions
 	def update(self) :
 		self.maintree.update()
@@ -5359,6 +5422,8 @@ class MainWindow :
 		else :
 			status_str += " " + _("(Hack mode)")
 		window.statusbar.push(1, status_str)
+
+		self.update_ui()
 
 		return False
 
@@ -5499,6 +5564,320 @@ class MainWindow :
 					+ _("Turn it off ?")))
 			if retval ==  gtk.RESPONSE_YES :
 				manager.do_cmd("crm_attribute\nop_defaults\ndel\nrecord-pending\n\"\"")
+
+	def on_shadow_action(self, action) :
+		global top_window
+
+		shadows = manager.do_cmd("get_shadows")
+		if shadows == None or len(shadows) == 0 :
+			msgbox(_("Cannot get any shadow CIB"))
+			return
+
+		shadow_list = [shadow[len("shadow."):] for shadow in shadows]
+		shadow_list.sort()
+
+		action_name = action.get_name()
+
+		default_shadow = None
+		if manager.active_cib != "" :
+			#if action_name == "delete" :
+			#	if manager.active_cib in shadow_list :
+			#		shadow_list.remove(manager.active_cib)
+			#		if len(shadow_list) == 0 :
+			#			msgbox(_("The only one shadow CIB \"%s\" is currently active.")%manager.active_cib)
+			#			return
+			#else :
+				default_shadow = manager.active_cib
+
+		title_str = _(name_cap(action_name)) + " " + _("Shadow CIB")
+		if action_name == "reset" :
+			action_des = _(name_cap(action_name)) + " - " + _("Recreate the specified shadow CIB from the live CIB")
+		elif action_name == "delete" :
+			action_des = _("Delete the specified shadow CIB")
+		elif action_name == "commit" :
+			action_des = _(name_cap(action_name)) + " - " + _("Upload the specified shadow CIB to the cluster")
+
+		shadow_action = kvbox(title_str, action_des,
+				[Field("shadow_name", _("Shadow name"), default_shadow, shadow_list, False, entry_editable = False)])
+
+		if shadow_action == None :
+			return
+
+		shadow_name = shadow_action.get("shadow_name", "")
+
+		if shadow_name == manager.active_cib and action_name == "delete" :
+			reinit_name = ""
+		else :
+			reinit_name = manager.active_cib
+
+		if shadow_name == manager.active_cib :
+			manager.do_cmd("shutdown_cib")
+
+		cmd_ret = manager.do_cmd("crm_shadow\n%s\n%s\ntrue" %(action_name, shadow_name))
+
+		if cmd_ret == None :
+			if manager.failed_reason.count("Please remember to unset the CIB_shadow variable") == 0 :
+				if manager.failed_reason != "" :
+					msgbox(manager.failed_reason)
+		#else :
+			elif action_name == "commit" and manager.active_cib != "" :
+				retval = confirmbox(_("The shadow CIB \"%s\"has been successfully commited.")%shadow_name + "\n"
+							+_("Switch to the live CIB?"),
+						(gtk.STOCK_NO, gtk.RESPONSE_NO, gtk.STOCK_YES, gtk.RESPONSE_YES),
+						_("Switch to the live CIB?"))
+				if retval == gtk.RESPONSE_YES :
+					reinit_name = ""
+
+		if shadow_name == manager.active_cib :
+			manager.do_cmd("init_cib\n%s"%(reinit_name))
+			if manager.failed_reason != "" :
+				msgbox(manager.failed_reason)
+			else :
+				manager.update()
+		elif manager.active_cib != reinit_name :
+			manager.do_cmd("switch_cib\n%s"%(reinit_name))
+			if manager.failed_reason != "" :
+				msgbox(manager.failed_reason)
+			else :
+				manager.update()
+
+	def on_shadow_diff(self, action) :
+		global top_window
+
+		dialog = gtk.Dialog(_("Shadow CIB Diff"), top_window, gtk.DIALOG_MODAL,
+				(gtk.STOCK_CLOSE, gtk.RESPONSE_CLOSE, gtk.STOCK_SAVE, gtk.RESPONSE_APPLY))
+		dialog.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_NORMAL)
+		dialog.set_size_request(750, 600)
+
+		label = gtk.Label()
+		label.set_markup('<b>' + _("Differences between the live CIB and the shadow CIB \"%s\": ")%manager.active_cib + '</b>')
+		label.set_alignment(0, 0)
+		dialog.vbox.pack_start(label, False, padding = 5)
+
+		sw = gtk.ScrolledWindow()
+		sw.set_shadow_type(gtk.SHADOW_IN)
+		sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+		dialog.vbox.pack_start(sw, True)
+
+		shadow_diff_text = gtk.TextView()
+		shadow_diff_text.set_property("editable", False)
+		shadow_diff_textbuffer = shadow_diff_text.get_buffer()
+		sw.add(shadow_diff_text)
+
+		reinit_name = manager.active_cib
+		manager.do_cmd("shutdown_cib")
+		shadow_diff = manager.do_cmd("crm_shadow\ndiff\n\n")
+		if shadow_diff == None :
+		#else :
+			shadow_diff_textbuffer.set_text(manager.failed_reason)
+
+		dialog.show_all()
+		save_top_window = top_window
+		top_window = dialog
+
+		while True :
+			ret = dialog.run()
+			if ret == gtk.RESPONSE_APPLY :
+				self.save_shadow_diff(shadow_diff_textbuffer)
+			else :
+				break
+
+		dialog.destroy()
+		top_window = save_top_window
+
+		manager.do_cmd("init_cib\n%s"%(reinit_name))
+		if manager.failed_reason != "" :
+			msgbox(manager.failed_reason)
+		else :
+			manager.update()
+
+	def save_shadow_diff(self, textbuffer) :
+		default_name = manager.active_cib + ".diff"
+		filter_list = ((_("Diff Files"), ("*.diff",)),
+				(_("All Files"), ("*")))
+		sfdlg = SelectFileDlg()
+		(save_file, save_type) = sfdlg.select_file(default_name, filter_list)
+		if save_file == None :
+			return
+
+		save_str = textbuffer.get_text(*textbuffer.get_bounds())
+
+		if save_str == None :
+			msgbox(_("Cannot save the shadow diff"))
+			return
+
+		try :
+			fd = os.open(save_file, os.O_RDWR|os.O_CREAT|os.O_TRUNC, 0644)
+		except OSError, msg :
+			msgbox(_("System error: ") + str(msg))
+			return
+
+		try :
+			 os.write(fd, save_str)
+		except OSError, msg :
+			msgbox(_("System error: ") + str(msg))
+			os.close(fd)
+			return
+		os.close(fd)
+
+	def on_create_cib(self, action) :
+		global top_window
+
+		shadows = manager.do_cmd("get_shadows")
+		if shadows == None or len(shadows) == 0 :
+			shadow_list = []
+		else :
+			shadow_list = [shadow[len("shadow."):] for shadow in shadows]
+			shadow_list.sort()
+
+		dialog = gtk.Dialog(_("Create Shadow CIB"), top_window, gtk.DIALOG_MODAL,
+			(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK))
+		dialog.set_default_response(gtk.RESPONSE_YES)
+		dialog.set_border_width(5)
+
+		combo_entries = {}
+		checkbuttons = {}
+		radiobuttons = {}
+
+		for key in ["shadow_name", "live", "empty","force"] :
+			hbox = gtk.HBox()
+			if key in ["shadow_name"] :
+				name_label = gtk.Label(_(name_cap(key))+_(":"))
+				name_label.set_alignment(0, 0.5)
+				hbox.pack_start(name_label, False, padding=2)
+
+			if key == "shadow_name" :
+				widget = gtk.combo_box_entry_new_text()
+				for shadow in shadow_list :
+					widget.append_text(shadow)
+				combo_entries[key] = widget
+			elif key == "live" :
+				widget = gtk.RadioButton(None, _("A copy of the live CIB"))
+				radiobuttons[key] = widget
+				live_radio_btn = widget
+			elif key == "empty" :
+				widget = gtk.RadioButton(live_radio_btn, _("A new CIB with empty cluster configuration"))
+				radiobuttons[key] = widget
+			elif key == "force" :
+				widget = gtk.CheckButton(_(name_cap(key)))
+				checkbuttons[key] = widget
+
+			hbox.pack_start(widget, True, padding=2)
+			dialog.vbox.pack_start(hbox, False, padding=2)
+
+		widgets = {}
+		widgets["combo_entries"] = combo_entries
+		widgets["checkbuttons"] = checkbuttons
+		widgets["radiobuttons"] = radiobuttons
+
+		widget_group = WidgetGroup(widgets)
+
+		save_top_window = top_window
+		top_window = dialog
+		dialog.show_all()
+
+		while True:
+			ret = dialog.run()
+			if ret in [gtk.RESPONSE_CANCEL, gtk.RESPONSE_DELETE_EVENT] :
+				break
+
+			create_shadow = widget_group.get_values()
+
+			shadow_name = create_shadow.get("shadow_name", "")
+			if shadow_name == "" :
+				msgbox(_("Please specify a name for the shadow CIB."))
+				continue
+			if shadow_name == "Live" or shadow_name == "live" :
+				msgbox(_("Please specify another name for avoiding confusion."))
+				continue
+			elif shadow_name == manager.active_cib :
+				msgbox(_("A shadow CIB \"%s\" already exists and it's currently active.")%(shadow_name))
+				continue
+			elif shadow_name in shadow_list and create_shadow.get("force", "") != "true" :
+				msgbox(_("A shadow CIB \"%s\" already exists.")%(shadow_name) + "\n" + 
+						_("Specify another name, or select \"Force\" if you want to override it."))
+				continue
+
+			if create_shadow.get("live") == "true" :
+				create_cmd = "create"
+			else :
+				create_cmd = "create-empty"
+
+			cmd_ret = manager.do_cmd("crm_shadow\n%s\n%s\n%s"
+					%(create_cmd, shadow_name, create_shadow.get("force", "")))
+			if cmd_ret == None :
+				if manager.failed_reason == "" :
+					#msgbox("Failed creating shadow CIB")
+					break
+
+				if manager.failed_reason.count("A new shadow instance was created") == 0 :
+					msgbox(manager.failed_reason)
+					continue
+			#else :
+				retval = confirmbox(_("A new shadow CIB \"%s\" has been successfully created.")%shadow_name + "\n"
+							+_("Switch to it now?"),
+						(gtk.STOCK_NO, gtk.RESPONSE_NO, gtk.STOCK_YES, gtk.RESPONSE_YES),
+						_("Switch to the new created shadow CIB \"%s\"?")%shadow_name)
+				if retval == gtk.RESPONSE_YES :
+					manager.do_cmd("switch_cib\n%s"%(create_shadow.get("shadow_name", "")))
+					manager.update()
+				break
+
+		top_window = save_top_window
+		dialog.destroy()
+
+
+	def on_switch_cib(self, action, current, switch_list) :
+		switch_name = switch_list[action.get_current_value()]
+		if switch_name == "live" :
+			manager.do_cmd("switch_cib\n")
+		else :
+			manager.do_cmd("switch_cib\n%s"%(switch_name[len("shadow."):]))
+
+		manager.update()
+
+	def render_switch_submenu(self, action) :
+		for menuitem in self.switch_submenu.get_children() :
+			self.switch_submenu.remove(menuitem)
+
+		shadows = manager.do_cmd("get_shadows")
+		if manager.failed_reason != "" :
+			msgbox(manager.failed_reason)
+			return
+		if shadows == None or len(shadows) == 0 :
+			return
+
+		#shadow_list = [shadow[len("shadow."):] for shadow in shadows]
+		shadow_list = shadows[:]
+		shadow_list.sort()
+
+		switch_list = shadow_list[:]
+		switch_list.insert(0, "live")
+
+		switch_radio_actions = [('live', None, _('Live'), None, None, 0)]
+		for i in range(len(shadow_list)) :
+			shadow = shadow_list[i]
+			switch_radio_actions.append((shadow, None, shadow[len("shadow."):], None, None, i+1))
+
+		default_active = 0
+		if manager.active_cib != "" :
+			active_shadow = "shadow." + manager.active_cib
+			if active_shadow in switch_list :
+				default_active = switch_list.index(active_shadow)
+
+		switch_radio_actiongroup = gtk.ActionGroup("switch")
+		switch_radio_actiongroup.add_radio_actions(switch_radio_actions, default_active, self.on_switch_cib, switch_list)
+
+		for switch_name in switch_list :
+			action = switch_radio_actiongroup.get_action(switch_name)
+			action.set_accel_group(self.accelgroup)
+			switch_menuitem = action.create_menu_item()
+			self.switch_submenu.append(switch_menuitem)
+			if switch_name == "live" :
+				separator = gtk.SeparatorMenuItem()
+				self.switch_submenu.append(separator)
+
+		self.switch_submenu.show_all()
 
 	def on_transition_info(self, action) :
 		input_list = manager.do_cmd("get_pe_inputs")
@@ -5790,12 +6169,23 @@ class MainWindow :
 				<menu action="connection">
 					<menuitem action="login"/>
 					<menuitem action="logout"/>
+					<separator/>
 					<menuitem action="quit"/>
 				</menu>
 				<menu action="view">
 					<menuitem action="simple-mode"/>
 					<menuitem action="expert-mode"/>
 					<menuitem action="hack-mode"/>
+				</menu>
+				<menu action="shadow">
+					<menuitem action="new"/>
+					<menuitem action="diff"/>
+					<menuitem action="reset"/>
+					<menuitem action="delete"/>
+					<separator/>
+					<menuitem action="commit"/>
+					<separator/>
+					<menuitem action="switch"/>
 				</menu>
 				<menu action="tools">
 					<menuitem action="transition-info"/>
@@ -5827,24 +6217,31 @@ class MainWindow :
 		</ui>'''
 		uimanager = gtk.UIManager()
 
-		#self.accelgroup = gtk.AccelGroup()
-		#win_widget.add_accel_group(self.accelgroup)
+		self.accelgroup = gtk.AccelGroup()
+		win_widget.add_accel_group(self.accelgroup)
 
 		actiongroup = gtk.ActionGroup('haclient')
-		
+
 		if pygtk_newer(2, 6) :
 			login_icon = gtk.STOCK_CONNECT
 			logout_icon = gtk.STOCK_DISCONNECT
 		else :
 			login_icon = "ha-login"
 			logout_icon = "ha-logout"
-			
+
 		actiongroup.add_actions([
 			('connection', None, _('Connection')),
 			('login', login_icon, _('Login...'), None,_('login to cluster'), self.on_login),
 			('logout', logout_icon, _('Logout'), None,_('logout from cluster'), self.on_logout),
 			('quit', gtk.STOCK_QUIT, _('Quit'), None,_('Quit the Program'), self.on_quit),
 			('view', None, _('View')),
+			('shadow', None, _('Shadow')),
+			('new', gtk.STOCK_NEW, _('New'), None,_('Create a new shadow CIB'), self.on_create_cib),
+			('diff', gtk.STOCK_COPY, _('Diff'), None,_('Differences between the live CIB and the shadow CIB'), self.on_shadow_diff),
+			('reset', None, _('Reset'), None,_('Recreate a shadow CIB from the live CIB'), self.on_shadow_action),
+			('delete', gtk.STOCK_DELETE, _('Delete'), None,_('Delete a shadow CIB'), self.on_shadow_action),
+			('commit', gtk.STOCK_SAVE, _('Commit'), None,_('Upload a shadow CIB to the cluster'), self.on_shadow_action),
+			('switch', None, _('Switch'), None,_('Switch working CIB'), self.render_switch_submenu),
 			('tools', None, _('Tools')),
 			('transition-info', gtk.STOCK_CONVERT, _('Transition Information'), None,
 				_('Show Transition Information'), self.on_transition_info),
@@ -5868,22 +6265,26 @@ class MainWindow :
 		# put componets to window
 		vbox = gtk.VBox()
 		win_widget.add(vbox)
-		
+
 		menubar = uimanager.get_widget('/menubar')
 		vbox.pack_start(menubar, False)
-		
+
+		switch_menu = uimanager.get_widget("/menubar/shadow/switch")
+		self.switch_submenu = gtk.Menu()
+		switch_menu.set_submenu(self.switch_submenu)
+		#switch_menu.connect("focus", self.render_switch_submenu)
+
 		toolbar = uimanager.get_widget('/toolbar')
 		toolbar.set_style(gtk.TOOLBAR_ICONS)
 		vbox.pack_start(toolbar, False)
-		
+
 		hpaned = gtk.HPaned()
 		vbox.pack_start(hpaned)
 
-		
 		#maintree = MainTree("cib")
 		maintree_sw = gtk.ScrolledWindow()
 		maintree_sw.set_shadow_type(gtk.SHADOW_IN)
-				
+
 		maintree_sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
 
 		self.maintree = MainTree()
@@ -5902,10 +6303,10 @@ class MainWindow :
 		#mainview_frame = gtk.Frame()
 		#mainview_frame.add(mainview_sw)
 		hpaned.add2(mainview_sw)
-			
+
 		self.statusbar = gtk.Statusbar()
 		vbox.pack_end(self.statusbar, False)
-		
+
 		# show the window
 		win_widget.show_all()
 		# keep some widgets
@@ -5939,6 +6340,7 @@ class Manager :
 	async_ret_str = {}
 	async_ret_list = {} 
 	xml_nodes = {}
+	active_cib = None
 	validate_name = None
 		
 	# cache functions
@@ -6077,7 +6479,7 @@ class Manager :
 	def ret_str2list(self, ret_str, command) :
 		self.failed_reason = ""
 		ret_list = string.split(ret_str, "\n")
-		if ret_list[0] != "ok" :
+		if ret_list[0] != "o" :
 			debug(str(string.split(command, "\n"))+":"+ str(ret_list))
 			if len(ret_list) > 1 :
 				self.failed_reason = string.join(ret_list[1:],"\n")
@@ -6170,7 +6572,7 @@ class Manager :
 			self.failed_reason = "return None"
 			return None
 		ret_list = string.split(ret_str, "\n")
-		if ret_list[0] != "ok":
+		if ret_list[0] != "o":
 			debug(str(string.split(command, "\n"))+":"+str(ret_list))
 			if len(ret_list) > 1:
 				self.failed_reason = string.join(ret_list[1:], "\n")
@@ -6254,6 +6656,16 @@ class Manager :
 			self.cns_xml = None
 			debug("fail to parse xml info")
 			return None"""
+
+	def get_active_cib(self) :
+		active_cib = manager.do_cmd("active_cib")
+		if active_cib == None or len(active_cib) == 0 :
+			return
+
+		if len(active_cib[0]) > 0 :
+			self.active_cib = active_cib[0]
+		else :
+			self.active_cib = ""
 
 	def get_supported_rsc_types(self) :
 		rsc_types = []
@@ -6607,6 +7019,7 @@ class Manager :
 	def update(self) :
 		self.cache_clear()
 		if self.update_cib_xml() :
+			self.get_active_cib()
 			self.parent = {}
 			window.update()
 		gc.collect()
@@ -7087,6 +7500,15 @@ class WidgetGroup :
 				object[attr_name] = widgets["anyname_combo_entries"][key].child.get_text()
 				if attr_name == "" or object[attr_name] == "" or object[attr_name] == None :
 					object.pop(attr_name)
+
+		if widgets.has_key("radiobuttons") :
+			for key in widgets["radiobuttons"].keys() :
+				if widgets["radiobuttons"][key].get_property("sensitive") == False :
+					continue
+				if widgets["radiobuttons"][key].get_active() :
+					object[key] = "true"
+				else:
+					object[key] = "false"
 
 		return object
 
