@@ -6442,7 +6442,7 @@ class Manager :
 		
 		self.do_cmd("regevt\nevt:cib_changed")
 		self.do_cmd("regevt\nevt:disconnected")
-		
+
 		fd = mgmt_inputfd()
 		self.io_tag = gobject.io_add_watch(fd, gobject.IO_IN, self.on_event, None)
 		return True
@@ -7019,6 +7019,8 @@ class Manager :
 	def update(self) :
 		self.cache_clear()
 		if self.update_cib_xml() :
+			for crm_cmd in ["pengine", "crmd"] :
+				self.query("crm_metadata\n%s"%(crm_cmd),True)
 			self.get_active_cib()
 			self.parent = {}
 			window.update()
