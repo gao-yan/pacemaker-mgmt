@@ -2116,6 +2116,7 @@ dnl The Makefiles and shell scripts we output
 AC_CONFIG_FILES(Makefile				        \
 README							        \
 debian/Makefile							\
+doc/Makefile
 include/Makefile						\
 	include/mgmt/Makefile					\
 lib/Makefile							\
