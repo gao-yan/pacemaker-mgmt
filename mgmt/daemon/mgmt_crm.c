@@ -1964,8 +1964,6 @@ on_gen_cluster_report(char* argv[], int argc)
 	return ret;
 }
 
-static const char* pe_working_dir = HA_VARLIBDIR"/heartbeat/pengine";
-
 static char*
 on_get_pe_inputs(char* argv[], int argc)
 {
@@ -1976,8 +1974,8 @@ on_get_pe_inputs(char* argv[], int argc)
 	struct stat statbuf;
 	char buf[MAX_STRLEN];
 
-	if ((dp = opendir(pe_working_dir)) == NULL){
-		mgmt_log(LOG_ERR, "error on opendir \"%s\": %s", pe_working_dir, strerror(errno));
+	if ((dp = opendir(PE_STATE_DIR)) == NULL){
+		mgmt_log(LOG_ERR, "error on opendir \"%s\": %s", PE_STATE_DIR, strerror(errno));
 		return strdup(MSG_FAIL"\nCannot open the pengine working directory");
 	}
 
@@ -1986,7 +1984,7 @@ on_get_pe_inputs(char* argv[], int argc)
 		if (dirp->d_type == DT_REG && strstr(dirp->d_name, "pe-") != NULL
 				&& strstr(dirp->d_name, "bz2") != NULL){
 			memset(fullpath, 0, sizeof(fullpath));
-			snprintf(fullpath, sizeof(fullpath), "%s/%s", pe_working_dir, dirp->d_name);
+			snprintf(fullpath, sizeof(fullpath), "%s/%s", PE_STATE_DIR, dirp->d_name);
 			if (stat(fullpath, &statbuf) < 0){
 				mgmt_log(LOG_ERR, "Cannot stat the file \"%s\"", fullpath);
 				continue;
@@ -2000,7 +1998,7 @@ on_get_pe_inputs(char* argv[], int argc)
 	}
 
 	if (closedir(dp) < 0){
-		mgmt_log(LOG_WARNING, "failed to closedir \"%s\": %s", pe_working_dir, strerror(errno) );
+		mgmt_log(LOG_WARNING, "failed to closedir \"%s\": %s", PE_STATE_DIR, strerror(errno) );
 	}
 	return ret;
 }
@@ -2019,7 +2017,7 @@ on_gen_pe_graph(char* argv[], int argc)
 		strncpy(cmd, "ptest -L", sizeof(cmd)-1);
 	}
 	else{
-		snprintf(cmd, sizeof(cmd), "ptest -x %s/%s", pe_working_dir, argv[1]);
+		snprintf(cmd, sizeof(cmd), "ptest -x %s/%s", PE_STATE_DIR, argv[1]);
 	}
 
 	strncat(cmd, " -D ", sizeof(cmd)-strlen(cmd)-1);
@@ -2074,7 +2072,7 @@ on_gen_pe_info(char* argv[], int argc)
 		strncpy(cmd, "ptest -L", sizeof(cmd)-1);
 	}
 	else{
-		snprintf(cmd, sizeof(cmd), "ptest -x %s/%s", pe_working_dir, argv[1]);
+		snprintf(cmd, sizeof(cmd), "ptest -x %s/%s", PE_STATE_DIR, argv[1]);
 	}
 	
 	if (STRNCMP_CONST(argv[2], "scores") == 0){
