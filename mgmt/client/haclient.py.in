@@ -227,6 +227,26 @@ def make_label_active(label, text, url) :
 	label.get_parent().connect("button_press_event", on_label_active, url)
 	#label.get_parent().window.set_cursor(gtk.gdk.Cursor(gtk.gdk.HAND1))
 
+def is_valid_time(time_input) :
+	num_chars = "0123456789."
+	valid_units = ["", "ms", "msec", "us", "usec", "s", "sec", "m", "min", "h", "hr"]
+	time_str = time_input.strip()
+	if time_str[0] not in num_chars :
+		return (False, _("The specified time should be numeric prefixed."))
+
+	unit_str = ""
+	for i in range(len(time_str)) :
+		if time_str[i] not in num_chars :
+			unit_str = time_str[i:].strip()
+			break
+
+	unit_list = valid_units[:]
+	unit_list.remove("")
+	if unit_str not in valid_units :
+		return (False, _("The specified time should default with second unit, ") +
+				_("or should be suffixed with one of the following units:\n %s")%(", ".join(unit_list)))
+	return (True, None)
+
 def kvbox(title, description, fields, auto_fill = None) :
 	global top_window
 	dialog = gtk.Dialog(title, top_window, gtk.DIALOG_MODAL,
@@ -7602,7 +7622,6 @@ class ObjectAttrs(WidgetGroup) :
 		self.render_attrs_vbox()
 
 		if validate_type == "dtd" :
-			self.verify_values = self.verify_values_dtd
 			self.dtd_elem = manager.get_dtd_elem(self.obj_type)
 			self.attr_list = dtd_elem.get_attr_list()
 			if self.dtd_elem.get_content_model()[1] == [] :
@@ -7611,7 +7630,6 @@ class ObjectAttrs(WidgetGroup) :
 				self.auto_id = False
 			self.render_widgets_dtd()
 		else :
-			self.verify_values = self.verify_values_rng
 			self.render_widgets_rng()
 
 		for widget_type in ("combos", "bool_combos", "combo_entries") :
@@ -7630,6 +7648,12 @@ class ObjectAttrs(WidgetGroup) :
 			else :
 				widget.connect("changed", self.on_changed_later)
 				self.widgets["anyname_combo_entries"][widget].connect("changed", self.on_changed_later)
+
+	def verify_values(self) :
+		if validate_type == "dtd" :
+			return self.verify_values_dtd()
+		else :
+			return self.verify_values_rng()
 
 	def on_after_show(self) :
 		if self.auto_id == True :
@@ -9175,7 +9199,7 @@ class OP(ObjectAttrs) :
 			return
 
 		op = self.get_values()
-		if op["name"] in ["monitor"] :
+		if op.get("name", "") in ["", "monitor"] :
 			required_attrs = ["id", "name", "interval", "timeout"]
 		else :
 			required_attrs = ["id", "name", "timeout"]
@@ -9192,6 +9216,26 @@ class OP(ObjectAttrs) :
 
 		required_vbox.show_all()
 		optional_vbox.show_all()
+
+	def verify_values(self) :
+		if not ObjectAttrs.verify_values(self) :
+			return False
+
+		time_attrs = ["interval", "timeout"]
+		if validate_type == "dtd" :
+			time_attrs.append("start_delay")
+		else :
+			time_attrs.append("start-delay")
+
+		op = self.get_values()
+		for time_attr in time_attrs :
+			if op.get(time_attr, "") != "" :
+				(is_valid, error_msg) = is_valid_time(op[time_attr])
+				if not is_valid :
+					msgbox(_("Invalid \"%s\":")%(_(name_cap(time_attr))) + "\n" +
+							error_msg)
+					return False
+		return True
 
 class RscOrder(ObjectAttrs) :
 	def __init__(self, xml_node, is_newobj = False, change_call_back = None) :
