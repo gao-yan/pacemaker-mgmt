@@ -5900,18 +5900,24 @@ class MainWindow :
 		self.switch_submenu.show_all()
 
 	def on_transition_info(self, action) :
-		input_list = manager.do_cmd("get_pe_inputs")
+		input_info = manager.do_cmd("get_pe_inputs")
 		if manager.failed_reason != "" :
 			msgbox(manager.failed_reason)
 			return
-		elif input_list == None or len(input_list) < 1 :
+		elif input_info == None or len(input_info) < 1 :
 			msgbox(_("Cannot find any transition record"))
 			return
 
 		input_dict = {}
-		for input in input_list :
-			(input_file, input_time) = input.split()
-			input_dict[float(input_time)] = input_file
+		for i in range(len(input_info)) :
+			input_list = input_info[i].split()
+			j = 0
+			while j < len(input_list) :
+				time_stamp = float(input_list[j+1])
+				if not input_dict.has_key(time_stamp) :
+					input_dict[time_stamp] = []
+				input_dict[time_stamp].append(input_list[j])
+				j += 2
 
 		input_time_list = input_dict.keys()
 		input_time_list.sort()
@@ -5920,10 +5926,12 @@ class MainWindow :
 		for i in range(len(input_time_list)) :
 			input_time = input_time_list[i]
 
-			input_file = input_dict[input_time]
-			info_text = input_file.split("-")[1].replace("input", "info").upper()
-			info_text += ": " + time.ctime(input_time)
-			input_info_list.append([input_file, info_text])
+			input_files = input_dict[input_time]
+			input_files.sort()
+			for input_file in input_files :
+				info_text = input_file.split("-")[1].replace("input", "info").upper()
+				info_text += ": " + time.ctime(input_time)
+				input_info_list.append([input_file, info_text])
 
 		tidlg = TransitionInfoDlg(input_info_list)
 

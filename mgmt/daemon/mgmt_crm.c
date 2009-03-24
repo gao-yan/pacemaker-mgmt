@@ -1972,6 +1972,7 @@ on_get_pe_inputs(char* argv[], int argc)
 	DIR *dp;
 	char fullpath[MAX_STRLEN];
 	struct stat statbuf;
+	char info[MAX_STRLEN];
 	char buf[MAX_STRLEN];
 
 	if ((dp = opendir(PE_STATE_DIR)) == NULL){
@@ -1979,26 +1980,33 @@ on_get_pe_inputs(char* argv[], int argc)
 		return strdup(MSG_FAIL"\nCannot open the pengine working directory");
 	}
 
+	memset(buf, 0, sizeof(buf));
 	ret = strdup(MSG_OK);
 	while ((dirp = readdir(dp)) != NULL) {
 		if (dirp->d_type == DT_REG && strstr(dirp->d_name, "pe-") != NULL
 				&& strstr(dirp->d_name, "bz2") != NULL){
 			memset(fullpath, 0, sizeof(fullpath));
 			snprintf(fullpath, sizeof(fullpath), "%s/%s", PE_STATE_DIR, dirp->d_name);
+
 			if (stat(fullpath, &statbuf) < 0){
 				mgmt_log(LOG_ERR, "Cannot stat the file \"%s\"", fullpath);
 				continue;
 			}
 			if (S_ISREG(statbuf.st_mode)){
-				memset(buf, 0, sizeof(buf));
-				snprintf(buf, sizeof(buf), "%s %ld", dirp->d_name, (long int)statbuf.st_mtime);
-				ret = mgmt_msg_append(ret, buf);
+				memset(info, 0, sizeof(info));
+				snprintf(info, sizeof(info), "%s %ld ", dirp->d_name, (long int)statbuf.st_mtime);
+				if (strlen(buf)+strlen(info) >= sizeof(buf)) {
+					ret = mgmt_msg_append(ret, buf);
+					memset(buf, 0, sizeof(buf));
+				}
+				strncat(buf, info, sizeof(buf)-strlen(buf)-1);
 			}
 		}
 	}
+	ret = mgmt_msg_append(ret, buf);
 
 	if (closedir(dp) < 0){
-		mgmt_log(LOG_WARNING, "failed to closedir \"%s\": %s", PE_STATE_DIR, strerror(errno) );
+		mgmt_log(LOG_WARNING, "failed to closedir \"%s\": %s", PE_STATE_DIR, strerror(errno));
 	}
 	return ret;
 }
