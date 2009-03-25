@@ -2129,6 +2129,7 @@ mgmt/Makefile							\
 	mgmt/daemon/Makefile					\
 	mgmt/client/Makefile					\
 		mgmt/client/haclient.py				\
+		mgmt/client/crm_gui.desktop			\
 		mgmt/client/mgmtcmd.py				\
 replace/Makefile						\
 snmp_subagent/Makefile						\

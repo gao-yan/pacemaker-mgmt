@@ -31,6 +31,9 @@ guilib_DATA            = ha.png login.png logout.png exit.png \
 			  nodes.png node.png administration.png record-pending.png \
 			  manage-resource.png unmanage-resource.png
 
+desktopdir		= $(datadir)/applications
+desktop_DATA		= crm_gui.desktop
+
 INCLUDES 	      	= -I$(top_builddir)/include  -I$(top_srcdir)/include \
 			  -I$(top_builddir)/linux-ha -I$(top_srcdir)/linux-ha \
 			  -I$(top_builddir)/libltdl -I$(top_srcdir)/libltdl
