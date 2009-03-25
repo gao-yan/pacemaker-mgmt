@@ -8719,6 +8719,22 @@ class Primitive(ObjectAttrs) :
 				desc = [shortdesc + _(".") + "\n" + longdesc]
 		return desc
 
+	def verify_values(self) :
+		if not ObjectAttrs.verify_values(self) :
+			return False
+
+		primitive = self.get_values()
+		if primitive.get("class", "") == "" :
+			msgbox(_("\"%s\" is required")%_("Class"))
+			return False
+
+		if primitive.get("class", "") == "ocf" and primitive.get("provider", "") == "" :
+			msgbox(_("\"%s\" is required")%_("Provider") + " " +
+					_("for an OCF primitive"))
+			return False
+
+		return True
+
 class MetaAttrsNV(ObjectAttrs) :
 	def __init__(self, xml_node, is_newobj = False, change_call_back = None) :
 		common_options = [
