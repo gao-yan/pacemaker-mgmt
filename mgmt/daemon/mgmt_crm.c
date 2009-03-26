@@ -527,6 +527,8 @@ on_get_shadows(char* argv[], int argc)
 	char* ret = NULL;
 	struct dirent *dirp;
 	DIR *dp;
+	char fullpath[MAX_STRLEN];
+	struct stat statbuf;
 
 	if ((dp = opendir(CRM_CONFIG_DIR)) == NULL){
 		mgmt_log(LOG_ERR, "error on opendir \"%s\": %s", CRM_CONFIG_DIR, strerror(errno));
@@ -535,8 +537,16 @@ on_get_shadows(char* argv[], int argc)
 
 	ret = strdup(MSG_OK);
 	while ((dirp = readdir(dp)) != NULL) {
-		if (dirp->d_type == DT_REG && strstr(dirp->d_name, "shadow.") == dirp->d_name) {
-			ret = mgmt_msg_append(ret, dirp->d_name);
+		if (strstr(dirp->d_name, "shadow.") == dirp->d_name) {
+			snprintf(fullpath, sizeof(fullpath), "%s/%s", CRM_CONFIG_DIR, dirp->d_name);
+
+			if (stat(fullpath, &statbuf) < 0){
+				mgmt_log(LOG_WARNING, "Cannot stat the file \"%s\"", fullpath);
+				continue;
+			}
+			if (S_ISREG(statbuf.st_mode)){
+				ret = mgmt_msg_append(ret, dirp->d_name);
+			}
 		}
 	}
 
@@ -1865,6 +1875,8 @@ on_gen_cluster_report(char* argv[], int argc)
 	const char *tempdir = "/tmp";
 	char *dest = tempnam(tempdir, "clrp.");
 	struct dirent *dirp;
+	struct stat statbuf;
+	int success = 0;
 	DIR *dp;
 	char *ret = NULL;
 	FILE *fstream = NULL;
@@ -1916,10 +1928,18 @@ on_gen_cluster_report(char* argv[], int argc)
 	}
 
 	while ((dirp = readdir(dp)) != NULL) {
-		if (dirp->d_type == DT_REG && strstr(dirp->d_name, basename(dest)) != NULL
+		if (strstr(dirp->d_name, basename(dest)) == dirp->d_name
 				&& strstr(dirp->d_name, "tar") != NULL){
 			snprintf(filename, sizeof(filename), "%s/%s", tempdir, dirp->d_name);
-			break;
+
+			if (stat(filename, &statbuf) < 0){
+				mgmt_log(LOG_WARNING, "Cannot stat the file \"%s\"", filename);
+				continue;
+			}
+			if (S_ISREG(statbuf.st_mode)){
+				success = 1;
+				break;
+			}
 		}
 	}
 
@@ -1929,7 +1949,7 @@ on_gen_cluster_report(char* argv[], int argc)
 
 	free(dest);
 
-	if (strnlen(filename, MAX_STRLEN) == 0) {
+	if (success == 0) {
 		mgmt_log(LOG_ERR, "cluster_report: failed to generate a cluster report");
 		return strdup(MSG_FAIL"\nFailed to generate a cluster report");
 	}
@@ -1983,13 +2003,13 @@ on_get_pe_inputs(char* argv[], int argc)
 	memset(buf, 0, sizeof(buf));
 	ret = strdup(MSG_OK);
 	while ((dirp = readdir(dp)) != NULL) {
-		if (dirp->d_type == DT_REG && strstr(dirp->d_name, "pe-") != NULL
+		if (strstr(dirp->d_name, "pe-") == dirp->d_name
 				&& strstr(dirp->d_name, "bz2") != NULL){
 			memset(fullpath, 0, sizeof(fullpath));
 			snprintf(fullpath, sizeof(fullpath), "%s/%s", PE_STATE_DIR, dirp->d_name);
 
 			if (stat(fullpath, &statbuf) < 0){
-				mgmt_log(LOG_ERR, "Cannot stat the file \"%s\"", fullpath);
+				mgmt_log(LOG_WARNING, "Cannot stat the file \"%s\"", fullpath);
 				continue;
 			}
 			if (S_ISREG(statbuf.st_mode)){
