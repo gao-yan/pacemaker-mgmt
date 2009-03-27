@@ -1874,10 +1874,7 @@ on_gen_cluster_report(char* argv[], int argc)
 	char filename[MAX_STRLEN];
 	const char *tempdir = "/tmp";
 	char *dest = tempnam(tempdir, "clrp.");
-	struct dirent *dirp;
 	struct stat statbuf;
-	int success = 0;
-	DIR *dp;
 	char *ret = NULL;
 	FILE *fstream = NULL;
 	const char* date_regex = \
@@ -1921,40 +1918,19 @@ on_gen_cluster_report(char* argv[], int argc)
 		return strdup(MSG_FAIL"\nError on execute the cluster report command");
 	}
 
-	if ((dp = opendir(tempdir)) == NULL){
-		mgmt_log(LOG_ERR, "cluster_report: error on opendir \"%s\": %s", tempdir, strerror(errno));
-		free(dest);
-		return strdup(MSG_FAIL"\nCannot open the temporary directory");
-	}
-
-	while ((dirp = readdir(dp)) != NULL) {
-		if (strstr(dirp->d_name, basename(dest)) == dirp->d_name
-				&& strstr(dirp->d_name, "tar") != NULL){
-			snprintf(filename, sizeof(filename), "%s/%s", tempdir, dirp->d_name);
-
-			if (stat(filename, &statbuf) < 0){
-				mgmt_log(LOG_WARNING, "Cannot stat the file \"%s\"", filename);
-				continue;
-			}
-			if (S_ISREG(statbuf.st_mode)){
-				success = 1;
-				break;
-			}
+	snprintf(filename, sizeof(filename), "%s.tar.bz2", dest);
+	if (stat(filename, &statbuf) < 0){
+		snprintf(filename, sizeof(filename), "%s.tar.gz", dest);
+		if (stat(filename, &statbuf) < 0){
+			free(dest);
+			mgmt_log(LOG_WARNING, "cluster_report: cannot stat the report file");
+			mgmt_log(LOG_ERR, "cluster_report: failed to generate a cluster report");
+			return strdup(MSG_FAIL"\nFailed to generate a cluster report");
 		}
 	}
 
-	if (closedir(dp) < 0){
-		mgmt_log(LOG_WARNING, "cluster_report: failed to closedir \"%s\": %s", tempdir, strerror(errno) );
-	}
-
 	free(dest);
-
-	if (success == 0) {
-		mgmt_log(LOG_ERR, "cluster_report: failed to generate a cluster report");
-		return strdup(MSG_FAIL"\nFailed to generate a cluster report");
-	}
-
-	mgmt_log(LOG_INFO, "cluster_report: execute the cluster report command successfully");
+	mgmt_log(LOG_INFO, "cluster_report: successfully generated the cluster report");
 
 	snprintf(cmd, sizeof(cmd), "/usr/bin/base64 %s", filename);
 	if ((fstream = popen(cmd, "r")) == NULL) {
