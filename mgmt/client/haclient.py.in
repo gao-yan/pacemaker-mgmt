@@ -7044,6 +7044,17 @@ class Manager :
 		else :
 			return (xml_node, obj_type_name, None)
 
+	def get_obj_ids(self, xml_node) :
+		id_list = []
+		node_id = xml_node.getAttribute("id")
+		if node_id != "" and id_list.count(node_id) == 0 :
+			id_list.append(node_id)
+		for child_node in xml_node.childNodes :
+			if child_node.nodeType != xml.dom.Node.ELEMENT_NODE :
+				continue
+			id_list.extend(self.get_obj_ids(child_node))
+		return id_list
+
 	def update(self) :
 		self.cache_clear()
 		if self.update_cib_xml() :
@@ -7449,7 +7460,7 @@ class Manager :
 
 	def rsc_exists(self, rsc_id) :
 		return rsc_id in self.get_all_rsc()
-		
+
 class WidgetGroup :
 	def __init__(self, widgets) :
 		self.widgets = widgets
@@ -7619,6 +7630,7 @@ class ObjectAttrs(WidgetGroup) :
 	dynamic_desc = None
 	static_desc = None
 	dynamic_render = None
+	dynamic_set_id = None
 	save_id = None
 
 	def __init__(self, xml_node, is_newobj = False, change_call_back = None, hide_optional = False) :
@@ -7664,6 +7676,9 @@ class ObjectAttrs(WidgetGroup) :
 			return self.verify_values_rng()
 
 	def on_after_show(self) :
+		if mode_level == 0 and self.dynamic_set_id != None :
+			self.hide_id_widget()
+
 		if self.auto_id == True :
 			if self.is_newobj :
 				if self.widgets.has_key("combo_entries") and self.widgets["combo_entries"].has_key("id") :
@@ -8271,6 +8286,9 @@ class ObjectAttrs(WidgetGroup) :
 		if self.dynamic_render != None :
 			self.dynamic_render(widget)
 
+		if self.dynamic_set_id != None :
+			self.dynamic_set_id(widget)
+
 		save_id = self.xml_node.getAttribute("id")
 		if save_id != "" :
 			self.save_id = save_id
@@ -8614,6 +8632,60 @@ class ObjectAttrs(WidgetGroup) :
 			for key in widgets[widget_type] :
 				if key in keys :
 					widgets[widget_type][key].set_sensitive(sensibility)
+
+	def exist_ids(self) :
+		all_ids = manager.get_obj_ids(manager.xml_nodes["cib"])
+
+		top_types = ["crm_config","rsc_defaults", "op_defaults", "nodes", "resources", "constraints", "status"]
+		top_parent = self.xml_node
+		while top_parent.parentNode.tagName not in top_types :
+			top_parent = top_parent.parentNode
+
+		other_ids = manager.get_obj_ids(top_parent)
+
+		for id in other_ids :
+			if id not in all_ids :
+				all_ids.append(id)
+
+		current_id = self.xml_node.getAttribute("id")
+		if current_id in all_ids :
+			all_ids.remove(current_id)
+
+		return all_ids
+
+	def get_unique_id(self, id_prefix) :
+		all_exist_ids = self.exist_ids()
+		id_suffix = ""
+		new_id = id_prefix 
+		while new_id in all_exist_ids :
+			if id_suffix == "" :
+				id_suffix = 0
+			else :
+				id_suffix += 1
+
+			new_id = id_prefix + "-" + str(id_suffix)
+
+		return new_id
+
+	def set_id_widget(self, id) :
+		widgets = self.widgets
+		if self.is_newobj :
+			if widgets.get("combo_entries", {}).has_key("id") :
+				widgets["combo_entries"]["id"].child.set_text(id)
+		else :
+			if widgets.get("value_labels", {}).has_key("id") :
+				widgets["value_labels"]["id"].set_text(id)
+
+	def hide_id_widget(self) :
+		widgets = self.widgets
+		if widgets.get("name_labels", {}).has_key("id") :
+			widgets["name_labels"]["id"].hide_all()
+		if self.is_newobj :
+			if widgets.get("combo_entries", {}).has_key("id") :
+				widgets["combo_entries"]["id"].hide_all()
+		else :
+			if widgets.get("value_labels", {}).has_key("id") :
+				widgets["value_labels"]["id"].hide_all()
 
 class Primitive(ObjectAttrs) :
 	def dynamic_fill(self, widget) :
@@ -9240,6 +9312,8 @@ class OP(ObjectAttrs) :
 
 		required_vbox.show_all()
 		optional_vbox.show_all()
+		if mode_level == 0 :
+			self.hide_id_widget()
 
 	def verify_values(self) :
 		if not ObjectAttrs.verify_values(self) :
@@ -9260,6 +9334,32 @@ class OP(ObjectAttrs) :
 							error_msg)
 					return False
 		return True
+
+	def dynamic_set_id(self, widget) :
+		widgets = self.widgets
+		if mode_level != 0 or not widgets.has_key("combo_entries") :
+			return
+		if widget not in [widgets["combo_entries"].get("name"), widgets["combo_entries"].get("interval")] :
+			if not widgets.has_key("combos") :
+				return
+			if widget != widgets["combos"].get("role") :
+				return
+				
+		op = self.get_values()
+		primitive_id = self.xml_node.parentNode.parentNode.getAttribute("id")
+		op_id = primitive_id + "-op"
+		name = op.get("name", "")
+		if name != "" :
+			op_id += "-" + name
+		role = op.get("role", "")
+		if role != "" :
+			op_id += "-" + role
+		interval = op.get("interval", "")
+		if interval != "" :
+			op_id += "-" + interval
+			
+		new_id = self.get_unique_id(op_id)
+		self.set_id_widget(new_id)
 
 class RscOrder(ObjectAttrs) :
 	def __init__(self, xml_node, is_newobj = False, change_call_back = None) :
