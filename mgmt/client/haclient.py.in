@@ -9314,6 +9314,7 @@ class OP(ObjectAttrs) :
 		optional_vbox.show_all()
 		if mode_level == 0 :
 			self.hide_id_widget()
+		top_window.set_focus(widgets["combo_entries"]["name"].child)
 
 	def verify_values(self) :
 		if not ObjectAttrs.verify_values(self) :
