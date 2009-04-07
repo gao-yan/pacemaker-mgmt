@@ -7646,6 +7646,7 @@ class ObjectAttrs(WidgetGroup) :
 			self.attr_list = dtd_elem.get_attr_list()
 			if self.dtd_elem.get_content_model()[1] == [] :
 				self.auto_id = True
+				self.dynamic_set_id = self.dynamic_set_id_auto
 			else :
 				self.auto_id = False
 			self.render_widgets_dtd()
@@ -7676,20 +7677,20 @@ class ObjectAttrs(WidgetGroup) :
 			return self.verify_values_rng()
 
 	def on_after_show(self) :
-		if mode_level == 0 and self.dynamic_set_id != None :
+		if self.auto_id or (mode_level == 0 and self.dynamic_set_id != None) :
 			self.hide_id_widget()
 
-		if self.auto_id == True :
-			if self.is_newobj :
-				if self.widgets.has_key("combo_entries") and self.widgets["combo_entries"].has_key("id") :
-					if len(self.widgets["combo_entries"]["id"].child.get_text()) == 0 :
-						self.widgets["combo_entries"]["id"].child.set_text(self.obj_type + "-" + gen_uuid())
-					self.widgets["name_labels"]["id"].hide_all()
-					self.widgets["combo_entries"]["id"].hide_all()
-			else :
-				if self.widgets.has_key("name_labels") and self.widgets["name_labels"].has_key("id") :
-					self.widgets["name_labels"]["id"].hide_all()
-					self.widgets["value_labels"]["id"].hide_all()
+		#if self.auto_id == True :
+		#	if self.is_newobj :
+		#		if self.widgets.has_key("combo_entries") and self.widgets["combo_entries"].has_key("id") :
+		#			if len(self.widgets["combo_entries"]["id"].child.get_text()) == 0 :
+		#				self.widgets["combo_entries"]["id"].child.set_text(self.obj_type + "-" + gen_uuid())
+		#			self.widgets["name_labels"]["id"].hide_all()
+		#			self.widgets["combo_entries"]["id"].hide_all()
+		#	else :
+		#		if self.widgets.has_key("name_labels") and self.widgets["name_labels"].has_key("id") :
+		#			self.widgets["name_labels"]["id"].hide_all()
+		#			self.widgets["value_labels"]["id"].hide_all()
 
 		#else :
 		#	if self.is_newobj and not self.id_is_idref :
@@ -7984,6 +7985,7 @@ class ObjectAttrs(WidgetGroup) :
 
 		if elem_rng_nodes == [] and not id_is_idref :
 			self.auto_id = True
+			self.dynamic_set_id = self.dynamic_set_id_auto
 		else :
 			self.auto_id = False
 					
@@ -8686,6 +8688,34 @@ class ObjectAttrs(WidgetGroup) :
 		else :
 			if widgets.get("value_labels", {}).has_key("id") :
 				widgets["value_labels"]["id"].hide_all()
+
+	def dynamic_set_id_auto(self, widget) :
+		widgets = self.widgets
+		if not widgets.has_key("combo_entries") :
+			return
+		if widget not in [widgets["combo_entries"].get("name")] :
+			return
+				
+		object_attrs = self.get_values()
+		name = object_attrs.get("name", "")
+		if name == "" :
+			name = self.obj_type
+		parent_node = self.xml_node.parentNode
+		parent_id = parent_node.getAttribute("id")
+		if parent_id == "" :
+			parent_type = parent_node.tagName
+			parent_parent_node = self.xml_node.parentNode.parentNode
+			parent_parent_id = parent_parent_node.getAttribute("id")
+			if parent_parent_id == "" :
+				parent_parent_type = parent_parent_node.tagName
+				id_prefix = parent_parent_type + "-" + parent_type + "-" + name
+			else :
+				id_prefix = parent_parent_id + "-" + parent_type + "-" + name
+		else :
+			id_prefix = parent_id + "-" + name
+			
+		new_id = self.get_unique_id(id_prefix)
+		self.set_id_widget(new_id)
 
 class Primitive(ObjectAttrs) :
 	def dynamic_fill(self, widget) :
