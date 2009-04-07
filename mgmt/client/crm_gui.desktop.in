@@ -18,7 +18,7 @@ X-SuSE-YaST-SortKey=
 Icon=@HA_DATADIR@/heartbeat-gui/ha.png
 Exec=/usr/bin/crm_gui 
 
-Name=CRM Management
-GenericName=CRM Management
-Comment= Pacemaker CRM management
+Name=Pacemaker GUI
+GenericName=Pacemaker GUI
+Comment=Pacemaker CRM GUI
 Encoding=UTF-8
