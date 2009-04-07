@@ -2365,7 +2365,8 @@ class CRMConfigView(View) :
 					nv = newdoc.documentElement
 					parent_xml_node.appendChild(nv)
 
-					nv.setAttribute("id", "nvpair" + "-" + gen_uuid())
+					attr_id = manager.auto_unique_id(nv, attr_name)
+					nv.setAttribute("id", attr_id)
 					nv.setAttribute("name", attr_name)
 					nv.setAttribute("value", value)
 
@@ -4336,7 +4337,8 @@ class AddWizard :
 					nv = newdoc.documentElement
 					parent_xml_node.appendChild(nv)
 
-					nv.setAttribute("id", "nvpair" + "-" + gen_uuid())
+					attr_id = manager.auto_unique_id(nv, attr_name)
+					nv.setAttribute("id", attr_id)
 					nv.setAttribute("name", attr_name)
 					nv.setAttribute("value", value)
 
@@ -4414,7 +4416,8 @@ class AddWizard :
 							interval = default_interval
 
 						op_id += "-" + interval
-						op.setAttribute("id", op_id)
+						unique_id = manager.get_unique_id(op_id, op)
+						op.setAttribute("id", unique_id)
 
 						for attr_name in attr_list :
 							key  = attr_name.replace("_", "-")
@@ -4471,7 +4474,8 @@ class AddWizard :
 				nv = newdoc.documentElement
 				parent_xml_node.appendChild(nv)
 
-				nv.setAttribute("id", "nvpair" + "-" + gen_uuid())
+				attr_id = manager.auto_unique_id(nv, attr_name)
+				nv.setAttribute("id", attr_id)
 				nv.setAttribute("name", attr_name)
 
 		for nv_name in nv_xml_nodes :
@@ -7055,6 +7059,65 @@ class Manager :
 			id_list.extend(self.get_obj_ids(child_node))
 		return id_list
 
+	def exist_ids(self, xml_node = None) :
+		all_ids = manager.get_obj_ids(manager.xml_nodes["cib"])
+
+		top_types = ["crm_config","rsc_defaults", "op_defaults", "nodes", "resources", "constraints", "status"]
+
+		if xml_node == None :
+			return all_ids
+
+		top_parent = xml_node
+		while top_parent.parentNode.tagName not in top_types :
+			top_parent = top_parent.parentNode
+
+		other_ids = manager.get_obj_ids(top_parent)
+
+		for id in other_ids :
+			if id not in all_ids :
+				all_ids.append(id)
+
+		current_id = xml_node.getAttribute("id")
+		if current_id in all_ids :
+			all_ids.remove(current_id)
+
+		return all_ids
+
+	def auto_id_prefix(self, xml_node, name) :
+		parent_node = xml_node.parentNode
+		parent_id = parent_node.getAttribute("id")
+		if parent_id == "" :
+			parent_type = parent_node.tagName
+			parent_parent_node = xml_node.parentNode.parentNode
+			parent_parent_id = parent_parent_node.getAttribute("id")
+			if parent_parent_id == "" :
+				parent_parent_type = parent_parent_node.tagName
+				id_prefix = parent_parent_type + "-" + parent_type + "-" + name
+			else :
+				id_prefix = parent_parent_id + "-" + parent_type + "-" + name
+		else :
+			id_prefix = parent_id + "-" + name
+
+		return id_prefix
+
+	def get_unique_id(self, id_prefix, xml_node = None) :
+		all_exist_ids = self.exist_ids(xml_node)
+		id_suffix = ""
+		new_id = id_prefix 
+		while new_id in all_exist_ids :
+			if id_suffix == "" :
+				id_suffix = 0
+			else :
+				id_suffix += 1
+
+			new_id = id_prefix + "-" + str(id_suffix)
+
+		return new_id
+
+	def auto_unique_id(self, xml_node, name) :
+		id_prefix = self.auto_id_prefix(xml_node, name)
+		return self.get_unique_id(id_prefix, xml_node)
+
 	def update(self) :
 		self.cache_clear()
 		if self.update_cib_xml() :
@@ -8635,40 +8698,6 @@ class ObjectAttrs(WidgetGroup) :
 				if key in keys :
 					widgets[widget_type][key].set_sensitive(sensibility)
 
-	def exist_ids(self) :
-		all_ids = manager.get_obj_ids(manager.xml_nodes["cib"])
-
-		top_types = ["crm_config","rsc_defaults", "op_defaults", "nodes", "resources", "constraints", "status"]
-		top_parent = self.xml_node
-		while top_parent.parentNode.tagName not in top_types :
-			top_parent = top_parent.parentNode
-
-		other_ids = manager.get_obj_ids(top_parent)
-
-		for id in other_ids :
-			if id not in all_ids :
-				all_ids.append(id)
-
-		current_id = self.xml_node.getAttribute("id")
-		if current_id in all_ids :
-			all_ids.remove(current_id)
-
-		return all_ids
-
-	def get_unique_id(self, id_prefix) :
-		all_exist_ids = self.exist_ids()
-		id_suffix = ""
-		new_id = id_prefix 
-		while new_id in all_exist_ids :
-			if id_suffix == "" :
-				id_suffix = 0
-			else :
-				id_suffix += 1
-
-			new_id = id_prefix + "-" + str(id_suffix)
-
-		return new_id
-
 	def set_id_widget(self, id) :
 		widgets = self.widgets
 		if self.is_newobj :
@@ -8700,21 +8729,8 @@ class ObjectAttrs(WidgetGroup) :
 		name = object_attrs.get("name", "")
 		if name == "" :
 			name = self.obj_type
-		parent_node = self.xml_node.parentNode
-		parent_id = parent_node.getAttribute("id")
-		if parent_id == "" :
-			parent_type = parent_node.tagName
-			parent_parent_node = self.xml_node.parentNode.parentNode
-			parent_parent_id = parent_parent_node.getAttribute("id")
-			if parent_parent_id == "" :
-				parent_parent_type = parent_parent_node.tagName
-				id_prefix = parent_parent_type + "-" + parent_type + "-" + name
-			else :
-				id_prefix = parent_parent_id + "-" + parent_type + "-" + name
-		else :
-			id_prefix = parent_id + "-" + name
 			
-		new_id = self.get_unique_id(id_prefix)
+		new_id = manager.auto_unique_id(self.xml_node, name)
 		self.set_id_widget(new_id)
 
 class Primitive(ObjectAttrs) :
@@ -9389,7 +9405,7 @@ class OP(ObjectAttrs) :
 		if interval != "" :
 			op_id += "-" + interval
 			
-		new_id = self.get_unique_id(op_id)
+		new_id = manager.get_unique_id(op_id, self.xml_node)
 		self.set_id_widget(new_id)
 
 class RscOrder(ObjectAttrs) :
