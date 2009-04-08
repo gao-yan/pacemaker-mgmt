@@ -622,13 +622,17 @@ class ElementTree(ElementList):
 			self.append_child_nodes(iter, elem_node)
 
 	def append_node(self, iter, node) :
+		model = self.tree.get_model()
 		node_type = node.tagName
 		node_id = node.getAttribute("id")
 		values = [node_type, node_id]
 		child_iter = self.store.append(iter, values)
-		if node_id == "" :
-			node_id = node.parentNode.getAttribute("id")
-		self.nodes[(node_type, node_id)] = node
+		#if node_id == "" :
+		#	node_id = node.parentNode.getAttribute("id")
+		#self.nodes[(node_type, node_id)] = node
+		
+		(type, id) = self.get_node_key(model, child_iter)
+		self.nodes[(type, id)] = node
 		return child_iter
 
 	def append_child_nodes(self, iter, node) :
