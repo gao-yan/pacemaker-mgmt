@@ -725,8 +725,15 @@ usr_belong_grp(const char* usr, const char* grp)
 		return 1;
 	}
 
-	pwd = getpwnam (usr);
+	pwd = getpwnam(usr);
+	if (pwd == NULL) {
+		return 0;
+	}
 	gren = getgrgid(pwd->pw_gid);
+	if (gren == NULL) {
+		return 0;
+	}
+
 	if (strncmp(grp, gren->gr_name,MAX_STRLEN) == 0) {
 		return 1;
 	}
