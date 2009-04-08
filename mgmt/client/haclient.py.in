@@ -519,19 +519,23 @@ class ElementList:
 		self.elem_node_list = elem_node_list
 		self.store.clear()
 		self.nodes = {}
+		model = self.tree.get_model()
 		for elem_node in elem_node_list :
 			values = [self.obj_type]
 			values.extend([elem_node.getAttribute(attr_name) for attr_name in self.attr_list])
 			iter = self.store.append(values)
-			elem_type = elem_node.tagName
-			elem_id = elem_node.getAttribute("id")
-			if elem_id == "" :
-				elem_id = elem_node.getAttribute("id-ref")
-			if elem_id == "" :
-				elem_id = values[1]
-			if elem_id == "" :
-				elem_id = elem_node.parentNode.getAttribute("id") 
-			self.nodes[(elem_type, elem_id)] = elem_node
+			#elem_type = elem_node.tagName
+			#elem_id = elem_node.getAttribute("id")
+			#if elem_id == "" :
+			#	elem_id = elem_node.getAttribute("id-ref")
+			#if elem_id == "" :
+			#	elem_id = values[1]
+			#if elem_id == "" :
+			#	elem_id = elem_node.parentNode.getAttribute("id") 
+			#self.nodes[(elem_type, elem_id)] = elem_node
+
+			(node_type, node_id) = self.get_node_key(model, iter)
+			self.nodes[(node_type, node_id)] = elem_node
 
 	def get_selected_node(self) :
 		(model, iter) = self.tree.get_selection().get_selected()
