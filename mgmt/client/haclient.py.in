@@ -8727,14 +8727,19 @@ class ObjectAttrs(WidgetGroup) :
 				widgets["value_labels"]["id"].hide_all()
 
 	def dynamic_set_id_auto(self, widget) :
+		key_attrs = ["name", "attribute"]
 		widgets = self.widgets
 		if not widgets.has_key("combo_entries") :
 			return
-		if widget not in [widgets["combo_entries"].get("name")] :
+		if widget not in [widgets["combo_entries"].get(attr) for attr in key_attrs] :
 			return
 				
 		object_attrs = self.get_values()
-		name = object_attrs.get("name", "")
+		for attr in key_attrs :
+			name = object_attrs.get(attr, "")
+			if name != "" :
+				break
+
 		if name == "" :
 			name = self.obj_type
 			
