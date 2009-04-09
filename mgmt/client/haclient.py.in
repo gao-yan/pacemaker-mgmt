@@ -7110,17 +7110,34 @@ class Manager :
 
 	def get_unique_id(self, id_prefix, xml_node = None) :
 		all_exist_ids = self.exist_ids(xml_node)
+		valid_id_prefix = self.sanify_id(id_prefix)
+
 		id_suffix = ""
-		new_id = id_prefix 
+		new_id = valid_id_prefix 
 		while new_id in all_exist_ids :
 			if id_suffix == "" :
 				id_suffix = 0
 			else :
 				id_suffix += 1
 
-			new_id = id_prefix + "-" + str(id_suffix)
+			new_id = valid_id_prefix + "-" + str(id_suffix)
 
 		return new_id
+
+	def sanify_id(self, id) :
+		valid_prefix = "_"
+		valid_chrs = "-_."
+		for i in range(len(id)) :
+			if id[i].isalpha() or id[i] in valid_prefix :
+				break
+
+		valid_id = ""
+		for chr in id[i:] :
+			if chr.isalnum() or chr in valid_chrs :
+				valid_id += chr
+			else :
+				valid_id += '.'
+		return valid_id
 
 	def auto_unique_id(self, xml_node, name) :
 		id_prefix = self.auto_id_prefix(xml_node, name)
