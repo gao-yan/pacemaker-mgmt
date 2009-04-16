@@ -126,18 +126,18 @@ def delete_dir(dir_path) :
 			try :
 				os.unlink(os.path.join(root, name))
 			except OSError, msg :
-				msgbox(_("System error: ") + str(msg))
+				msgbox(_("System error") + _(": ") + str(msg))
 				continue
 		for name in dirs :
 			try :
 				os.rmdir(os.path.join(root, name))
 			except OSError, msg :
-				msgbox(_("System error: ") + str(msg))
+				msgbox(_("System error") + _(": ") + str(msg))
 				continue
 	try :
 		os.rmdir(dir_path)
 	except OSError, msg :
-		msgbox(_("System error: ") + str(msg))
+		msgbox(_("System error") + _(": ") + str(msg))
 
 def add_column(widget, label, value, icon_cell_func = None, editable = False
 		, options=None, call_back=None, visible = True, is_enum = False) :
@@ -952,14 +952,14 @@ class ManageView :
 			for i in range(len(rsc_summary[attr_name])) :
 				hbox = gtk.HBox()
 				if i == 0 :
-					name_label = gtk.Label(_(name_cap(attr_name)+":"))
+					name_label = gtk.Label(_(name_cap(attr_name)) + _(":"))
 				else :
 					name_label = gtk.Label("")
 				name_label.set_alignment(0, 0.5)
 				name_label.set_selectable(True)
 
 				name_labels.append(name_label)
-				name_label_len = len(name_label.get_text())
+				name_label_len = len(name_label.get_text().decode("utf"))
 				if name_label_len > name_label_max_len :
 					name_label_max_len = name_label_len
 
@@ -1003,7 +1003,7 @@ class ManageView :
 				last_failure_time = time.ctime(float(last_failure))
 				if len(summary_str) > 0 :
 					summary_str += "  "
-				summary_str += "last failure at \"%s\""%last_failure_time
+				summary_str += _("last failure at \"%s\"")%last_failure_time
 
 			summary_str += ")"
 
@@ -1203,7 +1203,7 @@ class ManageView :
 			retval = confirmbox(_("Caused by your previous action, this attribute has been set to \"")
 						+value[0]
 						+_("\".")+"\n\n"
-						+_("Recommended:")+"\n"
+						+_("Recommended") + _(":")+"\n"
 						+_("Select \"Clear\" to remove the set.")+"\n"
 						+_("The sub-resource will inherit this attribute from its parent."),
 						(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
@@ -1288,7 +1288,7 @@ class ManageView :
 				name_label.set_alignment(0, 0.5)
 				name_labels.append(name_label)
 
-				name_label_len = len(name_label.get_text())
+				name_label_len = len(name_label.get_text().decode("utf"))
 				if name_label_len >  name_label_max_len :
 					name_label_max_len = name_label_len
 
@@ -2030,7 +2030,7 @@ class MainTree(ElementList) :
 
 			#(u',', [(u'configuration', ''), (u'status', '')], '')
 		if manager.active_cib == "" :
-			treeiter["management"] = self.store.append(None, ["Management", "management"])
+			treeiter["management"] = self.store.append(None, [_("Management"), "management"])
 
 		self.treeiter = treeiter
 
@@ -2162,7 +2162,7 @@ class ClusterView :
 
 			name_label_max_len = 0
 			for key in self.cluster_info_labels.keys() :
-				make_label_active(self.cluster_info_labels[key], _(info_dict.get(key, key)+":"), target_site)
+				make_label_active(self.cluster_info_labels[key], _(info_dict.get(key, key))+_(":"), target_site)
 				name_label_len = len(self.cluster_info_labels[key].get_text())
 				if name_label_len >  name_label_max_len :
 					name_label_max_len = name_label_len
@@ -2332,7 +2332,7 @@ class CRMConfigView(View) :
 		else :
 			mode_level = 2
 			window.radio_tool_action_group.get_action("hack-mode").set_active(True)
-			msgbox(_("Multiple \"Cluster Property Set\" in \"CRM Config\" .") + "\n"
+			msgbox(_("Multiple \"Cluster Property Set\" in \"CRM Config\".") + "\n"
 					+ _("We are switching to \"Hack Mode\" to view them properly."))
 			return None
 
@@ -2393,7 +2393,7 @@ class CRMConfigView(View) :
 			if widgets != None:
 				name_label_max_len = 0
 				for key in widgets["name_labels"].keys():
-					make_label_active(widgets["name_labels"][key], _(name_cap(key)+":"), target_site)
+					make_label_active(widgets["name_labels"][key], name_cap(key)+":", target_site)
 					name_label_len = len(widgets["name_labels"][key].get_text())
 					if name_label_len >  name_label_max_len :
 						name_label_max_len = name_label_len
@@ -2503,7 +2503,7 @@ class CRMConfigView(View) :
 					tip = shortdesc + _(".") + "\n" + longdesc
 
 			if param_default != "" :
-				default_str =  _("Default: ") + param_default
+				default_str =  _("Default") + _(": ") + param_default
 				if len(tip) > 0 :
 					tip += "\n\n" + default_str
 				else :
@@ -2642,7 +2642,7 @@ class ObjectView :
 		self.hbox = gtk.HBox()
 		self.hbox.pack_end(self.mode_combobox, False)
 
-		self.label = gtk.Label(_("Show: "))
+		self.label = gtk.Label(_("Show") + _(": "))
 		self.hbox.pack_end(self.label, False)
 
 		self.vbox.pack_start(self.hbox, False, padding=2)
@@ -3001,7 +3001,7 @@ class EditXMLDlg:
 			overwrite = _("INS")
 
 		self.statusbar.pop(0)
-		self.statusbar.push(0, _("Ln %d, Col %d\t%s"%(line+1, column+1, overwrite)))
+		self.statusbar.push(0, _("Ln %d, Col %d\t%s")%(line+1, column+1, overwrite))
 
 	def run(self) :
 		while True :
@@ -3017,7 +3017,7 @@ class EditXMLDlg:
 				try :
 					new_xml_node = parseString(new_xml_str).documentElement
 				except xml.parsers.expat.ExpatError, msg :
-					msgbox(_("Failed to parse the XML: ") + _(msg))
+					msgbox(_("Failed to parse the XML") + _(": ") + _(msg))
 					continue
 
 				return new_xml_node
@@ -3063,13 +3063,13 @@ class EditXMLDlg:
 		try :
 			file_obj = open(open_file)
 		except IOError, msg :
-			msgbox(_("IO error: ") + str(msg))
+			msgbox(_("I/O error") + _(": ") + str(msg))
 			return
 		
 		try :
 			new_xml_str = file_obj.read()
 		except IOError, msg :
-			msgbox(_("IO error: ") + str(msg))
+			msgbox(_("I/O error") + _(": ") + str(msg))
 			file_obj.close()
 			return
 		file_obj.close()
@@ -3090,7 +3090,7 @@ class EditXMLDlg:
 		try :
 			fd = os.open(save_file, os.O_RDWR|os.O_CREAT|os.O_TRUNC, 0644)
 		except OSError, msg :
-			msgbox(_("System error: ") + str(msg))
+			msgbox(_("System error") + _(": ") + str(msg))
 			return
 
 		new_xml_str = self.xml_textbuffer.get_text(*self.xml_textbuffer.get_bounds())
@@ -3098,7 +3098,7 @@ class EditXMLDlg:
 		try :
 			os.write(fd, new_xml_str)
 		except OSError, msg :
-			msgbox(_("System error: ") + str(msg))
+			msgbox(_("System error") + _(": ") + str(msg))
 			os.close(fd)
 			return
 		os.close(fd)
@@ -3600,7 +3600,7 @@ class ElementNotebook :
 				radio_btns[radio_btn] = option
 
 			if elem_is_any_name :
-				radio_btn = gtk.RadioButton(radio_btn, _("Other:"))
+				radio_btn = gtk.RadioButton(radio_btn, _("Other") + _(":"))
 				entry = gtk.Entry()
 
 				hbox = gtk.HBox()
@@ -4132,7 +4132,7 @@ class AddWizard :
 		self.current_page = 0
 
 		label = gtk.Label()
-		label_text = title + " - " + "Basic Settings"
+		label_text = title + " - " + _("Basic Settings")
 		label.set_markup('<big><b>' + label_text + '</b></big>')
 		label.set_alignment(0, 0)
 		label.show()
@@ -4628,11 +4628,11 @@ class ObjectViewDlg :
 		global top_window
 
 		if is_newobj :
-			title_prefix = "Add"
+			title_prefix = _("Add")
 		else :
-			title_prefix = "Edit"
+			title_prefix = _("Edit")
 
-		title = _(title_prefix) + " " + _(name_cap(xml_node.tagName))
+		title = title_prefix + " " + _(name_cap(xml_node.tagName))
 		dialog = gtk.Dialog(title, top_window, gtk.DIALOG_MODAL,
 			(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, str(_("Reset")), gtk.RESPONSE_APPLY, gtk.STOCK_OK, gtk.RESPONSE_OK))
 		dialog.set_border_width(5)
@@ -4690,7 +4690,7 @@ class TransitionInfoDlg :
 		dialog.set_size_request(750, 600)
 
 		hbox = gtk.HBox()
-		label = gtk.Label(_("Transition:"))
+		label = gtk.Label(_("Transition") + _(":"))
 		label.set_alignment(0, 0.5)
 		hbox.pack_start(label, False, padding=2)
 
@@ -4698,7 +4698,7 @@ class TransitionInfoDlg :
 		self.live_radio_btn.set_active(True)
 		hbox.pack_start(self.live_radio_btn, False, padding=2)
 
-		history_radio_btn = gtk.RadioButton(self.live_radio_btn, _("History:"))
+		history_radio_btn = gtk.RadioButton(self.live_radio_btn, _("History") + _(":"))
 		hbox.pack_start(history_radio_btn, False, padding=2)
 
 		max_num = len(input_info_list) - 1
@@ -4740,7 +4740,7 @@ class TransitionInfoDlg :
 		notebook.append_page(vbox, tab_label)
 
 		hbox = gtk.HBox()
-		label = gtk.Label(_("Verbosity:"))
+		label = gtk.Label(_("Verbosity") + _(":"))
 		hbox.pack_start(label, False, padding=2)
 
 		adj = gtk.Adjustment(3, 0, 99, 1, 5)
@@ -4951,13 +4951,13 @@ class TransitionInfoDlg :
 		try :
 			fd = os.open(save_file, os.O_RDWR|os.O_CREAT|os.O_TRUNC, 0644)
 		except OSError, msg :
-			msgbox(_("System error: ") + str(msg))
+			msgbox(_("System error") + _(": ") + str(msg))
 			return
 
 		try :
 			os.write(fd, save_str)
 		except OSError, msg :
-			msgbox(_("System error: ") + str(msg))
+			msgbox(_("System error") + _(": ") + str(msg))
 			os.close(fd)
 			return
 		os.close(fd)
@@ -5106,11 +5106,11 @@ class SelectFileDlg :
 				passed = True
 				try :
 					if not os.access(save_folder, os.R_OK | os.W_OK | os.X_OK) :
-						msgbox(_("Permission denied: ") + save_folder)
+						msgbox(_("Permission denied") + (": ") + save_folder)
 						passed = False
 						continue
 					if os.access(save_file, os.F_OK) :
-						retval = confirmbox(_("A file with the same name already exists: ")
+						retval = confirmbox(_("A file with the same name already exists") +_(": ")
 								+ os.path.basename(save_file) + "\n"
 								+_("Do you want to overwrite it?"),
 								(gtk.STOCK_NO, gtk.RESPONSE_NO,
@@ -5121,7 +5121,7 @@ class SelectFileDlg :
 							continue
 							
 				except OSError, msg :
-					msgbox(_("System error: ") + str(msg))
+					msgbox(_("System error") + _(": ") + str(msg))
 					passed = False
 
 				if passed :
@@ -5301,7 +5301,7 @@ class DesReportDlg:
 			if line.startswith("Severity: [choose one] ") :
 				options =  line.replace("Severity: [choose one] ", "").split()
 				hbox = gtk.HBox()
-				label = gtk.Label(_("Severity:"))
+				label = gtk.Label(_("Severity") + (":"))
 				label.set_alignment(0, 0.5)
 				hbox.pack_start(label, False)
 				name_labels.append(label)
@@ -5316,7 +5316,7 @@ class DesReportDlg:
 			elif line.startswith("Component: [choose one] ") :
 				options = line.replace("Component: [choose one] ", "").split()
 				hbox = gtk.HBox()
-				label = gtk.Label(_("Component:"))
+				label = gtk.Label(_("Component") + (":"))
 				label.set_alignment(0, 0.5)
 				hbox.pack_start(label, False)
 				name_labels.append(label)
@@ -5330,7 +5330,7 @@ class DesReportDlg:
 				combo_entries["component"] = combo_entry
 			elif line.startswith("Subject:") :
 				hbox = gtk.HBox()
-				label = gtk.Label(_("Subject:"))
+				label = gtk.Label(_("Subject") + _(":"))
 				label.set_alignment(0, 0.5)
 				name_labels.append(label)
 				hbox.pack_start(label, False)
@@ -5339,7 +5339,7 @@ class DesReportDlg:
 				dialog.vbox.pack_start(hbox, False, padding=1)
 				entries["subject"] = entry
 			elif line.startswith("Detailed description:") :
-				label = gtk.Label(_("Detailed description:"))
+				label = gtk.Label(_("Detailed description") + _(":"))
 				label.set_alignment(0, 0.5)
 				dialog.vbox.pack_start(label, False, padding=1)
 
@@ -5360,7 +5360,7 @@ class DesReportDlg:
 
 		name_label_max_len = 0
 		for name_label in name_labels :
-			name_label_len = len(name_label.get_text())
+			name_label_len = len(name_label.get_text().decode("utf"))
 			if name_label_len >  name_label_max_len :
 				name_label_max_len = name_label_len
 		for name_label in name_labels :
@@ -5448,11 +5448,11 @@ class MainWindow :
 		else :
 			status_str = _("Not connected")
 		if mode_level == 0 :
-			status_str += " " + _("(Simple mode)")
+			status_str += " " + _("(") + _("Simple Mode") +_(")")
 		elif mode_level == 1 :
-			status_str += " " + _("(Expert mode)")
+			status_str += " " + _("(") + _("Expert Mode") +_(")")
 		else :
-			status_str += " " + _("(Hack mode)")
+			status_str += " " + _("(") + _("Hack Mode") +_(")")
 		window.statusbar.push(1, status_str)
 
 		self.update_ui()
@@ -5531,19 +5531,19 @@ class MainWindow :
 		widgets = {}
 		name_labels = []
 		name_label_max_len = 0
-		for key in ["server:(port)", "user_name", "password"] :
+		for key in ["server(:port)", "user_name", "password"] :
 			hbox = gtk.HBox()
-			name_label = gtk.Label(_(name_cap(key)+":"))
+			name_label = gtk.Label(_(name_cap(key))+_(":"))
 			name_label.set_alignment(0, 0.5)
 			hbox.pack_start(name_label, False, padding=5)
 
 
 			name_labels.append(name_label)
-			name_label_len = len(name_label.get_text())
+			name_label_len = len(name_label.get_text().decode("utf"))
 			if name_label_len > name_label_max_len :
 				name_label_max_len = name_label_len
 
-			if key == "server:(port)" :
+			if key == "server(:port)" :
 				widget = gtk.combo_box_entry_new_text()
 				widget.append_text(server)
 				widget.child.set_text(server)
@@ -5568,7 +5568,7 @@ class MainWindow :
 		dialog.show_all()
 		ret =  dialog.run()
 
-		server = widgets["server:(port)"].child.get_text()
+		server = widgets["server(:port)"].child.get_text()
 		user = widgets["user_name"].child.get_text()
 		password = widgets["password"].get_text()
 
@@ -5630,7 +5630,7 @@ class MainWindow :
 			action_des = _(name_cap(action_name)) + " - " + _("Upload the specified shadow CIB to the cluster")
 
 		shadow_action = kvbox(title_str, action_des,
-				[Field("shadow_name", _("Shadow name"), default_shadow, shadow_list, False, entry_editable = False)])
+				[Field("shadow_name", _("Shadow Name"), default_shadow, shadow_list, False, entry_editable = False)])
 
 		if shadow_action == None :
 			return
@@ -5682,7 +5682,7 @@ class MainWindow :
 		dialog.set_size_request(750, 600)
 
 		label = gtk.Label()
-		label.set_markup('<b>' + _("Differences between the live CIB and the shadow CIB \"%s\": ")%manager.active_cib + '</b>')
+		label.set_markup('<b>' + _("Differences between the live CIB and the shadow CIB \"%s\"")%manager.active_cib + _(": ") + '</b>')
 		label.set_alignment(0, 0)
 		dialog.vbox.pack_start(label, False, padding = 5)
 
@@ -5741,13 +5741,13 @@ class MainWindow :
 		try :
 			fd = os.open(save_file, os.O_RDWR|os.O_CREAT|os.O_TRUNC, 0644)
 		except OSError, msg :
-			msgbox(_("System error: ") + str(msg))
+			msgbox(_("System error") + _(": ") + str(msg))
 			return
 
 		try :
 			 os.write(fd, save_str)
 		except OSError, msg :
-			msgbox(_("System error: ") + str(msg))
+			msgbox(_("System error") + _(": ") + str(msg))
 			os.close(fd)
 			return
 		os.close(fd)
@@ -5980,7 +5980,7 @@ class MainWindow :
 		try :
 			bin_str = binascii.a2b_base64(base64_str)
 		except binascii.Incomplete, msg :
-			msgbox(_("Incomplete data: ") + str(msg))
+			msgbox(_("Incomplete data") + (": ") + str(msg))
 			return
 
 		(fd, tmp_file) = tempfile.mkstemp(suffix = ".tar." + default_filetype, prefix = "cluster-report-")
@@ -5988,13 +5988,13 @@ class MainWindow :
 		#try :
 		#	fd = os.open(save_file, os.O_RDWR|os.O_CREAT|os.O_TRUNC, 0644)
 		#except OSError, msg :
-		#	msgbox(_("System error: ") + str(msg))
+		#	msgbox(_("System error") + _(": ") + str(msg))
 		#	return
 
 		try :
 			os.write(fd, bin_str)
 		except OSError, msg :
-			msgbox(_("System error: ") + str(msg))
+			msgbox(_("System error") + _(": ") + str(msg))
 			os.close(fd)
 			return
 		os.close(fd)
@@ -6010,10 +6010,10 @@ class MainWindow :
 		try :
 			tmp_tarfile = tarfile.open(tmp_file, "r:"+default_filetype)
 		except IOError, msg :
-			msgbox(_("I/O error: ") + str(msg))
+			msgbox(_("I/O error") + _(": ") + str(msg))
 			return
 		except tarfile.TarError, msg :
-			msgbox(_("Tar error: ") + "%s: '%s'"%(str(msg), tmp_file))
+			msgbox(_("Tar error") + _(": ") + "%s: '%s'"%(str(msg), tmp_file))
 			return
 			
 		try :
@@ -6021,7 +6021,7 @@ class MainWindow :
 			for filename in file_list :
 				tmp_tarfile.extract(filename, tmp_dir)
 		except tarfile.TarError, msg :
-			msgbox(_("Tar error: ") + "%s: '%s'"%(str(msg), tmp_file))
+			msgbox(_("Tar error") + _(": ") + "%s: '%s'"%(str(msg), tmp_file))
 			tmp_tarfile.close()
 			return
 
@@ -6040,14 +6040,14 @@ class MainWindow :
 			try :
 				des_f = open(des_filepath, "r+")
 			except IOError, msg :
-				msgbox(_("I/O error: ") + str(msg))
+				msgbox(_("I/O error") + _(": ") + str(msg))
 				self.delete_files(tmp_dir, file_list)
 				return
 
 			try :
 				file_lines = des_f.readlines()
 			except IOError, msg :
-				msgbox(_("I/O error: ") + str(msg))
+				msgbox(_("I/O error") + _(": ") + str(msg))
 				des_f.close()
 				self.delete_files(tmp_dir, file_list)
 				return
@@ -6063,7 +6063,7 @@ class MainWindow :
 				des_f.truncate()
 				des_f.writelines(new_file_lines)
 			except IOError, msg :
-				msgbox(_("I/O error: ") + str(msg))
+				msgbox(_("I/O error") + _(": ") + str(msg))
 				des_f.close()
 				self.delete_files(tmp_dir, file_list)
 				return
@@ -6079,11 +6079,11 @@ class MainWindow :
 		try :
 			new_tarfile = tarfile.open(save_file, "w:"+default_filetype)
 		except IOError, msg :
-			msgbox(_("I/O error: ") + str(msg))
+			msgbox(_("I/O error") + _(": ") + str(msg))
 			self.delete_files(tmp_dir, file_list)
 			return
 		except tarfile.TarError, msg :
-			msgbox(_("Tar error: ") + "%s: '%s'"%(str(msg), save_file))
+			msgbox(_("Tar error") + _(": ") + "%s: '%s'"%(str(msg), save_file))
 			self.delete_files(tmp_dir, file_list)
 			return
 
@@ -6103,11 +6103,11 @@ class MainWindow :
 			try :
 				new_tarfile.add(folder, new_arcname)
 			except IOError, msg :
-				msgbox(_("I/O error: ") + str(msg))
+				msgbox(_("I/O error") + _(": ") + str(msg))
 				self.delete_files(tmp_dir, file_list)
 				return
 			except tarfile.TarError, msg :
-				msgbox(_("Tar error: ") + "%s: '%s'"%(str(msg), save_file))
+				msgbox(_("Tar error") + _(": ") + "%s: '%s'"%(str(msg), save_file))
 				new_tarfile.close()
 				self.delete_files(tmp_dir, file_list)
 				return
@@ -6120,12 +6120,12 @@ class MainWindow :
 				try :
 					new_tarfile.add(file_path, recursive=False)
 				except IOError, msg :
-					msgbox(_("I/O error: ") + str(msg))
+					msgbox(_("I/O error") + _(": ") + str(msg))
 					new_tarfile.close()
 					self.delete_files(tmp_dir, file_list)
 					return
 				except tarfile.TarError, msg :
-					msgbox(_("Tar error: ") + "%s: '%s'"%(str(msg), save_file))
+					msgbox(_("Tar error") + _(": ") + "%s: '%s'"%(str(msg), save_file))
 					new_tarfile.close()
 					self.delete_files(tmp_dir, file_list)
 					return
@@ -6139,7 +6139,7 @@ class MainWindow :
 			try :
 				mode = os.lstat(file_path)[ST_MODE]
 			except OSError, msg :
-				msgbox(_("System error: ") + str(msg))
+				msgbox(_("System error") + _(": ") + str(msg))
 				continue
 
 			if S_ISDIR(mode) :
@@ -6148,7 +6148,7 @@ class MainWindow :
 				try :
 					os.unlink(file_path)
 				except OSError, msg :
-					msgbox(_("System error: ") + str(msg))
+					msgbox(_("System error") + _(": ") + str(msg))
 					continue
 
 		for dir_path in dir_list :
@@ -6634,7 +6634,7 @@ class Manager :
 		try :
 			xml_nodes["cib"] = parseString(cib_xml).documentElement
 		except xml.parsers.expat.ExpatError, msg :
-			msgbox(_("Failed to parse the CIB: ") + _(msg))
+			msgbox(_("Failed to parse the CIB") + _(": ") + _(msg))
 			return False 
 			
 		"""xml_status = self.cib_do_cmd("cib_query\nstatus")
@@ -6760,13 +6760,13 @@ class Manager :
 		try :
 			cib_doc = etree.fromstring(cib_xml_node.toxml())
 		except etree.Error, msg :
-			msgbox(_("Failed to parse the CIB XML: ") + _(msg))
+			msgbox(_("Failed to parse the CIB XML") + _(": ") + _(msg))
 			return False
 			
 		try :
 			relaxng = etree.RelaxNG(file = rng_doc)
 		except etree.Error, msg :
-			msgbox(_("Failed to parse the Relax-NG schema: ") + _(msg))
+			msgbox(_("Failed to parse the Relax-NG schema") + _(": ") + _(msg))
 			return False
 		#try :
 		#	relaxng.assertValid(cib_doc)
@@ -6799,7 +6799,7 @@ class Manager :
 			try :
 				fd = os.open(rng_doc_filename, os.O_RDWR|os.O_CREAT|os.O_TRUNC, 0644)
 			except OSError, msg :
-				msgbox(_("System error: ") + str(msg))
+				msgbox(_("System error") + _(": ") + str(msg))
 				return None
 
 			rng_doc_str = self.rng_str_docs[rng_doc_name]
@@ -6807,7 +6807,7 @@ class Manager :
 			try :
 				os.write(fd, rng_doc_str)
 			except OSError, msg :
-				msgbox(_("System error: ") + str(msg))
+				msgbox(_("System error") + _(": ") + str(msg))
 				os.close(fd)
 				return None
 			os.close(fd)
@@ -6830,7 +6830,7 @@ class Manager :
 		schema_info = validate_name + " " + file
 		crm_schema = self.get_crm_schema(validate_name, file)
 		if crm_schema == None :
-			msgbox(_("Cannot get Relax-NG schema: ") + schema_info)
+			msgbox(_("Cannot get the Relax-NG schema") + _(": ") + schema_info)
 			return None
 
 		self.rng_str_docs[file] = crm_schema
@@ -6838,7 +6838,7 @@ class Manager :
 		try :
 			rng_doc = parseString(crm_schema).documentElement
 		except xml.parsers.expat.ExpatError, msg :
-			msgbox(_("Failed to parse the Relax-NG schema: ") + _(msg) + schema_info)
+			msgbox(_("Failed to parse the Relax-NG schema") + _(": ") + _(msg) + schema_info)
 			return None
 
 		start_nodes = rng_doc.getElementsByTagName("start")
@@ -6846,7 +6846,7 @@ class Manager :
 			start_node = start_nodes[0] 
 			return (rng_doc, start_node)
 		else :
-			msgbox(_("Cannot get started in Relax-NG schema: ") + schema_info)
+			msgbox(_("Cannot get started in Relax-NG schema") +_(": ") + schema_info)
 			return None
 
 		#sub_start_node = None
@@ -7193,7 +7193,7 @@ class Manager :
 		if not self.dtd_elems.has_key(elem_name) :
 			dtd = self.get_crm_schema(self.validate_name)
 			if dtd == None :
-				msgbox(_("Cannot get DTD: ") + self.validate_name)
+				msgbox(_("Cannot get the DTD") + _(": ") + self.validate_name)
 				return None
 			complete_dtd = load_dtd_string(dtd)
 			self.dtd_elems[elem_name] = complete_dtd.get_elem(elem_name)
@@ -7890,10 +7890,10 @@ class ObjectAttrs(WidgetGroup) :
 		self.hboxes = {}
 		for attr_name in self.attr_list :
 			attr = dtd_elem.get_attr(attr_name)
-			label_text = _(name_cap(attr_name)+":")
+			label_text = _(name_cap(attr_name)) + _(":")
 			label = gtk.Label(label_text)
 			label.set_alignment(0, 0.5)
-			label_len = len(label.get_text())
+			label_len = len(label.get_text().decode("utf"))
 			if label_len > name_label_max_len :
 				name_label_max_len = label_len
 			eventbox = gtk.EventBox()
@@ -7984,7 +7984,7 @@ class ObjectAttrs(WidgetGroup) :
 			attr_decl = attr.get_decl()
 			
 			if attr_decl == "#REQUIRED" and not object.has_key(attr_name) :
-				msgbox(_(name_cap(attr_name)+":")+_(" can't be empty"))
+				msgbox(_(name_cap(attr_name)) + (":")+_(" can't be empty"))
 				passed =False
 		return passed
 
@@ -8106,10 +8106,10 @@ class ObjectAttrs(WidgetGroup) :
 							store_list[attr_name].append([option, ""])
 				continue
 
-			label_text = _(name_cap(attr_name)+":")
+			label_text = _(name_cap(attr_name)) + _(":")
 			label = gtk.Label(label_text)
 			label.set_alignment(0, 0.5)
-			label_len = len(label.get_text())
+			label_len = len(label.get_text().decode("utf"))
 			if label_len > name_label_max_len :
 				name_label_max_len = label_len
 			eventbox = gtk.EventBox()
@@ -8265,7 +8265,7 @@ class ObjectAttrs(WidgetGroup) :
 				continue
 
 			if manager.find_decl(attr_node, "choice") == 0  :
-				msgbox(_(name_cap(attr_name)+":")+_(" can't be empty"))
+				msgbox(_(name_cap(attr_name))+ _(":")+_(" can't be empty"))
 				passed =False
 			else :
 				choice_attrs.append(attr_node)
@@ -9407,7 +9407,7 @@ class OP(ObjectAttrs) :
 			if op.get(time_attr, "") != "" :
 				(is_valid, error_msg) = is_valid_time(op[time_attr])
 				if not is_valid :
-					msgbox(_("Invalid \"%s\":")%(_(name_cap(time_attr))) + "\n" +
+					msgbox(_("Invalid \"%s\"")%(_(name_cap(time_attr))) + _(":") + "\n" +
 							error_msg)
 					return False
 		return True
@@ -9490,15 +9490,15 @@ class RscOrder(ObjectAttrs) :
 			if order[attr_name] == None :
 				order[attr_name] = ""
 		desc = []
-		desc.append("* %s %s %s %s %s"
+		desc.append(_("* %s %s %s %s %s")
 				%(order["action"].capitalize(), order["from"], order["type"], order["to_action"], order["to"]))
 
 		if order["score"] == "INFINITY" or order["score"] == "infinity":
 			if order["type"] == "before" :
-				desc.append("* If cannot %s %s, do not %s %s"
+				desc.append(_("* If cannot %s %s, do not %s %s")
 						%(order["action"], order["from"], order["to_action"], order["to"]))
 			else :
-				desc.append("* If cannot %s %s, do not %s %s"
+				desc.append(_("* If cannot %s %s, do not %s %s")
 						%(order["to_action"], order["to"], order["action"], order["from"]))
 		else :
 			desc.append("")
@@ -9506,14 +9506,14 @@ class RscOrder(ObjectAttrs) :
 		action = self.invert_action(order["action"])
 		to_action = self.invert_action(order["to_action"])
 		if order["symmetrical"] == "true" and action != None and to_action != None :
-			desc.append("* %s %s %s %s %s"
+			desc.append(_("* %s %s %s %s %s")
 					%(to_action.capitalize(), order["to"], order["type"], action, order["from"]))
 			if order["score"] == "INFINITY" or order["score"] == "infinity":
 				if order["type"] == "before" :
-					desc.append("* If cannot %s %s, do not %s %s"
+					desc.append(_("* If cannot %s %s, do not %s %s")
 							%(to_action, order["to"], action, order["from"]))
 				else :
-					desc.append("* If cannot %s %s, do not %s %s"
+					desc.append(_("* If cannot %s %s, do not %s %s")
 							%(action, order["from"], to_action, order["to"]))
 			else:
 				desc.append("")
@@ -9560,13 +9560,13 @@ class RscOrder(ObjectAttrs) :
 				else :
 					order[attr_name] = ""
 		desc = []
-		desc.append("* %s %s before %s %s"
+		desc.append(_("* %s %s before %s %s")
 				%(order["first-action"].capitalize(), order["first"], order["then-action"], order["then"]))
 
 		score = self.get_score(order["score"])
 
 		if score > 0 :
-			desc.append("* If cannot %s %s, do not %s %s"
+			desc.append(_("* If cannot %s %s, do not %s %s")
 					%(order["first-action"], order["first"], order["then-action"], order["then"]))
 		else :
 			desc.append("")
@@ -9574,10 +9574,10 @@ class RscOrder(ObjectAttrs) :
 		first_action = self.invert_action(order["first-action"])
 		then_action = self.invert_action(order["then-action"])
 		if order["symmetrical"] == "true" and first_action != None and then_action != None :
-			desc.append("* %s %s before %s %s"
+			desc.append(_("* %s %s before %s %s")
 					%(then_action.capitalize(), order["then"], first_action, order["first"]))
 			if score > 0 :
-				desc.append("* If cannot %s %s, do not %s %s"
+				desc.append(_("* If cannot %s %s, do not %s %s")
 						%(then_action, order["then"], first_action, order["first"]))
 			else:
 				desc.append("")
@@ -9610,39 +9610,39 @@ class RscColocation(ObjectAttrs) :
 		desc = []
 
 		if colocation["score"] == "INFINITY" or colocation["score"] == "infinity" :
-			desc.append("* Make %s %s on the same node as %s %s  ( %s according to %s )"
+			desc.append(_("* Make %s %s on the same node as %s %s  ( %s according to %s )")
 					%(colocation["from"], colocation["from_role"], colocation["to"], colocation["to_role"],
 					colocation["from"], colocation["to"]))
-			desc.append("* If %s cannot be %s on any node, then %s won't be %s anywhere"
+			desc.append(_("* If %s cannot be %s on any node, then %s won't be %s anywhere")
 					%(colocation["to"], colocation["to_role"], colocation["from"], colocation["from_role"]))
 			if colocation["symmetrical"] == "false" :
-				desc.append("* If %s cannot be %s on any node, %s won't be affected"
+				desc.append(_("* If %s cannot be %s on any node, %s won't be affected")
 						%(colocation["from"], colocation["from_role"], colocation["to"]))
 				desc.append("")
 			else : 
-				desc.append("* Make %s %s on the same node as %s %s  ( %s according to %s )"
+				desc.append(_("* Make %s %s on the same node as %s %s  ( %s according to %s )")
 						%(colocation["to"], colocation["to_role"], colocation["from"], colocation["from_role"],
 						colocation["to"], colocation["from"]))
-				desc.append("* If %s cannot be %s on any node, then %s won't be %s anywhere"
+				desc.append(_("* If %s cannot be %s on any node, then %s won't be %s anywhere")
 						%(colocation["from"], colocation["from_role"], colocation["to"], colocation["to_role"]))
 		elif colocation["score"] == "-INFINITY" or colocation["score"] == "-infinity" :
-			desc.append("* Prevent %s from being %s on the same node as %s %s  ( %s according to %s )" 
+			desc.append(_("* Prevent %s from being %s on the same node as %s %s  ( %s according to %s )")
 					%(colocation["from"], colocation["from_role"], colocation["to"], colocation["to_role"],
 					colocation["from"], colocation["to"]))
-			desc.append("* If %s is %s on every node, then %s won't be %s anywhere"
+			desc.append(_("* If %s is %s on the only (or every) available node, then %s won't be %s anywhere")
 					%(colocation["to"], colocation["to_role"], colocation["from"], colocation["from_role"]))
 			if colocation["symmetrical"] == "false" :
-				desc.append("* If %s is %s on every node, %s won't be affected"
+				desc.append(_("* If %s is %s on the only (or every) available node, %s won't be affected")
 						%(colocation["from"], colocation["from_role"], colocation["to"]))
 				desc.append("")
 			else :
-				desc.append("* Prevent %s from being %s on the same node as %s %s ( %s according to %s)" 
+				desc.append(_("* Prevent %s from being %s on the same node as %s %s  ( %s according to %s )")
 						%(colocation["to"], colocation["to_role"], colocation["from"], colocation["from_role"],
 						colocation["to"], colocation["from"]))
-				desc.append("* If %s is %s on every node, then %s won't be %s anywhere"
+				desc.append(_("* If %s is %s on the only (or every) available node, then %s won't be %s anywhere")
 						%(colocation["from"], colocation["from_role"], colocation["to"], colocation["to_role"]))
 		else :
-			desc.append("* Combine this colocation score and the appropriate location scores to decide where to put the resources")
+			desc.append(_("* Combine this colocation score and the appropriate location scores to decide where to put the resources"))
 			desc.append("")
 			desc.append("")
 			desc.append("")
@@ -9662,20 +9662,20 @@ class RscColocation(ObjectAttrs) :
 
 		score = self.get_score(colocation["score"])
 
-		comb_tip = "* Combine this \"Score\" and corresponding location scores to decide where to place %s" \
+		comb_tip = _("* Combine this \"Score\" and corresponding location scores to decide where to place %s") \
 				%colocation["rsc"]
 
 		if score > 0 :
 			if colocation["score"] in ["INFINITY", "infinity", "+INFINITY", "+infinity"] :
-				desc.append("* Make %s %s on the same node as %s %s  ( %s is according to %s )" 
+				desc.append(_("* Make %s %s on the same node as %s %s  ( %s according to %s )")
 						%(colocation["rsc"], colocation["rsc-role"], colocation["with-rsc"], colocation["with-rsc-role"],
 						colocation["rsc"], colocation["with-rsc"]))
-				desc.append("* If %s cannot be %s on any node, then %s won't be %s anywhere"
+				desc.append(_("* If %s cannot be %s on any node, then %s won't be %s anywhere")
 						%(colocation["with-rsc"], colocation["with-rsc-role"], colocation["rsc"], colocation["rsc-role"]))
-				desc.append("* If %s cannot be %s on any node, %s won't be affected"
+				desc.append(_("* If %s cannot be %s on any node, %s won't be affected")
 						%(colocation["rsc"], colocation["rsc-role"], colocation["with-rsc"]))
 			else :
-				desc.append("* Prefer to make %s %s on the same node as %s %s  ( %s is according to %s )" 
+				desc.append(_("* Prefer to make %s %s on the same node as %s %s  ( %s according to %s )")
 					%(colocation["rsc"], colocation["rsc-role"], colocation["with-rsc"], colocation["with-rsc-role"],
 					colocation["rsc"], colocation["with-rsc"])) 
 				desc.append(comb_tip)
@@ -9684,21 +9684,21 @@ class RscColocation(ObjectAttrs) :
 
 		elif score < 0 :
 			if colocation["score"] in ["-INFINITY", "-infinity"] :
-				desc.append("* Prevent %s from being %s on the same node as %s %s  ( %s is according to %s )" 
+				desc.append(_("* Prevent %s from being %s on the same node as %s %s  ( %s according to %s )")
 						%(colocation["rsc"], colocation["rsc-role"], colocation["with-rsc"], colocation["with-rsc-role"],
 						colocation["rsc"], colocation["with-rsc"]))
-				desc.append("* If %s is %s on the only (or every) available node, then %s won't be %s anywhere"
+				desc.append(_("* If %s is %s on the only (or every) available node, then %s won't be %s anywhere")
 						%(colocation["with-rsc"], colocation["with-rsc-role"], colocation["rsc"], colocation["rsc-role"]))
-				desc.append("* If %s is %s on the only (or every) available node, %s won't be affected"
+				desc.append(_("* If %s is %s on the only (or every) available node, %s won't be affected")
 						%(colocation["rsc"], colocation["rsc-role"], colocation["with-rsc"]))
 			else :
-				desc.append("* Prefer to prevent %s from being %s on the same node as %s %s  ( %s is according to %s )" 
+				desc.append(_("* Prefer to prevent %s from being %s on the same node as %s %s  ( %s according to %s )")
 						%(colocation["rsc"], colocation["rsc-role"], colocation["with-rsc"], colocation["with-rsc-role"],
 						colocation["rsc"], colocation["with-rsc"])) 
 				desc.append(comb_tip)
 				desc.append("")
 		else :
-			desc.append("* Please specify a valid \"Score\" to determine the location relationship between %s and %s"
+			desc.append(_("* Please specify a valid \"Score\" to determine the location relationship between %s and %s")
 					%(colocation["rsc"], colocation["with-rsc"]))
 			desc.append("")
 			desc.append("")

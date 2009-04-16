@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-12-10 16:02+0800\n"
+"POT-Creation-Date: 2009-04-16 16:34+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,751 +16,1602 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: haclient.py.in:1280 haclient.py.in:1279 haclient.py.in:1267
-#: haclient.py.in:1269
-msgid "Connection"
-msgstr "连接"
+#: haclient.py.in:121
+msgid "Do not delete the root directory"
+msgstr "请不要删除根目录"
 
-#: haclient.py.in:1250 haclient.py.in:1238 haclient.py.in:1240
-msgid "Linux HA Management Client"
-msgstr "Linux 高可用集群管理客户端"
+#: haclient.py.in:129 haclient.py.in:135 haclient.py.in:140
+#: haclient.py.in:3093 haclient.py.in:3101 haclient.py.in:4954
+#: haclient.py.in:4960 haclient.py.in:5124 haclient.py.in:5744
+#: haclient.py.in:5750 haclient.py.in:5997 haclient.py.in:6142
+#: haclient.py.in:6151 haclient.py.in:6802 haclient.py.in:6810
+msgid "System error"
+msgstr "系统错误"
 
-#: haclient.py.in:1280 haclient.py.in:1268 haclient.py.in:1270
-msgid "Login..."
-msgstr "登录..."
+#: haclient.py.in:129 haclient.py.in:135 haclient.py.in:140
+#: haclient.py.in:2506 haclient.py.in:2645 haclient.py.in:3020
+#: haclient.py.in:3066 haclient.py.in:3072 haclient.py.in:3093
+#: haclient.py.in:3101 haclient.py.in:4954 haclient.py.in:4960
+#: haclient.py.in:5113 haclient.py.in:5124 haclient.py.in:5685
+#: haclient.py.in:5744 haclient.py.in:5750 haclient.py.in:5997
+#: haclient.py.in:6013 haclient.py.in:6016 haclient.py.in:6024
+#: haclient.py.in:6043 haclient.py.in:6050 haclient.py.in:6066
+#: haclient.py.in:6082 haclient.py.in:6086 haclient.py.in:6106
+#: haclient.py.in:6110 haclient.py.in:6123 haclient.py.in:6128
+#: haclient.py.in:6142 haclient.py.in:6151 haclient.py.in:6637
+#: haclient.py.in:6763 haclient.py.in:6769 haclient.py.in:6802
+#: haclient.py.in:6810 haclient.py.in:6833 haclient.py.in:6841
+#: haclient.py.in:6849 haclient.py.in:7196
+msgid ": "
+msgstr "： "
 
-#: haclient.py.in:1280 haclient.py.in:1268 haclient.py.in:1270
-msgid "login to cluster"
-msgstr "登录到集群"
+#: haclient.py.in:173
+msgid "Message"
+msgstr "消息"
 
-#: haclient.py.in:1281 haclient.py.in:1269 haclient.py.in:1271
-msgid "Logout"
-msgstr "断开"
+#: haclient.py.in:193
+msgid "Confirm"
+msgstr "确认"
 
-#: haclient.py.in:1281 haclient.py.in:1269 haclient.py.in:1271
-msgid "logout from cluster"
-msgstr "从集群中断开"
+#: haclient.py.in:235
+msgid "The specified time should be numeric prefixed."
+msgstr "指定的时间应为数字开头。"
 
-#: haclient.py.in:1282 haclient.py.in:1270 haclient.py.in:1272
-msgid "Quit"
-msgstr "退出"
+#: haclient.py.in:246
+msgid "The specified time should default with second unit, "
+msgstr "指定的时间应该缺省单位为秒，"
 
-#: haclient.py.in:1282 haclient.py.in:1270 haclient.py.in:1272
-msgid "Quit the Program"
-msgstr "退出客户端"
+#: haclient.py.in:247
+#, python-format
+msgid ""
+"or should be suffixed with one of the following units:\n"
+" %s"
+msgstr ""
+"或者应该以如下任一单位结尾：\n"
+" %s"
 
-#: haclient.py.in:1283 haclient.py.in:1271 haclient.py.in:1273
-msgid "Action"
-msgstr "操作"
+#: haclient.py.in:313
+msgid "Add Parameter"
+msgstr "添加参数"
 
-#: haclient.py.in:1284 haclient.py.in:1272 haclient.py.in:1274
-msgid "Add New Item"
-msgstr "添加新元素"
+#: haclient.py.in:315
+msgid "Add Operation"
+msgstr "添加操作"
 
-#: haclient.py.in:1284 haclient.py.in:1272 haclient.py.in:1274
-msgid "add new item"
-msgstr "添加新元素"
+#: haclient.py.in:356 haclient.py.in:7987 haclient.py.in:8268
+msgid " can't be empty"
+msgstr "不能为空"
 
-#: haclient.py.in:1285 haclient.glade.h:15 haclient.glade.h:13
-#: haclient.glade.h:11 haclient.py.in:1223 haclient.py.in:1273
-#: haclient.py.in:1225 haclient.py.in:1275
-msgid "Delete"
-msgstr "删除"
+#: haclient.py.in:453 haclient.py.in:604 haclient.py.in:1618
+msgid "Type"
+msgstr "类型"
 
-#: haclient.py.in:1285 haclient.py.in:1273 haclient.py.in:1275
-msgid "delete current item"
-msgstr "删除当前元素"
+#: haclient.py.in:605
+msgid "ID"
+msgstr "标识符"
 
-#: haclient.py.in:303 haclient.py.in:913 haclient.py.in:881 haclient.py.in:890
+#: haclient.py.in:710
+msgid "Start"
+msgstr "启动"
+
+#: haclient.py.in:710
+msgid "Start resource"
+msgstr "启动资源"
+
+#: haclient.py.in:711
+msgid "Stop"
+msgstr "停止"
+
+#: haclient.py.in:711
+msgid "Stop resource"
+msgstr "停止资源"
+
+#: haclient.py.in:712 haclient.py.in:2225 haclient.py.in:2506
+msgid "Default"
+msgstr "缺省"
+
+#: haclient.py.in:712
+msgid "Work as default"
+msgstr "缺省运行"
+
+#: haclient.py.in:713 haclient.py.in:1240
+msgid "Cleanup Resource"
+msgstr "清理资源"
+
+#: haclient.py.in:713
+msgid "Cleanup resource"
+msgstr "清理资源"
+
+#: haclient.py.in:714 haclient.py.in:1273
+msgid "Migrate Resource"
+msgstr "迁移资源"
+
+#: haclient.py.in:714
+msgid "Migrate a resource to specified node"
+msgstr "迁移资源到指定节点"
+
+#: haclient.py.in:716 haclient.py.in:1442
+msgid "Clear Migrate Constraints"
+msgstr "清理迁移限制"
+
+#: haclient.py.in:717
+msgid "Clear constraints created by migrate"
+msgstr "清理迁移时所创建的限制条件"
+
+#: haclient.py.in:719
+msgid "Unmanage Resource"
+msgstr "停止管理资源"
+
+#: haclient.py.in:719
+msgid "Put a resource into unmanaged mode"
+msgstr "将资源置为非管理模式"
+
+#: haclient.py.in:721
+msgid "Manage Resource"
+msgstr "管理资源"
+
+#: haclient.py.in:721
+msgid "Put a resource into managed mode"
+msgstr "将资源置为管理模式"
+
+#: haclient.py.in:723
+msgid "Refresh Resources"
+msgstr "刷新资源"
+
+#: haclient.py.in:723
+msgid "Refresh CIB from the LRM status"
+msgstr "从 LRM 状态刷新 CIB"
+
+#: haclient.py.in:725
+msgid "Reprobe Resources"
+msgstr "重新检查资源"
+
+#: haclient.py.in:725
+msgid "Reprobe for resources started outside of the CRM"
+msgstr "重新检查在 CRM 之外启动的资源"
+
+#: haclient.py.in:729
+msgid "Standby"
+msgstr "备用"
+
+#: haclient.py.in:729
+msgid "Make the node standby"
+msgstr "让节点备用"
+
+#: haclient.py.in:730
+msgid "Active"
+msgstr "活动"
+
+#: haclient.py.in:730
+msgid "Make the node active"
+msgstr "让节点活动"
+
+#: haclient.py.in:734
+msgid "Group By Node"
+msgstr "按节点分组资源"
+
+#: haclient.py.in:734
+msgid "Group resources by node"
+msgstr "按节点分组资源"
+
+#: haclient.py.in:735
+msgid "Maintenance Mode"
+msgstr "维护模式"
+
+#: haclient.py.in:736
+msgid "Switch to maintenance mode"
+msgstr "切换到维护模式"
+
+#: haclient.py.in:737
+msgid "Indicate Pending Operations"
+msgstr "显示进行中的操作"
+
+#: haclient.py.in:738
+msgid "Indicate pending(starting/stopping) operations"
+msgstr "显示进行中的（启动中／停止中）的操作"
+
+#: haclient.py.in:918 haclient.py.in:955 haclient.py.in:1206
+#: haclient.py.in:1287 haclient.py.in:1495 haclient.py.in:2165
+#: haclient.py.in:2177 haclient.py.in:3466 haclient.py.in:3603
+#: haclient.py.in:4184 haclient.py.in:4693 haclient.py.in:4701
+#: haclient.py.in:4743 haclient.py.in:5333 haclient.py.in:5342
+#: haclient.py.in:5536 haclient.py.in:5777 haclient.py.in:7893
+#: haclient.py.in:8109 haclient.py.in:8230 haclient.py.in:8268
+#: haclient.py.in:9410
+msgid ":"
+msgstr "："
+
+#: haclient.py.in:1006
+#, python-format
+msgid "last failure at \"%s\""
+msgstr "上次失败于“%s”"
+
+#: haclient.py.in:1150 haclient.py.in:1155 haclient.py.in:1546
+#: haclient.py.in:1871
+msgid "standby"
+msgstr "备用"
+
+#: haclient.py.in:1151 haclient.py.in:1156 haclient.py.in:1856
+msgid "never started"
+msgstr "未曾启动"
+
+#: haclient.py.in:1203
+msgid "Caused by your previous action, this attribute has been set to \""
+msgstr "您之前的操作将此属性设置为“"
+
+#: haclient.py.in:1205
+msgid "\"."
+msgstr "”。"
+
+#: haclient.py.in:1206
+msgid "Recommended"
+msgstr "建议"
+
+#: haclient.py.in:1207
+msgid "Select \"Clear\" to remove the set."
+msgstr "选择“清除”删除此设置。"
+
+#: haclient.py.in:1208
+msgid "The sub-resource will inherit this attribute from its parent."
+msgstr "子资源将从其父资源继承此属性。"
+
+#: haclient.py.in:1212
+#, python-format
+msgid "Retain the \"%s\" set for sub-resource \""
+msgstr "保留对子资源的 \"%s\" 设置： “"
+
+#: haclient.py.in:1213
+msgid "\"?"
+msgstr "”？"
+
+#: haclient.py.in:1232 haclient.py.in:1246
+msgid "all resources"
+msgstr "所有资源"
+
+#: haclient.py.in:1238 haclient.py.in:1242 haclient.py.in:1260
+msgid "all nodes"
+msgstr "所有节点"
+
+#: haclient.py.in:1241 haclient.py.in:1443
+msgid "Resource"
+msgstr "资源"
+
+#: haclient.py.in:1242
+msgid "Node"
+msgstr "节点"
+
+#: haclient.py.in:1433
+msgid "all migrated resources"
+msgstr "所有被迁移的资源"
+
+#: haclient.py.in:1487
+#, python-format
+msgid "%s Resources"
+msgstr "%s资源"
+
+#: haclient.py.in:1546 haclient.py.in:1553
+msgid "Make"
+msgstr "让"
+
+#: haclient.py.in:1553
+msgid "active"
+msgstr "活动"
+
+#: haclient.py.in:1619
 msgid "Name"
 msgstr "名称"
 
-#: haclient.py.in:304
+#: haclient.py.in:1620
 msgid "Status"
 msgstr "状态"
 
-#: haclient.glade.h:1
-msgid ""
-"\n"
-"\n"
-msgstr ""
-"\n"
-"\n"
+#: haclient.py.in:1621
+msgid "Details"
+msgstr "详细信息"
 
-#: haclient.glade.h:4
-msgid "Add"
-msgstr "添加"
+#: haclient.py.in:1677 haclient.py.in:1955
+msgid "not running"
+msgstr "未运行"
 
-#: haclient.glade.h:5
-msgid "Advance:"
-msgstr "高级："
+#: haclient.py.in:1679 haclient.py.in:1957 haclient.py.in:1967
+msgid "running"
+msgstr "运行"
 
-#: haclient.glade.h:6
-msgid "Apply"
-msgstr "应用"
+#: haclient.py.in:1681 haclient.py.in:1959
+msgid "fail"
+msgstr "失败"
 
-#: haclient.glade.h:7
-msgid "Attributes:"
-msgstr "属性："
+#: haclient.py.in:1683
+msgid "starting"
+msgstr "启动中"
 
-#: haclient.glade.h:8
-msgid "Class:"
-msgstr "类别："
+#: haclient.py.in:1685
+msgid "stopping"
+msgstr "停止中"
 
-msgid "Class"
-msgstr "类别"
+#: haclient.py.in:1691 haclient.py.in:1858 haclient.py.in:1965
+msgid "ping node"
+msgstr "ping 节点"
 
-#: haclient.glade.h:9
-msgid "Clone"
+#: haclient.py.in:1693 haclient.py.in:1869
+msgid "online"
+msgstr "在线"
+
+#: haclient.py.in:1776
+msgid "have quorum"
+msgstr "节点个数有效"
+
+#: haclient.py.in:1778
+msgid "no quorum"
+msgstr "节点个数无效"
+
+#: haclient.py.in:1789 haclient.py.in:1806 haclient.py.in:2192
+msgid "Cluster"
+msgstr "集群"
+
+#: haclient.py.in:1792
+msgid "Inactive resources"
+msgstr "停止的资源"
+
+#: haclient.py.in:1809
+msgid "Resources"
+msgstr "资源"
+
+#: haclient.py.in:1823
+msgid " on "
+msgstr "于 "
+
+#: haclient.py.in:1852
+msgid "unknown"
+msgstr "情况不明"
+
+#: haclient.py.in:1860
+msgid "unknown type"
+msgstr "未知类型"
+
+#: haclient.py.in:1863
+msgid "offline"
+msgstr "离线"
+
+#: haclient.py.in:1867
+msgid "online(dc)"
+msgstr "在线(主控节点)"
+
+#: haclient.py.in:1954
+msgid "primitive"
+msgstr "普通资源"
+
+#: haclient.py.in:1971
+msgid "group"
+msgstr "资源组"
+
+#: haclient.py.in:1971
+msgid "resources"
+msgstr "资源"
+
+#: haclient.py.in:1971
+msgid "clone"
 msgstr "克隆资源"
 
-#: haclient.glade.h:10
-msgid "Current Running on "
-msgstr "正运行于"
-
-#: haclient.glade.h:12
-msgid "Description of the type of resource:"
-msgstr "选中类型描述："
-
-#: haclient.glade.h:13
-msgid "Expressions:"
-msgstr "表达式："
-
-#: haclient.glade.h:14
-msgid "From:"
-msgstr "起始："
-
-#: haclient.glade.h:15
-msgid "Group:"
-msgstr "资源组："
-
-#: haclient.glade.h:16
-msgid "ID:"
-msgstr "标识符："
-
-#: haclient.glade.h:17
-msgid ""
-"INFINITY\n"
-"0\n"
-"-INFINITY"
-msgstr ""
-"INFINITY\n"
-"0\n"
-"-INFINITY"
-
-#: haclient.glade.h:20
-msgid "Master/Slave"
+#: haclient.py.in:1971
+msgid "master"
 msgstr "主从资源"
 
-#: haclient.glade.h:21
-msgid "No Data Available"
-msgstr "没有可显示的数据"
+#: haclient.py.in:1973
+msgid "orders"
+msgstr "顺序"
 
-#: haclient.glade.h:22
-msgid "Operations:"
-msgstr "操作："
+#: haclient.py.in:1973
+msgid "locations"
+msgstr "位置"
 
-#: haclient.glade.h:23
-msgid "Parameters:"
-msgstr "参数："
+#: haclient.py.in:1973
+msgid "colocations"
+msgstr "协同"
 
-#: haclient.glade.h:24
-msgid "Password:"
-msgstr "口令："
+#: haclient.py.in:1996 haclient.py.in:4697 haclient.py.in:5889
+msgid "Live"
+msgstr ""
 
-#: haclient.glade.h:25
-msgid "Provider:"
-msgstr "提供者："
+#: haclient.py.in:1998
+msgid "Shadow: "
+msgstr ""
 
-msgid "Provider"
-msgstr "提供者"
+#: haclient.py.in:2033
+msgid "Management"
+msgstr "管理"
 
-#: haclient.glade.h:26
+#: haclient.py.in:2198
+msgid "CIB"
+msgstr ""
+
+#: haclient.py.in:2227 haclient.py.in:2919 haclient.py.in:4637
+#: haclient.py.in:6281
 msgid "Reset"
 msgstr "重置"
 
-#: haclient.glade.h:27
-msgid "Resource:"
-msgstr "资源："
+#: haclient.py.in:2335
+msgid "Multiple \"Cluster Property Set\" in \"CRM Config\"."
+msgstr "“CRM 配置”中存在多个“集群属性集”。"
 
-#: haclient.glade.h:28
-msgid "Score:"
-msgstr "权重："
+#: haclient.py.in:2336 haclient.py.in:3195 haclient.py.in:3217
+#: haclient.py.in:3320 haclient.py.in:3341
+msgid "We are switching to \"Hack Mode\" to view them properly."
+msgstr "现在自动切换至“Hack 模式”以便正确显示。"
 
-#: haclient.glade.h:29
-msgid "Server:"
-msgstr "服务器："
+#: haclient.py.in:2408
+msgid "There are unsaved changes in current page."
+msgstr "在当前页中有未保存的修改。"
 
-msgid "Name:"
-msgstr "名称："
+#: haclient.py.in:2408 haclient.py.in:5465
+msgid "Apply the changes?"
+msgstr "您想应用修改吗？"
 
-msgid "Value:"
-msgstr "值："
+#: haclient.py.in:2426
+msgid "Policy Engine"
+msgstr "策略引擎"
 
-msgid "Description:"
-msgstr "描述："
+#: haclient.py.in:2438
+msgid "CRM Daemon"
+msgstr "CRM 守护程序"
 
-msgid "Interval:"
-msgstr "间隔："
+#: haclient.py.in:2500 haclient.py.in:2503 haclient.py.in:8864
+#: haclient.py.in:8867 haclient.py.in:9123 haclient.py.in:9126
+msgid "."
+msgstr "。"
 
-msgid "Timeout:"
-msgstr "超时："
+#: haclient.py.in:2520 haclient.py.in:2573 haclient.py.in:2577
+#: haclient.py.in:7924 haclient.py.in:7943 haclient.py.in:8281
+#: haclient.py.in:9038 haclient.py.in:9042 haclient.py.in:9096
+msgid "default"
+msgstr "缺省"
+
+#: haclient.py.in:2636
+msgid "List Mode"
+msgstr "列表模式"
+
+#: haclient.py.in:2637
+msgid "Tree Mode"
+msgstr "树形模式"
+
+#: haclient.py.in:2638
+msgid "XML Mode"
+msgstr "XML 模式"
+
+#: haclient.py.in:2645
+msgid "Show"
+msgstr "显示"
+
+#: haclient.py.in:2909
+msgid "The object doesn't exist"
+msgstr "对象不存在"
+
+#: haclient.py.in:2918
+msgid "Edit XML"
+msgstr "编辑 XML"
+
+#: haclient.py.in:2933
+msgid "Import"
+msgstr "导入"
+
+#: haclient.py.in:2934
+msgid "Import XML"
+msgstr "导入 XML"
+
+#: haclient.py.in:2935
+msgid "Export"
+msgstr "导出"
+
+#: haclient.py.in:2936
+msgid "Export XML"
+msgstr "导出 XML"
+
+#: haclient.py.in:2999
+msgid "OVR"
+msgstr "覆盖"
+
+#: haclient.py.in:3001
+msgid "INS"
+msgstr "插入"
+
+#: haclient.py.in:3004
+#, python-format
+msgid "Ln %d, Col %d\t%s"
+msgstr "行 %d, 列 %d\t%s"
+
+#: haclient.py.in:3020
+msgid "Failed to parse the XML"
+msgstr "解析 XML 失败"
+
+#: haclient.py.in:3032
+msgid "Open File"
+msgstr "打开文件"
+
+#: haclient.py.in:3042
+msgid "All files"
+msgstr "所有文件"
+
+#: haclient.py.in:3047
+msgid "XML files"
+msgstr "XML 文件"
+
+#: haclient.py.in:3066 haclient.py.in:3072 haclient.py.in:6013
+#: haclient.py.in:6043 haclient.py.in:6050 haclient.py.in:6066
+#: haclient.py.in:6082 haclient.py.in:6106 haclient.py.in:6123
+msgid "I/O error"
+msgstr "输入输出错误"
+
+#: haclient.py.in:3193 haclient.py.in:3318
+#, python-format
+msgid "The \"%s\" has multiple \"%s\" sets."
+msgstr "“%s”存在多个“%s”集。"
+
+#: haclient.py.in:3214 haclient.py.in:3338
+#, python-format
+msgid "The \"%s\" has a \"%s\"."
+msgstr "“%s”中存在“%s”。"
+
+#: haclient.py.in:3568 haclient.py.in:4126 haclient.py.in:4530
+#: haclient.py.in:4631
+msgid "Add"
+msgstr "添加"
+
+#: haclient.py.in:3603
+msgid "Other"
+msgstr "其它"
+
+#: haclient.py.in:3628
+msgid "Please specify the type of object you want to add"
+msgstr "请指定添加对象的类型"
+
+#: haclient.py.in:3669
+msgid "Wizard"
+msgstr "向导"
+
+#: haclient.py.in:3672
+msgid "Dialog"
+msgstr "对话"
+
+#: haclient.py.in:3913
+#, python-format
+msgid "This will delete the %s \"%s\""
+msgstr "这会删除%s \"%s\""
+
+#: haclient.py.in:3915
+msgid "Delete the selected object?"
+msgstr "删除选定的对象？"
+
+#: haclient.py.in:4082
+msgid "Initial state of resource"
+msgstr "资源的初始状态"
+
+#: haclient.py.in:4087
+msgid ""
+"Maximum number of copies (Defaults to the number of nodes in the cluster)"
+msgstr "最大实例个数（缺省为集群的节点个数）"
+
+#: haclient.py.in:4089
+msgid "Maximum number of copies on a single node (Defaults to 1)"
+msgstr "单个节点上的最大实例个数（缺省为 1）"
+
+#: haclient.py.in:4092 haclient.py.in:4094 haclient.py.in:4096
+#: haclient.py.in:8891 haclient.py.in:8893 haclient.py.in:8902
+#: haclient.py.in:8915 haclient.py.in:8917 haclient.py.in:8919
+#: haclient.py.in:8921
+msgid "[ default ]"
+msgstr "[ 缺省 ]"
+
+#: haclient.py.in:4093
+msgid ""
+"Notify all the other copies before stopping or starting a copy and when the "
+"action was successful (Defaults to false)"
+msgstr ""
+"在启动或停止一个实例之前, 并且在成功完成之时，通知所有其它实例（缺省为 "
+"false）"
+
+#: haclient.py.in:4095
+msgid ""
+"Globally Unique (Does each copy of the clone perform a different function? "
+"Defaults to false)"
+msgstr "全局唯一（克隆的每个实例执行不同的功能？ 缺省为 false）"
+
+#: haclient.py.in:4097
+msgid ""
+"Interleave (Changes the behavior of ordering constraints (between clones/"
+"masters) so that instances can start/stop as soon as their peer instance has "
+"(rather than waiting for every instance of the other clone has). Defaults to "
+"false)"
+msgstr ""
+"交错（改变顺序限制条件的操作方式(克隆／主从资源之间）， 这样实例能够在相关的"
+"实例启动或停止之后立刻启停（不必等待另一克隆资源的每个实例操作完成）。 缺省"
+"为 false）"
+
+#: haclient.py.in:4102
+msgid "Maximum number of master copies (Defaults to 1)"
+msgstr "最大主实例个数 （缺省为 1）"
+
+#: haclient.py.in:4104
+msgid "Maximum number of master copies on a single node (Defaults to 1)"
+msgstr "单个节点上的最大主实例个数 （缺省为 1）"
+
+#: haclient.py.in:4135
+msgid "Basic Settings"
+msgstr "基本设置"
+
+#: haclient.py.in:4157
+msgid "Options"
+msgstr "选项"
+
+#: haclient.py.in:4256
+msgid "Add monitor operation"
+msgstr "添加监视操作"
+
+#: haclient.py.in:4540
+#, python-format
+msgid "Summary Of \"%s\""
+msgstr "“%s” 概要"
+
+#: haclient.py.in:4542
+msgid "Summary"
+msgstr "概要"
+
+#: haclient.py.in:4561
+#, python-format
+msgid "Sub-resource For \"%s\""
+msgstr "“%s”的子资源"
+
+#: haclient.py.in:4563
+msgid "Sub-resource"
+msgstr "子资源"
+
+#: haclient.py.in:4565
+msgid "Add "
+msgstr "添加"
+
+#: haclient.py.in:4566
+msgid "Continue Adding "
+msgstr "继续添加"
+
+#: haclient.py.in:4633
+msgid "Edit"
+msgstr "编辑"
+
+#: haclient.py.in:4674
+msgid ""
+"This will reset the current object attributes and all sub-objects to the "
+"initial configurations."
+msgstr "这会重置当前对象属性以及所有子对象为初始设置。"
+
+#: haclient.py.in:4676
+msgid "Reset the configurations?"
+msgstr "重置设置？"
+
+#: haclient.py.in:4693
+msgid "Transition"
+msgstr "集群操作"
+
+#: haclient.py.in:4701
+msgid "History"
+msgstr "历史"
+
+#: haclient.py.in:4728
+msgid "Graph"
+msgstr "图解"
+
+#: haclient.py.in:4739
+msgid "Detail"
+msgstr "详细信息"
+
+#: haclient.py.in:4743
+msgid "Verbosity"
+msgstr "详细程度"
+
+#: haclient.py.in:4769
+msgid "Scores"
+msgstr "得分"
+
+#: haclient.py.in:4865
+msgid "Failed to generate the transition graph"
+msgstr "生成集群操作图解失败"
+
+#: haclient.py.in:4910
+msgid "Cannot save the graph for specified transition"
+msgstr "无法保存指定的集群操作图解"
+
+#: haclient.py.in:4913
+msgid "PNG Image"
+msgstr "PNG 图像"
+
+#: haclient.py.in:4914
+msgid "JPEG Image"
+msgstr "JPEG 图像"
+
+#: haclient.py.in:4915
+msgid "GIF Image"
+msgstr "GIF 图像"
+
+#: haclient.py.in:4916
+msgid "TIFF Image"
+msgstr "TIFF 图像"
+
+#: haclient.py.in:4917
+msgid "Dot File"
+msgstr "Dot 文件"
+
+#: haclient.py.in:4948
+msgid "Cannot save the information for specified transition"
+msgstr "无法保存指定的集群操作信息"
+
+#: haclient.py.in:4968
+msgid ""
+"Interpreting the graph:\n"
+"* Arrows indicate ordering dependancies\n"
+"* Dashed-arrows indicate dependancies that are not present in the transition "
+"graph\n"
+"* Actions with a dashed border of any color do not form part of the "
+"transition graph\n"
+"* Actions with a green border form part of the transition graph\n"
+"* Actions with a red border are ones the cluster would like to execute but "
+"are unrunnable\n"
+"* Actions with a blue border are ones the cluster does not feel need to be "
+"executed\n"
+"* Actions with orange text are pseudo/pretend actions that the cluster uses "
+"to simplify the graph\n"
+"* Actions with black text are sent to the LRM\n"
+"* Resource actions have text of the form {rsc}_{action}_{interval} {node}\n"
+"* Any action depending on an action with a red border will not be able to "
+"execute.\n"
+"* Loops are really bad. Please report them to the development team."
+msgstr ""
+"图解说明：\n"
+"* 箭头表示顺序依赖关系\n"
+"* 虚线箭头表示没有出现在该集群操作中的依赖关系\n"
+"* 任何颜色虚线边框的动作不是该集群操作的组成部分\n"
+"* 绿色边框的动作是该集群操作的组成部分\n"
+"* 红色边框的动作是指集群想要但不能执行的动作\n"
+"* 蓝色边框的动作是指集群认为不需要执行的动作\n"
+"* 橙色文本的动作是集群用以简化图解的伪动作\n"
+"* 黑色文本的动作是发送给 LRM 的动作\n"
+"* 资源动作的文本格式为 {资源}_{动作}_{间隔} {节点}\n"
+"* 任何动作如果依赖于红色边框的动作，则不能执行\n"
+"* 如果遇到环路情况，请报告给开发团队。"
+
+#: haclient.py.in:5009 haclient.py.in:5959 haclient.py.in:6288
+msgid "Cluster Report"
+msgstr "集群报告"
+
+#: haclient.py.in:5018
+msgid "From"
+msgstr "起始"
+
+#: haclient.py.in:5019
+msgid "To"
+msgstr "目标"
+
+#: haclient.py.in:5040
+msgid "The \"From\" time should before the \"To\" one"
+msgstr "\"起始\"时间应早于\"截止\"时间"
+
+#: haclient.py.in:5079
+msgid "Save as ..."
+msgstr "保存为..."
+
+#: haclient.py.in:5109
+msgid "Permission denied"
+msgstr "权限不够"
+
+#: haclient.py.in:5113
+msgid "A file with the same name already exists"
+msgstr "同名文件已经存在"
+
+#: haclient.py.in:5115
+msgid "Do you want to overwrite it?"
+msgstr "您想要覆盖该文件吗？"
+
+#: haclient.py.in:5118
+msgid "Replace it?"
+msgstr "替换？"
+
+#: haclient.py.in:5291
+msgid "Description of Cluster Report"
+msgstr "集群报告描述"
+
+#: haclient.py.in:5304
+msgid "Severity"
+msgstr "严重性"
+
+#: haclient.py.in:5319
+msgid "Component"
+msgstr "组件"
+
+#: haclient.py.in:5333
+msgid "Subject"
+msgstr "主题"
+
+#: haclient.py.in:5342
+msgid "Detailed description"
+msgstr "详细描述"
+
+#: haclient.py.in:5447 haclient.py.in:6475
+msgid "Connected to "
+msgstr "已连接至 "
+
+#: haclient.py.in:5449
+msgid "Not connected"
+msgstr "未连接"
+
+#: haclient.py.in:5451 haclient.py.in:5453 haclient.py.in:5455
+msgid "("
+msgstr "（"
+
+#: haclient.py.in:5451 haclient.py.in:6294
+msgid "Simple Mode"
+msgstr "简单模式"
+
+#: haclient.py.in:5451 haclient.py.in:5453 haclient.py.in:5455
+msgid ")"
+msgstr "）"
+
+#: haclient.py.in:5453 haclient.py.in:6295
+msgid "Expert Mode"
+msgstr "专家模式"
+
+#: haclient.py.in:5455 haclient.py.in:6296
+msgid "Hack Mode"
+msgstr "Hack 模式"
+
+#: haclient.py.in:5465
+msgid "The data of current view have been changed."
+msgstr "当前视图中的数据已更改。"
+
+#: haclient.py.in:5515
+msgid "Do you want to quit ?"
+msgstr "您想要退出吗？"
+
+#: haclient.py.in:5524
+msgid "Login"
+msgstr "登录"
+
+#: haclient.py.in:5587
+msgid "Do you want to logout ?"
+msgstr "您想要断开吗？"
+
+#: haclient.py.in:5594
+msgid "\"Indicate pending operations\" has been activated."
+msgstr "“显示进行中的操作” 已被激活。"
+
+#: haclient.py.in:5595
+msgid "It could affect the performance."
+msgstr "这会影响集群性能。"
+
+#: haclient.py.in:5596
+msgid "Turn it off ?"
+msgstr "将其关闭吗？"
+
+#: haclient.py.in:5605
+msgid "Cannot get any shadow CIB"
+msgstr "无法获取任何 Shadow CIB"
+
+#: haclient.py.in:5624
+msgid "Shadow CIB"
+msgstr ""
+
+#: haclient.py.in:5626
+msgid "Recreate the specified shadow CIB from the live CIB"
+msgstr "重新从 Live CIB 创建指定的 Shadow CIB"
+
+#: haclient.py.in:5628
+msgid "Delete the specified shadow CIB"
+msgstr "删除选定的 Shadow CIB"
+
+#: haclient.py.in:5630
+msgid "Upload the specified shadow CIB to the cluster"
+msgstr "加载指定的 Shadow CIB 到集群"
+
+#: haclient.py.in:5633
+msgid "Shadow Name"
+msgstr "Shadow 名称"
+
+#: haclient.py.in:5656
+#, python-format
+msgid "The shadow CIB \"%s\"has been successfully commited."
+msgstr "成功提交 Shadow CIB “%s”"
+
+#: haclient.py.in:5657 haclient.py.in:5659
+msgid "Switch to the live CIB?"
+msgstr "转到 Live CIB？"
+
+#: haclient.py.in:5679
+msgid "Shadow CIB Diff"
+msgstr "Shadow CIB 差异"
+
+#: haclient.py.in:5685
+#, python-format
+msgid "Differences between the live CIB and the shadow CIB \"%s\""
+msgstr "Live CIB 与 Shadow CIB “%s” 之间的差异"
+
+#: haclient.py.in:5728
+msgid "Diff Files"
+msgstr "Diff 文件"
+
+#: haclient.py.in:5729
+msgid "All Files"
+msgstr "所有文件"
+
+#: haclient.py.in:5738
+msgid "Cannot save the shadow diff"
+msgstr "无法保存 Shadow 差异"
+
+#: haclient.py.in:5765
+msgid "Create Shadow CIB"
+msgstr "创建 Shadow CIB"
+
+#: haclient.py.in:5787
+msgid "A copy of the live CIB"
+msgstr "Live CIB 的拷贝"
+
+#: haclient.py.in:5791
+msgid "A new CIB with empty cluster configuration"
+msgstr "新的空配置的 CIB"
+
+#: haclient.py.in:5820
+msgid "Please specify a name for the shadow CIB."
+msgstr "请指定 Shadow CIB 的名称"
+
+#: haclient.py.in:5823
+msgid "Please specify another name for avoiding confusion."
+msgstr "请指定其它的名称以防混淆。"
+
+#: haclient.py.in:5826
+#, python-format
+msgid "A shadow CIB \"%s\" already exists and it's currently active."
+msgstr "Shadow CIB “%s” 已经存在并且正在操作当中。"
+
+#: haclient.py.in:5829
+#, python-format
+msgid "A shadow CIB \"%s\" already exists."
+msgstr "Shadow CIB “%s” 已经存在。"
+
+#: haclient.py.in:5830
+msgid "Specify another name, or select \"Force\" if you want to override it."
+msgstr "请指定其它的名称， 或者选择“强制”将其覆盖。"
+
+#: haclient.py.in:5849
+#, python-format
+msgid "A new shadow CIB \"%s\" has been successfully created."
+msgstr "成功创建新的 Shadow CIB “%s”。"
+
+#: haclient.py.in:5850
+msgid "Switch to it now?"
+msgstr "转到此 CIB？"
+
+#: haclient.py.in:5852
+#, python-format
+msgid "Switch to the new created shadow CIB \"%s\"?"
+msgstr "转到新创建的 Shadow CIB “%s”？"
+
+#: haclient.py.in:5920
+msgid "Cannot find any transition record"
+msgstr "无法获取任何集群操作记录"
+
+#: haclient.py.in:5960
+msgid "Generating the cluster report may take a while,"
+msgstr "生成集群报告需要一段时间，"
+
+#: haclient.py.in:5961
+msgid "depending on the size of logs..."
+msgstr "取决于日志的大小..."
+
+#: haclient.py.in:5973
+msgid "Failed to generate the cluster report"
+msgstr "生成集群报告失败"
+
+#: haclient.py.in:5983
+msgid "Incomplete data"
+msgstr "不完整的数据"
+
+#: haclient.py.in:6016 haclient.py.in:6024 haclient.py.in:6086
+#: haclient.py.in:6110 haclient.py.in:6128
+msgid "Tar error"
+msgstr "归档错误"
+
+#: haclient.py.in:6174
+msgid "Pacemaker GUI"
+msgstr "Pacemaker 图形用户界面"
+
+#: haclient.py.in:6273
+msgid "Connection"
+msgstr "连接"
+
+#: haclient.py.in:6274
+msgid "Login..."
+msgstr "登录..."
+
+#: haclient.py.in:6274
+msgid "login to cluster"
+msgstr "登录到集群"
+
+#: haclient.py.in:6275
+msgid "Logout"
+msgstr "断开"
+
+#: haclient.py.in:6275
+msgid "logout from cluster"
+msgstr "从集群中断开"
+
+#: haclient.py.in:6276
+msgid "Quit"
+msgstr "退出"
+
+#: haclient.py.in:6276
+msgid "Quit the Program"
+msgstr "退出客户端"
+
+#: haclient.py.in:6277
+msgid "View"
+msgstr "查看"
+
+#: haclient.py.in:6278
+msgid "Shadow"
+msgstr "Shadow 配置"
+
+#: haclient.py.in:6279
+msgid "New"
+msgstr "新建"
+
+#: haclient.py.in:6279
+msgid "Create a new shadow CIB"
+msgstr "创建新的 Shadow CIB"
+
+#: haclient.py.in:6280
+msgid "Diff"
+msgstr "差异"
+
+#: haclient.py.in:6280
+msgid "Differences between the live CIB and the shadow CIB"
+msgstr "Live CIB 与 Shadow CIB 之间的差异"
+
+#: haclient.py.in:6281
+msgid "Recreate a shadow CIB from the live CIB"
+msgstr "从 Live CIB 重新创建 Shadow CIB"
+
+#: haclient.py.in:6282
+msgid "Delete"
+msgstr "删除"
+
+#: haclient.py.in:6282
+msgid "Delete a shadow CIB"
+msgstr "删除 Shadow CIB"
+
+#: haclient.py.in:6283
+msgid "Commit"
+msgstr "提交"
+
+#: haclient.py.in:6283
+msgid "Upload a shadow CIB to the cluster"
+msgstr "加载 Shadow CIB 到集群"
+
+#: haclient.py.in:6284
+msgid "Switch"
+msgstr "转到"
+
+#: haclient.py.in:6284
+msgid "Switch working CIB"
+msgstr "切换要操作的 CIB"
+
+#: haclient.py.in:6285
+msgid "Tools"
+msgstr "工具"
+
+#: haclient.py.in:6286
+msgid "Transition Information"
+msgstr "集群操作信息"
+
+#: haclient.py.in:6287
+msgid "Show Transition Information"
+msgstr "查看集群操作信息"
+
+#: haclient.py.in:6288
+msgid "generate a cluster report"
+msgstr "生成集群报告"
+
+#: haclient.py.in:6294
+msgid "Switch to simple mode"
+msgstr "切换到简单模式"
+
+#: haclient.py.in:6295
+msgid "Switch to expert mode"
+msgstr "切换到专家模式"
+
+#: haclient.py.in:6296
+msgid "Switch to hack mode"
+msgstr "切换到 Hack 模式"
+
+#: haclient.py.in:6359
+msgid "Not Connected"
+msgstr "未连接"
+
+#: haclient.py.in:6452
+msgid "Can't resolve address of server "
+msgstr "无法解析服务器地址 "
+
+#: haclient.py.in:6458 haclient.py.in:6464
+msgid "Can't connect to server "
+msgstr "无法连接到服务器 "
+
+#: haclient.py.in:6467
+msgid ""
+"Failed in the authentication.\n"
+" User Name or Password may be wrong.\n"
+" or the user doesn't belong to haclient group"
+msgstr "用户认证失败，可能是用户或密码不对，或该用户不属于 haclient 组"
+
+#: haclient.py.in:6470
+msgid ""
+"Can't login to server.\n"
+" The protocols may be mismatched."
+msgstr "无法登录到服务器，可能是协议不匹配"
+
+#: haclient.py.in:6480 haclient.py.in:6573
+msgid "Updating data from server..."
+msgstr "正在从服务器更新数据..."
+
+#: haclient.py.in:6582
+msgid "Reconnecting..."
+msgstr "重新连接中..."
+
+#: haclient.py.in:6631
+msgid "Cannot get the CIB"
+msgstr "无法获取 CIB"
+
+#: haclient.py.in:6637
+msgid "Failed to parse the CIB"
+msgstr "解析 CIB 失败"
+
+#: haclient.py.in:6647
+msgid "Cannot parse the CIB"
+msgstr "无法解析 CIB"
+
+#: haclient.py.in:6757 haclient.py.in:6833
+msgid "Cannot get the Relax-NG schema"
+msgstr "无法获取 Relax-NG Schema"
+
+#: haclient.py.in:6763
+msgid "Failed to parse the CIB XML"
+msgstr "解析 CIB XML 失败"
+
+#: haclient.py.in:6769 haclient.py.in:6841
+msgid "Failed to parse the Relax-NG schema"
+msgstr "解析 Relax-NG Schema 失败"
+
+#: haclient.py.in:6849
+msgid "Cannot get started in Relax-NG schema"
+msgstr "无法获取 Relax-NG Schema 的起始点"
+
+#: haclient.py.in:7196
+msgid "Cannot get the DTD"
+msgstr "无法获取 DTD"
+
+#: haclient.py.in:8853 haclient.py.in:9115
+msgid ".  "
+msgstr "。 "
+
+#: haclient.py.in:8853 haclient.py.in:9115
+msgid ".\n"
+msgstr "。\n"
+
+#: haclient.py.in:8876 haclient.py.in:8880
+#, python-format
+msgid "\"%s\" is required"
+msgstr "“%s”是必填的"
+
+#: haclient.py.in:8876
+msgid "Class"
+msgstr "类别"
+
+#: haclient.py.in:8880
+msgid "Provider"
+msgstr "提供者"
+
+#: haclient.py.in:8881
+msgid "for an OCF primitive"
+msgstr "对于一个 OCF 的普通资源"
+
+#: haclient.py.in:8890
+msgid ""
+"If not all resources can be active, the cluster will stop lower priority "
+"resources in order to keep higher priority ones active."
+msgstr ""
+"如果资源无法全部工作， 集群会停止低优先级的资源， 以便让高优先级的资源工作。"
+
+#: haclient.py.in:8892
+msgid "What state should the cluster attempt to keep this resource in?"
+msgstr "集群试图让该资源保持的状态。"
+
+#: haclient.py.in:8894
+msgid "Is the cluster allowed to start and stop the resource?"
+msgstr "是否让集群负责启停和管理资源？"
+
+#: haclient.py.in:8899
+msgid ""
+"How much does the resource prefer to stay where it is? Defaults to the value "
+"of \"default-resource-stickiness\""
+msgstr ""
+"资源有多大程度倾向于停留在当前节点？缺省为“default-resource-stickiness”的值"
+
+#: haclient.py.in:8901
+msgid ""
+"How many failures should occur for this resource on a node before making the "
+"node ineligible to host this resource. Default: \"none\""
+msgstr ""
+"允许该资源在一个节点上的失败次数， 之后禁止该资源在其上运行。缺省： 无限制"
+
+#: haclient.py.in:8902
+msgid "(mark the resource as unmanaged)"
+msgstr "(将该资源视为失控)"
+
+#: haclient.py.in:8903
+msgid ""
+"What should the cluster do if it ever finds the resource active on more than "
+"one node."
+msgstr "如果发现资源在多个节点上运行，集群如何处理？"
+
+#: haclient.py.in:8905
+msgid ""
+"How many seconds to wait before acting as if the failure had not occurred "
+"(and potentially allowing the resource back to the node on which it failed. "
+"Default: \"never\""
+msgstr ""
+"等待多少秒之后就视作失败从未发生过（意味允许资源回到之前失效过的节点）缺省： "
+"从不"
+
+#: haclient.py.in:8910
+msgid ""
+"How many copies of the resource to start. Defaults to the number of nodes in "
+"the cluster."
+msgstr "能够启动的最大资源实例个数。 缺省为集群的节点个数。"
+
+#: haclient.py.in:8912
+msgid "How many copies of the resource can be started on a single node."
+msgstr "单个节点上能够启动的最大资源实例个数。"
+
+#: haclient.py.in:8916
+msgid ""
+"When stopping or starting a copy of the clone, tell all the other copies "
+"beforehand and when the action was successful."
+msgstr "在启动或停止一个实例之前, 并且在成功完成之时，通知所有其它实例"
+
+#: haclient.py.in:8918
+msgid "Does each copy of the clone perform a different function?"
+msgstr "克隆的每个实例执行不同的功能？"
+
+#: haclient.py.in:8920
+msgid "Should the copies be started in series (instead of in parallel)"
+msgstr "串行地启动实例（而非并行地）"
+
+#: haclient.py.in:8922
+msgid ""
+"Changes the behavior of ordering constraints (between clones/masters) so "
+"that instances can start/stop as soon as their peer instance has (rather "
+"than waiting for every instance of the other clone has)."
+msgstr ""
+"改变顺序限制条件的操作方式(克隆／主从资源之间）， 这样实例能够在相关的实例启"
+"动或停止之后立刻启停（不必等待另一克隆资源的每个实例操作完成）。 缺省为 false"
+
+#: haclient.py.in:8927
+msgid "How many copies of the resource can be promoted to master status."
+msgstr "能够提升为主状态的最大资源实例个数。"
+
+#: haclient.py.in:8929
+msgid ""
+"How many copies of the resource can be promoted to master status on a single "
+"node."
+msgstr "单个节点上能够提升为主状态的最大资源实例个数。"
+
+#: haclient.py.in:9061
+msgid "required"
+msgstr "必需"
+
+#: haclient.py.in:9064
+msgid ", "
+msgstr "， "
+
+#: haclient.py.in:9065
+msgid "unique"
+msgstr "唯一"
+
+#: haclient.py.in:9410
+#, python-format
+msgid "Invalid \"%s\""
+msgstr "无效的“%s”"
+
+#: haclient.py.in:9487
+msgid "* Specify dependencies between the actions on two resources"
+msgstr "* 指定两个资源其动作之间的依赖关系"
+
+#: haclient.py.in:9488 haclient.py.in:9606
+msgid "* Please set the required attributes"
+msgstr "* 请设置必填的属性"
+
+#: haclient.py.in:9493 haclient.py.in:9509
+#, python-format
+msgid "* %s %s %s %s %s"
+msgstr ""
+
+#: haclient.py.in:9498 haclient.py.in:9501 haclient.py.in:9513
+#: haclient.py.in:9516 haclient.py.in:9569 haclient.py.in:9580
+#, python-format
+msgid "* If cannot %s %s, do not %s %s"
+msgstr "* 如果不能 %s %s, 则不 %s %s"
+
+#: haclient.py.in:9551
+msgid "* Specify the order of actions on resources"
+msgstr "* 指定资源动作的顺序"
+
+#: haclient.py.in:9552 haclient.py.in:9658
+msgid "* Please set the required attributes or add resource sets"
+msgstr "* 请设置必填属性或者添加资源集"
+
+#: haclient.py.in:9563 haclient.py.in:9577
+#, python-format
+msgid "* %s %s before %s %s"
+msgstr "* 先 %s %s， 然后 %s %s"
+
+#: haclient.py.in:9605
+msgid "* Specify where a resource should run relative to another resource"
+msgstr "* 指定一个资源相对于另一资源的运行位置"
+
+#: haclient.py.in:9613 haclient.py.in:9623 haclient.py.in:9670
+#, python-format
+msgid "* Make %s %s on the same node as %s %s  ( %s according to %s )"
+msgstr "* 让 %s %s 在 %s %s 的相同节点上 （%s 参照 %s）"
+
+#: haclient.py.in:9616 haclient.py.in:9626 haclient.py.in:9673
+#, python-format
+msgid "* If %s cannot be %s on any node, then %s won't be %s anywhere"
+msgstr "* 如果 %s 无法 %s 在任何节点上， 则 %s 也不能 %s 在任何节点上"
+
+#: haclient.py.in:9619 haclient.py.in:9675
+#, python-format
+msgid "* If %s cannot be %s on any node, %s won't be affected"
+msgstr "* 如果 %s 无法 %s 在任何节点上， %s 不受影响"
+
+#: haclient.py.in:9629 haclient.py.in:9639 haclient.py.in:9687
+#, python-format
+msgid ""
+"* Prevent %s from being %s on the same node as %s %s  ( %s according to %s )"
+msgstr "* 避免 %s %s 在 %s %s 的相同节点上 （%s 参照 %s）"
+
+#: haclient.py.in:9632 haclient.py.in:9642 haclient.py.in:9690
+#, python-format
+msgid ""
+"* If %s is %s on the only (or every) available node, then %s won't be %s "
+"anywhere"
+msgstr ""
+"* 如果 %s 在唯一的（或每个）可用节点上 %s， 则 %s 不会 %s 在任何节点上"
+
+#: haclient.py.in:9635 haclient.py.in:9692
+#, python-format
+msgid ""
+"* If %s is %s on the only (or every) available node, %s won't be affected"
+msgstr "* 如果 %s 在唯一的（或每个）可用节点上 %s, %s 不受影响"
+
+#: haclient.py.in:9645
+msgid ""
+"* Combine this colocation score and the appropriate location scores to "
+"decide where to put the resources"
+msgstr "* 综合此协同权重以及相应的位置权重以决定资源运行位置"
+
+#: haclient.py.in:9657
+msgid "* Specify where resources should run relative to other resources"
+msgstr "* 指定资源相对于其他资源的运行位置"
+
+#: haclient.py.in:9665
+#, python-format
+msgid ""
+"* Combine this \"Score\" and corresponding location scores to decide where "
+"to place %s"
+msgstr "* 综合此“权重”以及相应的位置权重以决定资源“%s”的运行位置"
+
+#: haclient.py.in:9678
+#, python-format
+msgid ""
+"* Prefer to make %s %s on the same node as %s %s  ( %s according to %s )"
+msgstr "* 倾向于让 %s %s 在 %s %s 的相同节点上（%s 参照 %s）"
+
+#: haclient.py.in:9695
+#, python-format
+msgid ""
+"* Prefer to prevent %s from being %s on the same node as %s %s  ( %s "
+"according to %s )"
+msgstr "* 倾向于避免 %s %s 在 %s %s 的相同节点上 （%s 参照 %s）"
+
+#: haclient.py.in:9701
+#, python-format
+msgid ""
+"* Please specify a valid \"Score\" to determine the location relationship "
+"between %s and %s"
+msgstr "* 请指定有效的“权重”以决定 %s 与 %s 之间的位置关系"
+
+msgid "Clone"
+msgstr "克隆资源"
+
+msgid "Expression"
+msgstr "表达式"
+
+msgid "Operations"
+msgstr "操作"
+
+msgid "Password"
+msgstr "口令"
+
+msgid "Score"
+msgstr "权重"
+
+msgid "Interval"
+msgstr "间隔"
+
+msgid "Interval Origin"
+msgstr "间隔 Origin"
+
+msgid "Timeout"
+msgstr "超时"
 
 msgid "Start Delay"
 msgstr "启动延时"
 
-msgid "Start Delay:"
-msgstr "启动延时："
+msgid "Enabled"
+msgstr "激活"
 
 msgid "Disabled"
-msgstr "失效"
+msgstr "关闭"
 
-msgid "Disabled:"
-msgstr "失效："
+msgid "Record Pending"
+msgstr "记录进行中的操作"
 
 msgid "Role"
 msgstr "角色"
 
-msgid "Role:"
-msgstr "角色："
+msgid "Requires"
+msgstr "依赖"
 
 msgid "Prereq"
 msgstr "依赖"
 
-msgid "Prereq:"
-msgstr "依赖："
-
 msgid "On Fail"
 msgstr "失败时"
 
-msgid "On Fail:"
-msgstr "失败时："
+msgid "First"
+msgstr "首先"
 
-msgid "Attribute:"
-msgstr "属性："
+msgid "Then"
+msgstr "然后"
 
-msgid "Operation:"
-msgstr "操作："
+msgid "First Action"
+msgstr "首先操作"
 
-#: haclient.glade.h:30
-msgid "To:"
-msgstr "目标："
+msgid "Then Action"
+msgstr "然后操作"
 
-#: haclient.glade.h:31 haclient.py.in:569
-msgid "Type:"
-msgstr "类型："
+msgid "Action"
+msgstr "操作"
 
-msgid "Action:"
-msgstr "起始操作："
+msgid "To Action"
+msgstr "目标操作"
 
-msgid "To Action:"
-msgstr "目标操作："
+msgid "Symmetrical"
+msgstr "对称"
 
-msgid "Symmetrical:"
-msgstr "对称："
+msgid "With Resource"
+msgstr "与资源"
 
-msgid "From Role:"
-msgstr "起始角色："
+msgid "Resource Role"
+msgstr "资源角色"
 
-msgid "To Role:"
-msgstr "目标角色："
+msgid "With Resource Role"
+msgstr "与资源角色"
 
-msgid "Node Attribute:"
-msgstr "节点属性："
+msgid "From Role"
+msgstr "起始角色"
 
-msgid "Required"
-msgstr "必填"
+msgid "To Role"
+msgstr "目标角色"
+
+msgid "Node Attribute"
+msgstr "节点属性"
 
 msgid "Optional"
 msgstr "选填"
 
-#: haclient.glade.h:32
-msgid "User Name:"
-msgstr "用户名："
+msgid "User Name"
+msgstr "用户名"
 
-#: haclient.glade.h:33
-msgid ""
-"before\n"
-"after"
-msgstr ""
-"before\n"
-"after"
-
-#: haclient.glade.h:35
-msgid "clone_max:"
-msgstr "最多克隆个数："
-
-#: haclient.glade.h:36
-msgid "clone_node_max:"
-msgstr "每节点最多克隆个数："
-
-#: haclient.glade.h:37
-msgid ""
-"ignore\n"
-"stop\n"
-"freeze"
-msgstr ""
-"ignore\n"
-"stop\n"
-"freeze"
-
-#: haclient.glade.h:40
-msgid "master_max:"
-msgstr "最多主资源个数："
-
-#: haclient.glade.h:41
-msgid "master_node_max:"
-msgstr "每节点最多主资源个数："
-
-#: haclient.glade.h:42
-msgid "resource_"
-msgstr "resource_"
-
-#: haclient.py.in:434
-msgid "with quorum"
-msgstr "节点个数有效"
-
-#: haclient.py.in:436
-msgid "without quorum"
-msgstr "节点个数无效"
-
-#: haclient.py.in:437
-msgid "Linux-HA cluster"
-msgstr "Linux高可用集群"
-
-#: haclient.py.in:439
 msgid "Nodes"
 msgstr "节点"
 
-#: haclient.py.in:443
-msgid "Resources"
-msgstr "资源"
-
-msgid "Tools"
-msgstr "工具"
-
-#: haclient.py.in:448
 msgid "Constraints"
 msgstr "限制条件"
 
-#: haclient.py.in:450
-msgid "Locations"
-msgstr "位置"
+msgid "Resource Location"
+msgstr "资源位置"
 
-#: haclient.py.in:455
-msgid "Orders"
-msgstr "顺序"
+msgid "Resource Order"
+msgstr "资源顺序"
 
-#: haclient.py.in:460
-msgid "Colocations"
-msgstr "协同"
+msgid "Resource Colocation"
+msgstr "资源协同"
 
-#: haclient.py.in:345 haclient.py.in:478 haclient.py.in:1114
-#: haclient.py.in:1131 haclient.py.in:1187 haclient.py.in:1190
-#: haclient.py.in:1224 haclient.py.in:1115 haclient.py.in:1132
-#: haclient.py.in:1188 haclient.py.in:1189 haclient.py.in:1192
-#: haclient.py.in:1226
-msgid "native"
-msgstr "普通资源"
-
-#: haclient.py.in:358 haclient.py.in:1114 haclient.py.in:1187
-#: haclient.py.in:1193 haclient.py.in:1224 haclient.py.in:1115
-#: haclient.py.in:1189 haclient.py.in:1195 haclient.py.in:1226
-msgid "group"
-msgstr "资源组"
-
-#: haclient.py.in:358 haclient.py.in:1114 haclient.py.in:1224
-#: haclient.py.in:1115 haclient.py.in:1140 haclient.py.in:1226
-msgid "clone"
-msgstr "克隆资源"
-
-#: haclient.py.in:358 haclient.py.in:1114 haclient.py.in:1224
-#: haclient.py.in:1115 haclient.py.in:1142 haclient.py.in:1226
-msgid "master"
-msgstr "主从资源"
-
-#: haclient.py.in:346 haclient.py.in:503
-msgid "running"
-msgstr "运行"
-
-#: haclient.py.in:501
-msgid "running(dc)"
-msgstr "运行(主控节点)"
-
-#: haclient.py.in:496
-msgid "stopped"
-msgstr "停止"
-
-#: haclient.py.in:494
-msgid "unknown"
-msgstr "情况不明"
-
-#: haclient.py.in:482
-msgid " on "
-msgstr "于"
-
-#: haclient.py.in:348
 msgid "failed"
 msgstr "失败"
 
-#: haclient.py.in:1115 haclient.py.in:1131 haclient.py.in:1116
-#: haclient.py.in:1132
 msgid "unmanaged"
-msgstr "失控"
+msgstr "未管理"
 
-#: haclient.py.in:1153 haclient.py.in:1154
-msgid "Login"
-msgstr "登录"
-
-#: haclient.py.in:1186 haclient.py.in:1187
-msgid "The type of new item"
-msgstr "新元素的类型"
-
-#: haclient.py.in:1187 haclient.py.in:1188
-msgid "Item Type"
-msgstr "元素类型"
-
-#: haclient.py.in:119
-msgid "Confirm"
-msgstr "确认"
-
-#: haclient.py.in:914 haclient.py.in:882 haclient.py.in:751
 msgid "Value"
 msgstr "值"
 
-#: haclient.py.in:915
 msgid "Description"
 msgstr "描述"
 
-msgid "Failed to parse the XML: "
-msgstr "解析 XML 失败： "
-
-msgid "Failed to parse the CIB: "
-msgstr "解析 CIB 失败: "
-
-msgid "Failed to parse the metadata of %s: %s"
-msgstr "解析 %s 的元数据失败： %s"
-
-#: haclient.py.in:1057 haclient.py.in:1487 haclient.py.in:1493
-msgid "The ID already exists"
-msgstr "该标识符已经存在"
-
-msgid "The specified group name exists, while it's not group type"
-msgstr "指定的资源组名存在，并且不属于资源组类型"
-
-#: haclient.py.in:1484
-msgid "the ID can't be empty"
-msgstr "标识符不能为空"
-
-#: haclient.py.in:109
-msgid "Message"
-msgstr "消息"
-
-#: haclient.py.in:992
-msgid "Add Native Resource"
-msgstr "添加资源"
-
-#: haclient.py.in:912 haclient.py.in:880 haclient.py.in:889
-#: haclient.py.in:1042 haclient.py.in:1045 haclient.py.in:1049
-#: haclient.py.in:1196 haclient.py.in:748 haclient.py.in:1201
-#: haclient.py.in:1209 haclient.py.in:1217
-msgid "ID"
-msgstr "标识符"
-
-#: haclient.py.in:1114 haclient.py.in:453 haclient.py.in:1115
-#: haclient.py.in:1134 haclient.py.in:1189 haclient.py.in:1199
-#: haclient.py.in:1228
-msgid "location"
-msgstr "位置"
-
-#: haclient.py.in:1114 haclient.py.in:458 haclient.py.in:1115
-#: haclient.py.in:1136 haclient.py.in:1189 haclient.py.in:1207
-#: haclient.py.in:1230
-msgid "order"
-msgstr "顺序"
-
-#: haclient.py.in:1114 haclient.py.in:463 haclient.py.in:1115
-#: haclient.py.in:1138 haclient.py.in:1189 haclient.py.in:1215
-#: haclient.py.in:1232
-msgid "colocation"
-msgstr "协同"
-
-#: haclient.py.in:879 haclient.py.in:920
-msgid "Add Parameter"
-msgstr "添加参数"
-
-#: haclient.py.in:891
-msgid "Interval"
-msgstr "间隔"
-
-#: haclient.py.in:892
-msgid "Timeout"
-msgstr "超时"
-
-#: haclient.py.in:888
-msgid "Add Operation"
-msgstr "添加操作"
-
-#: haclient.py.in:1196
-msgid "Add Resource Group"
-msgstr "添加资源组"
-
-#: haclient.py.in:76
-msgid " can't be empty"
-msgstr "不能为空"
-
-#: haclient.py.in:348
-msgid "fail"
-msgstr "失败"
-
-#: haclient.py.in:1200
-msgid "Add Location Constraint"
-msgstr "添加位置限制"
-
-#: haclient.py.in:1208
-msgid "Add Order Constraint"
-msgstr "添加顺序限制"
-
-#: haclient.py.in:1216
-msgid "Add Colocation Constraint"
-msgstr "添加协同限制"
-
-#: haclient.py.in:749
 msgid "Attribute"
 msgstr "属性"
 
-#: haclient.py.in:750
 msgid "Operation"
 msgstr "操作"
 
-#: haclient.py.in:1203 haclient.py.in:1220
-msgid "Score"
-msgstr "权重"
+msgid "Debug Level"
+msgstr "调试级别"
 
-#: haclient.py.in:1210 haclient.py.in:1218
-msgid "From"
-msgstr "起始"
+msgid "UDP Port"
+msgstr "UDP 端口"
 
-#: haclient.py.in:1211
-msgid "Type"
-msgstr "类型"
+msgid "Keep Alive"
+msgstr "心跳间隔"
 
-#: haclient.py.in:1212 haclient.py.in:1219
-msgid "To"
-msgstr "目标"
+msgid "Warning Time"
+msgstr "警报时间"
 
-#: haclient.py.in:747
-msgid "Add Expression"
-msgstr "添加表达式"
+msgid "Dead Time"
+msgstr "认定宕机时间"
 
-#: haclient.py.in:564
-msgid "Standby:"
-msgstr "备份："
+msgid "Initial Dead Time"
+msgstr "启动时认定宕机时间"
 
-#: haclient.py.in:565
-msgid "Node Name:"
-msgstr "节点名字："
+msgid "Quorum Server"
+msgstr "Quorum 服务器"
 
-#: haclient.py.in:566
-msgid "Is it DC:"
-msgstr "是否是主控节点："
+msgid "Use Logd"
+msgstr "使用 Logd"
 
-#: haclient.py.in:567
-msgid "Shutdown:"
-msgstr "关闭："
+msgid "Auto Join"
+msgstr "自动加入节点"
 
-#: haclient.py.in:568
-msgid "Online:"
-msgstr "运行："
+msgid "API Authentication"
+msgstr "API 认证"
 
-#: haclient.py.in:570
-msgid "Unclean:"
-msgstr "情况不明："
+msgid "Auto Failback"
+msgstr "自动回迁"
 
-#: haclient.py.in:571
-msgid "Expected up:"
-msgstr "预计启动："
+msgid "Baud Rate"
+msgstr "波特率"
 
-#: haclient.py.in:612
-msgid "Version:"
-msgstr "版本："
+msgid "Debug File"
+msgstr "调试文件"
 
-#: haclient.py.in:613
-msgid "Debug Level:"
-msgstr "调试级别："
+msgid "Dead Ping"
+msgstr "认定 Ping 节点宕机时间"
 
-#: haclient.py.in:614
-msgid "UDP Port:"
-msgstr "UDP 端口："
+msgid "Heartbeat Version"
+msgstr "Heartbeat 版本"
 
-#: haclient.py.in:615
-msgid "Keep Alive:"
-msgstr "心跳间隔："
+msgid "Log Facility"
+msgstr "日志机制"
 
-#: haclient.py.in:616
-msgid "Warning Time:"
-msgstr "警报时间："
+msgid "Message Format"
+msgstr "消息格式"
 
-#: haclient.py.in:617
-msgid "Dead Time:"
-msgstr "认定宕机时间："
-
-#: haclient.py.in:618
-msgid "Initial Dead Time:"
-msgstr "启动时认定宕机时间："
-
-msgid "Quorum Server:"
-msgstr "Quorum 服务器："
-
-msgid "Use Logd:"
-msgstr "使用 Logd："
-
-msgid "Auto Join:"
-msgstr "自动加入节点："
-
-msgid "API Authentication:"
-msgstr "API 认证："
-
-msgid "Auto Failback:"
-msgstr "自动回迁："
-
-msgid "Baud Rate:"
-msgstr "波特率："
-
-msgid "Debug File:"
-msgstr "调试文件："
-
-msgid "Dead Ping:"
-msgstr "认定 Ping 节点宕机时间："
-
-msgid "Heartbeat Version:"
-msgstr "Heartbeat 版本："
-
-msgid "Hop Fudge:"
-msgstr "Hop Fudge："
-
-msgid "Log Facility:"
-msgstr "日志机制："
-
-msgid "Log File:"
-msgstr "日志文件："
-
-msgid "Message Format:"
-msgstr "消息格式："
-
-msgid "Nice Failback:"
-msgstr "回迁："
-
-msgid "Node:"
-msgstr "节点："
-
-msgid "Normal Poll:"
-msgstr "Normal Poll："
-
-msgid "Stonith:"
-msgstr "Stonith："
-
-msgid "Watchdog:"
-msgstr "Watchdog："
-
-msgid "Cluster:"
-msgstr "集群："
-
-#: haclient.py.in:619
-msgid "Default Action Timeout:"
-msgstr "缺省事务超时时间："
-
-#: haclient.py.in:620
-msgid "Default Resource Stickiness:"
-msgstr "缺省资源粘黏性："
-
-msgid "Default Resource Failure Stickiness:"
-msgstr "缺省资源失败粘黏性："
-
-#: haclient.py.in:621
-msgid "No Quorum Policy:"
-msgstr "节点数无效策略："
-
-#: haclient.py.in:622
-msgid "Symmetric Cluster:"
-msgstr "对称集群："
-
-#: haclient.py.in:623
-msgid "Stonith Enabled:"
-msgstr "启用 Stonith："
-
-#: haclient.py.in:1202
-msgid "Resource"
-msgstr "资源"
-
-msgid "login failed"
-msgstr "登录失败"
-
-msgid "can't connect to any node"
-msgstr "登录失败"
-
-msgid "can not get information from cluster!"
-msgstr "无法从集群获得信息!"
-
-msgid "standby"
-msgstr "备用"
-
-msgid "Standby"
-msgstr "备用"
-
-msgid "Active"
-msgstr "活动"
-
-msgid "active"
-msgstr "活动"
-
-msgid "Make the node standby"
-msgstr "让节点备用"
-
-msgid "Make the node active"
-msgstr "让节点活动"
-
-msgid "Group resources by node"
-msgstr "按节点分组资源"
-
-msgid "Make"
-msgstr "让"
-
-msgid "not running"
-msgstr "未运行"
-
-msgid "Start"
-msgstr "启动"
-
-msgid "Stop"
-msgstr "停止"
-
-msgid "Stop resource"
-msgstr "停止资源"
-
-msgid "Start resource"
-msgstr "启动资源"
-
-msgid "Not Connected"
-msgstr "未连接"
-
-msgid "Connected to "
-msgstr "已连接"
-
-msgid "Updating data from server..."
-msgstr "正在从服务器更新数据..."
-
-msgid "Can't connect to server "
-msgstr "无法连接到服务器 "
-
-msgid "Failed in the authentication.\n User Name or Password may be wrong.\n or the user doesn't belong to haclient group"
-msgstr "用户认证失败，可能是用户或密码不对，或该用户不属于 haclient 组"
-
-msgid "Can't login to server.\n The protocols may be mismatched."
-msgstr "无法登录到服务器，可能是协议不匹配"
-
-msgid "Can't resolve address of server "
-msgstr "无法解析服务器地址 "
+msgid "Nice Failback"
+msgstr "回迁"
 
 msgid "running (Master)"
 msgstr "运行(主)"
@@ -768,296 +1619,119 @@ msgstr "运行(主)"
 msgid "running (Slave)"
 msgstr "运行(从)"
 
-msgid "Cleanup resource"
-msgstr "清理资源"
+msgid "Force"
+msgstr "强制"
 
-msgid "Cleanup Resource"
-msgstr "清理资源"
+msgid "Server(:Port)"
+msgstr "服务器(：端口号)"
 
-msgid "Node"
-msgstr "节点"
+msgid "Boolean Op"
+msgstr "布尔运算"
 
-msgid "all resources"
-msgstr "所有资源"
+msgid "Score Attribute"
+msgstr "权重属性"
 
-msgid "all nodes"
-msgstr "所有节点"
+msgid "Score Attribute Mangle"
+msgstr "权重属性 Mangle"
 
-msgid "Default"
-msgstr "缺省"
+msgid "Configuration"
+msgstr "配置"
 
-msgid "Work as default"
-msgstr "缺省运行"
+msgid "Refresh"
+msgstr "刷新"
 
-msgid "Move Up"
-msgstr "上移"
+msgid "Reprobe"
+msgstr "重新检查"
 
-msgid "Move Down"
-msgstr "下移"
+msgid "Required"
+msgstr "必填"
 
-msgid "move the resource down in the group"
-msgstr "在资源组里下移资源"
+msgid "Primitive"
+msgstr "普通资源"
 
-msgid "move the resource up in the group"
-msgstr "在资源组里上移资源"
+msgid "Group"
+msgstr "资源组"
 
-msgid "Migrate Resource"
-msgstr "迁移资源"
+msgid "Master"
+msgstr "主从资源"
+
+msgid "Uname"
+msgstr "节点名"
+
+msgid "CRM Config"
+msgstr "CRM 配置"
+
+msgid "Cluster Property Set"
+msgstr "集群属性集"
+
+msgid "Resource Defaults"
+msgstr "资源缺省设置"
+
+msgid "Operation Defaults"
+msgstr "操作缺省设置"
+
+msgid "Meta Attributes"
+msgstr "元属性"
+
+msgid "Instance Attributes"
+msgstr "实例属性"
+
+msgid "Nvpair"
+msgstr "名称/值对"
 
 msgid "To Node"
 msgstr "目标节点"
 
-msgid "Force"
-msgstr "强制"
+msgid "Duration"
+msgstr "持续时间"
 
-msgid "Migrate a resource to specified node"
-msgstr "迁移资源到指定节点"
+msgid "Migration Threshold"
+msgstr "迁移阈值"
 
-msgid " not migrated: not-active and no prefered node specified."
-msgstr " 无法迁移： 资源未运行，并且未指定目标节点"
+msgid "Fail Count"
+msgstr "失败计数"
 
-msgid " is already running on "
-msgstr " 已经运行在 "
+msgid "Call ID"
+msgstr "调用标识码"
 
-msgid "Clear Migrate Constraints"
-msgstr "清理迁移限制"
+msgid "Return Code"
+msgstr "返回码"
 
-msgid "Clear constraints created by migrate"
-msgstr "清理迁移时所创建的限制条件"
+msgid "Last Run"
+msgstr "上次运行"
 
-msgid "all migrated resources"
-msgstr "所有被迁移的资源"
+msgid "Exec Time"
+msgstr "执行时间"
 
-msgid "Cluster Report"
-msgstr "集群报告"
+msgid "Queue Time"
+msgstr "排队时间"
 
-msgid "generate a cluster report"
-msgstr "生成集群报告"
+msgid "Last Return Code Change"
+msgstr "上次返回码改变"
 
-msgid "The \"From\" time should before the \"To\" one"
-msgstr "\"起始\"时间应早于\"目标\"时间"
+msgid "ID Ref"
+msgstr "标识符引用"
 
-msgid "Generating the cluster report may take a while,"
-msgstr "生成集群报告需要一段时间，"
+msgid "End"
+msgstr "截止"
 
-msgid "depending on the size of logs..."
-msgstr "取决于日志的大小..."
+msgid "Rule"
+msgstr "规则"
 
-msgid "Save as ..."
-msgstr "保存为..."
+msgid "Lifetime"
+msgstr "生效期限"
 
-msgid "Failed to generate the cluster report"
-msgstr "生成集群报告失败"
+msgid "Date Expression"
+msgstr "日期表达式"
 
-msgid "Incomplete data: "
-msgstr "不完整的数据： "
+msgid "Date Spec"
+msgstr "日期指定"
 
-msgid "System error"
-msgstr "系统错误"
+msgid "Resource Set"
+msgstr "资源集"
 
-msgid "Permission denied: "
-msgstr "权限不够： "
+msgid "Sequential"
+msgstr "顺序"
 
-msgid "A file with the same name already exists: "
-msgstr "同名文件已经存在： "
-
-msgid "Do you want to overwrite it?"
-msgstr "您想要覆盖该文件吗？"
-
-msgid "Replace it?"
-msgstr "替换？"
-
-msgid "Description of Cluster Report"
-msgstr "集群报告描述"
-
-msgid "I/O error: "
-msgstr "输入输出错误： "
-
-msgid "Tar error: "
-msgstr "归档错误： "
-
-msgid "System error: "
-msgstr "系统错误： "
-
-msgid "Do not delete the root directory"
-msgstr "请不要删除根目录"
-
-msgid "Resource ID:"
-msgstr "资源 ID："
-
-msgid "Attributes"
-msgstr "属性"
-
-msgid "Parameters"
-msgstr "参数"
-
-msgid "Operations"
-msgstr "操作"
-
-msgid "Delete Parameter"
-msgstr "删除参数"
-
-msgid "Delete Operation"
-msgstr "删除操作"
-
-msgid "Delete Expression"
-msgstr "删除表达式"
-
-msgid "Belong to group:\n(type for new one)"
-msgstr "属于资源组：\n(新资源组请输入)"
-
-msgid "Type(double click for detail):"
-msgstr "类型(双击可看详细信息)"
-
-msgid "If belong to a clone or master/slave:"
-msgstr "如果属于克隆资源或主从资源："
-
-msgid "Clone or Master/Slave ID:"
-msgstr "克隆资源或主从资源的ID："
-
-msgid "press \"Default\" or \"Start\" button in toolbar/menu to start the resource"
-msgstr "点击工具条或菜单中的\"缺省\"或\"开始\"可以启动资源"
-
-msgid "Delete Attribute"
-msgstr "删除属性"
-
-msgid "Add Attribute"
-msgstr "添加属性"
-
-msgid "Add Name/Value Pair"
-msgstr "添加名称/值对"
-
-msgid "Reconnecting..."
-msgstr "重新连接中..."
-
-msgid "Ordered"
-msgstr "顺序启动子资源"
-
-msgid "Collocated"
-msgstr "同节点启动子资源"
-
-msgid "Server(:port):"
-msgstr "服务器(:端口号):"
-
-msgid "Boolean OP:"
-msgstr "布尔运算："
-
-msgid "Clone can't belong to group"
-msgstr "克隆资源不能从属于资源组"
-
-msgid "Master/Slave can't belong to group"
-msgstr "主从资源不能从属于资源组"
-
-msgid "Informations"
-msgstr "信息"
-
-msgid "Configurations"
-msgstr "配置"
-
-msgid "Stonith Action:"
-msgstr "Stonith 操作："
-
-msgid "Is Managed Default:"
-msgstr "缺省管理资源："
-
-msgid "Stop Orphan Resources:"
-msgstr "停止已删除资源："
-
-msgid "Stop Orphan Actions:"
-msgstr "取消已删除操作："
-
-msgid "Remove After Stop:"
-msgstr "清空已停止资源状态信息："
-
-msgid "Cluster Delay:"
-msgstr "集群延时："
-
-msgid "PE Error Series Max:"
-msgstr "策略引擎最大错误数："
-
-msgid "PE Warn Series Max:"
-msgstr "策略引擎最大警告数："
-
-msgid "PE Input Series Max:"
-msgstr "策略引擎最大输入数："
-
-msgid "Startup Fencing:"
-msgstr "启动屏蔽："
-
-msgid "Start Failure Is Fatal:"
-msgstr "将启动失败视为严重错误："
-
-msgid "Batch Limit:"
-msgstr "转换引擎并行任务数限制："
-
-msgid "Recommended:"
-msgstr "建议："
-
-msgid "Select \"Clear\" to remove the set."
-msgstr "选择“清除”删除此设置。"
-
-msgid "It will inherit the attribute from its parent resource."
-msgstr "从父资源继承此属性。"
-
-msgid "Are you sure you want to set \"target_role\"?"
-msgstr "您确定要设置“target_role”？"
-
-msgid "Caused by your previous action, this attribute has been set to \""
-msgstr "您之前的操作将此属性设置为“"
-
-msgid "\"."
-msgstr "”。"
-
-msgid "The sub-resource will inherit this attribute from its parent."
-msgstr "子资源将从其父资源继承此属性。"
-
-msgid "Retain the \"%s\" set for sub-resource \""
-msgstr "保留对子资源的 \"%s\" 设置：“"
-
-msgid "\"?"
-msgstr "”？"
-
-msgid "Advanced"
-msgstr "高级"
-
-msgid "DC Deadtime:"
-msgstr "主控节点认定宕机时间："
-
-msgid "Cluster Recheck Interval:"
-msgstr "集群轮询间隔："
-
-msgid "Election Timeout:"
-msgstr "选择超时："
-
-msgid "Shutdown Escalation:"
-msgstr "强制关闭："
-
-msgid "CRMD Integration Timeout:"
-msgstr "集群资源管理服务集成超时："
-
-msgid "CRMD Finalization Timeout:"
-msgstr "集群资源管理服务结束超时："
-
-msgid "There are unsaved changes in current page."
-msgstr "在当前页中有未保存的修改。"
-
-msgid "Apply the changes?"
-msgstr "您想应用修改吗？"
-
-msgid "The data of current view have been changed."
-msgstr "当前视图中的数据已修改。"
-
-msgid "This will reset the current object attributes and all sub-objects to the initial configurations."
-msgstr "这会重置当前对象属性以及所有子对象为初始设置。"
-
-msgid "Reset the configurations?"
-msgstr "重置设置？"
-
-msgid "This will delete the %s \"%s\""
-msgstr "这会删除%s \"%s\""
-
-msgid "Delete the selected object?"
-msgstr "删除选定的对象？"
-
-msgid "Primitive"
-msgstr "普通资源"
+msgid "Resource Ref"
+msgstr "资源引用"
