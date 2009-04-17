@@ -7780,10 +7780,14 @@ class ObjectAttrs(WidgetGroup) :
 		#			self.widgets["name_labels"]["id"].hide_all()
 		#			self.widgets["value_labels"]["id"].hide_all()
 
-		#else :
-		#	if self.is_newobj and not self.id_is_idref :
-		#		if self.widgets.has_key("combo_entries") and self.widgets["combo_entries"].has_key("id") \
-		#				and len(self.widgets["combo_entries"]["id"].child.get_text()) == 0 :
+		else :
+			if self.is_newobj and not self.id_is_idref and self.obj_type not in \
+					["node", "primitive", "group", "clone", "master","master_slave", \
+					"rsc_location", "rsc_colocation", "rsc_order"] :
+				if self.widgets.has_key("combo_entries") and self.widgets["combo_entries"].has_key("id") \
+						and len(self.widgets["combo_entries"]["id"].child.get_text()) == 0 :
+					obj_id = manager.auto_unique_id(self.xml_node, self.obj_type)
+					self.widgets["combo_entries"]["id"].child.set_text(obj_id)
 		#			parent_id = self.xml_node.parentNode.getAttribute("id")
 		#			if parent_id == "" :
 		#				id_prefix = self.obj_type
