@@ -47,14 +47,5 @@ mgmtdtest_LDADD 	= $(top_builddir)/lib/$(MGMT_DIR)/libhbmgmtclient.la \
 			  $(top_builddir)/lib/$(MGMT_DIR)/libhbmgmtcommon.la
 mgmtdtest_LDFLAGS 	= $(GNUTLSLIBS)
 
-mozhCNdir		= $(datadir)/locale/zh_CN/LC_MESSAGES
-mozhCN_DATA		= haclient.zh_CN.mo
-
-install-data-hook:
-	mv $(DESTDIR)/$(datadir)/locale/zh_CN/LC_MESSAGES/haclient.zh_CN.mo $(DESTDIR)/$(datadir)/locale/zh_CN/LC_MESSAGES/haclient.mo
-
-EXTRA_DIST		= $(guilib_DATA) $(mozhCN_DATA)
-
-.po.mo:
-	$(MSGFMT) -o $@ $<
+EXTRA_DIST		= $(guilib_DATA)
 
