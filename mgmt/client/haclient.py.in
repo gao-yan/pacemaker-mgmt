@@ -6996,23 +6996,9 @@ class Manager :
 				xml_node.appendChild(mid_elem)
 				new_mid_elem = mid_elem
 
-				obj_type = xml_node.tagName
-				if obj_type == "crm_config" :
-					mid_id = "cib-bootstrap-options"
-				elif obj_type in ["rsc_defaults", "op_defaults"] :
-					mid_id = obj_type + "-options"
-				elif obj_type == "node" :
-					mid_id = "nodes-" + xml_node.getAttribute("id")
-				else :
-					parent_id = xml_node.getAttribute("id")
-					if parent_id != "" and sub_attr_list.count("id") > 0 :
-						mid_id = xml_node.getAttribute("id") + "-" + obj_type_name
-					else :
-						mid_id = ""
-
-				if mid_id != "" :
+				if sub_attr_list.count("id") > 0 :
+					mid_id = manager.auto_unique_id(mid_elem, obj_type_name)
 					mid_elem.setAttribute("id", mid_id)
-				
 			else :
 				mid_elem = elem_node_list[0]
 
@@ -7093,9 +7079,17 @@ class Manager :
 
 	def auto_id_prefix(self, xml_node, name) :
 		parent_node = xml_node.parentNode
+		parent_type = parent_node.tagName
 		parent_id = parent_node.getAttribute("id")
+
+		if parent_type == "crm_config" :
+			return "cib-bootstrap-options"
+		elif parent_type in ["rsc_defaults", "op_defaults"] :
+			return parent_type + "-options"
+		elif parent_type == "node" :
+			return "nodes-" + parent_id
+
 		if parent_id == "" :
-			parent_type = parent_node.tagName
 			parent_parent_node = xml_node.parentNode.parentNode
 			parent_parent_id = parent_parent_node.getAttribute("id")
 			if parent_parent_id == "" :
