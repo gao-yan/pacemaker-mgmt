@@ -7768,11 +7768,11 @@ class ObjectAttrs(WidgetGroup) :
 		if self.auto_id or (mode_level == 0 and self.dynamic_set_id != None) :
 			self.hide_id_widget()
 
-		#if self.auto_id == True :
-		#	if self.is_newobj :
-		#		if self.widgets.has_key("combo_entries") and self.widgets["combo_entries"].has_key("id") :
-		#			if len(self.widgets["combo_entries"]["id"].child.get_text()) == 0 :
-		#				self.widgets["combo_entries"]["id"].child.set_text(self.obj_type + "-" + gen_uuid())
+		if self.auto_id == True :
+			if self.is_newobj :
+				if self.widgets.has_key("combo_entries") and self.widgets["combo_entries"].has_key("id") :
+					if len(self.widgets["combo_entries"]["id"].child.get_text()) == 0 :
+						self.widgets["combo_entries"]["id"].child.set_text(self.obj_type + "-" + gen_uuid())
 		#			self.widgets["name_labels"]["id"].hide_all()
 		#			self.widgets["combo_entries"]["id"].hide_all()
 		#	else :
