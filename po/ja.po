@@ -1,0 +1,1751 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: pacemaker-mgmt 2.0.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2009-04-17 15:37+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: ../mgmt/client/haclient.py.in:121
+msgid "Do not delete the root directory"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:129 ../mgmt/client/haclient.py.in:135
+#: ../mgmt/client/haclient.py.in:140 ../mgmt/client/haclient.py.in:3093
+#: ../mgmt/client/haclient.py.in:3101 ../mgmt/client/haclient.py.in:4954
+#: ../mgmt/client/haclient.py.in:4960 ../mgmt/client/haclient.py.in:5124
+#: ../mgmt/client/haclient.py.in:5744 ../mgmt/client/haclient.py.in:5750
+#: ../mgmt/client/haclient.py.in:5997 ../mgmt/client/haclient.py.in:6142
+#: ../mgmt/client/haclient.py.in:6151 ../mgmt/client/haclient.py.in:6802
+#: ../mgmt/client/haclient.py.in:6810
+msgid "System error"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:129 ../mgmt/client/haclient.py.in:135
+#: ../mgmt/client/haclient.py.in:140 ../mgmt/client/haclient.py.in:2506
+#: ../mgmt/client/haclient.py.in:2645 ../mgmt/client/haclient.py.in:3020
+#: ../mgmt/client/haclient.py.in:3066 ../mgmt/client/haclient.py.in:3072
+#: ../mgmt/client/haclient.py.in:3093 ../mgmt/client/haclient.py.in:3101
+#: ../mgmt/client/haclient.py.in:4954 ../mgmt/client/haclient.py.in:4960
+#: ../mgmt/client/haclient.py.in:5113 ../mgmt/client/haclient.py.in:5124
+#: ../mgmt/client/haclient.py.in:5685 ../mgmt/client/haclient.py.in:5744
+#: ../mgmt/client/haclient.py.in:5750 ../mgmt/client/haclient.py.in:5997
+#: ../mgmt/client/haclient.py.in:6013 ../mgmt/client/haclient.py.in:6016
+#: ../mgmt/client/haclient.py.in:6024 ../mgmt/client/haclient.py.in:6043
+#: ../mgmt/client/haclient.py.in:6050 ../mgmt/client/haclient.py.in:6066
+#: ../mgmt/client/haclient.py.in:6082 ../mgmt/client/haclient.py.in:6086
+#: ../mgmt/client/haclient.py.in:6106 ../mgmt/client/haclient.py.in:6110
+#: ../mgmt/client/haclient.py.in:6123 ../mgmt/client/haclient.py.in:6128
+#: ../mgmt/client/haclient.py.in:6142 ../mgmt/client/haclient.py.in:6151
+#: ../mgmt/client/haclient.py.in:6637 ../mgmt/client/haclient.py.in:6763
+#: ../mgmt/client/haclient.py.in:6769 ../mgmt/client/haclient.py.in:6802
+#: ../mgmt/client/haclient.py.in:6810 ../mgmt/client/haclient.py.in:6833
+#: ../mgmt/client/haclient.py.in:6841 ../mgmt/client/haclient.py.in:6849
+#: ../mgmt/client/haclient.py.in:7196
+msgid ": "
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:173
+msgid "Message"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:193
+msgid "Confirm"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:235
+msgid "The specified time should be numeric prefixed."
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:246
+msgid "The specified time should default with second unit, "
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:247
+#, python-format
+msgid ""
+"or should be suffixed with one of the following units:\n"
+" %s"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:313
+msgid "Add Parameter"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:315
+msgid "Add Operation"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:356 ../mgmt/client/haclient.py.in:7987
+#: ../mgmt/client/haclient.py.in:8268
+msgid " can't be empty"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:453 ../mgmt/client/haclient.py.in:604
+#: ../mgmt/client/haclient.py.in:1618
+msgid "Type"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:605
+msgid "ID"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:710
+msgid "Start"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:710
+msgid "Start resource"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:711
+msgid "Stop"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:711
+msgid "Stop resource"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:712 ../mgmt/client/haclient.py.in:2225
+#: ../mgmt/client/haclient.py.in:2506
+msgid "Default"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:712
+msgid "Work as default"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:713 ../mgmt/client/haclient.py.in:1240
+msgid "Cleanup Resource"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:713
+msgid "Cleanup resource"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:714 ../mgmt/client/haclient.py.in:1273
+msgid "Migrate Resource"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:714
+msgid "Migrate a resource to specified node"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:716 ../mgmt/client/haclient.py.in:1442
+msgid "Clear Migrate Constraints"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:717
+msgid "Clear constraints created by migrate"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:719
+msgid "Unmanage Resource"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:719
+msgid "Put a resource into unmanaged mode"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:721
+msgid "Manage Resource"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:721
+msgid "Put a resource into managed mode"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:723
+msgid "Refresh Resources"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:723
+msgid "Refresh CIB from the LRM status"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:725
+msgid "Reprobe Resources"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:725
+msgid "Reprobe for resources started outside of the CRM"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:729
+msgid "Standby"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:729
+msgid "Make the node standby"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:730
+msgid "Active"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:730
+msgid "Make the node active"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:734
+msgid "Group By Node"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:734
+msgid "Group resources by node"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:735
+msgid "Maintenance Mode"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:736
+msgid "Switch to maintenance mode"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:737
+msgid "Indicate Pending Operations"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:738
+msgid "Indicate pending(starting/stopping) operations"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:918 ../mgmt/client/haclient.py.in:955
+#: ../mgmt/client/haclient.py.in:1206 ../mgmt/client/haclient.py.in:1287
+#: ../mgmt/client/haclient.py.in:1495 ../mgmt/client/haclient.py.in:2165
+#: ../mgmt/client/haclient.py.in:2177 ../mgmt/client/haclient.py.in:3466
+#: ../mgmt/client/haclient.py.in:3603 ../mgmt/client/haclient.py.in:4184
+#: ../mgmt/client/haclient.py.in:4693 ../mgmt/client/haclient.py.in:4701
+#: ../mgmt/client/haclient.py.in:4743 ../mgmt/client/haclient.py.in:5333
+#: ../mgmt/client/haclient.py.in:5342 ../mgmt/client/haclient.py.in:5536
+#: ../mgmt/client/haclient.py.in:5777 ../mgmt/client/haclient.py.in:7893
+#: ../mgmt/client/haclient.py.in:8109 ../mgmt/client/haclient.py.in:8230
+#: ../mgmt/client/haclient.py.in:8268 ../mgmt/client/haclient.py.in:9410
+msgid ":"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:1006
+#, python-format
+msgid "last failure at \"%s\""
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:1150 ../mgmt/client/haclient.py.in:1155
+#: ../mgmt/client/haclient.py.in:1546 ../mgmt/client/haclient.py.in:1871
+msgid "standby"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:1151 ../mgmt/client/haclient.py.in:1156
+#: ../mgmt/client/haclient.py.in:1856
+msgid "never started"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:1203
+msgid "Caused by your previous action, this attribute has been set to \""
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:1205
+msgid "\"."
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:1206
+msgid "Recommended"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:1207
+msgid "Select \"Clear\" to remove the set."
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:1208
+msgid "The sub-resource will inherit this attribute from its parent."
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:1212
+#, python-format
+msgid "Retain the \"%s\" set for sub-resource \""
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:1213
+msgid "\"?"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:1232 ../mgmt/client/haclient.py.in:1246
+msgid "all resources"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:1238 ../mgmt/client/haclient.py.in:1242
+#: ../mgmt/client/haclient.py.in:1260
+msgid "all nodes"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:1241 ../mgmt/client/haclient.py.in:1443
+msgid "Resource"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:1242
+msgid "Node"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:1433
+msgid "all migrated resources"
+msgstr ""
+
+#. node_options = node_list[:]
+#. node_options.insert(0, "")
+#: ../mgmt/client/haclient.py.in:1487
+#, python-format
+msgid "%s Resources"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:1546 ../mgmt/client/haclient.py.in:1553
+msgid "Make"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:1553
+msgid "active"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:1619
+msgid "Name"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:1620
+msgid "Status"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:1621
+msgid "Details"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:1677 ../mgmt/client/haclient.py.in:1955
+msgid "not running"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:1679 ../mgmt/client/haclient.py.in:1957
+#: ../mgmt/client/haclient.py.in:1967
+msgid "running"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:1681 ../mgmt/client/haclient.py.in:1959
+msgid "fail"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:1683
+msgid "starting"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:1685
+msgid "stopping"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:1691 ../mgmt/client/haclient.py.in:1858
+#: ../mgmt/client/haclient.py.in:1965
+msgid "ping node"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:1693 ../mgmt/client/haclient.py.in:1869
+msgid "online"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:1776
+msgid "have quorum"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:1778
+msgid "no quorum"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:1789 ../mgmt/client/haclient.py.in:1806
+#: ../mgmt/client/haclient.py.in:2192
+msgid "Cluster"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:1792
+msgid "Inactive resources"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:1809
+msgid "Resources"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:1823
+msgid " on "
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:1852
+msgid "unknown"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:1860
+msgid "unknown type"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:1863
+msgid "offline"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:1867
+msgid "online(dc)"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:1954
+msgid "primitive"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:1971
+msgid "group"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:1971
+msgid "resources"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:1971
+msgid "clone"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:1971
+msgid "master"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:1973
+msgid "orders"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:1973
+msgid "locations"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:1973
+msgid "colocations"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:1996 ../mgmt/client/haclient.py.in:4697
+#: ../mgmt/client/haclient.py.in:5889
+msgid "Live"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:1998
+msgid "Shadow: "
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:2033
+msgid "Management"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:2198
+msgid "CIB"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:2227 ../mgmt/client/haclient.py.in:2919
+#: ../mgmt/client/haclient.py.in:4637 ../mgmt/client/haclient.py.in:6281
+msgid "Reset"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:2335
+msgid "Multiple \"Cluster Property Set\" in \"CRM Config\"."
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:2336 ../mgmt/client/haclient.py.in:3195
+#: ../mgmt/client/haclient.py.in:3217 ../mgmt/client/haclient.py.in:3320
+#: ../mgmt/client/haclient.py.in:3341
+msgid "We are switching to \"Hack Mode\" to view them properly."
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:2408
+msgid "There are unsaved changes in current page."
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:2408 ../mgmt/client/haclient.py.in:5465
+msgid "Apply the changes?"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:2426
+msgid "Policy Engine"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:2438
+msgid "CRM Daemon"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:2500 ../mgmt/client/haclient.py.in:2503
+#: ../mgmt/client/haclient.py.in:8864 ../mgmt/client/haclient.py.in:8867
+#: ../mgmt/client/haclient.py.in:9123 ../mgmt/client/haclient.py.in:9126
+msgid "."
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:2520 ../mgmt/client/haclient.py.in:2573
+#: ../mgmt/client/haclient.py.in:2577 ../mgmt/client/haclient.py.in:7924
+#: ../mgmt/client/haclient.py.in:7943 ../mgmt/client/haclient.py.in:8281
+#: ../mgmt/client/haclient.py.in:9038 ../mgmt/client/haclient.py.in:9042
+#: ../mgmt/client/haclient.py.in:9096
+msgid "default"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:2636
+msgid "List Mode"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:2637
+msgid "Tree Mode"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:2638
+msgid "XML Mode"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:2645
+msgid "Show"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:2909
+msgid "The object doesn't exist"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:2918
+msgid "Edit XML"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:2933
+msgid "Import"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:2934
+msgid "Import XML"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:2935
+msgid "Export"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:2936
+msgid "Export XML"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:2999
+msgid "OVR"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:3001
+msgid "INS"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:3004
+#, python-format
+msgid "Ln %d, Col %d\t%s"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:3020
+msgid "Failed to parse the XML"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:3032
+msgid "Open File"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:3042
+msgid "All files"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:3047
+msgid "XML files"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:3066 ../mgmt/client/haclient.py.in:3072
+#: ../mgmt/client/haclient.py.in:6013 ../mgmt/client/haclient.py.in:6043
+#: ../mgmt/client/haclient.py.in:6050 ../mgmt/client/haclient.py.in:6066
+#: ../mgmt/client/haclient.py.in:6082 ../mgmt/client/haclient.py.in:6106
+#: ../mgmt/client/haclient.py.in:6123
+msgid "I/O error"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:3193 ../mgmt/client/haclient.py.in:3318
+#, python-format
+msgid "The \"%s\" has multiple \"%s\" sets."
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:3214 ../mgmt/client/haclient.py.in:3338
+#, python-format
+msgid "The \"%s\" has a \"%s\"."
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:3568 ../mgmt/client/haclient.py.in:4126
+#: ../mgmt/client/haclient.py.in:4530 ../mgmt/client/haclient.py.in:4631
+msgid "Add"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:3603
+msgid "Other"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:3628
+msgid "Please specify the type of object you want to add"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:3669
+msgid "Wizard"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:3672
+msgid "Dialog"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:3913
+#, python-format
+msgid "This will delete the %s \"%s\""
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:3915
+msgid "Delete the selected object?"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:4082
+msgid "Initial state of resource"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:4087
+msgid ""
+"Maximum number of copies (Defaults to the number of nodes in the cluster)"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:4089
+msgid "Maximum number of copies on a single node (Defaults to 1)"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:4092 ../mgmt/client/haclient.py.in:4094
+#: ../mgmt/client/haclient.py.in:4096 ../mgmt/client/haclient.py.in:8891
+#: ../mgmt/client/haclient.py.in:8893 ../mgmt/client/haclient.py.in:8902
+#: ../mgmt/client/haclient.py.in:8915 ../mgmt/client/haclient.py.in:8917
+#: ../mgmt/client/haclient.py.in:8919 ../mgmt/client/haclient.py.in:8921
+msgid "[ default ]"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:4093
+msgid ""
+"Notify all the other copies before stopping or starting a copy and when the "
+"action was successful (Defaults to false)"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:4095
+msgid ""
+"Globally Unique (Does each copy of the clone perform a different function? "
+"Defaults to false)"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:4097
+msgid ""
+"Interleave (Changes the behavior of ordering constraints (between clones/"
+"masters) so that instances can start/stop as soon as their peer instance has "
+"(rather than waiting for every instance of the other clone has). Defaults to "
+"false)"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:4102
+msgid "Maximum number of master copies (Defaults to 1)"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:4104
+msgid "Maximum number of master copies on a single node (Defaults to 1)"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:4135
+msgid "Basic Settings"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:4157
+msgid "Options"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:4256
+msgid "Add monitor operation"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:4540
+#, python-format
+msgid "Summary Of \"%s\""
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:4542
+msgid "Summary"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:4561
+#, python-format
+msgid "Sub-resource For \"%s\""
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:4563
+msgid "Sub-resource"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:4565
+msgid "Add "
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:4566
+msgid "Continue Adding "
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:4633
+msgid "Edit"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:4674
+msgid ""
+"This will reset the current object attributes and all sub-objects to the "
+"initial configurations."
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:4676
+msgid "Reset the configurations?"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:4693
+msgid "Transition"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:4701
+msgid "History"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:4728
+msgid "Graph"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:4739
+msgid "Detail"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:4743
+msgid "Verbosity"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:4769
+msgid "Scores"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:4865
+msgid "Failed to generate the transition graph"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:4910
+msgid "Cannot save the graph for specified transition"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:4913
+msgid "PNG Image"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:4914
+msgid "JPEG Image"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:4915
+msgid "GIF Image"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:4916
+msgid "TIFF Image"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:4917
+msgid "Dot File"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:4948
+msgid "Cannot save the information for specified transition"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:4968
+msgid ""
+"Interpreting the graph:\n"
+"* Arrows indicate ordering dependancies\n"
+"* Dashed-arrows indicate dependancies that are not present in the transition "
+"graph\n"
+"* Actions with a dashed border of any color do not form part of the "
+"transition graph\n"
+"* Actions with a green border form part of the transition graph\n"
+"* Actions with a red border are ones the cluster would like to execute but "
+"are unrunnable\n"
+"* Actions with a blue border are ones the cluster does not feel need to be "
+"executed\n"
+"* Actions with orange text are pseudo/pretend actions that the cluster uses "
+"to simplify the graph\n"
+"* Actions with black text are sent to the LRM\n"
+"* Resource actions have text of the form {rsc}_{action}_{interval} {node}\n"
+"* Any action depending on an action with a red border will not be able to "
+"execute.\n"
+"* Loops are really bad. Please report them to the development team."
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:5009 ../mgmt/client/haclient.py.in:5959
+#: ../mgmt/client/haclient.py.in:6288
+msgid "Cluster Report"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:5018
+msgid "From"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:5019
+msgid "To"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:5040
+msgid "The \"From\" time should before the \"To\" one"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:5079
+msgid "Save as ..."
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:5109
+msgid "Permission denied"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:5113
+msgid "A file with the same name already exists"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:5115
+msgid "Do you want to overwrite it?"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:5118
+msgid "Replace it?"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:5291
+msgid "Description of Cluster Report"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:5304
+msgid "Severity"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:5319
+msgid "Component"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:5333
+msgid "Subject"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:5342
+msgid "Detailed description"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:5447 ../mgmt/client/haclient.py.in:6475
+msgid "Connected to "
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:5449
+msgid "Not connected"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:5451 ../mgmt/client/haclient.py.in:5453
+#: ../mgmt/client/haclient.py.in:5455
+msgid "("
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:5451 ../mgmt/client/haclient.py.in:6294
+msgid "Simple Mode"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:5451 ../mgmt/client/haclient.py.in:5453
+#: ../mgmt/client/haclient.py.in:5455
+msgid ")"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:5453 ../mgmt/client/haclient.py.in:6295
+msgid "Expert Mode"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:5455 ../mgmt/client/haclient.py.in:6296
+msgid "Hack Mode"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:5465
+msgid "The data of current view have been changed."
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:5515
+msgid "Do you want to quit ?"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:5524
+msgid "Login"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:5587
+msgid "Do you want to logout ?"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:5594
+msgid "\"Indicate pending operations\" has been activated."
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:5595
+msgid "It could affect the performance."
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:5596
+msgid "Turn it off ?"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:5605
+msgid "Cannot get any shadow CIB"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:5624
+msgid "Shadow CIB"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:5626
+msgid "Recreate the specified shadow CIB from the live CIB"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:5628
+msgid "Delete the specified shadow CIB"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:5630
+msgid "Upload the specified shadow CIB to the cluster"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:5633
+msgid "Shadow Name"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:5656
+#, python-format
+msgid "The shadow CIB \"%s\"has been successfully commited."
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:5657 ../mgmt/client/haclient.py.in:5659
+msgid "Switch to the live CIB?"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:5679
+msgid "Shadow CIB Diff"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:5685
+#, python-format
+msgid "Differences between the live CIB and the shadow CIB \"%s\""
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:5728
+msgid "Diff Files"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:5729
+msgid "All Files"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:5738
+msgid "Cannot save the shadow diff"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:5765
+msgid "Create Shadow CIB"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:5787
+msgid "A copy of the live CIB"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:5791
+msgid "A new CIB with empty cluster configuration"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:5820
+msgid "Please specify a name for the shadow CIB."
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:5823
+msgid "Please specify another name for avoiding confusion."
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:5826
+#, python-format
+msgid "A shadow CIB \"%s\" already exists and it's currently active."
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:5829
+#, python-format
+msgid "A shadow CIB \"%s\" already exists."
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:5830
+msgid "Specify another name, or select \"Force\" if you want to override it."
+msgstr ""
+
+#. else :
+#: ../mgmt/client/haclient.py.in:5849
+#, python-format
+msgid "A new shadow CIB \"%s\" has been successfully created."
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:5850
+msgid "Switch to it now?"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:5852
+#, python-format
+msgid "Switch to the new created shadow CIB \"%s\"?"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:5920
+msgid "Cannot find any transition record"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:5960
+msgid "Generating the cluster report may take a while,"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:5961
+msgid "depending on the size of logs..."
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:5973
+msgid "Failed to generate the cluster report"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:5983
+msgid "Incomplete data"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:6016 ../mgmt/client/haclient.py.in:6024
+#: ../mgmt/client/haclient.py.in:6086 ../mgmt/client/haclient.py.in:6110
+#: ../mgmt/client/haclient.py.in:6128
+msgid "Tar error"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:6174
+msgid "Pacemaker GUI"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:6273
+msgid "Connection"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:6274
+msgid "Login..."
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:6274
+msgid "login to cluster"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:6275
+msgid "Logout"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:6275
+msgid "logout from cluster"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:6276
+msgid "Quit"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:6276
+msgid "Quit the Program"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:6277
+msgid "View"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:6278
+msgid "Shadow"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:6279
+msgid "New"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:6279
+msgid "Create a new shadow CIB"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:6280
+msgid "Diff"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:6280
+msgid "Differences between the live CIB and the shadow CIB"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:6281
+msgid "Recreate a shadow CIB from the live CIB"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:6282
+msgid "Delete"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:6282
+msgid "Delete a shadow CIB"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:6283
+msgid "Commit"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:6283
+msgid "Upload a shadow CIB to the cluster"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:6284
+msgid "Switch"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:6284
+msgid "Switch working CIB"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:6285
+msgid "Tools"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:6286
+msgid "Transition Information"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:6287
+msgid "Show Transition Information"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:6288
+msgid "generate a cluster report"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:6294
+msgid "Switch to simple mode"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:6295
+msgid "Switch to expert mode"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:6296
+msgid "Switch to hack mode"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:6359
+msgid "Not Connected"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:6452
+msgid "Can't resolve address of server "
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:6458 ../mgmt/client/haclient.py.in:6464
+msgid "Can't connect to server "
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:6467
+msgid ""
+"Failed in the authentication.\n"
+" User Name or Password may be wrong.\n"
+" or the user doesn't belong to haclient group"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:6470
+msgid ""
+"Can't login to server.\n"
+" The protocols may be mismatched."
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:6480 ../mgmt/client/haclient.py.in:6573
+msgid "Updating data from server..."
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:6582
+msgid "Reconnecting..."
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:6631
+msgid "Cannot get the CIB"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:6637
+msgid "Failed to parse the CIB"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:6647
+msgid "Cannot parse the CIB"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:6757 ../mgmt/client/haclient.py.in:6833
+msgid "Cannot get the Relax-NG schema"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:6763
+msgid "Failed to parse the CIB XML"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:6769 ../mgmt/client/haclient.py.in:6841
+msgid "Failed to parse the Relax-NG schema"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:6849
+msgid "Cannot get started in Relax-NG schema"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:7196
+msgid "Cannot get the DTD"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:8853 ../mgmt/client/haclient.py.in:9115
+msgid ".  "
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:8853 ../mgmt/client/haclient.py.in:9115
+msgid ".\n"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:8876 ../mgmt/client/haclient.py.in:8880
+#, python-format
+msgid "\"%s\" is required"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:8876
+msgid "Class"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:8880
+msgid "Provider"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:8881
+msgid "for an OCF primitive"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:8890
+msgid ""
+"If not all resources can be active, the cluster will stop lower priority "
+"resources in order to keep higher priority ones active."
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:8892
+msgid "What state should the cluster attempt to keep this resource in?"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:8894
+msgid "Is the cluster allowed to start and stop the resource?"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:8899
+msgid ""
+"How much does the resource prefer to stay where it is? Defaults to the value "
+"of \"default-resource-stickiness\""
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:8901
+msgid ""
+"How many failures should occur for this resource on a node before making the "
+"node ineligible to host this resource. Default: \"none\""
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:8902
+msgid "(mark the resource as unmanaged)"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:8903
+msgid ""
+"What should the cluster do if it ever finds the resource active on more than "
+"one node."
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:8905
+msgid ""
+"How many seconds to wait before acting as if the failure had not occurred "
+"(and potentially allowing the resource back to the node on which it failed. "
+"Default: \"never\""
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:8910
+msgid ""
+"How many copies of the resource to start. Defaults to the number of nodes in "
+"the cluster."
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:8912
+msgid "How many copies of the resource can be started on a single node."
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:8916
+msgid ""
+"When stopping or starting a copy of the clone, tell all the other copies "
+"beforehand and when the action was successful."
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:8918
+msgid "Does each copy of the clone perform a different function?"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:8920
+msgid "Should the copies be started in series (instead of in parallel)"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:8922
+msgid ""
+"Changes the behavior of ordering constraints (between clones/masters) so "
+"that instances can start/stop as soon as their peer instance has (rather "
+"than waiting for every instance of the other clone has)."
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:8927
+msgid "How many copies of the resource can be promoted to master status."
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:8929
+msgid ""
+"How many copies of the resource can be promoted to master status on a single "
+"node."
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:9061
+msgid "required"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:9064
+msgid ", "
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:9065
+msgid "unique"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:9410
+#, python-format
+msgid "Invalid \"%s\""
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:9487
+msgid "* Specify dependencies between the actions on two resources"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:9488 ../mgmt/client/haclient.py.in:9606
+msgid "* Please set the required attributes"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:9493 ../mgmt/client/haclient.py.in:9509
+#, python-format
+msgid "* %s %s %s %s %s"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:9498 ../mgmt/client/haclient.py.in:9501
+#: ../mgmt/client/haclient.py.in:9513 ../mgmt/client/haclient.py.in:9516
+#: ../mgmt/client/haclient.py.in:9569 ../mgmt/client/haclient.py.in:9580
+#, python-format
+msgid "* If cannot %s %s, do not %s %s"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:9551
+msgid "* Specify the order of actions on resources"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:9552 ../mgmt/client/haclient.py.in:9658
+msgid "* Please set the required attributes or add resource sets"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:9563 ../mgmt/client/haclient.py.in:9577
+#, python-format
+msgid "* %s %s before %s %s"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:9605
+msgid "* Specify where a resource should run relative to another resource"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:9613 ../mgmt/client/haclient.py.in:9623
+#: ../mgmt/client/haclient.py.in:9670
+#, python-format
+msgid "* Make %s %s on the same node as %s %s  ( %s according to %s )"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:9616 ../mgmt/client/haclient.py.in:9626
+#: ../mgmt/client/haclient.py.in:9673
+#, python-format
+msgid "* If %s cannot be %s on any node, then %s won't be %s anywhere"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:9619 ../mgmt/client/haclient.py.in:9675
+#, python-format
+msgid "* If %s cannot be %s on any node, %s won't be affected"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:9629 ../mgmt/client/haclient.py.in:9639
+#: ../mgmt/client/haclient.py.in:9687
+#, python-format
+msgid ""
+"* Prevent %s from being %s on the same node as %s %s  ( %s according to %s )"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:9632 ../mgmt/client/haclient.py.in:9642
+#: ../mgmt/client/haclient.py.in:9690
+#, python-format
+msgid ""
+"* If %s is %s on the only (or every) available node, then %s won't be %s "
+"anywhere"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:9635 ../mgmt/client/haclient.py.in:9692
+#, python-format
+msgid ""
+"* If %s is %s on the only (or every) available node, %s won't be affected"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:9645
+msgid ""
+"* Combine this colocation score and the appropriate location scores to "
+"decide where to put the resources"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:9657
+msgid "* Specify where resources should run relative to other resources"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:9665
+#, python-format
+msgid ""
+"* Combine this \"Score\" and corresponding location scores to decide where "
+"to place %s"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:9678
+#, python-format
+msgid ""
+"* Prefer to make %s %s on the same node as %s %s  ( %s according to %s )"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:9695
+#, python-format
+msgid ""
+"* Prefer to prevent %s from being %s on the same node as %s %s  ( %s "
+"according to %s )"
+msgstr ""
+
+#: ../mgmt/client/haclient.py.in:9701
+#, python-format
+msgid ""
+"* Please specify a valid \"Score\" to determine the location relationship "
+"between %s and %s"
+msgstr ""
+
+msgid "Clone"
+msgstr ""
+
+msgid "Expression"
+msgstr ""
+
+msgid "Operations"
+msgstr ""
+
+msgid "Password"
+msgstr ""
+
+msgid "Score"
+msgstr ""
+
+msgid "Interval"
+msgstr ""
+
+msgid "Interval Origin"
+msgstr ""
+
+msgid "Timeout"
+msgstr ""
+
+msgid "Start Delay"
+msgstr ""
+
+msgid "Enabled"
+msgstr ""
+
+msgid "Disabled"
+msgstr ""
+
+msgid "Record Pending"
+msgstr ""
+
+msgid "Role"
+msgstr ""
+
+msgid "Requires"
+msgstr ""
+
+msgid "Prereq"
+msgstr ""
+
+msgid "On Fail"
+msgstr ""
+
+msgid "First"
+msgstr ""
+
+msgid "Then"
+msgstr ""
+
+msgid "First Action"
+msgstr ""
+
+msgid "Then Action"
+msgstr ""
+
+msgid "Action"
+msgstr ""
+
+msgid "To Action"
+msgstr ""
+
+msgid "Symmetrical"
+msgstr ""
+
+msgid "With Resource"
+msgstr ""
+
+msgid "Resource Role"
+msgstr ""
+
+msgid "With Resource Role"
+msgstr ""
+
+msgid "From Role"
+msgstr ""
+
+msgid "To Role"
+msgstr ""
+
+msgid "Node Attribute"
+msgstr ""
+
+msgid "Optional"
+msgstr ""
+
+msgid "User Name"
+msgstr ""
+
+msgid "Nodes"
+msgstr ""
+
+msgid "Constraints"
+msgstr ""
+
+msgid "Resource Location"
+msgstr ""
+
+msgid "Resource Order"
+msgstr ""
+
+msgid "Resource Colocation"
+msgstr ""
+
+msgid "failed"
+msgstr ""
+
+msgid "unmanaged"
+msgstr ""
+
+msgid "Value"
+msgstr ""
+
+msgid "Description"
+msgstr ""
+
+msgid "Attribute"
+msgstr ""
+
+msgid "Operation"
+msgstr ""
+
+msgid "Debug Level"
+msgstr ""
+
+msgid "UDP Port"
+msgstr ""
+
+msgid "Keep Alive"
+msgstr ""
+
+msgid "Warning Time"
+msgstr ""
+
+msgid "Dead Time"
+msgstr ""
+
+msgid "Initial Dead Time"
+msgstr ""
+
+msgid "Quorum Server"
+msgstr ""
+
+msgid "Use Logd"
+msgstr ""
+
+msgid "Auto Join"
+msgstr ""
+
+msgid "API Authentication"
+msgstr ""
+
+msgid "Auto Failback"
+msgstr ""
+
+msgid "Baud Rate"
+msgstr ""
+
+msgid "Debug File"
+msgstr ""
+
+msgid "Dead Ping"
+msgstr ""
+
+msgid "Heartbeat Version"
+msgstr ""
+
+msgid "Log Facility"
+msgstr ""
+
+msgid "Message Format"
+msgstr ""
+
+msgid "Nice Failback"
+msgstr ""
+
+msgid "running (Master)"
+msgstr ""
+
+msgid "running (Slave)"
+msgstr ""
+
+msgid "Force"
+msgstr ""
+
+msgid "Server(:Port)"
+msgstr ""
+
+msgid "Boolean Op"
+msgstr ""
+
+msgid "Score Attribute"
+msgstr ""
+
+msgid "Score Attribute Mangle"
+msgstr ""
+
+msgid "Configuration"
+msgstr ""
+
+msgid "Refresh"
+msgstr ""
+
+msgid "Reprobe"
+msgstr ""
+
+msgid "Required"
+msgstr ""
+
+msgid "Primitive"
+msgstr ""
+
+msgid "Group"
+msgstr ""
+
+msgid "Master"
+msgstr ""
+
+msgid "Uname"
+msgstr ""
+
+msgid "CRM Config"
+msgstr ""
+
+msgid "Cluster Property Set"
+msgstr ""
+
+msgid "Resource Defaults"
+msgstr ""
+
+msgid "Operation Defaults"
+msgstr ""
+
+msgid "Meta Attributes"
+msgstr ""
+
+msgid "Instance Attributes"
+msgstr ""
+
+msgid "Nvpair"
+msgstr ""
+
+msgid "To Node"
+msgstr ""
+
+msgid "Duration"
+msgstr ""
+
+msgid "Migration Threshold"
+msgstr ""
+
+msgid "Fail Count"
+msgstr ""
+
+msgid "Call ID"
+msgstr ""
+
+msgid "Return Code"
+msgstr ""
+
+msgid "Last Run"
+msgstr ""
+
+msgid "Exec Time"
+msgstr ""
+
+msgid "Queue Time"
+msgstr ""
+
+msgid "Last Return Code Change"
+msgstr ""
+
+msgid "ID Ref"
+msgstr ""
+
+msgid "End"
+msgstr ""
+
+msgid "Rule"
+msgstr ""
+
+msgid "Lifetime"
+msgstr ""
+
+msgid "Date Expression"
+msgstr ""
+
+msgid "Date Spec"
+msgstr ""
+
+msgid "Resource Set"
+msgstr ""
+
+msgid "Sequential"
+msgstr ""
+
+msgid "Resource Ref"
+msgstr ""

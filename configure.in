@@ -48,6 +48,12 @@ HB_PKG=heartbeat
 PKG_NAME=pacemaker-mgmt
 AM_INIT_AUTOMAKE($PKG_NAME, $HAPKGVERSION)
 
+GETTEXT_PACKAGE="haclient"
+AC_SUBST(GETTEXT_PACKAGE)
+AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE, "$GETTEXT_PACKAGE", [Gettext package])
+IT_PROG_INTLTOOL([0.40.5], [no-xml])
+AM_PO_SUBDIRS
+
 dnl ===============================================
 dnl Helpers 
 dnl ===============================================
@@ -2131,6 +2137,7 @@ mgmt/Makefile							\
 		mgmt/client/haclient.py				\
 		mgmt/client/crm_gui.desktop			\
 		mgmt/client/mgmtcmd.py				\
+po/Makefile.in
 replace/Makefile						\
 snmp_subagent/Makefile						\
 	snmp_subagent/SNMPAgentSanityCheck			\

@@ -41,7 +41,7 @@ if SNMP_SUBAGENT_BUILD
 SNMP_SUBAGENT_DIR = snmp_subagent
 endif
 
-SUBDIRS	= $(LIBLTDL_DIR) replace include lib mgmt $(CIM_PROVIDER_DIR) $(TSA_PLUGIN_DIR) $(SNMP_SUBAGENT_DIR) doc
+SUBDIRS	= $(LIBLTDL_DIR) replace include lib mgmt $(CIM_PROVIDER_DIR) $(TSA_PLUGIN_DIR) $(SNMP_SUBAGENT_DIR) doc po
 
 tgz:
 	rm -f $(TARFILE)
