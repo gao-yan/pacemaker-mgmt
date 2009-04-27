@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pacemaker-mgmt 2.0.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-04-17 15:37+0800\n"
+"POT-Creation-Date: 2009-04-24 19:08+0800\n"
 "PO-Revision-Date: 2009-04-17 15:37+0800\n"
 "Last-Translator: Yan Gao <ygao@novell.com>\n"
 "Language-Team: Simplified Chinese <language@novell.com>\n"
@@ -51,7 +51,7 @@ msgstr "系统错误"
 #: ../mgmt/client/haclient.py.in:6769 ../mgmt/client/haclient.py.in:6802
 #: ../mgmt/client/haclient.py.in:6810 ../mgmt/client/haclient.py.in:6833
 #: ../mgmt/client/haclient.py.in:6841 ../mgmt/client/haclient.py.in:6849
-#: ../mgmt/client/haclient.py.in:7196
+#: ../mgmt/client/haclient.py.in:7190
 msgid ": "
 msgstr "： "
 
@@ -88,8 +88,8 @@ msgstr "添加参数"
 msgid "Add Operation"
 msgstr "添加操作"
 
-#: ../mgmt/client/haclient.py.in:356 ../mgmt/client/haclient.py.in:7987
-#: ../mgmt/client/haclient.py.in:8268
+#: ../mgmt/client/haclient.py.in:356 ../mgmt/client/haclient.py.in:7985
+#: ../mgmt/client/haclient.py.in:8266
 msgid " can't be empty"
 msgstr "不能为空"
 
@@ -231,9 +231,9 @@ msgstr "显示进行中的（启动中／停止中）的操作"
 #: ../mgmt/client/haclient.py.in:4693 ../mgmt/client/haclient.py.in:4701
 #: ../mgmt/client/haclient.py.in:4743 ../mgmt/client/haclient.py.in:5333
 #: ../mgmt/client/haclient.py.in:5342 ../mgmt/client/haclient.py.in:5536
-#: ../mgmt/client/haclient.py.in:5777 ../mgmt/client/haclient.py.in:7893
-#: ../mgmt/client/haclient.py.in:8109 ../mgmt/client/haclient.py.in:8230
-#: ../mgmt/client/haclient.py.in:8268 ../mgmt/client/haclient.py.in:9410
+#: ../mgmt/client/haclient.py.in:5777 ../mgmt/client/haclient.py.in:7891
+#: ../mgmt/client/haclient.py.in:8107 ../mgmt/client/haclient.py.in:8228
+#: ../mgmt/client/haclient.py.in:8266 ../mgmt/client/haclient.py.in:9408
 msgid ":"
 msgstr "："
 
@@ -481,16 +481,16 @@ msgid "CRM Daemon"
 msgstr "CRM 守护程序"
 
 #: ../mgmt/client/haclient.py.in:2500 ../mgmt/client/haclient.py.in:2503
-#: ../mgmt/client/haclient.py.in:8864 ../mgmt/client/haclient.py.in:8867
-#: ../mgmt/client/haclient.py.in:9123 ../mgmt/client/haclient.py.in:9126
+#: ../mgmt/client/haclient.py.in:8862 ../mgmt/client/haclient.py.in:8865
+#: ../mgmt/client/haclient.py.in:9121 ../mgmt/client/haclient.py.in:9124
 msgid "."
 msgstr "。"
 
 #: ../mgmt/client/haclient.py.in:2520 ../mgmt/client/haclient.py.in:2573
-#: ../mgmt/client/haclient.py.in:2577 ../mgmt/client/haclient.py.in:7924
-#: ../mgmt/client/haclient.py.in:7943 ../mgmt/client/haclient.py.in:8281
-#: ../mgmt/client/haclient.py.in:9038 ../mgmt/client/haclient.py.in:9042
-#: ../mgmt/client/haclient.py.in:9096
+#: ../mgmt/client/haclient.py.in:2577 ../mgmt/client/haclient.py.in:7922
+#: ../mgmt/client/haclient.py.in:7941 ../mgmt/client/haclient.py.in:8279
+#: ../mgmt/client/haclient.py.in:9036 ../mgmt/client/haclient.py.in:9040
+#: ../mgmt/client/haclient.py.in:9094
 msgid "default"
 msgstr "缺省"
 
@@ -625,10 +625,10 @@ msgid "Maximum number of copies on a single node (Defaults to 1)"
 msgstr "单个节点上的最大实例个数（缺省为 1）"
 
 #: ../mgmt/client/haclient.py.in:4092 ../mgmt/client/haclient.py.in:4094
-#: ../mgmt/client/haclient.py.in:4096 ../mgmt/client/haclient.py.in:8891
-#: ../mgmt/client/haclient.py.in:8893 ../mgmt/client/haclient.py.in:8902
-#: ../mgmt/client/haclient.py.in:8915 ../mgmt/client/haclient.py.in:8917
-#: ../mgmt/client/haclient.py.in:8919 ../mgmt/client/haclient.py.in:8921
+#: ../mgmt/client/haclient.py.in:4096 ../mgmt/client/haclient.py.in:8889
+#: ../mgmt/client/haclient.py.in:8891 ../mgmt/client/haclient.py.in:8900
+#: ../mgmt/client/haclient.py.in:8913 ../mgmt/client/haclient.py.in:8915
+#: ../mgmt/client/haclient.py.in:8917 ../mgmt/client/haclient.py.in:8919
 msgid "[ default ]"
 msgstr "[ 缺省 ]"
 
@@ -1224,75 +1224,75 @@ msgstr "解析 Relax-NG Schema 失败"
 msgid "Cannot get started in Relax-NG schema"
 msgstr "无法获取 Relax-NG Schema 的起始点"
 
-#: ../mgmt/client/haclient.py.in:7196
+#: ../mgmt/client/haclient.py.in:7190
 msgid "Cannot get the DTD"
 msgstr "无法获取 DTD"
 
-#: ../mgmt/client/haclient.py.in:8853 ../mgmt/client/haclient.py.in:9115
+#: ../mgmt/client/haclient.py.in:8851 ../mgmt/client/haclient.py.in:9113
 msgid ".  "
 msgstr "。 "
 
-#: ../mgmt/client/haclient.py.in:8853 ../mgmt/client/haclient.py.in:9115
+#: ../mgmt/client/haclient.py.in:8851 ../mgmt/client/haclient.py.in:9113
 msgid ".\n"
 msgstr "。\n"
 
-#: ../mgmt/client/haclient.py.in:8876 ../mgmt/client/haclient.py.in:8880
+#: ../mgmt/client/haclient.py.in:8874 ../mgmt/client/haclient.py.in:8878
 #, python-format
 msgid "\"%s\" is required"
 msgstr "“%s”是必填的"
 
-#: ../mgmt/client/haclient.py.in:8876
+#: ../mgmt/client/haclient.py.in:8874
 msgid "Class"
 msgstr "类别"
 
-#: ../mgmt/client/haclient.py.in:8880
+#: ../mgmt/client/haclient.py.in:8878
 msgid "Provider"
 msgstr "提供者"
 
-#: ../mgmt/client/haclient.py.in:8881
+#: ../mgmt/client/haclient.py.in:8879
 msgid "for an OCF primitive"
 msgstr "对于一个 OCF 的普通资源"
 
-#: ../mgmt/client/haclient.py.in:8890
+#: ../mgmt/client/haclient.py.in:8888
 msgid ""
 "If not all resources can be active, the cluster will stop lower priority "
 "resources in order to keep higher priority ones active."
 msgstr ""
 "如果资源无法全部工作， 集群会停止低优先级的资源， 以便让高优先级的资源工作。"
 
-#: ../mgmt/client/haclient.py.in:8892
+#: ../mgmt/client/haclient.py.in:8890
 msgid "What state should the cluster attempt to keep this resource in?"
 msgstr "集群试图让该资源保持的状态。"
 
-#: ../mgmt/client/haclient.py.in:8894
+#: ../mgmt/client/haclient.py.in:8892
 msgid "Is the cluster allowed to start and stop the resource?"
 msgstr "是否让集群负责启停和管理资源？"
 
-#: ../mgmt/client/haclient.py.in:8899
+#: ../mgmt/client/haclient.py.in:8897
 msgid ""
 "How much does the resource prefer to stay where it is? Defaults to the value "
 "of \"default-resource-stickiness\""
 msgstr ""
 "资源有多大程度倾向于停留在当前节点？缺省为“default-resource-stickiness”的值"
 
-#: ../mgmt/client/haclient.py.in:8901
+#: ../mgmt/client/haclient.py.in:8899
 msgid ""
 "How many failures should occur for this resource on a node before making the "
 "node ineligible to host this resource. Default: \"none\""
 msgstr ""
 "允许该资源在一个节点上的失败次数， 之后禁止该资源在其上运行。缺省： 无限制"
 
-#: ../mgmt/client/haclient.py.in:8902
+#: ../mgmt/client/haclient.py.in:8900
 msgid "(mark the resource as unmanaged)"
 msgstr "(将该资源视为失控)"
 
-#: ../mgmt/client/haclient.py.in:8903
+#: ../mgmt/client/haclient.py.in:8901
 msgid ""
 "What should the cluster do if it ever finds the resource active on more than "
 "one node."
 msgstr "如果发现资源在多个节点上运行，集群如何处理？"
 
-#: ../mgmt/client/haclient.py.in:8905
+#: ../mgmt/client/haclient.py.in:8903
 msgid ""
 "How many seconds to wait before acting as if the failure had not occurred "
 "(and potentially allowing the resource back to the node on which it failed. "
@@ -1301,31 +1301,31 @@ msgstr ""
 "等待多少秒之后就视作失败从未发生过（意味允许资源回到之前失效过的节点）缺省： "
 "从不"
 
-#: ../mgmt/client/haclient.py.in:8910
+#: ../mgmt/client/haclient.py.in:8908
 msgid ""
 "How many copies of the resource to start. Defaults to the number of nodes in "
 "the cluster."
 msgstr "能够启动的最大资源实例个数。 缺省为集群的节点个数。"
 
-#: ../mgmt/client/haclient.py.in:8912
+#: ../mgmt/client/haclient.py.in:8910
 msgid "How many copies of the resource can be started on a single node."
 msgstr "单个节点上能够启动的最大资源实例个数。"
 
-#: ../mgmt/client/haclient.py.in:8916
+#: ../mgmt/client/haclient.py.in:8914
 msgid ""
 "When stopping or starting a copy of the clone, tell all the other copies "
 "beforehand and when the action was successful."
 msgstr "在启动或停止一个实例之前, 并且在成功完成之时，通知所有其它实例"
 
-#: ../mgmt/client/haclient.py.in:8918
+#: ../mgmt/client/haclient.py.in:8916
 msgid "Does each copy of the clone perform a different function?"
 msgstr "克隆的每个实例执行不同的功能？"
 
-#: ../mgmt/client/haclient.py.in:8920
+#: ../mgmt/client/haclient.py.in:8918
 msgid "Should the copies be started in series (instead of in parallel)"
 msgstr "串行地启动实例（而非并行地）"
 
-#: ../mgmt/client/haclient.py.in:8922
+#: ../mgmt/client/haclient.py.in:8920
 msgid ""
 "Changes the behavior of ordering constraints (between clones/masters) so "
 "that instances can start/stop as soon as their peer instance has (rather "
@@ -1334,139 +1334,139 @@ msgstr ""
 "改变顺序限制条件的操作方式(克隆／主从资源之间）， 这样实例能够在相关的实例启"
 "动或停止之后立刻启停（不必等待另一克隆资源的每个实例操作完成）。 缺省为 false"
 
-#: ../mgmt/client/haclient.py.in:8927
+#: ../mgmt/client/haclient.py.in:8925
 msgid "How many copies of the resource can be promoted to master status."
 msgstr "能够提升为主状态的最大资源实例个数。"
 
-#: ../mgmt/client/haclient.py.in:8929
+#: ../mgmt/client/haclient.py.in:8927
 msgid ""
 "How many copies of the resource can be promoted to master status on a single "
 "node."
 msgstr "单个节点上能够提升为主状态的最大资源实例个数。"
 
-#: ../mgmt/client/haclient.py.in:9061
+#: ../mgmt/client/haclient.py.in:9059
 msgid "required"
 msgstr "必需"
 
-#: ../mgmt/client/haclient.py.in:9064
+#: ../mgmt/client/haclient.py.in:9062
 msgid ", "
 msgstr "， "
 
-#: ../mgmt/client/haclient.py.in:9065
+#: ../mgmt/client/haclient.py.in:9063
 msgid "unique"
 msgstr "唯一"
 
-#: ../mgmt/client/haclient.py.in:9410
+#: ../mgmt/client/haclient.py.in:9408
 #, python-format
 msgid "Invalid \"%s\""
 msgstr "无效的“%s”"
 
-#: ../mgmt/client/haclient.py.in:9487
+#: ../mgmt/client/haclient.py.in:9485
 msgid "* Specify dependencies between the actions on two resources"
 msgstr "* 指定两个资源其动作之间的依赖关系"
 
-#: ../mgmt/client/haclient.py.in:9488 ../mgmt/client/haclient.py.in:9606
+#: ../mgmt/client/haclient.py.in:9486 ../mgmt/client/haclient.py.in:9604
 msgid "* Please set the required attributes"
 msgstr "* 请设置必填的属性"
 
-#: ../mgmt/client/haclient.py.in:9493 ../mgmt/client/haclient.py.in:9509
+#: ../mgmt/client/haclient.py.in:9491 ../mgmt/client/haclient.py.in:9507
 #, python-format
 msgid "* %s %s %s %s %s"
 msgstr ""
 
-#: ../mgmt/client/haclient.py.in:9498 ../mgmt/client/haclient.py.in:9501
-#: ../mgmt/client/haclient.py.in:9513 ../mgmt/client/haclient.py.in:9516
-#: ../mgmt/client/haclient.py.in:9569 ../mgmt/client/haclient.py.in:9580
+#: ../mgmt/client/haclient.py.in:9496 ../mgmt/client/haclient.py.in:9499
+#: ../mgmt/client/haclient.py.in:9511 ../mgmt/client/haclient.py.in:9514
+#: ../mgmt/client/haclient.py.in:9567 ../mgmt/client/haclient.py.in:9578
 #, python-format
 msgid "* If cannot %s %s, do not %s %s"
 msgstr "* 如果不能 %s %s, 则不 %s %s"
 
-#: ../mgmt/client/haclient.py.in:9551
+#: ../mgmt/client/haclient.py.in:9549
 msgid "* Specify the order of actions on resources"
 msgstr "* 指定资源动作的顺序"
 
-#: ../mgmt/client/haclient.py.in:9552 ../mgmt/client/haclient.py.in:9658
+#: ../mgmt/client/haclient.py.in:9550 ../mgmt/client/haclient.py.in:9656
 msgid "* Please set the required attributes or add resource sets"
 msgstr "* 请设置必填属性或者添加资源集"
 
-#: ../mgmt/client/haclient.py.in:9563 ../mgmt/client/haclient.py.in:9577
+#: ../mgmt/client/haclient.py.in:9561 ../mgmt/client/haclient.py.in:9575
 #, python-format
 msgid "* %s %s before %s %s"
 msgstr "* 先 %s %s， 然后 %s %s"
 
-#: ../mgmt/client/haclient.py.in:9605
+#: ../mgmt/client/haclient.py.in:9603
 msgid "* Specify where a resource should run relative to another resource"
 msgstr "* 指定一个资源相对于另一资源的运行位置"
 
-#: ../mgmt/client/haclient.py.in:9613 ../mgmt/client/haclient.py.in:9623
-#: ../mgmt/client/haclient.py.in:9670
+#: ../mgmt/client/haclient.py.in:9611 ../mgmt/client/haclient.py.in:9621
+#: ../mgmt/client/haclient.py.in:9668
 #, python-format
 msgid "* Make %s %s on the same node as %s %s  ( %s according to %s )"
 msgstr "* 让 %s %s 在 %s %s 的相同节点上 （%s 参照 %s）"
 
-#: ../mgmt/client/haclient.py.in:9616 ../mgmt/client/haclient.py.in:9626
-#: ../mgmt/client/haclient.py.in:9673
+#: ../mgmt/client/haclient.py.in:9614 ../mgmt/client/haclient.py.in:9624
+#: ../mgmt/client/haclient.py.in:9671
 #, python-format
 msgid "* If %s cannot be %s on any node, then %s won't be %s anywhere"
 msgstr "* 如果 %s 无法 %s 在任何节点上， 则 %s 也不能 %s 在任何节点上"
 
-#: ../mgmt/client/haclient.py.in:9619 ../mgmt/client/haclient.py.in:9675
+#: ../mgmt/client/haclient.py.in:9617 ../mgmt/client/haclient.py.in:9673
 #, python-format
 msgid "* If %s cannot be %s on any node, %s won't be affected"
 msgstr "* 如果 %s 无法 %s 在任何节点上， %s 不受影响"
 
-#: ../mgmt/client/haclient.py.in:9629 ../mgmt/client/haclient.py.in:9639
-#: ../mgmt/client/haclient.py.in:9687
+#: ../mgmt/client/haclient.py.in:9627 ../mgmt/client/haclient.py.in:9637
+#: ../mgmt/client/haclient.py.in:9685
 #, python-format
 msgid ""
 "* Prevent %s from being %s on the same node as %s %s  ( %s according to %s )"
 msgstr "* 避免 %s %s 在 %s %s 的相同节点上 （%s 参照 %s）"
 
-#: ../mgmt/client/haclient.py.in:9632 ../mgmt/client/haclient.py.in:9642
-#: ../mgmt/client/haclient.py.in:9690
+#: ../mgmt/client/haclient.py.in:9630 ../mgmt/client/haclient.py.in:9640
+#: ../mgmt/client/haclient.py.in:9688
 #, python-format
 msgid ""
 "* If %s is %s on the only (or every) available node, then %s won't be %s "
 "anywhere"
 msgstr "* 如果 %s 在唯一的（或每个）可用节点上 %s， 则 %s 不会 %s 在任何节点上"
 
-#: ../mgmt/client/haclient.py.in:9635 ../mgmt/client/haclient.py.in:9692
+#: ../mgmt/client/haclient.py.in:9633 ../mgmt/client/haclient.py.in:9690
 #, python-format
 msgid ""
 "* If %s is %s on the only (or every) available node, %s won't be affected"
 msgstr "* 如果 %s 在唯一的（或每个）可用节点上 %s, %s 不受影响"
 
-#: ../mgmt/client/haclient.py.in:9645
+#: ../mgmt/client/haclient.py.in:9643
 msgid ""
 "* Combine this colocation score and the appropriate location scores to "
 "decide where to put the resources"
 msgstr "* 综合此协同权重以及相应的位置权重以决定资源运行位置"
 
-#: ../mgmt/client/haclient.py.in:9657
+#: ../mgmt/client/haclient.py.in:9655
 msgid "* Specify where resources should run relative to other resources"
 msgstr "* 指定资源相对于其他资源的运行位置"
 
-#: ../mgmt/client/haclient.py.in:9665
+#: ../mgmt/client/haclient.py.in:9663
 #, python-format
 msgid ""
 "* Combine this \"Score\" and corresponding location scores to decide where "
 "to place %s"
 msgstr "* 综合此“权重”以及相应的位置权重以决定资源“%s”的运行位置"
 
-#: ../mgmt/client/haclient.py.in:9678
+#: ../mgmt/client/haclient.py.in:9676
 #, python-format
 msgid ""
 "* Prefer to make %s %s on the same node as %s %s  ( %s according to %s )"
 msgstr "* 倾向于让 %s %s 在 %s %s 的相同节点上（%s 参照 %s）"
 
-#: ../mgmt/client/haclient.py.in:9695
+#: ../mgmt/client/haclient.py.in:9693
 #, python-format
 msgid ""
 "* Prefer to prevent %s from being %s on the same node as %s %s  ( %s "
 "according to %s )"
 msgstr "* 倾向于避免 %s %s 在 %s %s 的相同节点上 （%s 参照 %s）"
 
-#: ../mgmt/client/haclient.py.in:9701
+#: ../mgmt/client/haclient.py.in:9699
 #, python-format
 msgid ""
 "* Please specify a valid \"Score\" to determine the location relationship "

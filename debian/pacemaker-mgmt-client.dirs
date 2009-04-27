@@ -1,4 +1,5 @@
 usr/bin
 usr/lib/heartbeat-gui
 usr/share/heartbeat-gui
+usr/share/applications
 usr/share/locale

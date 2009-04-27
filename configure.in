@@ -48,11 +48,38 @@ HB_PKG=heartbeat
 PKG_NAME=pacemaker-mgmt
 AM_INIT_AUTOMAKE($PKG_NAME, $HAPKGVERSION)
 
+dnl i18n
 GETTEXT_PACKAGE="haclient"
 AC_SUBST(GETTEXT_PACKAGE)
 AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE, "$GETTEXT_PACKAGE", [Gettext package])
-IT_PROG_INTLTOOL([0.40.5], [no-xml])
+#IT_PROG_INTLTOOL([0.40.5], [no-xml])
+AC_PROG_INTLTOOL(0.35.2)
 AM_PO_SUBDIRS
+
+# Set DATADIRNAME correctly if it is not set yet
+# (copied from glib-gettext.m4)
+if test -z "$DATADIRNAME"; then
+  AC_LINK_IFELSE(
+    [AC_LANG_PROGRAM([[]],
+                     [[extern int _nl_msg_cat_cntr;
+                       return _nl_msg_cat_cntr]])],
+    [DATADIRNAME=share],
+    [case $host in
+    *-*-solaris*)
+    dnl On Solaris, if bind_textdomain_codeset is in libc,
+    dnl GNU format message catalog is always supported,
+    dnl since both are added to the libc all together.
+    dnl Hence, we'd like to go with DATADIRNAME=share
+    dnl in this case.
+    AC_CHECK_FUNC(bind_textdomain_codeset,
+      [DATADIRNAME=share], [DATADIRNAME=lib])
+    ;;
+    *)
+    [DATADIRNAME=lib]
+    ;;
+    esac])
+fi
+AC_SUBST(DATADIRNAME)
 
 dnl ===============================================
 dnl Helpers 
