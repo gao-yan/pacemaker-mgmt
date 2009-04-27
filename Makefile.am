@@ -27,7 +27,7 @@ coredir = 		@HA_COREDIR@
 hauser = 		@HA_CCMUSER@
 
 TARFILE			= pacemaker-mgmt.tar.gz
-LAST_RELEASE		= pacemaker-mgmt-1.99.0
+LAST_RELEASE		= pacemaker-mgmt-1.99.1
 
 if CIM_PROVIDER_BUILD
 CIM_PROVIDER_DIR = cim

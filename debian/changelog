@@ -1,3 +1,34 @@
+pacemaker-mgmt (1.99.1-1) unstable; urgency=medium
+  * Update source tarball to revision: pacemaker-mgmt-1.99.1 (484883b2efe8+ tip)
+  * Statistics:
+      Changesets: 27
+      Diff:            26 files changed, 10335 insertions(+), 1290 deletions(-)
+
+  * Changes since 1.99.0-3
+  + Build: (bnc#487697) Add copies of licenses
+  + Dev: haclient: Automatically generate meaningful unique IDs instead of UUIDs
+  + Dev: haclient: Automatically generate unique IDs for "op"s in "Simple Mode"
+  + Dev: haclient: Improved for i18n
+  + Dev: haclient: Make sure a generated ID is valid against schema
+  + Dev: haclient: Propose ID for objects for which users may not want to set ID themselves
+  + Dev: po: Maintain po in a separate directory.
+  + High: mgmt: The path that keeps PEngine outputs has been changed!
+  + High: mgmtd: Replace the adoptions of dirent->d_type which is not supported by some filesystems such as reiserfs
+  + Low: Build: Improve i18n support for compatibility
+  + Low: haclient: (bnc#484169) Add desktop file
+  + Low: haclient: Make sure a created intermediate object's ID is unique
+  + Low: haclient: Rename some terms
+  + Low: haclient: Support objects with unicode IDs
+  + Low: mgmtd: Try to stat the cluster report file directly
+  + Medium: haclient: (bnc#486866) Check whether a specified time is valid
+  + Medium: haclient: (bnc#488594) Additional prechecks for "primitive"
+  + Medium: haclient: Generate an UUID first (since there are objects for which we could not generate a meaningful ID)
+  + Medium: haclient: Set the focus back after dynamically tuning the layout
+  + Medium: mgmt: Optimize viewing transition information
+  + Medium: mgmtd: Avoid segmentation faults caused by missing the required user or group
+
+ -- Yan Gao <ygao@novell.com>  Mon, 27 Apr 2009 11:45:06 +0800
+
 pacemaker-mgmt (1.99.0-3) unstable; urgency=medium
   * Update source tarball to revision: f07b59e49f79 tip
   * Statistics:
