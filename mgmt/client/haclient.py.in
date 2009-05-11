@@ -6632,17 +6632,20 @@ class Manager :
 		xml_nodes = self.xml_nodes
 		cib_xml = self.cib_do_cmd("cib_query\ncib")
 		if self.failed_reason != "" :
-			msgbox(self.failed_reason)
+			#msgbox(self.failed_reason)
+			log(self.failed_reason)
 			return False 
 
 		if cib_xml == None or cib_xml == "" :
-			msgbox(_("Cannot get the CIB"))
+			#msgbox(_("Cannot get the CIB"))
+			log("Cannot get the CIB")
 			return False
 
 		try :
 			xml_nodes["cib"] = parseString(cib_xml).documentElement
 		except xml.parsers.expat.ExpatError, msg :
-			msgbox(_("Failed to parse the CIB") + _(": ") + _(msg))
+			#msgbox(_("Failed to parse the CIB") + _(": ") + _(msg))
+			log("Failed to parse the CIB: " + _(msg))
 			return False 
 			
 		"""xml_status = self.cib_do_cmd("cib_query\nstatus")
@@ -6652,7 +6655,8 @@ class Manager :
 		xml_crm_config = self.cib_do_cmd("cib_query\ncrm_config")"""
 
 		if xml_nodes.get("cib") == None :
-			msgbox(_("Cannot parse the CIB"))
+			#msgbox(_("Cannot parse the CIB"))
+			log("Cannot parse the CIB")
 			return False
 
 		validate_type = self.get_validate_type()
@@ -6842,7 +6846,8 @@ class Manager :
 		schema_info = validate_name + " " + file
 		crm_schema = self.get_crm_schema(validate_name, file)
 		if crm_schema == None :
-			msgbox(_("Cannot get the Relax-NG schema") + _(": ") + schema_info)
+			#msgbox(_("Cannot get the Relax-NG schema") + _(": ") + schema_info)
+			log("Cannot get the Relax-NG schema: " + schema_info)
 			return None
 
 		self.rng_str_docs[file] = crm_schema
@@ -6850,7 +6855,8 @@ class Manager :
 		try :
 			rng_doc = parseString(crm_schema).documentElement
 		except xml.parsers.expat.ExpatError, msg :
-			msgbox(_("Failed to parse the Relax-NG schema") + _(": ") + _(msg) + schema_info)
+			#msgbox(_("Failed to parse the Relax-NG schema") + _(": ") + _(msg) + schema_info)
+			log("Failed to parse the Relax-NG schema: " + _(msg) + schema_info)
 			return None
 
 		start_nodes = rng_doc.getElementsByTagName("start")
@@ -6858,7 +6864,8 @@ class Manager :
 			start_node = start_nodes[0] 
 			return (rng_doc, start_node)
 		else :
-			msgbox(_("Cannot get started in Relax-NG schema") +_(": ") + schema_info)
+			#msgbox(_("Cannot get started in Relax-NG schema") +_(": ") + schema_info)
+			log("Cannot get started in Relax-NG schema: " + schema_info)
 			return None
 
 		#sub_start_node = None
@@ -6869,7 +6876,8 @@ class Manager :
 		##sub_start_nodes = self.get_sub_rng_nodes(start_node)["req_elem_nodes"]
 		##if sub_start_nodes == [] :
 		#if sub_start_node == None :
-		#	msgbox(_("Cannot get the start element in Relax-NG schema: ") + schema_info)
+		#	#msgbox(_("Cannot get the start element in Relax-NG schema: ") + schema_info)
+		#	log("Cannot get the start element in Relax-NG schema: " + schema_info)
 		#	return None
 		#else :
 		#	return (rng_doc, sub_start_node)
@@ -7157,8 +7165,12 @@ class Manager :
 			self.get_active_cib()
 			self.parent = {}
 			window.update()
+			retval = False
+		else :
+			retval = True
 		gc.collect()
 		self.update_timer = -1
+		return retval
 
 	def get_validate_type(self) : 
 		validate_list = {
@@ -7199,7 +7211,8 @@ class Manager :
 		if not self.dtd_elems.has_key(elem_name) :
 			dtd = self.get_crm_schema(self.validate_name)
 			if dtd == None :
-				msgbox(_("Cannot get the DTD") + _(": ") + self.validate_name)
+				#msgbox(_("Cannot get the DTD") + _(": ") + self.validate_name)
+				log("Cannot get the DTD:" + self.validate_name)
 				return None
 			complete_dtd = load_dtd_string(dtd)
 			self.dtd_elems[elem_name] = complete_dtd.get_elem(elem_name)
