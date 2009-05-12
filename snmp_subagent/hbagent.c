@@ -1396,9 +1396,9 @@ main(int argc, char ** argv)
 			debug++ ;
 			break;
 		    case 'r': /* LHAHeartbeatConfigInfo partial-mode */
+			i = atoi(optarg);
 #if SUPPORT_HEARTBEAT
 			hbconfig_partial = 1;
-			i = atoi(optarg);
 			if (i > 0)
 				hbconfig_refresh_timing = i / DEFAULT_TIME_OUT;
 			else
