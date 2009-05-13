@@ -2879,7 +2879,7 @@ class ObjectView :
 						msgbox(manager.failed_reason)
 					else :
 						if manager.active_cib != "" :
-							manager.update_timer = gobject.timeout_add(200, manager.update)
+							manager.set_update()
 						xml_dlg.destroy()
 						break
 				else :
@@ -3743,7 +3743,7 @@ class ElementNotebook :
 					msgbox(manager.failed_reason)
 				else :
 					if manager.active_cib != "" :
-						manager.update_timer = gobject.timeout_add(200, manager.update)
+						manager.set_update()
 					objdlg.destroy()
 					self.new_page_type = obj_type_name
 					return 3
@@ -3932,11 +3932,11 @@ class ElementNotebook :
 					if manager.failed_reason != "" :
 						msgbox(manager.failed_reason)
 						if manager.active_cib != "" :
-							manager.update_timer = gobject.timeout_add(200, manager.update)
+							manager.set_update()
 					elif manager.active_cib != "" :
 						self.on_changed()
 				else :
-					manager.update_timer = gobject.timeout_add(200, manager.update)
+					manager.set_update()
 
 	def on_up(self, widget) :
 		elem_list = self.get_elem_list()
@@ -3976,11 +3976,11 @@ class ElementNotebook :
 				if manager.failed_reason != "" :
 					msgbox(manager.failed_reason)
 					if manager.active_cib != "" :
-						manager.update_timer = gobject.timeout_add(200, manager.update)
+						manager.set_update()
 				else :
 					self.on_changed()
 			else :
-				manager.update_timer = gobject.timeout_add(200, manager.update)
+				manager.set_update()
 		else :
 			self.on_changed()
 			if self.change_call_back != None :
@@ -4022,11 +4022,11 @@ class ElementNotebook :
 				if manager.failed_reason != "" :
 					msgbox(manager.failed_reason)
 					if manager.active_cib != "" :
-						manager.update_timer = gobject.timeout_add(200, manager.update)
+						manager.set_update()
 				else :
 					self.on_changed()
 			else :
-				manager.update_timer = gobject.timeout_add(200, manager.update)
+				manager.set_update()
 		else :
 			self.on_changed()
 			if self.change_call_back != None :
@@ -5669,13 +5669,13 @@ class MainWindow :
 			if manager.failed_reason != "" :
 				msgbox(manager.failed_reason)
 			else :
-				manager.update_timer = gobject.timeout_add(200, manager.update)
+				manager.set_update()
 		elif manager.active_cib != reinit_name :
 			manager.do_cmd("switch_cib\n%s"%(reinit_name))
 			if manager.failed_reason != "" :
 				msgbox(manager.failed_reason)
 			else :
-				manager.update_timer = gobject.timeout_add(200, manager.update)
+				manager.set_update()
 
 	def on_shadow_diff(self, action) :
 		global top_window
@@ -5725,7 +5725,7 @@ class MainWindow :
 		if manager.failed_reason != "" :
 			msgbox(manager.failed_reason)
 		else :
-			manager.update_timer = gobject.timeout_add(200, manager.update)
+			manager.set_update()
 
 	def save_shadow_diff(self, textbuffer) :
 		default_name = manager.active_cib + ".diff"
@@ -5856,7 +5856,7 @@ class MainWindow :
 						_("Switch to the new created shadow CIB \"%s\"?")%shadow_name)
 				if retval == gtk.RESPONSE_YES :
 					manager.do_cmd("switch_cib\n%s"%(create_shadow.get("shadow_name", "")))
-					manager.update_timer = gobject.timeout_add(200, manager.update)
+					manager.set_update()
 				break
 
 		top_window = save_top_window
@@ -5870,7 +5870,7 @@ class MainWindow :
 		else :
 			manager.do_cmd("switch_cib\n%s"%(switch_name[len("shadow."):]))
 
-		manager.update_timer = gobject.timeout_add(200, manager.update)
+		manager.set_update()
 
 	def render_switch_submenu(self, action) :
 		for menuitem in self.switch_submenu.get_children() :
@@ -6575,11 +6575,7 @@ class Manager :
 
 	def process_event(self, event) :
 		if event == "evt:cib_changed" :
-			if self.update_timer != -1 :
-				gobject.source_remove(self.update_timer)
-			else :
-				window.statusbar.push(2,_("Updating data from server..."))
-			self.update_timer = gobject.timeout_add(200, self.update)
+			self.set_update()
 
 		elif event == None or event == "evt:disconnected" :
 			self.logout()
@@ -6589,6 +6585,13 @@ class Manager :
 			else :
 				window.statusbar.push(1,_("Reconnecting..."))
 				gobject.timeout_add(1000, self.on_reconnect)
+
+	def set_update(self) :
+		if self.update_timer != -1 :
+			gobject.source_remove(self.update_timer)
+		else :
+			window.statusbar.push(2,_("Updating data from server..."))
+		self.update_timer = gobject.timeout_add(200, self.update)
 	
 	def on_event(self, source, condition, event_str) :
 		self.session_lock.acquire()
