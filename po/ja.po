@@ -9,8 +9,8 @@ msgstr ""
 "Project-Id-Version: pacemaker-mgmt 2.0.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-04-24 19:08+0800\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"PO-Revision-Date: 2009-05-14 17:07+0800\n"
+"Last-Translator: Hideo Yamauchi <renayama19661014@ybb.ne.jp>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -18,7 +18,7 @@ msgstr ""
 
 #: ../mgmt/client/haclient.py.in:121
 msgid "Do not delete the root directory"
-msgstr ""
+msgstr "ルートディレクトリは削除出来ません"
 
 #: ../mgmt/client/haclient.py.in:129 ../mgmt/client/haclient.py.in:135
 #: ../mgmt/client/haclient.py.in:140 ../mgmt/client/haclient.py.in:3093
@@ -29,7 +29,7 @@ msgstr ""
 #: ../mgmt/client/haclient.py.in:6151 ../mgmt/client/haclient.py.in:6802
 #: ../mgmt/client/haclient.py.in:6810
 msgid "System error"
-msgstr ""
+msgstr "システムエラー"
 
 #: ../mgmt/client/haclient.py.in:129 ../mgmt/client/haclient.py.in:135
 #: ../mgmt/client/haclient.py.in:140 ../mgmt/client/haclient.py.in:2506
@@ -53,23 +53,23 @@ msgstr ""
 #: ../mgmt/client/haclient.py.in:6841 ../mgmt/client/haclient.py.in:6849
 #: ../mgmt/client/haclient.py.in:7190
 msgid ": "
-msgstr ""
+msgstr ": "
 
 #: ../mgmt/client/haclient.py.in:173
 msgid "Message"
-msgstr ""
+msgstr "メッセージ"
 
 #: ../mgmt/client/haclient.py.in:193
 msgid "Confirm"
-msgstr ""
+msgstr "確認"
 
 #: ../mgmt/client/haclient.py.in:235
 msgid "The specified time should be numeric prefixed."
-msgstr ""
+msgstr "時間は数値で指定して下さい."
 
 #: ../mgmt/client/haclient.py.in:246
 msgid "The specified time should default with second unit, "
-msgstr ""
+msgstr "時間のデフォルt単位は秒(s)です."
 
 #: ../mgmt/client/haclient.py.in:247
 #, python-format
@@ -77,149 +77,151 @@ msgid ""
 "or should be suffixed with one of the following units:\n"
 " %s"
 msgstr ""
+"もしくは、次の単位の１つを最後に付けて下さい:\n"
+" %s"
 
 #: ../mgmt/client/haclient.py.in:313
 msgid "Add Parameter"
-msgstr ""
+msgstr "パラメータの追加"
 
 #: ../mgmt/client/haclient.py.in:315
 msgid "Add Operation"
-msgstr ""
+msgstr "オペレーションの追加"
 
 #: ../mgmt/client/haclient.py.in:356 ../mgmt/client/haclient.py.in:7985
 #: ../mgmt/client/haclient.py.in:8266
 msgid " can't be empty"
-msgstr ""
+msgstr "空には出来ません"
 
 #: ../mgmt/client/haclient.py.in:453 ../mgmt/client/haclient.py.in:604
 #: ../mgmt/client/haclient.py.in:1618
 msgid "Type"
-msgstr ""
+msgstr "タイプ"
 
 #: ../mgmt/client/haclient.py.in:605
 msgid "ID"
-msgstr ""
+msgstr "ID"
 
 #: ../mgmt/client/haclient.py.in:710
 msgid "Start"
-msgstr ""
+msgstr "開始"
 
 #: ../mgmt/client/haclient.py.in:710
 msgid "Start resource"
-msgstr ""
+msgstr "リソースの開始"
 
 #: ../mgmt/client/haclient.py.in:711
 msgid "Stop"
-msgstr ""
+msgstr "停止"
 
 #: ../mgmt/client/haclient.py.in:711
 msgid "Stop resource"
-msgstr ""
+msgstr "リソースの停止"
 
 #: ../mgmt/client/haclient.py.in:712 ../mgmt/client/haclient.py.in:2225
 #: ../mgmt/client/haclient.py.in:2506
 msgid "Default"
-msgstr ""
+msgstr "デフォルト"
 
 #: ../mgmt/client/haclient.py.in:712
 msgid "Work as default"
-msgstr ""
+msgstr "作業デフォルト"
 
 #: ../mgmt/client/haclient.py.in:713 ../mgmt/client/haclient.py.in:1240
 msgid "Cleanup Resource"
-msgstr ""
+msgstr "リソースのクリーンアップ"
 
 #: ../mgmt/client/haclient.py.in:713
 msgid "Cleanup resource"
-msgstr ""
+msgstr "リソースのクリーンアップ"
 
 #: ../mgmt/client/haclient.py.in:714 ../mgmt/client/haclient.py.in:1273
 msgid "Migrate Resource"
-msgstr ""
+msgstr "リソースの移動"
 
 #: ../mgmt/client/haclient.py.in:714
 msgid "Migrate a resource to specified node"
-msgstr ""
+msgstr "リソースを指定ノードに移動"
 
 #: ../mgmt/client/haclient.py.in:716 ../mgmt/client/haclient.py.in:1442
 msgid "Clear Migrate Constraints"
-msgstr ""
+msgstr "移動制約のクリア"
 
 #: ../mgmt/client/haclient.py.in:717
 msgid "Clear constraints created by migrate"
-msgstr ""
+msgstr "移動によって設定された制約をクリア"
 
 #: ../mgmt/client/haclient.py.in:719
 msgid "Unmanage Resource"
-msgstr ""
+msgstr "リソースを管理外に設定"
 
 #: ../mgmt/client/haclient.py.in:719
 msgid "Put a resource into unmanaged mode"
-msgstr ""
+msgstr "リソースを管理外に設定"
 
 #: ../mgmt/client/haclient.py.in:721
 msgid "Manage Resource"
-msgstr ""
+msgstr "リソースを管理状態に設定"
 
 #: ../mgmt/client/haclient.py.in:721
 msgid "Put a resource into managed mode"
-msgstr ""
+msgstr "リソースを管理状態に設定"
 
 #: ../mgmt/client/haclient.py.in:723
 msgid "Refresh Resources"
-msgstr ""
+msgstr "リソースのリフレッシュ"
 
 #: ../mgmt/client/haclient.py.in:723
 msgid "Refresh CIB from the LRM status"
-msgstr ""
+msgstr "LRMステータスからのCIBのリフレッシュ"
 
 #: ../mgmt/client/haclient.py.in:725
 msgid "Reprobe Resources"
-msgstr ""
+msgstr "リソースの再プローブ"
 
 #: ../mgmt/client/haclient.py.in:725
 msgid "Reprobe for resources started outside of the CRM"
-msgstr ""
+msgstr "CRM外で開始されるリソースの為の再プローブ"
 
 #: ../mgmt/client/haclient.py.in:729
 msgid "Standby"
-msgstr ""
+msgstr "スタンバイ"
 
 #: ../mgmt/client/haclient.py.in:729
 msgid "Make the node standby"
-msgstr ""
+msgstr "ノードをスタンバイに設定"
 
 #: ../mgmt/client/haclient.py.in:730
 msgid "Active"
-msgstr ""
+msgstr "アクティブ"
 
 #: ../mgmt/client/haclient.py.in:730
 msgid "Make the node active"
-msgstr ""
+msgstr "ノードをアクティブに設定"
 
 #: ../mgmt/client/haclient.py.in:734
 msgid "Group By Node"
-msgstr ""
+msgstr "ノードでグループ化"
 
 #: ../mgmt/client/haclient.py.in:734
 msgid "Group resources by node"
-msgstr ""
+msgstr "ノードのリソースでグループ化"
 
 #: ../mgmt/client/haclient.py.in:735
 msgid "Maintenance Mode"
-msgstr ""
+msgstr "保守モード"
 
 #: ../mgmt/client/haclient.py.in:736
 msgid "Switch to maintenance mode"
-msgstr ""
+msgstr "保守モードへ切換え"
 
 #: ../mgmt/client/haclient.py.in:737
 msgid "Indicate Pending Operations"
-msgstr ""
+msgstr "待ち操作の表示"
 
 #: ../mgmt/client/haclient.py.in:738
 msgid "Indicate pending(starting/stopping) operations"
-msgstr ""
+msgstr "待ち操作(開始中/停止中)動作の表示"
 
 #: ../mgmt/client/haclient.py.in:918 ../mgmt/client/haclient.py.in:955
 #: ../mgmt/client/haclient.py.in:1206 ../mgmt/client/haclient.py.in:1287
@@ -233,256 +235,256 @@ msgstr ""
 #: ../mgmt/client/haclient.py.in:8107 ../mgmt/client/haclient.py.in:8228
 #: ../mgmt/client/haclient.py.in:8266 ../mgmt/client/haclient.py.in:9408
 msgid ":"
-msgstr ""
+msgstr ":"
 
 #: ../mgmt/client/haclient.py.in:1006
 #, python-format
 msgid "last failure at \"%s\""
-msgstr ""
+msgstr "最後の故障は\"%s\""
 
 #: ../mgmt/client/haclient.py.in:1150 ../mgmt/client/haclient.py.in:1155
 #: ../mgmt/client/haclient.py.in:1546 ../mgmt/client/haclient.py.in:1871
 msgid "standby"
-msgstr ""
+msgstr "スタンバイ"
 
 #: ../mgmt/client/haclient.py.in:1151 ../mgmt/client/haclient.py.in:1156
 #: ../mgmt/client/haclient.py.in:1856
 msgid "never started"
-msgstr ""
+msgstr "開始しない"
 
 #: ../mgmt/client/haclient.py.in:1203
 msgid "Caused by your previous action, this attribute has been set to \""
-msgstr ""
+msgstr "前の操作によって、属性はセットされました。設定値は \""
 
 #: ../mgmt/client/haclient.py.in:1205
 msgid "\"."
-msgstr ""
+msgstr "\"."
 
 #: ../mgmt/client/haclient.py.in:1206
 msgid "Recommended"
-msgstr ""
+msgstr "推奨する操作"
 
 #: ../mgmt/client/haclient.py.in:1207
 msgid "Select \"Clear\" to remove the set."
-msgstr ""
+msgstr "選択・クリアを解除の為に選択して下さい."
 
 #: ../mgmt/client/haclient.py.in:1208
 msgid "The sub-resource will inherit this attribute from its parent."
-msgstr ""
+msgstr "配下のリソースは、親の属性を継承します."
 
 #: ../mgmt/client/haclient.py.in:1212
 #, python-format
 msgid "Retain the \"%s\" set for sub-resource \""
-msgstr ""
+msgstr "配下のリソース \"%s\" の属性を保持しますか \""
 
 #: ../mgmt/client/haclient.py.in:1213
 msgid "\"?"
-msgstr ""
+msgstr "\"?"
 
 #: ../mgmt/client/haclient.py.in:1232 ../mgmt/client/haclient.py.in:1246
 msgid "all resources"
-msgstr ""
+msgstr "全リソース"
 
 #: ../mgmt/client/haclient.py.in:1238 ../mgmt/client/haclient.py.in:1242
 #: ../mgmt/client/haclient.py.in:1260
 msgid "all nodes"
-msgstr ""
+msgstr "全ノード"
 
 #: ../mgmt/client/haclient.py.in:1241 ../mgmt/client/haclient.py.in:1443
 msgid "Resource"
-msgstr ""
+msgstr "リソース"
 
 #: ../mgmt/client/haclient.py.in:1242
 msgid "Node"
-msgstr ""
+msgstr "ノード"
 
 #: ../mgmt/client/haclient.py.in:1433
 msgid "all migrated resources"
-msgstr ""
+msgstr "全リソースを移動"
 
 #. node_options = node_list[:]
 #. node_options.insert(0, "")
 #: ../mgmt/client/haclient.py.in:1487
 #, python-format
 msgid "%s Resources"
-msgstr ""
+msgstr "%s リソース"
 
 #: ../mgmt/client/haclient.py.in:1546 ../mgmt/client/haclient.py.in:1553
 msgid "Make"
-msgstr ""
+msgstr "ノード "
 
 #: ../mgmt/client/haclient.py.in:1553
 msgid "active"
-msgstr ""
+msgstr "をアクティブにしますか"
 
 #: ../mgmt/client/haclient.py.in:1619
 msgid "Name"
-msgstr ""
+msgstr "名前"
 
 #: ../mgmt/client/haclient.py.in:1620
 msgid "Status"
-msgstr ""
+msgstr "状態"
 
 #: ../mgmt/client/haclient.py.in:1621
 msgid "Details"
-msgstr ""
+msgstr "詳細"
 
 #: ../mgmt/client/haclient.py.in:1677 ../mgmt/client/haclient.py.in:1955
 msgid "not running"
-msgstr ""
+msgstr "未起動"
 
 #: ../mgmt/client/haclient.py.in:1679 ../mgmt/client/haclient.py.in:1957
 #: ../mgmt/client/haclient.py.in:1967
 msgid "running"
-msgstr ""
+msgstr "起動中"
 
 #: ../mgmt/client/haclient.py.in:1681 ../mgmt/client/haclient.py.in:1959
 msgid "fail"
-msgstr ""
+msgstr "故障"
 
 #: ../mgmt/client/haclient.py.in:1683
 msgid "starting"
-msgstr ""
+msgstr "開始中"
 
 #: ../mgmt/client/haclient.py.in:1685
 msgid "stopping"
-msgstr ""
+msgstr "停止中"
 
 #: ../mgmt/client/haclient.py.in:1691 ../mgmt/client/haclient.py.in:1858
 #: ../mgmt/client/haclient.py.in:1965
 msgid "ping node"
-msgstr ""
+msgstr "pingノード"
 
 #: ../mgmt/client/haclient.py.in:1693 ../mgmt/client/haclient.py.in:1869
 msgid "online"
-msgstr ""
+msgstr "オンライン"
 
 #: ../mgmt/client/haclient.py.in:1776
 msgid "have quorum"
-msgstr ""
+msgstr "QUORUM有"
 
 #: ../mgmt/client/haclient.py.in:1778
 msgid "no quorum"
-msgstr ""
+msgstr "QUORUM無"
 
 #: ../mgmt/client/haclient.py.in:1789 ../mgmt/client/haclient.py.in:1806
 #: ../mgmt/client/haclient.py.in:2192
 msgid "Cluster"
-msgstr ""
+msgstr "クラスタ"
 
 #: ../mgmt/client/haclient.py.in:1792
 msgid "Inactive resources"
-msgstr ""
+msgstr "アクティブでないリソース"
 
 #: ../mgmt/client/haclient.py.in:1809
 msgid "Resources"
-msgstr ""
+msgstr "リソース"
 
 #: ../mgmt/client/haclient.py.in:1823
 msgid " on "
-msgstr ""
+msgstr " on "
 
 #: ../mgmt/client/haclient.py.in:1852
 msgid "unknown"
-msgstr ""
+msgstr "不明"
 
 #: ../mgmt/client/haclient.py.in:1860
 msgid "unknown type"
-msgstr ""
+msgstr "不明なタイプ"
 
 #: ../mgmt/client/haclient.py.in:1863
 msgid "offline"
-msgstr ""
+msgstr "オフライン"
 
 #: ../mgmt/client/haclient.py.in:1867
 msgid "online(dc)"
-msgstr ""
+msgstr "オンライン(dc)"
 
 #: ../mgmt/client/haclient.py.in:1954
 msgid "primitive"
-msgstr ""
+msgstr "プリミティブ"
 
 #: ../mgmt/client/haclient.py.in:1971
 msgid "group"
-msgstr ""
+msgstr "グループ"
 
 #: ../mgmt/client/haclient.py.in:1971
 msgid "resources"
-msgstr ""
+msgstr "リソース"
 
 #: ../mgmt/client/haclient.py.in:1971
 msgid "clone"
-msgstr ""
+msgstr "クローン"
 
 #: ../mgmt/client/haclient.py.in:1971
 msgid "master"
-msgstr ""
+msgstr "マスタ"
 
 #: ../mgmt/client/haclient.py.in:1973
 msgid "orders"
-msgstr ""
+msgstr "順序"
 
 #: ../mgmt/client/haclient.py.in:1973
 msgid "locations"
-msgstr ""
+msgstr "配置"
 
 #: ../mgmt/client/haclient.py.in:1973
 msgid "colocations"
-msgstr ""
+msgstr "組み合わせ配置"
 
 #: ../mgmt/client/haclient.py.in:1996 ../mgmt/client/haclient.py.in:4697
 #: ../mgmt/client/haclient.py.in:5889
 msgid "Live"
-msgstr ""
+msgstr "ライブ"
 
 #: ../mgmt/client/haclient.py.in:1998
 msgid "Shadow: "
-msgstr ""
+msgstr "シャドー: "
 
 #: ../mgmt/client/haclient.py.in:2033
 msgid "Management"
-msgstr ""
+msgstr "保守"
 
 #: ../mgmt/client/haclient.py.in:2198
 msgid "CIB"
-msgstr ""
+msgstr "CIB"
 
 #: ../mgmt/client/haclient.py.in:2227 ../mgmt/client/haclient.py.in:2919
 #: ../mgmt/client/haclient.py.in:4637 ../mgmt/client/haclient.py.in:6281
 msgid "Reset"
-msgstr ""
+msgstr "リセット"
 
 #: ../mgmt/client/haclient.py.in:2335
 msgid "Multiple \"Cluster Property Set\" in \"CRM Config\"."
-msgstr ""
+msgstr "重複した \"クラスタプロパティセット\" が \"CRMの構成\"に設定されています."
 
 #: ../mgmt/client/haclient.py.in:2336 ../mgmt/client/haclient.py.in:3195
 #: ../mgmt/client/haclient.py.in:3217 ../mgmt/client/haclient.py.in:3320
 #: ../mgmt/client/haclient.py.in:3341
 msgid "We are switching to \"Hack Mode\" to view them properly."
-msgstr ""
+msgstr "モードを\"Hackモード\"に切り替えて、プロパティを確認して下さい."
 
 #: ../mgmt/client/haclient.py.in:2408
 msgid "There are unsaved changes in current page."
-msgstr ""
+msgstr "保存されていない変更が、現在のページにあります."
 
 #: ../mgmt/client/haclient.py.in:2408 ../mgmt/client/haclient.py.in:5465
 msgid "Apply the changes?"
-msgstr ""
+msgstr "変更してもよろしいですか?"
 
 #: ../mgmt/client/haclient.py.in:2426
 msgid "Policy Engine"
-msgstr ""
+msgstr "ポリシーエンジン"
 
 #: ../mgmt/client/haclient.py.in:2438
 msgid "CRM Daemon"
-msgstr ""
+msgstr "CRMデーモン"
 
 #: ../mgmt/client/haclient.py.in:2500 ../mgmt/client/haclient.py.in:2503
 #: ../mgmt/client/haclient.py.in:8862 ../mgmt/client/haclient.py.in:8865
 #: ../mgmt/client/haclient.py.in:9121 ../mgmt/client/haclient.py.in:9124
 msgid "."
-msgstr ""
+msgstr "."
 
 #: ../mgmt/client/haclient.py.in:2520 ../mgmt/client/haclient.py.in:2573
 #: ../mgmt/client/haclient.py.in:2577 ../mgmt/client/haclient.py.in:7922
@@ -490,76 +492,76 @@ msgstr ""
 #: ../mgmt/client/haclient.py.in:9036 ../mgmt/client/haclient.py.in:9040
 #: ../mgmt/client/haclient.py.in:9094
 msgid "default"
-msgstr ""
+msgstr "デフォルト"
 
 #: ../mgmt/client/haclient.py.in:2636
 msgid "List Mode"
-msgstr ""
+msgstr "リストモード"
 
 #: ../mgmt/client/haclient.py.in:2637
 msgid "Tree Mode"
-msgstr ""
+msgstr "ツリーモード"
 
 #: ../mgmt/client/haclient.py.in:2638
 msgid "XML Mode"
-msgstr ""
+msgstr "XMLモード"
 
 #: ../mgmt/client/haclient.py.in:2645
 msgid "Show"
-msgstr ""
+msgstr "表示"
 
 #: ../mgmt/client/haclient.py.in:2909
 msgid "The object doesn't exist"
-msgstr ""
+msgstr "オブジェクトが存在しません"
 
 #: ../mgmt/client/haclient.py.in:2918
 msgid "Edit XML"
-msgstr ""
+msgstr "XML編集"
 
 #: ../mgmt/client/haclient.py.in:2933
 msgid "Import"
-msgstr ""
+msgstr "インポート"
 
 #: ../mgmt/client/haclient.py.in:2934
 msgid "Import XML"
-msgstr ""
+msgstr "XMLをインポート"
 
 #: ../mgmt/client/haclient.py.in:2935
 msgid "Export"
-msgstr ""
+msgstr "エキスポート"
 
 #: ../mgmt/client/haclient.py.in:2936
 msgid "Export XML"
-msgstr ""
+msgstr "XMLをエキスポート"
 
 #: ../mgmt/client/haclient.py.in:2999
 msgid "OVR"
-msgstr ""
+msgstr "上書"
 
 #: ../mgmt/client/haclient.py.in:3001
 msgid "INS"
-msgstr ""
+msgstr "挿入"
 
 #: ../mgmt/client/haclient.py.in:3004
 #, python-format
 msgid "Ln %d, Col %d\t%s"
-msgstr ""
+msgstr "ライン %d カラム %d\t%s"
 
 #: ../mgmt/client/haclient.py.in:3020
 msgid "Failed to parse the XML"
-msgstr ""
+msgstr "XMLのパースに失敗しました"
 
 #: ../mgmt/client/haclient.py.in:3032
 msgid "Open File"
-msgstr ""
+msgstr "ファイルオープン"
 
 #: ../mgmt/client/haclient.py.in:3042
 msgid "All files"
-msgstr ""
+msgstr "全てのファイル"
 
 #: ../mgmt/client/haclient.py.in:3047
 msgid "XML files"
-msgstr ""
+msgstr "XMLファイル"
 
 #: ../mgmt/client/haclient.py.in:3066 ../mgmt/client/haclient.py.in:3072
 #: ../mgmt/client/haclient.py.in:6013 ../mgmt/client/haclient.py.in:6043
@@ -567,60 +569,60 @@ msgstr ""
 #: ../mgmt/client/haclient.py.in:6082 ../mgmt/client/haclient.py.in:6106
 #: ../mgmt/client/haclient.py.in:6123
 msgid "I/O error"
-msgstr ""
+msgstr "I/Oエラー"
 
 #: ../mgmt/client/haclient.py.in:3193 ../mgmt/client/haclient.py.in:3318
 #, python-format
 msgid "The \"%s\" has multiple \"%s\" sets."
-msgstr ""
+msgstr "\"%s\"は、複数の\"%s\"があります."
 
 #: ../mgmt/client/haclient.py.in:3214 ../mgmt/client/haclient.py.in:3338
 #, python-format
 msgid "The \"%s\" has a \"%s\"."
-msgstr ""
+msgstr "\"%s\"は、\"%s\"があります."
 
 #: ../mgmt/client/haclient.py.in:3568 ../mgmt/client/haclient.py.in:4126
 #: ../mgmt/client/haclient.py.in:4530 ../mgmt/client/haclient.py.in:4631
 msgid "Add"
-msgstr ""
+msgstr "追加"
 
 #: ../mgmt/client/haclient.py.in:3603
 msgid "Other"
-msgstr ""
+msgstr "その他"
 
 #: ../mgmt/client/haclient.py.in:3628
 msgid "Please specify the type of object you want to add"
-msgstr ""
+msgstr "追加するオブジェクトのタイプを指定して下さい"
 
 #: ../mgmt/client/haclient.py.in:3669
 msgid "Wizard"
-msgstr ""
+msgstr "ウィザード"
 
 #: ../mgmt/client/haclient.py.in:3672
 msgid "Dialog"
-msgstr ""
+msgstr "ダイアログ"
 
 #: ../mgmt/client/haclient.py.in:3913
 #, python-format
 msgid "This will delete the %s \"%s\""
-msgstr ""
+msgstr "%s \"%s\"を削除します"
 
 #: ../mgmt/client/haclient.py.in:3915
 msgid "Delete the selected object?"
-msgstr ""
+msgstr "選択されたオブジェクトを削除しますか?"
 
 #: ../mgmt/client/haclient.py.in:4082
 msgid "Initial state of resource"
-msgstr ""
+msgstr "リソース状態の初期化"
 
 #: ../mgmt/client/haclient.py.in:4087
 msgid ""
 "Maximum number of copies (Defaults to the number of nodes in the cluster)"
-msgstr ""
+msgstr "クラスタ内の最大クローン数(デフォルト:ノード数）"
 
 #: ../mgmt/client/haclient.py.in:4089
 msgid "Maximum number of copies on a single node (Defaults to 1)"
-msgstr ""
+msgstr "ノード内のクローン数(デフォルト:1）"
 
 #: ../mgmt/client/haclient.py.in:4092 ../mgmt/client/haclient.py.in:4094
 #: ../mgmt/client/haclient.py.in:4096 ../mgmt/client/haclient.py.in:8889
@@ -628,19 +630,23 @@ msgstr ""
 #: ../mgmt/client/haclient.py.in:8913 ../mgmt/client/haclient.py.in:8915
 #: ../mgmt/client/haclient.py.in:8917 ../mgmt/client/haclient.py.in:8919
 msgid "[ default ]"
-msgstr ""
+msgstr "[ デフォルト ]"
 
 #: ../mgmt/client/haclient.py.in:4093
 msgid ""
 "Notify all the other copies before stopping or starting a copy and when the "
 "action was successful (Defaults to false)"
 msgstr ""
+"クローンが開始・停止する前に通知する"
+"(デフォルト:false)"
 
 #: ../mgmt/client/haclient.py.in:4095
 msgid ""
 "Globally Unique (Does each copy of the clone perform a different function? "
 "Defaults to false)"
 msgstr ""
+"グローバルユニーク(個々のクローンが異なる機能を提供するかどうか?"
+"デフォルト:false)"
 
 #: ../mgmt/client/haclient.py.in:4097
 msgid ""
@@ -649,122 +655,128 @@ msgid ""
 "(rather than waiting for every instance of the other clone has). Defaults to "
 "false)"
 msgstr ""
+"インターリーブ (マスタ・クローンのインスタンス達が、他のインスタンスを"
+"待たずにすぐに開始・停止出来るように、マスタ・クローン内での制約の作用 "
+"を変更します。(デフォルト:false)."
+""
 
 #: ../mgmt/client/haclient.py.in:4102
 msgid "Maximum number of master copies (Defaults to 1)"
-msgstr ""
+msgstr "クラスタ内の最大マスタ数(デフォルト:1)"
 
 #: ../mgmt/client/haclient.py.in:4104
 msgid "Maximum number of master copies on a single node (Defaults to 1)"
-msgstr ""
+msgstr "ノード内の最大マスタ数(デフォルト:1)"
 
 #: ../mgmt/client/haclient.py.in:4135
 msgid "Basic Settings"
-msgstr ""
+msgstr "基本設定"
 
 #: ../mgmt/client/haclient.py.in:4157
 msgid "Options"
-msgstr ""
+msgstr "オプション"
 
 #: ../mgmt/client/haclient.py.in:4256
 msgid "Add monitor operation"
-msgstr ""
+msgstr "モニタ操作の追加"
 
 #: ../mgmt/client/haclient.py.in:4540
 #, python-format
 msgid "Summary Of \"%s\""
-msgstr ""
+msgstr "\"%s\"の概要"
 
 #: ../mgmt/client/haclient.py.in:4542
 msgid "Summary"
-msgstr ""
+msgstr "概要"
 
 #: ../mgmt/client/haclient.py.in:4561
 #, python-format
 msgid "Sub-resource For \"%s\""
-msgstr ""
+msgstr "\"%s\" サブリソース用"
 
 #: ../mgmt/client/haclient.py.in:4563
 msgid "Sub-resource"
-msgstr ""
+msgstr "サブリソース"
 
 #: ../mgmt/client/haclient.py.in:4565
 msgid "Add "
-msgstr ""
+msgstr "追加する"
 
 #: ../mgmt/client/haclient.py.in:4566
 msgid "Continue Adding "
-msgstr ""
+msgstr "追加を続ける"
 
 #: ../mgmt/client/haclient.py.in:4633
 msgid "Edit"
-msgstr ""
+msgstr "編集"
 
 #: ../mgmt/client/haclient.py.in:4674
 msgid ""
 "This will reset the current object attributes and all sub-objects to the "
 "initial configurations."
 msgstr ""
+"現在のオブジェクトの属性をリセットします."
+"そして全てのサブオブジェクトの構成も初期化されます."
 
 #: ../mgmt/client/haclient.py.in:4676
 msgid "Reset the configurations?"
-msgstr ""
+msgstr "構成をリセットしますか?"
 
 #: ../mgmt/client/haclient.py.in:4693
 msgid "Transition"
-msgstr ""
+msgstr "遷移"
 
 #: ../mgmt/client/haclient.py.in:4701
 msgid "History"
-msgstr ""
+msgstr "履歴"
 
 #: ../mgmt/client/haclient.py.in:4728
 msgid "Graph"
-msgstr ""
+msgstr "グラフ"
 
 #: ../mgmt/client/haclient.py.in:4739
 msgid "Detail"
-msgstr ""
+msgstr "詳細"
 
 #: ../mgmt/client/haclient.py.in:4743
 msgid "Verbosity"
-msgstr ""
+msgstr "選択"
 
 #: ../mgmt/client/haclient.py.in:4769
 msgid "Scores"
-msgstr ""
+msgstr "スコア"
 
 #: ../mgmt/client/haclient.py.in:4865
 msgid "Failed to generate the transition graph"
-msgstr ""
+msgstr "遷移グラフの生成に失敗しました"
 
 #: ../mgmt/client/haclient.py.in:4910
 msgid "Cannot save the graph for specified transition"
-msgstr ""
+msgstr "指定された遷移グラフは保存出来ません"
 
 #: ../mgmt/client/haclient.py.in:4913
 msgid "PNG Image"
-msgstr ""
+msgstr "PNGイメージ"
 
 #: ../mgmt/client/haclient.py.in:4914
 msgid "JPEG Image"
-msgstr ""
+msgstr "JPEGイメージ"
 
 #: ../mgmt/client/haclient.py.in:4915
 msgid "GIF Image"
-msgstr ""
+msgstr "GIFイメージ"
 
 #: ../mgmt/client/haclient.py.in:4916
 msgid "TIFF Image"
-msgstr ""
+msgstr "TIFFイメージ"
 
 #: ../mgmt/client/haclient.py.in:4917
 msgid "Dot File"
-msgstr ""
+msgstr "Dotファイル"
 
 #: ../mgmt/client/haclient.py.in:4948
 msgid "Cannot save the information for specified transition"
-msgstr ""
+msgstr "指定された遷移情報を保存出来ません"
 
 #: ../mgmt/client/haclient.py.in:4968
 msgid ""
@@ -787,374 +799,392 @@ msgid ""
 "execute.\n"
 "* Loops are really bad. Please report them to the development team."
 msgstr ""
+"グラフの解釈について:\n"
+"* 矢印は、依存状態の順序を示します。\n"
+"* 破線の矢印は、遷移の中で存在しない依存状態を示します。"
+"\n"
+"* 色のついた破線の動作も、遷移の一部にはなりません。"
+"\n"
+"* 緑の境界の動作は、遷移の一部になります。\n"
+"* 赤の境界の動作は、クラスタで実行しようとしていていますが、未実行です。 "
+"\n"
+"* 青の境界の動作は、クラスタが実行する必要がないと判断たものです。"
+"\n"
+"* オレンジの文字の動作は、集団がグラフを単純化するために使うpseudo/pretendアクションです。"
+"\n"
+"* 黒の文字の動作は、LRMに送られます。\n"
+"* リソースの動作は、{リソース_動作_実行間隔 実行するノード}からなるテキストを持っています。\n"
+"* 赤のアクションに依存している動作は、実行することが出来ません。"
+"\n"
+"* ループしている遷移は問題です。問題となっている遷移を開発チームに報告して下さい。"
 
 #: ../mgmt/client/haclient.py.in:5009 ../mgmt/client/haclient.py.in:5959
 #: ../mgmt/client/haclient.py.in:6288
 msgid "Cluster Report"
-msgstr ""
+msgstr "クラスタリポート"
 
 #: ../mgmt/client/haclient.py.in:5018
 msgid "From"
-msgstr ""
+msgstr "開始時間"
 
 #: ../mgmt/client/haclient.py.in:5019
 msgid "To"
-msgstr ""
+msgstr "終了時間"
 
 #: ../mgmt/client/haclient.py.in:5040
 msgid "The \"From\" time should before the \"To\" one"
-msgstr ""
+msgstr "\"開始時間\"は、 \"終了時間\"の前の時間でなくてはいけません."
 
 #: ../mgmt/client/haclient.py.in:5079
 msgid "Save as ..."
-msgstr ""
+msgstr "名前を付けて保存"
 
 #: ../mgmt/client/haclient.py.in:5109
 msgid "Permission denied"
-msgstr ""
+msgstr "権限がありません"
 
 #: ../mgmt/client/haclient.py.in:5113
 msgid "A file with the same name already exists"
-msgstr ""
+msgstr "既に同じ名前のファイルが存在します"
 
 #: ../mgmt/client/haclient.py.in:5115
 msgid "Do you want to overwrite it?"
-msgstr ""
+msgstr "上書きしてもよろしいですか?"
 
 #: ../mgmt/client/haclient.py.in:5118
 msgid "Replace it?"
-msgstr ""
+msgstr "置き換えますか?"
 
 #: ../mgmt/client/haclient.py.in:5291
 msgid "Description of Cluster Report"
-msgstr ""
+msgstr "クラスタリポートの説明"
 
 #: ../mgmt/client/haclient.py.in:5304
 msgid "Severity"
-msgstr ""
+msgstr "深刻度"
 
 #: ../mgmt/client/haclient.py.in:5319
 msgid "Component"
-msgstr ""
+msgstr "構成要素"
 
 #: ../mgmt/client/haclient.py.in:5333
 msgid "Subject"
-msgstr ""
+msgstr "題名"
 
 #: ../mgmt/client/haclient.py.in:5342
 msgid "Detailed description"
-msgstr ""
+msgstr "詳細な説明"
 
 #: ../mgmt/client/haclient.py.in:5447 ../mgmt/client/haclient.py.in:6475
 msgid "Connected to "
-msgstr ""
+msgstr "接続中..."
 
 #: ../mgmt/client/haclient.py.in:5449
 msgid "Not connected"
-msgstr ""
+msgstr "未接続"
 
 #: ../mgmt/client/haclient.py.in:5451 ../mgmt/client/haclient.py.in:5453
 #: ../mgmt/client/haclient.py.in:5455
 msgid "("
-msgstr ""
+msgstr "("
 
 #: ../mgmt/client/haclient.py.in:5451 ../mgmt/client/haclient.py.in:6294
 msgid "Simple Mode"
-msgstr ""
+msgstr "簡単モード"
 
 #: ../mgmt/client/haclient.py.in:5451 ../mgmt/client/haclient.py.in:5453
 #: ../mgmt/client/haclient.py.in:5455
 msgid ")"
-msgstr ""
+msgstr ")"
 
 #: ../mgmt/client/haclient.py.in:5453 ../mgmt/client/haclient.py.in:6295
 msgid "Expert Mode"
-msgstr ""
+msgstr "エキスパートモード"
 
 #: ../mgmt/client/haclient.py.in:5455 ../mgmt/client/haclient.py.in:6296
 msgid "Hack Mode"
-msgstr ""
+msgstr "Hackモード"
 
 #: ../mgmt/client/haclient.py.in:5465
 msgid "The data of current view have been changed."
-msgstr ""
+msgstr "表示しているビューの元のデータが変更されました."
 
 #: ../mgmt/client/haclient.py.in:5515
 msgid "Do you want to quit ?"
-msgstr ""
+msgstr "終了してもよろしいですか?"
 
 #: ../mgmt/client/haclient.py.in:5524
 msgid "Login"
-msgstr ""
+msgstr "ログイン"
 
 #: ../mgmt/client/haclient.py.in:5587
 msgid "Do you want to logout ?"
-msgstr ""
+msgstr "ログアウトしてもよろしいですか?"
 
 #: ../mgmt/client/haclient.py.in:5594
 msgid "\"Indicate pending operations\" has been activated."
-msgstr ""
+msgstr "待ち中の操作の表示モードがアクティブになっています."
 
 #: ../mgmt/client/haclient.py.in:5595
 msgid "It could affect the performance."
-msgstr ""
+msgstr "このままでは、パフォーマンスに影響します."
 
 #: ../mgmt/client/haclient.py.in:5596
 msgid "Turn it off ?"
-msgstr ""
+msgstr "モードを解除しすか?"
 
 #: ../mgmt/client/haclient.py.in:5605
 msgid "Cannot get any shadow CIB"
-msgstr ""
+msgstr "シャドーCIBが取得出来ませんでした"
 
 #: ../mgmt/client/haclient.py.in:5624
 msgid "Shadow CIB"
-msgstr ""
+msgstr "シャドーCIB"
 
 #: ../mgmt/client/haclient.py.in:5626
 msgid "Recreate the specified shadow CIB from the live CIB"
-msgstr ""
+msgstr "シャドーCIBをライブCIBから作成する"
 
 #: ../mgmt/client/haclient.py.in:5628
 msgid "Delete the specified shadow CIB"
-msgstr ""
+msgstr "シャドーCIBを削除する"
 
 #: ../mgmt/client/haclient.py.in:5630
 msgid "Upload the specified shadow CIB to the cluster"
-msgstr ""
+msgstr "クラスタにシャドーCIBをアップロードする"
 
 #: ../mgmt/client/haclient.py.in:5633
 msgid "Shadow Name"
-msgstr ""
+msgstr "シャドー名"
 
 #: ../mgmt/client/haclient.py.in:5656
 #, python-format
 msgid "The shadow CIB \"%s\"has been successfully commited."
-msgstr ""
+msgstr "シャドーCIB\"%s\"をコミットしました。"
 
 #: ../mgmt/client/haclient.py.in:5657 ../mgmt/client/haclient.py.in:5659
 msgid "Switch to the live CIB?"
-msgstr ""
+msgstr "ライブCIBに切り換えますか?"
 
 #: ../mgmt/client/haclient.py.in:5679
 msgid "Shadow CIB Diff"
-msgstr ""
+msgstr "シャドーCIBの差分"
 
 #: ../mgmt/client/haclient.py.in:5685
 #, python-format
 msgid "Differences between the live CIB and the shadow CIB \"%s\""
-msgstr ""
+msgstr "ライブCIBとシャドーCIB \"%s\" の違い"
 
 #: ../mgmt/client/haclient.py.in:5728
 msgid "Diff Files"
-msgstr ""
+msgstr "差分ファイル"
 
 #: ../mgmt/client/haclient.py.in:5729
 msgid "All Files"
-msgstr ""
+msgstr "全てのファイル"
 
 #: ../mgmt/client/haclient.py.in:5738
 msgid "Cannot save the shadow diff"
-msgstr ""
+msgstr "差分の保存に失敗しました"
 
 #: ../mgmt/client/haclient.py.in:5765
 msgid "Create Shadow CIB"
-msgstr ""
+msgstr "シャドーCIBの作成"
 
 #: ../mgmt/client/haclient.py.in:5787
 msgid "A copy of the live CIB"
-msgstr ""
+msgstr "ライブCIBからのコピー"
 
 #: ../mgmt/client/haclient.py.in:5791
 msgid "A new CIB with empty cluster configuration"
-msgstr ""
+msgstr "新しいCIBを空のクラスタ構成で作成"
 
 #: ../mgmt/client/haclient.py.in:5820
 msgid "Please specify a name for the shadow CIB."
-msgstr ""
+msgstr "シャドーCIBの名前を指定して下さい."
 
 #: ../mgmt/client/haclient.py.in:5823
 msgid "Please specify another name for avoiding confusion."
-msgstr ""
+msgstr "システムで予約された名前の為、別の名前で指定して下さい."
 
 #: ../mgmt/client/haclient.py.in:5826
 #, python-format
 msgid "A shadow CIB \"%s\" already exists and it's currently active."
-msgstr ""
+msgstr "指定されたシャドーCIB \"%s\"は、既に存在してアクティブになっています."
 
 #: ../mgmt/client/haclient.py.in:5829
 #, python-format
 msgid "A shadow CIB \"%s\" already exists."
-msgstr ""
+msgstr "指定されたシャドーCIB \"%s\" は、既に存在します。"
 
 #: ../mgmt/client/haclient.py.in:5830
 msgid "Specify another name, or select \"Force\" if you want to override it."
-msgstr ""
+msgstr "別の名前を指定するか、\"強制\"を指定して上書きして下さい。"
 
 #. else :
 #: ../mgmt/client/haclient.py.in:5849
 #, python-format
 msgid "A new shadow CIB \"%s\" has been successfully created."
-msgstr ""
+msgstr "新しいシャドーCIB \"%s\" が作成されました。"
 
 #: ../mgmt/client/haclient.py.in:5850
 msgid "Switch to it now?"
-msgstr ""
+msgstr "切り換えますか?"
 
 #: ../mgmt/client/haclient.py.in:5852
 #, python-format
 msgid "Switch to the new created shadow CIB \"%s\"?"
-msgstr ""
+msgstr "新しいシャドーCIB \"%s\"に切り換えますか?"
 
 #: ../mgmt/client/haclient.py.in:5920
 msgid "Cannot find any transition record"
-msgstr ""
+msgstr "遷移情報が見付かりません"
 
 #: ../mgmt/client/haclient.py.in:5960
 msgid "Generating the cluster report may take a while,"
-msgstr ""
+msgstr "クラスタリポートを作成中です"
 
 #: ../mgmt/client/haclient.py.in:5961
 msgid "depending on the size of logs..."
-msgstr ""
+msgstr "必要となるサイズを計算していてます..."
 
 #: ../mgmt/client/haclient.py.in:5973
 msgid "Failed to generate the cluster report"
-msgstr ""
+msgstr "クラスタリポートの生成に失敗しました"
 
 #: ../mgmt/client/haclient.py.in:5983
 msgid "Incomplete data"
-msgstr ""
+msgstr "不完全なデータ"
 
 #: ../mgmt/client/haclient.py.in:6016 ../mgmt/client/haclient.py.in:6024
 #: ../mgmt/client/haclient.py.in:6086 ../mgmt/client/haclient.py.in:6110
 #: ../mgmt/client/haclient.py.in:6128
 msgid "Tar error"
-msgstr ""
+msgstr "圧縮(Tar)エラー"
 
 #: ../mgmt/client/haclient.py.in:6174
 msgid "Pacemaker GUI"
-msgstr ""
+msgstr "Pacemaker GUI"
 
 #: ../mgmt/client/haclient.py.in:6273
 msgid "Connection"
-msgstr ""
+msgstr "接続"
 
 #: ../mgmt/client/haclient.py.in:6274
 msgid "Login..."
-msgstr ""
+msgstr "ログイン"
 
 #: ../mgmt/client/haclient.py.in:6274
 msgid "login to cluster"
-msgstr ""
+msgstr "クラスタにログイン"
 
 #: ../mgmt/client/haclient.py.in:6275
 msgid "Logout"
-msgstr ""
+msgstr "ログアウト"
 
 #: ../mgmt/client/haclient.py.in:6275
 msgid "logout from cluster"
-msgstr ""
+msgstr "クラスタからログアウト"
 
 #: ../mgmt/client/haclient.py.in:6276
 msgid "Quit"
-msgstr ""
+msgstr "終了"
 
 #: ../mgmt/client/haclient.py.in:6276
 msgid "Quit the Program"
-msgstr ""
+msgstr "プログラムを終了"
 
 #: ../mgmt/client/haclient.py.in:6277
 msgid "View"
-msgstr ""
+msgstr "ビュー"
 
 #: ../mgmt/client/haclient.py.in:6278
 msgid "Shadow"
-msgstr ""
+msgstr "シャドー"
 
 #: ../mgmt/client/haclient.py.in:6279
 msgid "New"
-msgstr ""
+msgstr "新規"
 
 #: ../mgmt/client/haclient.py.in:6279
 msgid "Create a new shadow CIB"
-msgstr ""
+msgstr "シャドーCIBの作成"
 
 #: ../mgmt/client/haclient.py.in:6280
 msgid "Diff"
-msgstr ""
+msgstr "差分"
 
 #: ../mgmt/client/haclient.py.in:6280
 msgid "Differences between the live CIB and the shadow CIB"
-msgstr ""
+msgstr "ライブCIBとシャドーCIBの違い"
 
 #: ../mgmt/client/haclient.py.in:6281
 msgid "Recreate a shadow CIB from the live CIB"
-msgstr ""
+msgstr "ライブCIBでシャドーCIBを再作成"
 
 #: ../mgmt/client/haclient.py.in:6282
 msgid "Delete"
-msgstr ""
+msgstr "削除"
 
 #: ../mgmt/client/haclient.py.in:6282
 msgid "Delete a shadow CIB"
-msgstr ""
+msgstr "シャドーCIBの削除"
 
 #: ../mgmt/client/haclient.py.in:6283
 msgid "Commit"
-msgstr ""
+msgstr "コミット"
 
 #: ../mgmt/client/haclient.py.in:6283
 msgid "Upload a shadow CIB to the cluster"
-msgstr ""
+msgstr "シャドーCIBをクラスタにアップロード"
 
 #: ../mgmt/client/haclient.py.in:6284
 msgid "Switch"
-msgstr ""
+msgstr "切り換え"
 
 #: ../mgmt/client/haclient.py.in:6284
 msgid "Switch working CIB"
-msgstr ""
+msgstr "作業中のCIBに切り換え"
 
 #: ../mgmt/client/haclient.py.in:6285
 msgid "Tools"
-msgstr ""
+msgstr "ツール"
 
 #: ../mgmt/client/haclient.py.in:6286
 msgid "Transition Information"
-msgstr ""
+msgstr "遷移情報"
 
 #: ../mgmt/client/haclient.py.in:6287
 msgid "Show Transition Information"
-msgstr ""
+msgstr "遷移情報の表示"
 
 #: ../mgmt/client/haclient.py.in:6288
 msgid "generate a cluster report"
-msgstr ""
+msgstr "クラスタリポートの生成"
 
 #: ../mgmt/client/haclient.py.in:6294
 msgid "Switch to simple mode"
-msgstr ""
+msgstr "簡単モードに切り換え"
 
 #: ../mgmt/client/haclient.py.in:6295
 msgid "Switch to expert mode"
-msgstr ""
+msgstr "エキスパートモードに切り換え"
 
 #: ../mgmt/client/haclient.py.in:6296
 msgid "Switch to hack mode"
-msgstr ""
+msgstr "Hackモードに切り換え"
 
 #: ../mgmt/client/haclient.py.in:6359
 msgid "Not Connected"
-msgstr ""
+msgstr "未接続"
 
 #: ../mgmt/client/haclient.py.in:6452
 msgid "Can't resolve address of server "
-msgstr ""
+msgstr "サーバのアドレスが解決出来ませんでした. "
 
 #: ../mgmt/client/haclient.py.in:6458 ../mgmt/client/haclient.py.in:6464
 msgid "Can't connect to server "
-msgstr ""
+msgstr "サーバに接続出来ませんでした. "
 
 #: ../mgmt/client/haclient.py.in:6467
 msgid ""
@@ -1162,113 +1192,126 @@ msgid ""
 " User Name or Password may be wrong.\n"
 " or the user doesn't belong to haclient group"
 msgstr ""
+"ログイン認証に失敗しました。\n"
+"ユーザ、パスワードに誤りがあるか、\n"
+"ユーザがhaclientグループに設定されていない可能性があります。"
 
 #: ../mgmt/client/haclient.py.in:6470
 msgid ""
 "Can't login to server.\n"
 " The protocols may be mismatched."
 msgstr ""
+"サーバにログイン出来ませんでした。\n"
+" プロトコルが合っていない可能性があります。"
 
 #: ../mgmt/client/haclient.py.in:6480 ../mgmt/client/haclient.py.in:6573
 msgid "Updating data from server..."
-msgstr ""
+msgstr "サーバから更新データ受信中..."
 
 #: ../mgmt/client/haclient.py.in:6582
 msgid "Reconnecting..."
-msgstr ""
+msgstr "再接続しています..."
 
 #: ../mgmt/client/haclient.py.in:6631
 msgid "Cannot get the CIB"
-msgstr ""
+msgstr "CIBを取得出来ませんでした"
 
 #: ../mgmt/client/haclient.py.in:6637
 msgid "Failed to parse the CIB"
-msgstr ""
+msgstr "CIBのパースに失敗しました"
 
 #: ../mgmt/client/haclient.py.in:6647
 msgid "Cannot parse the CIB"
-msgstr ""
+msgstr "CIBがパース出来ませんでした"
 
 #: ../mgmt/client/haclient.py.in:6757 ../mgmt/client/haclient.py.in:6833
 msgid "Cannot get the Relax-NG schema"
-msgstr ""
+msgstr "Relax-NGスキーマを取得出来ませんでした"
 
 #: ../mgmt/client/haclient.py.in:6763
 msgid "Failed to parse the CIB XML"
-msgstr ""
+msgstr "CIB XMLのパースに失敗しました"
 
 #: ../mgmt/client/haclient.py.in:6769 ../mgmt/client/haclient.py.in:6841
 msgid "Failed to parse the Relax-NG schema"
-msgstr ""
+msgstr "Relax-NGスキーマのパースに失敗しました"
 
 #: ../mgmt/client/haclient.py.in:6849
 msgid "Cannot get started in Relax-NG schema"
-msgstr ""
+msgstr "Relax-NGスキーマの取得開始に失敗しました"
 
 #: ../mgmt/client/haclient.py.in:7190
 msgid "Cannot get the DTD"
-msgstr ""
+msgstr "DTDの取得に失敗しました"
 
 #: ../mgmt/client/haclient.py.in:8851 ../mgmt/client/haclient.py.in:9113
 msgid ".  "
-msgstr ""
+msgstr ".  "
 
 #: ../mgmt/client/haclient.py.in:8851 ../mgmt/client/haclient.py.in:9113
 msgid ".\n"
-msgstr ""
+msgstr ".\n"
 
 #: ../mgmt/client/haclient.py.in:8874 ../mgmt/client/haclient.py.in:8878
 #, python-format
 msgid "\"%s\" is required"
-msgstr ""
+msgstr "\"%s\" が必要です。"
 
 #: ../mgmt/client/haclient.py.in:8874
 msgid "Class"
-msgstr ""
+msgstr "クラス"
 
 #: ../mgmt/client/haclient.py.in:8878
 msgid "Provider"
-msgstr ""
+msgstr "プロバイダ"
 
 #: ../mgmt/client/haclient.py.in:8879
 msgid "for an OCF primitive"
-msgstr ""
+msgstr "OCFプリミティブ用"
 
 #: ../mgmt/client/haclient.py.in:8888
 msgid ""
 "If not all resources can be active, the cluster will stop lower priority "
 "resources in order to keep higher priority ones active."
 msgstr ""
+"全リソースを起動出来ない時、クラスタは高い優先度のリソースの為に、"
+"低い優先度のリソースを停止します."
 
 #: ../mgmt/client/haclient.py.in:8890
 msgid "What state should the cluster attempt to keep this resource in?"
-msgstr ""
+msgstr "クラスタはリソースをどんな状態にしておきますか?"
 
 #: ../mgmt/client/haclient.py.in:8892
 msgid "Is the cluster allowed to start and stop the resource?"
-msgstr ""
+msgstr "クラスタはリソースを制御(開始・停止)しますか?"
 
 #: ../mgmt/client/haclient.py.in:8897
 msgid ""
 "How much does the resource prefer to stay where it is? Defaults to the value "
 "of \"default-resource-stickiness\""
 msgstr ""
+"どのくらいリソースが留まる事を期待していますか?\n"
+"デフォルト:\"default-resource-stickiness\""
 
 #: ../mgmt/client/haclient.py.in:8899
 msgid ""
 "How many failures should occur for this resource on a node before making the "
 "node ineligible to host this resource. Default: \"none\""
 msgstr ""
+"何回の故障がリソースで発生した時に、ノード上でリソースの管理を出来なくするか. "
+"デフォルト:\"none\""
 
 #: ../mgmt/client/haclient.py.in:8900
 msgid "(mark the resource as unmanaged)"
-msgstr ""
+msgstr "(リソースは管理外にマークされます)"
 
 #: ../mgmt/client/haclient.py.in:8901
 msgid ""
 "What should the cluster do if it ever finds the resource active on more than "
 "one node."
 msgstr ""
+"リソースが１つのノード以外の複数のノードで実行されている事を検知した時、 "
+"クラスタは何をしなければならないか."
 
 #: ../mgmt/client/haclient.py.in:8903
 msgid ""
@@ -1276,30 +1319,37 @@ msgid ""
 "(and potentially allowing the resource back to the node on which it failed. "
 "Default: \"never\""
 msgstr ""
+"何秒の間、故障が起こらなかったようにする為に待つか. "
+"(これによって、故障したノードで再びリソースが稼働を続ける機会を与える."
+"デフォルト: \"never\")"
 
 #: ../mgmt/client/haclient.py.in:8908
 msgid ""
 "How many copies of the resource to start. Defaults to the number of nodes in "
 "the cluster."
 msgstr ""
+"いくつのリソースのコピーを開始するか. "
+"デフォルト:クラスタのノード数."
 
 #: ../mgmt/client/haclient.py.in:8910
 msgid "How many copies of the resource can be started on a single node."
-msgstr ""
+msgstr "いくつのリソースのコピーを１つのノードで開始するか."
 
 #: ../mgmt/client/haclient.py.in:8914
 msgid ""
 "When stopping or starting a copy of the clone, tell all the other copies "
 "beforehand and when the action was successful."
 msgstr ""
+"クローンのコピーが開始するか停止する時、 動作の成功を"
+"他のコピーに通知するか."
 
 #: ../mgmt/client/haclient.py.in:8916
 msgid "Does each copy of the clone perform a different function?"
-msgstr ""
+msgstr "クローンのそれぞれのコピーは、異なる機能を実行するか?"
 
 #: ../mgmt/client/haclient.py.in:8918
 msgid "Should the copies be started in series (instead of in parallel)"
-msgstr ""
+msgstr "コピーは直列に始まるべきである.(並列の代わりに)"
 
 #: ../mgmt/client/haclient.py.in:8920
 msgid ""
@@ -1307,87 +1357,90 @@ msgid ""
 "that instances can start/stop as soon as their peer instance has (rather "
 "than waiting for every instance of the other clone has)."
 msgstr ""
+"マスタ・クローンのインスタンス達が、他のインスタンスを"
+"待たずにすぐに開始・停止出来るように、マスタ・クローン内での制約の作用 "
+"を変更します."
 
 #: ../mgmt/client/haclient.py.in:8925
 msgid "How many copies of the resource can be promoted to master status."
-msgstr ""
+msgstr "いくつのコピーがマスタになれるか."
 
 #: ../mgmt/client/haclient.py.in:8927
 msgid ""
 "How many copies of the resource can be promoted to master status on a single "
 "node."
-msgstr ""
+msgstr "いつくのコピーが１つのノードでマスタになれるか."
 
 #: ../mgmt/client/haclient.py.in:9059
 msgid "required"
-msgstr ""
+msgstr "必須"
 
 #: ../mgmt/client/haclient.py.in:9062
 msgid ", "
-msgstr ""
+msgstr ", "
 
 #: ../mgmt/client/haclient.py.in:9063
 msgid "unique"
-msgstr ""
+msgstr "ユニーク"
 
 #: ../mgmt/client/haclient.py.in:9408
 #, python-format
 msgid "Invalid \"%s\""
-msgstr ""
+msgstr "無効 \"%s\""
 
 #: ../mgmt/client/haclient.py.in:9485
 msgid "* Specify dependencies between the actions on two resources"
-msgstr ""
+msgstr "* ２つのリソースに影響する動作の間で、依存を指定して下さい."
 
 #: ../mgmt/client/haclient.py.in:9486 ../mgmt/client/haclient.py.in:9604
 msgid "* Please set the required attributes"
-msgstr ""
+msgstr "* 必須属性を設定して下さい."
 
 #: ../mgmt/client/haclient.py.in:9491 ../mgmt/client/haclient.py.in:9507
 #, python-format
 msgid "* %s %s %s %s %s"
-msgstr ""
+msgstr "* %s %s %s %s %s"
 
 #: ../mgmt/client/haclient.py.in:9496 ../mgmt/client/haclient.py.in:9499
 #: ../mgmt/client/haclient.py.in:9511 ../mgmt/client/haclient.py.in:9514
 #: ../mgmt/client/haclient.py.in:9567 ../mgmt/client/haclient.py.in:9578
 #, python-format
 msgid "* If cannot %s %s, do not %s %s"
-msgstr ""
+msgstr "* %s %sには出来ません。%sに%sをしないで下さい."
 
 #: ../mgmt/client/haclient.py.in:9549
 msgid "* Specify the order of actions on resources"
-msgstr ""
+msgstr "* リソースの動作の順序を指定して下さい."
 
 #: ../mgmt/client/haclient.py.in:9550 ../mgmt/client/haclient.py.in:9656
 msgid "* Please set the required attributes or add resource sets"
-msgstr ""
+msgstr "* 必須の属性を設定するか、リソースセットを設定して下さい."
 
 #: ../mgmt/client/haclient.py.in:9561 ../mgmt/client/haclient.py.in:9575
 #, python-format
 msgid "* %s %s before %s %s"
-msgstr ""
+msgstr "* %s %s の後ろの %s %s"
 
 #: ../mgmt/client/haclient.py.in:9603
 msgid "* Specify where a resource should run relative to another resource"
-msgstr ""
+msgstr "* リソースが他のリソースとして、どのように動作するか指定して下さい."
 
 #: ../mgmt/client/haclient.py.in:9611 ../mgmt/client/haclient.py.in:9621
 #: ../mgmt/client/haclient.py.in:9668
 #, python-format
 msgid "* Make %s %s on the same node as %s %s  ( %s according to %s )"
-msgstr ""
+msgstr "* %s の %s は、%s の %s と同じノードになるように設定して下さい.( %s は %s に従う)"
 
 #: ../mgmt/client/haclient.py.in:9614 ../mgmt/client/haclient.py.in:9624
 #: ../mgmt/client/haclient.py.in:9671
 #, python-format
 msgid "* If %s cannot be %s on any node, then %s won't be %s anywhere"
-msgstr ""
+msgstr "* もし、%s がどのノードでも %s でないならば、 %s はどこでも %s ではありません."
 
 #: ../mgmt/client/haclient.py.in:9617 ../mgmt/client/haclient.py.in:9673
 #, python-format
 msgid "* If %s cannot be %s on any node, %s won't be affected"
-msgstr ""
+msgstr "* もし、%s がどのノードでも %s でないならば、 %s は影響を受けません."
 
 #: ../mgmt/client/haclient.py.in:9627 ../mgmt/client/haclient.py.in:9637
 #: ../mgmt/client/haclient.py.in:9685
@@ -1395,6 +1448,7 @@ msgstr ""
 msgid ""
 "* Prevent %s from being %s on the same node as %s %s  ( %s according to %s )"
 msgstr ""
+"* %s の %s が、%s の %s と同じノードになることを防いで下さい.  ( %s は %s に従う)"
 
 #: ../mgmt/client/haclient.py.in:9630 ../mgmt/client/haclient.py.in:9640
 #: ../mgmt/client/haclient.py.in:9688
@@ -1403,35 +1457,39 @@ msgid ""
 "* If %s is %s on the only (or every) available node, then %s won't be %s "
 "anywhere"
 msgstr ""
+"* %s が唯一の（または毎）利用できるノードの上の %s であるならば、"
+" %s はどこにも %s ではありません."
 
 #: ../mgmt/client/haclient.py.in:9633 ../mgmt/client/haclient.py.in:9690
 #, python-format
 msgid ""
 "* If %s is %s on the only (or every) available node, %s won't be affected"
 msgstr ""
+"* %s が唯一の（または毎）利用できるノードの上の %s であるならば、%s は影響を受けません."
 
 #: ../mgmt/client/haclient.py.in:9643
 msgid ""
 "* Combine this colocation score and the appropriate location scores to "
 "decide where to put the resources"
-msgstr ""
+msgstr "* リソースの場所を決定する為に、colocationのスコアとlocationのスコアを組み合わせて下さい"
 
 #: ../mgmt/client/haclient.py.in:9655
 msgid "* Specify where resources should run relative to other resources"
-msgstr ""
+msgstr "* リソースが他のリソースとどのように動作するか指定して下さい"
 
 #: ../mgmt/client/haclient.py.in:9663
 #, python-format
 msgid ""
 "* Combine this \"Score\" and corresponding location scores to decide where "
 "to place %s"
-msgstr ""
+msgstr "* %s の場所を決定するする為に、この\"スコア\"とlocationのスコアを組み合わせて下さい"
 
 #: ../mgmt/client/haclient.py.in:9676
 #, python-format
 msgid ""
 "* Prefer to make %s %s on the same node as %s %s  ( %s according to %s )"
 msgstr ""
+"* %s の %s と %s の %s が、同じノードになるように設定して下さい.( %s は %s に従う) "
 
 #: ../mgmt/client/haclient.py.in:9693
 #, python-format
@@ -1439,6 +1497,8 @@ msgid ""
 "* Prefer to prevent %s from being %s on the same node as %s %s  ( %s "
 "according to %s )"
 msgstr ""
+"* %s の %s と %s の %s が、同じノードにならないように設定して下さい.( %s は %s に従う) "
+""
 
 #: ../mgmt/client/haclient.py.in:9699
 #, python-format
@@ -1446,306 +1506,308 @@ msgid ""
 "* Please specify a valid \"Score\" to determine the location relationship "
 "between %s and %s"
 msgstr ""
+"* %s と %s の場所の関係を決定する為に、有効な\"スコア\"を指定して下さい"
+""
 
 msgid "Clone"
-msgstr ""
+msgstr "クローン"
 
 msgid "Expression"
-msgstr ""
+msgstr "式"
 
 msgid "Operations"
-msgstr ""
+msgstr "操作"
 
 msgid "Password"
-msgstr ""
+msgstr "パスワード"
 
 msgid "Score"
-msgstr ""
+msgstr "スコア"
 
 msgid "Interval"
-msgstr ""
+msgstr "間隔"
 
 msgid "Interval Origin"
-msgstr ""
+msgstr "間隔起点"
 
 msgid "Timeout"
-msgstr ""
+msgstr "タイムアウト"
 
 msgid "Start Delay"
-msgstr ""
+msgstr "開始遅延"
 
 msgid "Enabled"
-msgstr ""
+msgstr "操作可能"
 
 msgid "Disabled"
-msgstr ""
+msgstr "操作無効"
 
 msgid "Record Pending"
-msgstr ""
+msgstr "待ち操作の記録"
 
 msgid "Role"
-msgstr ""
+msgstr "ロール"
 
 msgid "Requires"
-msgstr ""
+msgstr "開始前"
 
 msgid "Prereq"
-msgstr ""
+msgstr "開始前"
 
 msgid "On Fail"
-msgstr ""
+msgstr "故障時の動作"
 
 msgid "First"
-msgstr ""
+msgstr "最初"
 
 msgid "Then"
-msgstr ""
+msgstr "次"
 
 msgid "First Action"
-msgstr ""
+msgstr "最初の動作"
 
 msgid "Then Action"
-msgstr ""
+msgstr "次の動作"
 
 msgid "Action"
-msgstr ""
+msgstr "動作"
 
 msgid "To Action"
-msgstr ""
+msgstr "動作へ"
 
 msgid "Symmetrical"
-msgstr ""
+msgstr "対称形"
 
 msgid "With Resource"
-msgstr ""
+msgstr "連携するリソース"
 
 msgid "Resource Role"
-msgstr ""
+msgstr "リソースロール"
 
 msgid "With Resource Role"
-msgstr ""
+msgstr "連携するリソースロール"
 
 msgid "From Role"
-msgstr ""
+msgstr "ロールから"
 
 msgid "To Role"
-msgstr ""
+msgstr "ロールへ"
 
 msgid "Node Attribute"
-msgstr ""
+msgstr "ノード属性"
 
 msgid "Optional"
-msgstr ""
+msgstr "オプション"
 
 msgid "User Name"
-msgstr ""
+msgstr "ユーザ名"
 
 msgid "Nodes"
-msgstr ""
+msgstr "ノード"
 
 msgid "Constraints"
-msgstr ""
+msgstr "制約"
 
 msgid "Resource Location"
-msgstr ""
+msgstr "リソースの配置"
 
 msgid "Resource Order"
-msgstr ""
+msgstr "リソースの順序"
 
 msgid "Resource Colocation"
-msgstr ""
+msgstr "リソースの組み合わせ配置"
 
 msgid "failed"
-msgstr ""
+msgstr "故障"
 
 msgid "unmanaged"
-msgstr ""
+msgstr "管理外"
 
 msgid "Value"
-msgstr ""
+msgstr "値"
 
 msgid "Description"
-msgstr ""
+msgstr "説明"
 
 msgid "Attribute"
-msgstr ""
+msgstr "属性"
 
 msgid "Operation"
-msgstr ""
+msgstr "操作"
 
 msgid "Debug Level"
-msgstr ""
+msgstr "デバックレベル"
 
 msgid "UDP Port"
-msgstr ""
+msgstr "UDPポート"
 
 msgid "Keep Alive"
-msgstr ""
+msgstr "監視間隔"
 
 msgid "Warning Time"
-msgstr ""
+msgstr "遅延警告時間"
 
 msgid "Dead Time"
-msgstr ""
+msgstr "故障検出時間"
 
 msgid "Initial Dead Time"
-msgstr ""
+msgstr "初期停止時間"
 
 msgid "Quorum Server"
-msgstr ""
+msgstr "Quorumサーバ"
 
 msgid "Use Logd"
-msgstr ""
+msgstr "Logd利用"
 
 msgid "Auto Join"
-msgstr ""
+msgstr "自動参加"
 
 msgid "API Authentication"
-msgstr ""
+msgstr "API権限"
 
 msgid "Auto Failback"
-msgstr ""
+msgstr "自動ファイルバック"
 
 msgid "Baud Rate"
-msgstr ""
+msgstr "ボーレート"
 
 msgid "Debug File"
-msgstr ""
+msgstr "デバックファイル"
 
 msgid "Dead Ping"
-msgstr ""
+msgstr "Pingノード障害検出時間"
 
 msgid "Heartbeat Version"
-msgstr ""
+msgstr "Heartbeatバージョン"
 
 msgid "Log Facility"
-msgstr ""
+msgstr "ログファシリティ"
 
 msgid "Message Format"
-msgstr ""
+msgstr "メッセージ形式"
 
 msgid "Nice Failback"
-msgstr ""
+msgstr "Nice Failback"
 
 msgid "running (Master)"
-msgstr ""
+msgstr "起動中(マスタ)"
 
 msgid "running (Slave)"
-msgstr ""
+msgstr "起動中(スレーブ)"
 
 msgid "Force"
-msgstr ""
+msgstr "強制"
 
 msgid "Server(:Port)"
-msgstr ""
+msgstr "サーバ(:Port)"
 
 msgid "Boolean Op"
-msgstr ""
+msgstr "論理操作"
 
 msgid "Score Attribute"
-msgstr ""
+msgstr "スコア属性"
 
 msgid "Score Attribute Mangle"
-msgstr ""
+msgstr "Score Attribute Mangle"
 
 msgid "Configuration"
-msgstr ""
+msgstr "構成"
 
 msgid "Refresh"
-msgstr ""
+msgstr "リフレッシュ"
 
 msgid "Reprobe"
-msgstr ""
+msgstr "再プローブ"
 
 msgid "Required"
-msgstr ""
+msgstr "必須"
 
 msgid "Primitive"
-msgstr ""
+msgstr "プリミティブ"
 
 msgid "Group"
-msgstr ""
+msgstr "グループ"
 
 msgid "Master"
-msgstr ""
+msgstr "マスタ"
 
 msgid "Uname"
-msgstr ""
+msgstr "ホスト名"
 
 msgid "CRM Config"
-msgstr ""
+msgstr "CRMの構成"
 
 msgid "Cluster Property Set"
-msgstr ""
+msgstr "クラスタプロパティセット"
 
 msgid "Resource Defaults"
-msgstr ""
+msgstr "リソースのデフォルト"
 
 msgid "Operation Defaults"
-msgstr ""
+msgstr "操作のデフォルト"
 
 msgid "Meta Attributes"
-msgstr ""
+msgstr "メタ属性"
 
 msgid "Instance Attributes"
-msgstr ""
+msgstr "インスタンス属性"
 
 msgid "Nvpair"
-msgstr ""
+msgstr "名前・設定値"
 
 msgid "To Node"
-msgstr ""
+msgstr "ノードへ"
 
 msgid "Duration"
-msgstr ""
+msgstr "期間"
 
 msgid "Migration Threshold"
-msgstr ""
+msgstr "移動閾値"
 
 msgid "Fail Count"
-msgstr ""
+msgstr "故障回数"
 
 msgid "Call ID"
-msgstr ""
+msgstr "呼出ID"
 
 msgid "Return Code"
-msgstr ""
+msgstr "返値"
 
 msgid "Last Run"
-msgstr ""
+msgstr "最後の実行時間"
 
 msgid "Exec Time"
-msgstr ""
+msgstr "実行時間"
 
 msgid "Queue Time"
-msgstr ""
+msgstr "キュー時間"
 
 msgid "Last Return Code Change"
-msgstr ""
+msgstr "最後の返値の変化時間"
 
 msgid "ID Ref"
-msgstr ""
+msgstr "参照ID"
 
 msgid "End"
-msgstr ""
+msgstr "終了"
 
 msgid "Rule"
-msgstr ""
+msgstr "ルール"
 
 msgid "Lifetime"
-msgstr ""
+msgstr "生存時間"
 
 msgid "Date Expression"
-msgstr ""
+msgstr "日付式"
 
 msgid "Date Spec"
-msgstr ""
+msgstr "日付スペック"
 
 msgid "Resource Set"
-msgstr ""
+msgstr "リソースセット"
 
 msgid "Sequential"
-msgstr ""
+msgstr "連続"
 
 msgid "Resource Ref"
-msgstr ""
+msgstr "参照リソース"
