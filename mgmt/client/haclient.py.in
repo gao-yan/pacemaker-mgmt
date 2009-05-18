@@ -3017,7 +3017,7 @@ class EditXMLDlg:
 				try :
 					new_xml_node = parseString(new_xml_str).documentElement
 				except xml.parsers.expat.ExpatError, msg :
-					msgbox(_("Failed to parse the XML") + _(": ") + _(msg))
+					msgbox(_("Failed to parse the XML") + _(": ") + str(msg))
 					continue
 
 				return new_xml_node
@@ -6647,8 +6647,8 @@ class Manager :
 		try :
 			xml_nodes["cib"] = parseString(cib_xml).documentElement
 		except xml.parsers.expat.ExpatError, msg :
-			#msgbox(_("Failed to parse the CIB") + _(": ") + _(msg))
-			log("Failed to parse the CIB: " + _(msg))
+			#msgbox(_("Failed to parse the CIB") + _(": ") + str(msg))
+			log("Failed to parse the CIB: " + str(msg))
 			return False 
 			
 		"""xml_status = self.cib_do_cmd("cib_query\nstatus")
@@ -6775,13 +6775,13 @@ class Manager :
 		try :
 			cib_doc = etree.fromstring(cib_xml_node.toxml())
 		except etree.Error, msg :
-			msgbox(_("Failed to parse the CIB XML") + _(": ") + _(msg))
+			msgbox(_("Failed to parse the CIB XML") + _(": ") + str(msg))
 			return False
 			
 		try :
 			relaxng = etree.RelaxNG(file = rng_doc)
 		except etree.Error, msg :
-			msgbox(_("Failed to parse the Relax-NG schema") + _(": ") + _(msg))
+			msgbox(_("Failed to parse the Relax-NG schema") + _(": ") + str(msg))
 			return False
 		#try :
 		#	relaxng.assertValid(cib_doc)
@@ -6858,8 +6858,8 @@ class Manager :
 		try :
 			rng_doc = parseString(crm_schema).documentElement
 		except xml.parsers.expat.ExpatError, msg :
-			#msgbox(_("Failed to parse the Relax-NG schema") + _(": ") + _(msg) + schema_info)
-			log("Failed to parse the Relax-NG schema: " + _(msg) + schema_info)
+			#msgbox(_("Failed to parse the Relax-NG schema") + _(": ") + str(msg) + schema_info)
+			log("Failed to parse the Relax-NG schema: " + str(msg) + schema_info)
 			return None
 
 		start_nodes = rng_doc.getElementsByTagName("start")
