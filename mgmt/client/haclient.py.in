@@ -1867,7 +1867,7 @@ class ManageTree :
 					status = _("online(dc)")
 				else :
 					status = _("online")
-			if manager.get_node_config(node)["standby"] == "True" :
+			if manager.get_node_config(node).get("standby") == "True" :
 				status = status + "-"+ _("standby")
 
 		node_iter = self.store.append(nodes_root,["node", node, status, ""])
