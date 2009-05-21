@@ -139,10 +139,20 @@ int cib_cache_enable = FALSE;
 	if (rsc == NULL) {						\
 		char *as_clone = crm_concat(argv[1], "0", ':');		\
 		rsc = pe_find_resource(data_set->resources, as_clone);	\
+		crm_free(as_clone);					\
 		if (rsc == NULL) {					\
 			free_data_set(data_set);			\
 			return strdup(MSG_FAIL"\nno such resource");	\
 		}							\
+	}
+
+#define free_cib_cached()					\
+	if (cib_cache_enable) {					\
+		if (cib_cached != NULL) {			\
+			cleanup_calculations(cib_cached);	\
+			free(cib_cached);			\
+			cib_cached = NULL;			\
+		}						\
 	}
 
 /* internal functions */
@@ -216,6 +226,7 @@ free_data_set(pe_working_set_t* data_set)
 		free(data_set);
 	}
 }	
+
 char* 
 crm_failed_msg(crm_data_t* output, int rc) 
 {
@@ -393,8 +404,11 @@ final_crm(void)
 	if(cib_conn != NULL) {
 		in_shutdown = TRUE;
 		cib_conn->cmds->signoff(cib_conn);
+		cib_delete(cib_conn);
 		cib_conn = NULL;
 	}
+
+	free_cib_cached();
 }
 
 /* event handler */
@@ -404,13 +418,8 @@ on_cib_diff(const char *event, crm_data_t *msg)
 	if (debug_level) {
 		mgmt_debug(LOG_DEBUG,"update cib finished");
 	}
-	if (cib_cache_enable) {
-		if (cib_cached != NULL) {
-			cleanup_calculations(cib_cached);
-			free(cib_cached);
-			cib_cached = NULL;
-		}
-	}
+
+	free_cib_cached();
 	
 	fire_event(EVT_CIB_CHANGED);
 }
@@ -1236,6 +1245,7 @@ on_cleanup_rsc(char* argv[], int argc)
 	time_t now = time(NULL);
 	char *dest_node = NULL;
 	int rc;
+	char *buffer = NULL;
 	
 	ARGC_CHECK(3);
 	snprintf(our_pid, 10, "%d", getpid());
@@ -1247,14 +1257,18 @@ on_cleanup_rsc(char* argv[], int argc)
 	send_hello_message(crmd_channel, our_pid, client_name, "0", "1");
 	delete_lrm_rsc(crmd_channel, argv[1], argv[2]);
 	refresh_lrm(crmd_channel, NULL); 
+	crmd_channel->ops->destroy(crmd_channel);
 	
 	rc = query_node_uuid(cib_conn, argv[1], &dest_node);
 	if (rc != cib_ok) {
 		mgmt_log(LOG_WARNING, "Could not map uname=%s to a UUID: %s\n",
 				argv[1], cib_error2string(rc));
 	} else {
+		buffer = crm_concat("fail-count", argv[2], '-');
 		delete_attr(cib_conn, cib_sync_call, XML_CIB_TAG_STATUS, dest_node, NULL,
-				NULL, crm_concat("fail-count", argv[2], '-'), NULL, FALSE);
+				NULL, buffer, NULL, FALSE);
+		crm_free(dest_node);
+		crm_free(buffer);
 		mgmt_log(LOG_INFO, "Delete fail-count for %s from %s", argv[2], argv[1]);
 	}
 	/* force the TE to start a transition */
@@ -1317,6 +1331,7 @@ on_get_rsc_status(char* argv[], int argc)
 	resource_t* rsc;
 	char* ret;
 	pe_working_set_t* data_set;
+	char* num_s;
 	
 	data_set = get_data_set();
 	GET_RESOURCE()
@@ -1366,7 +1381,9 @@ on_get_rsc_status(char* argv[], int argc)
 			ret = mgmt_msg_append(ret, "master");
 			break;
 	}
-	ret = mgmt_msg_append(ret, crm_itoa(rsc->migration_threshold));
+	num_s = crm_itoa(rsc->migration_threshold);
+	ret = mgmt_msg_append(ret, num_s);
+	crm_free(num_s);
 	free_data_set(data_set);
 	return ret;
 }
@@ -1755,6 +1772,7 @@ on_cib_query(char* argv[], int argc)
 	crm_data_t* output = NULL;
 	const char* type = NULL;
 	char* ret = NULL;
+	char* buffer = NULL;
 	ARGC_CHECK(2)
 
 	type = argv[1];
@@ -1765,10 +1783,12 @@ on_cib_query(char* argv[], int argc)
 		return crm_failed_msg(output, rc);
 	} else {
 		ret = strdup(MSG_OK);
-		ret = mgmt_msg_append(ret, dump_xml_formatted(output));
+		buffer = dump_xml_formatted(output);
+		ret = mgmt_msg_append(ret, buffer);
 #if 0		
-		mgmt_log(LOG_INFO, "%s", dump_xml_formatted(output)); 
+		mgmt_log(LOG_INFO, "%s", buffer); 
 #endif
+		crm_free(buffer);
 		free_xml(output);
 		return ret;
 	}
