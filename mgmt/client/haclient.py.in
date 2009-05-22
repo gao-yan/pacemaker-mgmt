@@ -4683,6 +4683,7 @@ class TransitionInfoDlg :
 	def __init__(self, input_info_list) :
 		global top_window
 		self.input_info_list = input_info_list
+		self.G = None
 		dialog = gtk.Dialog("Transition Information", top_window, gtk.DIALOG_MODAL,
 			(gtk.STOCK_HELP, gtk.RESPONSE_HELP, gtk.STOCK_CLOSE, gtk.RESPONSE_CLOSE, 
 			gtk.STOCK_SAVE, gtk.RESPONSE_APPLY))
@@ -4805,6 +4806,9 @@ class TransitionInfoDlg :
 			else :
 				break
 
+		if support_gv and self.G != None :
+			gv.rm(self.G)
+
 		dialog.destroy()
 		top_window = save_top_window
 
@@ -4843,6 +4847,8 @@ class TransitionInfoDlg :
 		else :
 			pe_input = self.input_info_list[int(self.spin_btn.get_value())][0]
 
+		if self.G != None :
+			gv.rm(self.G)
 		self.image.clear()
 		graph_str = self.gen_pe_graph(pe_input)
 		if graph_str != None :
