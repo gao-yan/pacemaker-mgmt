@@ -1257,7 +1257,6 @@ on_cleanup_rsc(char* argv[], int argc)
 	send_hello_message(crmd_channel, our_pid, client_name, "0", "1");
 	delete_lrm_rsc(crmd_channel, argv[1], argv[2]);
 	refresh_lrm(crmd_channel, NULL); 
-	crmd_channel->ops->destroy(crmd_channel);
 	
 	rc = query_node_uuid(cib_conn, argv[1], &dest_node);
 	if (rc != cib_ok) {
@@ -1278,6 +1277,7 @@ on_cleanup_rsc(char* argv[], int argc)
 		    XML_CIB_TAG_CRMCONFIG, NULL, NULL, NULL, "last-lrm-refresh", now_s, FALSE);
 	crm_free(now_s);
 
+	crmd_channel->ops->destroy(crmd_channel);
 	
 	return strdup(MSG_OK);
 }
