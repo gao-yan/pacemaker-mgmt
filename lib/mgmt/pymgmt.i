@@ -1,4 +1,8 @@
 %module pymgmt
+%newobject mgmt_recvmsg;
+%newobject mgmt_sendmsg;
+%newobject mgmt_thread_sendmsg;
+
 %{
 #include "../../include/mgmt/mgmt_client.h"
 
