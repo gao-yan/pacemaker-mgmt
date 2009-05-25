@@ -6492,7 +6492,7 @@ class Manager :
 		self.password = password
 
 		window.statusbar.push(2,_("Updating data from server..."))
-		self.update_timer = gobject.timeout_add(200, self.update)
+		self.update_timer = gobject.timeout_add(500, self.update)
 		
 		self.do_cmd("regevt\nevt:cib_changed")
 		self.do_cmd("regevt\nevt:disconnected")
@@ -6597,7 +6597,7 @@ class Manager :
 			gobject.source_remove(self.update_timer)
 		else :
 			window.statusbar.push(2,_("Updating data from server..."))
-		self.update_timer = gobject.timeout_add(200, self.update)
+		self.update_timer = gobject.timeout_add(500, self.update)
 	
 	def on_event(self, source, condition, event_str) :
 		self.session_lock.acquire()
