@@ -7171,7 +7171,9 @@ class Manager :
 
 	def update(self) :
 		self.cache_clear()
-		if self.update_cib_xml() :
+		if not manager.connected :
+			retval = False
+		elif self.update_cib_xml() :
 			self.get_active_cib()
 			self.parent = {}
 			window.update()
