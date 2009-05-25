@@ -6499,6 +6499,9 @@ class Manager :
 
 		fd = mgmt_inputfd()
 		self.io_tag = gobject.io_add_watch(fd, gobject.IO_IN, self.on_event, None)
+
+		gobject.timeout_add(5000, self.update_crm_metadata, priority=gobject.PRIORITY_DEFAULT_IDLE)
+
 		return True
 	
 	def query(self, query, keep_in_catch = False) :
@@ -7169,8 +7172,6 @@ class Manager :
 	def update(self) :
 		self.cache_clear()
 		if self.update_cib_xml() :
-			for crm_cmd in ["pengine", "crmd"] :
-				self.query("crm_metadata\n%s"%(crm_cmd),True)
 			self.get_active_cib()
 			self.parent = {}
 			window.update()
@@ -7229,6 +7230,11 @@ class Manager :
 		return self.dtd_elems[elem_name]
 
 	# cluster functions		
+	def update_crm_metadata(self) :
+		for crm_cmd in ["pengine", "crmd"] :
+			self.query("crm_metadata\n%s"%(crm_cmd),True)
+		return False
+
 	def get_crm_metadata(self, crm_cmd) :
 		if crm_cmd == None :
 			return None
