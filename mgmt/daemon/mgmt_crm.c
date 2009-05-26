@@ -2021,11 +2021,7 @@ on_get_pe_inputs(char* argv[], int argc)
 			if (S_ISREG(statbuf.st_mode)){
 				memset(info, 0, sizeof(info));
 				snprintf(info, sizeof(info), "%s %ld ", dirp->d_name, (long int)statbuf.st_mtime);
-				if (strlen(buf)+strlen(info) >= sizeof(buf)) {
-					ret = mgmt_msg_append(ret, buf);
-					memset(buf, 0, sizeof(buf));
-				}
-				strncat(buf, info, sizeof(buf)-strlen(buf)-1);
+				append_str(info, buf, ret);
 			}
 		}
 	}
