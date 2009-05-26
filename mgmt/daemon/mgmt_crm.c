@@ -1901,6 +1901,7 @@ on_gen_cluster_report(char* argv[], int argc)
 {
 	char cmd[MAX_STRLEN];
 	char buf[MAX_STRLEN];
+	char str[MAX_STRLEN];
 	char filename[MAX_STRLEN];
 	const char *tempdir = "/tmp";
 	char *dest = tempnam(tempdir, "clrp.");
@@ -1969,18 +1970,19 @@ on_gen_cluster_report(char* argv[], int argc)
 		return strdup(MSG_FAIL"\nFailed to encode the cluster report to base64");
 	 }
 
+	memset(buf, 0, sizeof(buf));
 	ret = strdup(MSG_OK);
 	ret = mgmt_msg_append(ret, filename);
 	while (!feof(fstream)) {
-		memset(buf, 0, sizeof(buf));
-		if (fgets(buf, sizeof(buf), fstream) != NULL) {
-			ret = mgmt_msg_append(ret, buf);
-			ret[strlen(ret)-1] = '\0';
+		if (fgets(str, sizeof(str), fstream) != NULL) {
+			append_str(str, buf, ret);
 		}
 		else {
 			sleep(1);
 		}
 	}
+	ret = mgmt_msg_append(ret, buf);
+
 	if (pclose(fstream) == -1){
 		mgmt_log(LOG_WARNING, "cluster_report: failed to close pipe");
 	}
