@@ -155,13 +155,28 @@ int cib_cache_enable = FALSE;
 		}						\
 	}
 
-#define append_str(str, buf, mgmt_msg)				\
+#define append_str(msg, buf, str)				\
 	if (strlen(buf)+strlen(str) >= sizeof(buf)) {		\
-		mgmt_msg = mgmt_msg_append(mgmt_msg, buf);	\
+		msg = mgmt_msg_append(msg, buf);		\
 		memset(buf, 0, sizeof(buf));			\
 	}							\
 	strncat(buf, str, sizeof(buf)-strlen(buf)-1);
 
+#define gen_msg_from_fstream(fstream, msg, buf, str)		\
+	memset(buf, 0, sizeof(buf));				\
+	while (!feof(fstream)){					\
+		if (fgets(str, sizeof(str), fstream) != NULL){	\
+			append_str(msg, buf, str);		\
+		}						\
+		else{						\
+			sleep(1);				\
+		}						\
+	}							\
+	msg = mgmt_msg_append(msg, buf);			\
+	if (msg[strlen(msg)-1] == '\n'){			\
+		msg[strlen(msg)-1] = '\0';			\
+	}
+	
 
 /* internal functions */
 /*
@@ -577,6 +592,7 @@ on_crm_shadow(char* argv[], int argc)
 {
 	char cmd[MAX_STRLEN];
 	char buf[MAX_STRLEN];
+	char str[MAX_STRLEN];
 	char* ret = NULL;
 	int require_name = 0;
 	const char* name = "";
@@ -650,16 +666,7 @@ on_crm_shadow(char* argv[], int argc)
 	}
 
 	ret = strdup(MSG_FAIL);
-	while (!feof(fp_out)){
-		memset(buf, 0, sizeof(buf));
-		if (fgets(buf, sizeof(buf), fp_out) != NULL){
-			ret = mgmt_msg_append(ret, buf);
-			ret[strlen(ret)-1] = '\0';
-		}
-		else{
-			sleep(1);
-		}
-	}
+	gen_msg_from_fstream(fp_out, ret, buf, str);
 
 	/*if (pclose2(fp_in, fp_out, childpid) == -1) {*/
 	if ((stat = pclose2(NULL, fp_out, childpid)) == -1) {
@@ -752,17 +759,8 @@ on_get_crm_schema(char* argv[], int argc)
 		return strdup(MSG_FAIL);
 	}
 
-	memset(buf, 0, sizeof(buf));
 	ret = strdup(MSG_OK);
-	while (!feof(fstream)){
-		if (fgets(str, sizeof(str), fstream) != NULL){
-			append_str(str, buf, ret);
-		}
-		else{
-			sleep(1);
-		}
-	}
-	ret = mgmt_msg_append(ret, buf);
+	gen_msg_from_fstream(fstream, ret, buf, str);
 	
 	if (fclose(fstream) == -1)
 		mgmt_log(LOG_WARNING, "failed to fclose stream");
@@ -785,17 +783,8 @@ on_get_crm_dtd(char* argv[], int argc)
 		return strdup(MSG_FAIL);
 	}
 
-	memset(buf, 0, sizeof(buf));
 	ret = strdup(MSG_OK);
-	while (!feof(fstream)){
-		if (fgets(str, sizeof(str), fstream) != NULL){
-			append_str(str, buf, ret);
-		}
-		else{
-			sleep(1);
-		}
-	}
-	ret = mgmt_msg_append(ret, buf);
+	gen_msg_from_fstream(fstream, ret, buf, str);
 
 	if (fclose(fstream) == -1)
 		mgmt_log(LOG_WARNING, "failed to fclose stream");
@@ -882,6 +871,7 @@ on_get_crm_metadata(char* argv[], int argc)
 {
 	char cmd[MAX_STRLEN];
 	char buf[MAX_STRLEN];	
+	char str[MAX_STRLEN];	
 	char* ret = NULL;
 	FILE *fstream = NULL;
 
@@ -900,16 +890,7 @@ on_get_crm_metadata(char* argv[], int argc)
 	}
 
 	ret = strdup(MSG_OK);
-	while (!feof(fstream)){
-		memset(buf, 0, sizeof(buf));
-		if (fgets(buf, sizeof(buf), fstream) != NULL){
-			ret = mgmt_msg_append(ret, buf);
-			ret[strlen(ret)-1] = '\0';
-		}
-		else{
-			sleep(1);
-		}
-	}
+	gen_msg_from_fstream(fstream, ret, buf, str);
 
 	if (pclose(fstream) == -1)
 		mgmt_log(LOG_WARNING, "failed to close pipe");
@@ -1744,6 +1725,7 @@ on_cib_query(char* argv[], int argc)
 	const char* type = NULL;
 	char cmd[MAX_STRLEN];
 	char buf[MAX_STRLEN];	
+	char str[MAX_STRLEN];	
 	char* ret = strdup(MSG_OK);
 	FILE *fstream = NULL;
 	ARGC_CHECK(2)
@@ -1758,16 +1740,7 @@ on_cib_query(char* argv[], int argc)
 		return strdup(MSG_FAIL);
 	}
 
-	while (!feof(fstream)){
-		memset(buf, 0, sizeof(buf));
-		if (fgets(buf, sizeof(buf), fstream) != NULL){
-			ret = mgmt_msg_append(ret, buf);
-			ret[strlen(ret)-1] = '\0';
-		}
-		else{
-			sleep(1);
-		}
-	}
+	gen_msg_from_fstream(fstream, ret, buf, str);
 
 	if (pclose(fstream) == -1)
 		mgmt_log(LOG_WARNING, "failed to close pipe");
@@ -1971,18 +1944,9 @@ on_gen_cluster_report(char* argv[], int argc)
 		return strdup(MSG_FAIL"\nFailed to encode the cluster report to base64");
 	 }
 
-	memset(buf, 0, sizeof(buf));
 	ret = strdup(MSG_OK);
 	ret = mgmt_msg_append(ret, filename);
-	while (!feof(fstream)) {
-		if (fgets(str, sizeof(str), fstream) != NULL) {
-			append_str(str, buf, ret);
-		}
-		else {
-			sleep(1);
-		}
-	}
-	ret = mgmt_msg_append(ret, buf);
+	gen_msg_from_fstream(fstream, ret, buf, str);
 
 	if (pclose(fstream) == -1){
 		mgmt_log(LOG_WARNING, "cluster_report: failed to close pipe");
@@ -2024,7 +1988,7 @@ on_get_pe_inputs(char* argv[], int argc)
 			if (S_ISREG(statbuf.st_mode)){
 				memset(info, 0, sizeof(info));
 				snprintf(info, sizeof(info), "%s %ld ", dirp->d_name, (long int)statbuf.st_mtime);
-				append_str(info, buf, ret);
+				append_str(ret, buf, info);
 			}
 		}
 	}
@@ -2071,17 +2035,8 @@ on_gen_pe_graph(char* argv[], int argc)
 		return strdup(MSG_FAIL"\nError on read the transition graph file");
 	}
 
-	memset(buf, 0, sizeof(buf));
 	ret = strdup(MSG_OK);
-	while (!feof(fstream)){
-		if (fgets(str, sizeof(str), fstream) != NULL){
-			append_str(str, buf, ret);
-		}
-		else{
-			sleep(1);
-		}
-	}
-	ret = mgmt_msg_append(ret, buf);
+	gen_msg_from_fstream(fstream, ret, buf, str);
 
 	if (fclose(fstream) == -1){
 		mgmt_log(LOG_WARNING, "failed to fclose stream");
@@ -2131,17 +2086,8 @@ on_gen_pe_info(char* argv[], int argc)
 		return strdup(MSG_FAIL"\nError on popen the ptest command");
 	}
 
-	memset(buf, 0, sizeof(buf));
 	ret = strdup(MSG_OK);
-	while (!feof(fstream)){
-		if (fgets(str, sizeof(str), fstream) != NULL){
-			append_str(str, buf, ret);
-		}
-		else{
-			sleep(1);
-		}
-	}
-	ret = mgmt_msg_append(ret, buf);
+	gen_msg_from_fstream(fstream, ret, buf, str);
 
 	if (fclose(fstream) == -1){
 		mgmt_log(LOG_WARNING, "failed to fclose stream");
