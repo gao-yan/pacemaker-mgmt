@@ -2043,6 +2043,7 @@ on_gen_pe_graph(char* argv[], int argc)
 	char* ret = NULL;
 	char cmd[MAX_STRLEN];
 	char buf[MAX_STRLEN];
+	char str[MAX_STRLEN];
 	char *dotfile = NULL;
 	FILE *fstream = NULL;
 
@@ -2071,17 +2072,17 @@ on_gen_pe_graph(char* argv[], int argc)
 		return strdup(MSG_FAIL"\nError on read the transition graph file");
 	}
 
+	memset(buf, 0, sizeof(buf));
 	ret = strdup(MSG_OK);
 	while (!feof(fstream)){
-		memset(buf, 0, sizeof(buf));
-		if (fgets(buf, sizeof(buf), fstream) != NULL){
-			ret = mgmt_msg_append(ret, buf);
-			ret[strlen(ret)-1] = '\0';
+		if (fgets(str, sizeof(str), fstream) != NULL){
+			append_str(str, buf, ret);
 		}
 		else{
 			sleep(1);
 		}
 	}
+	ret = mgmt_msg_append(ret, buf);
 
 	if (fclose(fstream) == -1){
 		mgmt_log(LOG_WARNING, "failed to fclose stream");
@@ -2099,6 +2100,7 @@ on_gen_pe_info(char* argv[], int argc)
 	char cmd[MAX_STRLEN];
 	int i;
 	char buf[MAX_STRLEN];
+	char str[MAX_STRLEN];
 	FILE *fstream = NULL;
 
 	ARGC_CHECK(3)
@@ -2130,17 +2132,17 @@ on_gen_pe_info(char* argv[], int argc)
 		return strdup(MSG_FAIL"\nError on popen the ptest command");
 	}
 
+	memset(buf, 0, sizeof(buf));
 	ret = strdup(MSG_OK);
 	while (!feof(fstream)){
-		memset(buf, 0, sizeof(buf));
-		if (fgets(buf, sizeof(buf), fstream) != NULL){
-			ret = mgmt_msg_append(ret, buf);
-			ret[strlen(ret)-1] = '\0';
+		if (fgets(str, sizeof(str), fstream) != NULL){
+			append_str(str, buf, ret);
 		}
 		else{
 			sleep(1);
 		}
 	}
+	ret = mgmt_msg_append(ret, buf);
 
 	if (fclose(fstream) == -1){
 		mgmt_log(LOG_WARNING, "failed to fclose stream");
