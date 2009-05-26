@@ -775,6 +775,7 @@ on_get_crm_dtd(char* argv[], int argc)
 {
 	const char *dtd_file = HA_NOARCHDATAHBDIR"/crm.dtd";
 	char buf[MAX_STRLEN];	
+	char str[MAX_STRLEN];	
 	char* ret = NULL;
 	FILE *fstream = NULL;
 
@@ -784,17 +785,17 @@ on_get_crm_dtd(char* argv[], int argc)
 		return strdup(MSG_FAIL);
 	}
 
+	memset(buf, 0, sizeof(buf));
 	ret = strdup(MSG_OK);
 	while (!feof(fstream)){
-		memset(buf, 0, sizeof(buf));
-		if (fgets(buf, sizeof(buf), fstream) != NULL){
-			ret = mgmt_msg_append(ret, buf);
-			ret[strlen(ret)-1] = '\0';
+		if (fgets(str, sizeof(str), fstream) != NULL){
+			append_str(str, buf, ret);
 		}
 		else{
 			sleep(1);
 		}
 	}
+	ret = mgmt_msg_append(ret, buf);
 
 	if (fclose(fstream) == -1)
 		mgmt_log(LOG_WARNING, "failed to fclose stream");
