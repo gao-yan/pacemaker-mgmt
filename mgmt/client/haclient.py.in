@@ -5575,6 +5575,7 @@ class MainWindow :
 		for name_label in name_labels :
 			name_label.set_size_request(name_label_max_len, -1)
 
+		dialog.set_focus(widgets["password"])		
 		dialog.show_all()
 		ret =  dialog.run()
 
