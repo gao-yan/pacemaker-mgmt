@@ -6984,6 +6984,7 @@ class Manager :
 		return sorted_nodes
 
 	def real_add_obj_type(self, xml_node, obj_type_name, is_wizard = False) :
+		sub_attr_is_any_name = False 
 		if validate_type == "dtd" :
 			dtd_elem = manager.get_dtd_elem(obj_type_name)
 			sub_attr_list = dtd_elem.get_attr_list()
@@ -6991,7 +6992,6 @@ class Manager :
 			sorted_rng_nodes = manager.sorted_sub_rng_nodes_by_name(obj_type_name)
 			sub_attr_list = []
 			sub_elem_type_list = []
-			sub_attr_is_any_name = False 
 			sub_elem_is_any_name = False
 			if sorted_rng_nodes != None :
 				sub_attr_rng_nodes = sorted_rng_nodes.get("attribute", [])
