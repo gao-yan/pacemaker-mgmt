@@ -29,7 +29,6 @@ from stat import *
 from xml.dom.minidom import parseString
 from xml.dom.minidom import getDOMImplementation
 from xml.parsers.xmlproc.xmldtd import load_dtd_string
-from lxml import etree
 
 import locale, gettext
 app_name = "haclient"
@@ -41,6 +40,13 @@ from pymgmt import *
 import pygtk
 pygtk.require('2.0')
 import gtk, gobject
+
+support_lxml = False
+try :
+	from lxml import etree
+	support_lxml = True
+except ImportError :
+	pass
 
 support_gv = False
 try :
@@ -6770,6 +6776,8 @@ class Manager :
 			 cib_xml_node = manager.xml_nodes["cib"]
 
 		if validate_type == "dtd" :
+			is_valid = True
+		elif not support_lxml :
 			is_valid = True
 		else :
 			is_valid = self.validate_with_rng(cib_xml_node)
