@@ -1001,7 +1001,7 @@ on_get_running_rsc(char* argv[], int argc)
 	ARGC_CHECK(2);
 	while (cur != NULL) {
 		node = (node_t*) cur->data;
-		if (node->details->online) {
+		/*if (node->details->online) {*/
 			if (strncmp(argv[1],node->details->uname,MAX_STRLEN) == 0) {
 				GList* cur_rsc;
 				char* ret = strdup(MSG_OK);
@@ -1014,7 +1014,7 @@ on_get_running_rsc(char* argv[], int argc)
 				free_data_set(data_set);
 				return ret;
 			}
-		}
+		/*}*/
 		cur = g_list_next(cur);
 	}
 	free_data_set(data_set);

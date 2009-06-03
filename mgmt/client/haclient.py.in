@@ -1881,7 +1881,7 @@ class ManageTree :
 
 		node_iter = self.store.append(nodes_root,["node", node, status, ""])
 
-		if add_rscs and active :
+		if add_rscs :
 	 		running_rsc = manager.get_running_rsc(node)
  			for rsc in running_rsc :
  				self.add_rsc(node_iter, rsc)
