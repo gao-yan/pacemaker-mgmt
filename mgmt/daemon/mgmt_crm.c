@@ -980,6 +980,9 @@ on_get_node_config(char* argv[], int argc)
 			ret = mgmt_msg_append(ret, node->details->expected_up?"True":"False");
 			ret = mgmt_msg_append(ret, node->details->is_dc?"True":"False");
 			ret = mgmt_msg_append(ret, node->details->type==node_ping?"ping":"member");
+			ret = mgmt_msg_append(ret, node->details->pending?"True":"False");
+			ret = mgmt_msg_append(ret, node->details->standby_onfail?"True":"False");
+			
 			free_data_set(data_set);
 			return ret;
 		}

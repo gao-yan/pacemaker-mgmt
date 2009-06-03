@@ -1868,16 +1868,25 @@ class ManageTree :
 			else :
 				status = _("unknown type")
 		else :
-			if not active :
+			node_status = manager.get_node_config(node)
+			if node_status.get("online") == "True" :
+				status = _("online")
+			elif node_status.get("pending") == "True" :
+				status = _("pending")
+			else :
 				status = _("offline")
-			else :		
-				dc = manager.get_dc()
-				if dc != None and node in dc :
-					status = _("online(dc)")
-				else :
-					status = _("online")
-			if manager.get_node_config(node).get("standby") == "True" :
-				status = status + "-"+ _("standby")
+
+			if node_status.get("unclean") == "True" :
+				status += " (" + _("unclean") + ")"
+
+			if node_status.get("is_dc") == "True" :
+				status += " (" + _("dc") + ")"
+
+			if node_status.get("standby_onfail") == "True" \
+					and node_status.get("online") == "True" :
+				status += " - " + _("standby") + " (" + _("on-fail") + ")"
+			elif node_status.get("standby") == "True" :
+				status += " - " + _("standby")
 
 		node_iter = self.store.append(nodes_root,["node", node, status, ""])
 
@@ -7372,7 +7381,7 @@ class Manager :
 				
 	def get_node_config(self, node) :
 		node_attr_names = ["uname", "online","standby", "unclean", "shutdown",
-				   "expected_up","is_dc","type"]
+				   "expected_up","is_dc","type", "pending","standby_onfail"]
 				  
 		values = manager.query("node_config\n%s"%node)
 		if values == None :

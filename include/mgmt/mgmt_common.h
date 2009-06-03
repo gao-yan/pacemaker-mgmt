@@ -351,6 +351,8 @@ or
 #define F_MGMT_EXPECTED_UP			6
 #define F_MGMT_IS_DC				7
 #define F_MGMT_NODE_PING			8
+#define F_MGMT_NODE_PENDING			9
+#define F_MGMT_NODE_STRANDBY_ONFAIL		10
 
 /*
 description:
