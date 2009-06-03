@@ -1324,6 +1324,7 @@ on_get_rsc_status(char* argv[], int argc)
 	char* ret;
 	pe_working_set_t* data_set;
 	char* num_s;
+	char buf[MAX_STRLEN];
 	
 	data_set = get_data_set();
 	GET_RESOURCE()
@@ -1333,35 +1334,45 @@ on_get_rsc_status(char* argv[], int argc)
 			ret = mgmt_msg_append(ret, "unknown");
 			break;
 		case pe_native:
-			if(is_set(rsc->flags, pe_rsc_start_pending)) {
-				ret = mgmt_msg_append(ret, "starting");
-				break;
-			}
+			memset(buf, 0, sizeof(buf));
+
 			if(is_not_set(rsc->flags, pe_rsc_managed)) {
-				ret = mgmt_msg_append(ret, "unmanaged");
-				break;
+				strncat(buf, "unmanaged", sizeof(buf)-strlen(buf)-1);
 			}
-			if(is_set(rsc->flags, pe_rsc_failed)) {
-				ret = mgmt_msg_append(ret, "failed");
-				break;
+			else if(is_set(rsc->flags, pe_rsc_failed)) {
+				strncat(buf, "failed", sizeof(buf)-strlen(buf)-1);
 			}
-			if( g_list_length(rsc->running_on) == 0) {
-				ret = mgmt_msg_append(ret, "not running");
-				break;
+			else if (g_list_length(rsc->running_on) > 0
+					&& rsc->fns->active(rsc, TRUE) == FALSE) {
+				strncat(buf, "unclean", sizeof(buf)-strlen(buf)-1);
 			}
-			if( g_list_length(rsc->running_on) > 1) {
-				ret = mgmt_msg_append(ret, "multi-running");
-				break;
+			else if (g_list_length(rsc->running_on) == 0) {
+				strncat(buf, "not running", sizeof(buf)-strlen(buf)-1);
 			}
-			if( rsc->role==RSC_ROLE_SLAVE ) {
-				ret = mgmt_msg_append(ret, "running (Slave)");		
+			else if (g_list_length(rsc->running_on) > 1) {
+				strncat(buf, "multi-running", sizeof(buf)-strlen(buf)-1);
 			}
-			else if( rsc->role==RSC_ROLE_MASTER) {
-				ret = mgmt_msg_append(ret, "running (Master)");		
+			else if(is_set(rsc->flags, pe_rsc_start_pending)) {
+				strncat(buf, "starting", sizeof(buf)-strlen(buf)-1);
+			}
+			else if(rsc->role == RSC_ROLE_MASTER) {
+				strncat(buf, "running (Master)", sizeof(buf)-strlen(buf)-1);
+			}
+			else if(rsc->role == RSC_ROLE_SLAVE) {
+				strncat(buf, "running (Slave)", sizeof(buf)-strlen(buf)-1);
+			}
+			else if(rsc->role == RSC_ROLE_STARTED) {
+				strncat(buf, "running", sizeof(buf)-strlen(buf)-1);
 			}
 			else {
-				ret = mgmt_msg_append(ret, "running");		
+				strncat(buf, role2text(rsc->role), sizeof(buf)-strlen(buf)-1);
 			}
+
+			if(is_set(rsc->flags, pe_rsc_orphan)) {
+				strncat(buf, " (orphaned)", sizeof(buf)-strlen(buf)-1);
+			}
+
+			ret = mgmt_msg_append(ret, buf);
 			break;
 		case pe_group:
 			ret = mgmt_msg_append(ret, "group");

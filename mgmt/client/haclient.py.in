@@ -1680,16 +1680,19 @@ class ManageTree :
 		status = model.get_value(iter, 2)
 		iter_status = 0
 		if type == "primitive" :
-			if string.find(status, _("not running")) != -1 :
-				iter_status = 1
-			elif string.find(status, _("running")) != -1 :
-				iter_status = 0
-			elif string.find(status, _("fail")) != -1 :
+			if string.find(status, _("unmanaged")) != -1 \
+					or string.find(status, _("unclean")) != -1 :
+				iter_status = 2
+			elif string.find(status, _("failed")) != -1 :
 				iter_status = 3
 			elif string.find(status, _("starting")) != -1 :
 				iter_status = 4
 			elif string.find(status, _("stopping")) != -1 :
 				iter_status = 5
+			elif string.find(status, _("not running")) != -1 :
+				iter_status = 1
+			elif string.find(status, _("running")) != -1 :
+				iter_status = 0
 			else :
 				iter_status = 2
 		
