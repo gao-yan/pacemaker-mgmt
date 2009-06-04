@@ -4718,10 +4718,14 @@ class TransitionInfoDlg :
 		hbox.pack_start(self.live_radio_btn, False, padding=2)
 
 		history_radio_btn = gtk.RadioButton(self.live_radio_btn, _("History") + _(":"))
+		if len(input_info_list) < 1 : 
+			history_radio_btn.set_sensitive(False)
 		hbox.pack_start(history_radio_btn, False, padding=2)
 
-		max_num = len(input_info_list) - 1
-
+		if len(input_info_list) > 0 :
+			max_num = len(input_info_list) - 1
+		else :
+			max_num = 0
 		adj = gtk.Adjustment(float(max_num), 0, float(max_num), 1, 5)
 		self.spin_btn = gtk.SpinButton(adj, 0, 0)
 		self.spin_btn.set_width_chars(len(str(max_num)))
@@ -4729,7 +4733,11 @@ class TransitionInfoDlg :
 		self.spin_btn.set_sensitive(False)
 		hbox.pack_start(self.spin_btn, False, padding=2)
 
-		self.time_label = gtk.Label(input_info_list[-1][1])
+		if len(input_info_list) > 0 :
+			time_str = input_info_list[-1][1]
+		else :
+			time_str = ""
+		self.time_label = gtk.Label(time_str)
 		self.time_label.set_alignment(0, 0.5)
 		self.time_label.set_sensitive(False)
 		hbox.pack_start(self.time_label, False, padding=2)
