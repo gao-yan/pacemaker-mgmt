@@ -1988,7 +1988,7 @@ on_get_pe_inputs(char* argv[], int argc)
 	char info[MAX_STRLEN];
 	char buf[MAX_STRLEN];
 
-	if ((dp = opendir(PE_STATE_DIR)) == NULL){
+	if ((dp = opendir(pe_state_dir)) == NULL){
 		mgmt_log(LOG_ERR, "error on opendir \"%s\": %s", pe_state_dir, strerror(errno));
 		return strdup(MSG_FAIL"\nCannot open the pengine working directory");
 	}
