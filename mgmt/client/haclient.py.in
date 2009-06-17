@@ -4858,9 +4858,21 @@ class TransitionInfoDlg :
 		if input_info_list == None :
 			return
 
+		show_len = 30
+		late_len = 27
+		early_len = show_len - late_len
+
 		store = gtk.ListStore(str, str)
-		for input_info in input_info_list :
-			store.append(input_info)
+		if len(input_info_list) > show_len :
+			for input_info in input_info_list[:late_len] :
+				store.append(input_info)
+			omit_len = len(input_info_list) - show_len
+			store.append(["", _("[Omitted %d transitions...]")%omit_len])
+			for input_info in input_info_list[-early_len:] :
+				store.append(input_info)
+		else :
+			for input_info in input_info_list :
+				store.append(input_info)
 		self.combo_entry.set_model(store)
 
 	def get_pe_inputs(self, ftime, ttime) :
