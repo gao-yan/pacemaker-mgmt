@@ -613,13 +613,25 @@ or
 description:
 	get transition list
 format:
-	MSG_GET_PE_INPUTS
+	MSG_GET_PE_INPUTS FTIME TTIME
 return:
-	MSG_OK "FILENAME1 TIME1" "FILENAME2 TIME2" ... "FILENAMEn TIMEn"
+	MSG_OK FILENAME1 TIME1 FILENAME2 TIME2 ... FILENAMEn TIMEn
 or
 	MSG_FAIL REASON
 */
 #define MSG_GET_PE_INPUTS "get_pe_inputs"
+
+/*
+description:
+	get transition summary
+format:
+	MSG_GET_PE_SUMMARY <live|PE_SERIES_NAME> <""|SEQUENCE>
+return:
+	MSG_OK TIME_STAMP
+or
+	MSG_FAIL REASON
+*/
+#define MSG_GET_PE_SUMMARY "get_pe_summary"
 
 /*
 description:

@@ -24,6 +24,7 @@
 #include <regex.h>
 #include <dirent.h>
 #include <sys/wait.h>
+#include <time.h>
 
 #include <hb_config.h>
 #include <clplumbing/cl_log.h>
@@ -104,6 +105,7 @@ static char* on_cib_delete(char* argv[], int argc);
 
 static char* on_gen_cluster_report(char* argv[], int argc);
 static char* on_get_pe_inputs(char* argv[], int argc);
+static char* on_get_pe_summary(char* argv[], int argc);
 static char* on_gen_pe_graph(char* argv[], int argc);
 static char* on_gen_pe_info(char* argv[], int argc);
 
@@ -406,6 +408,7 @@ init_crm(int cache_cib)
 		
 	reg_msg(MSG_GEN_CLUSTER_REPORT, on_gen_cluster_report);
 	reg_msg(MSG_GET_PE_INPUTS, on_get_pe_inputs);
+	reg_msg(MSG_GET_PE_SUMMARY, on_get_pe_summary);
 	reg_msg(MSG_GEN_PE_GRAPH, on_gen_pe_graph);
 	reg_msg(MSG_GEN_PE_INFO, on_gen_pe_info);
 	
@@ -573,7 +576,7 @@ on_get_shadows(char* argv[], int argc)
 			snprintf(fullpath, sizeof(fullpath), "%s/%s", CRM_CONFIG_DIR, dirp->d_name);
 
 			if (stat(fullpath, &statbuf) < 0){
-				mgmt_log(LOG_WARNING, "Cannot stat the file \"%s\"", fullpath);
+				mgmt_log(LOG_WARNING, "Cannot stat the file \"%s\": %s", fullpath, strerror(errno));
 				continue;
 			}
 			if (S_ISREG(statbuf.st_mode)){
@@ -1977,46 +1980,294 @@ static const char* pe_state_dir = PE_STATE_DIR;
 static const char* pe_state_dir = HA_VARLIBDIR"/heartbeat/pengine";
 #endif
 
+typedef struct pe_series_s
+{
+	const char *name;
+	const char *param;
+	int wrap;
+} pe_series_t;
+
+pe_series_t pe_series[] = {
+        { "pe-unknown", "_dont_match_anything_", -1 },
+        { "pe-error",   "pe-error-series-max", -1, },
+        { "pe-warn",    "pe-warn-series-max", 200, },
+        { "pe-input",   "pe-input-series-max", 400, },
+};
+
+#define get_seq(seq, last, max, offset, new_seq)					\
+	if (max > 0) {									\
+		if (seq <= last) {							\
+			if (seq + offset > last) {					\
+				new_seq = -1;						\
+			} else if (seq + offset <= 0 && seq + offset + max > last) {	\
+				new_seq += max;						\
+			} else {							\
+				new_seq = seq + offset;					\
+			}								\
+		} else {								\
+			if (seq + offset <= last) {					\
+				new_seq = -1;						\
+			} else if (seq + offset > max && seq + offset - max <= last) {	\
+				new_seq -= max;						\
+			} else {							\
+				new_seq = seq + offset;					\
+			}								\
+		}									\
+	} else {									\
+		new_seq = seq + offset;							\
+	}
+
+#define get_mid_seq(first, last, max, mid)		\
+	if (max > 0 && first > last) {			\
+		mid = (first + last + max) / 2;		\
+		if (mid > max) {			\
+			mid -= max;			\
+		}					\
+	} else {					\
+		mid = (first + last) / 2;		\
+	}
+
+#define seq_lt(seq1, seq2, last, max, is_lt)			\
+	if (max > 0) {						\
+		if (seq1 > last && seq2 <= last) {		\
+			is_lt = (seq1 - max < seq2);		\
+		} else if (seq1 <= last && seq2 > last) {	\
+			is_lt = (seq1 < seq2 - max);		\
+		} else {					\
+			is_lt = (seq1 < seq2);			\
+		}						\
+	} else {						\
+		is_lt = (seq1 < seq2);				\
+	}
+
 static char*
 on_get_pe_inputs(char* argv[], int argc)
 {
 	char* ret = NULL;
-	struct dirent *dirp;
-	DIR *dp;
-	char fullpath[MAX_STRLEN];
+	time_t from_time = -1;
+	time_t to_time = -1;
+	pe_working_set_t* data_set;
+	int i = 0;
+	int wrap = -1;
+	char* value = NULL;
+	int last_seq = -1;
+	int start_seq = -1;
+	int end_seq = -1;
+	int first = -1;
+	int last = -1;
+	int from_seq = -1;
+	int to_seq = -1;
+	int mid = -1;
+	char* filename = NULL;
 	struct stat statbuf;
+	int stat_rc = -1;
+	int try_count = 0;
+	int is_lt = 0;
+	int seq = 0;
 	char info[MAX_STRLEN];
 	char buf[MAX_STRLEN];
+	int compress = TRUE;
 
-	if ((dp = opendir(pe_state_dir)) == NULL){
-		mgmt_log(LOG_ERR, "error on opendir \"%s\": %s", pe_state_dir, strerror(errno));
-		return strdup(MSG_FAIL"\nCannot open the pengine working directory");
+	ARGC_CHECK(3);
+
+	if (STRNCMP_CONST(argv[1], "") != 0) {
+		from_time = crm_int_helper(argv[1], NULL);
+	}
+	if (STRNCMP_CONST(argv[2], "") != 0) {
+		to_time = crm_int_helper(argv[2], NULL);
 	}
 
-	memset(buf, 0, sizeof(buf));
-	ret = strdup(MSG_OK);
-	while ((dirp = readdir(dp)) != NULL) {
-		if (strstr(dirp->d_name, "pe-") == dirp->d_name
-				&& strstr(dirp->d_name, "bz2") != NULL){
-			memset(fullpath, 0, sizeof(fullpath));
-			snprintf(fullpath, sizeof(fullpath), "%s/%s", pe_state_dir, dirp->d_name);
+	if (from_time >= 0 && to_time >= 0 && from_time > to_time) {
+		return strdup(MSG_FAIL"\n\"From\" time should be earlier than \"To\" time");
+	}
 
-			if (stat(fullpath, &statbuf) < 0){
-				mgmt_log(LOG_WARNING, "Cannot stat the file \"%s\"", fullpath);
-				continue;
-			}
-			if (S_ISREG(statbuf.st_mode)){
-				memset(info, 0, sizeof(info));
-				snprintf(info, sizeof(info), "%s %ld ", dirp->d_name, (long int)statbuf.st_mtime);
-				append_str(ret, buf, info);
+	data_set = get_data_set();
+
+	ret = strdup(MSG_OK);
+	for (i = 0; i < 4 ; i++) {
+		wrap = pe_series[i].wrap;
+		if (data_set != NULL && data_set->config_hash != NULL) {
+			value = g_hash_table_lookup(data_set->config_hash, pe_series[i].param);
+			if (value != NULL) {
+				wrap = crm_int_helper(value, NULL);
 			}
 		}
-	}
-	ret = mgmt_msg_append(ret, buf);
 
-	if (closedir(dp) < 0){
-		mgmt_log(LOG_WARNING, "failed to closedir \"%s\": %s", pe_state_dir, strerror(errno));
+		last_seq = get_last_sequence(pe_state_dir, pe_series[i].name);
+
+		if (wrap > 0) {
+			for (compress = 1, stat_rc = -1; compress >= 0; compress--) {
+				filename = generate_series_filename(
+        		                pe_state_dir, pe_series[i].name, last_seq, compress);
+				stat_rc = stat(filename, &statbuf);
+				crm_free(filename);
+				if (stat_rc == 0) {
+					break;
+				}
+			}
+			if (stat_rc == 0) {
+				start_seq = last_seq;
+				if (last_seq == 1) {
+					end_seq = wrap;
+				} else {
+					end_seq = last_seq -1;
+				}
+			} else {
+				start_seq = 0;
+				end_seq = last_seq - 1;
+			}
+		} else {
+			start_seq = 0;
+			end_seq = last_seq - 1;
+		}
+
+		if (end_seq < 0) {
+			continue;
+		}
+
+		first = start_seq;
+		last = end_seq;
+		mid = first;
+
+		try_count = 50;
+		while (first != last && try_count > 0) {
+			for (compress = 1, stat_rc = -1; compress >= 0; compress--) {
+				filename = generate_series_filename(
+        	        	        pe_state_dir, pe_series[i].name, mid, compress);
+				stat_rc = stat(filename, &statbuf);
+				crm_free(filename);
+				if (stat_rc == 0) {
+					break;
+				}
+			}
+
+			if (stat_rc == 0 && from_time < 0) {
+				first = mid;
+				break;
+			}	
+
+			if (stat_rc < 0 || statbuf.st_mtime < from_time) {
+				if (mid == last) {
+					first = mid;
+				} else {
+					get_seq(mid, end_seq, wrap, 1, first);
+				}
+			} else {
+				last = mid;
+			}
+			get_mid_seq(first, last, wrap, mid);
+			try_count--;
+		}
+		from_seq = first;
+
+		first = start_seq;
+		last = end_seq;
+		mid = last;
+
+		try_count = 50;
+		while (first != last && try_count > 0) {
+			for (compress = 1, stat_rc = -1; compress >= 0; compress--) {
+				filename = generate_series_filename(
+        	                	pe_state_dir, pe_series[i].name, mid, compress);
+				stat_rc = stat(filename, &statbuf);
+				crm_free(filename);
+				if (stat_rc == 0) {
+					break;
+				}
+			}
+
+			if (stat_rc == 0 && to_time < 0) {
+				last = mid;
+				break;
+			}	
+
+			if (stat_rc < 0 || statbuf.st_mtime <= to_time) {
+				if (mid == last) {
+					first = mid;
+				} else {
+					get_seq(mid, end_seq, wrap, 1, first);
+				}
+			} else {
+				last = mid;
+			}
+			get_mid_seq(first, last, wrap, mid);
+			try_count--;
+		}
+		to_seq = last;
+
+		memset(buf, 0, sizeof(buf));
+		seq_lt(from_seq, to_seq, end_seq, wrap, is_lt);
+		seq = from_seq;	
+		while (seq >= 0 && (is_lt || seq == to_seq)) {
+			for (compress = 1, stat_rc = -1; compress >= 0; compress--) {
+				filename = generate_series_filename(
+        	                	pe_state_dir, pe_series[i].name, seq, compress);
+				stat_rc = stat(filename, &statbuf);
+				if (stat_rc == 0) {
+					break;
+				} else {
+					crm_free(filename);
+				}
+			}
+
+			if (stat_rc == 0) {
+				snprintf(info, sizeof(info), "%s %ld ", basename(filename), (long)statbuf.st_mtime);
+				append_str(ret, buf, info);
+				crm_free(filename);
+			}
+
+			get_seq(seq, end_seq, wrap, 1, seq);
+			seq_lt(seq, to_seq, end_seq, wrap, is_lt);
+		}
+		ret = mgmt_msg_append(ret, buf);
+
 	}
+
+	if (data_set != NULL) {
+		free_data_set(data_set);
+	}
+	return ret;
+}
+
+static char*
+on_get_pe_summary(char* argv[], int argc)
+{
+	char* ret = NULL;
+	time_t time_stamp;
+	char* filename = NULL;
+	char info[MAX_STRLEN];
+	struct stat statbuf;
+	int stat_rc = -1;
+	int compress = TRUE;
+
+	ARGC_CHECK(3)
+	if (STRNCMP_CONST(argv[1], "live") == 0) {
+		time(&time_stamp);
+		snprintf(info, sizeof(info), "%ld", time_stamp);
+		ret = strdup(MSG_OK);
+		ret = mgmt_msg_append(ret, info);
+	} else {
+		for (compress = 1, stat_rc = -1; compress >= 0; compress--) {
+			filename = generate_series_filename(
+                       		pe_state_dir, argv[1], crm_int_helper(argv[2], NULL), compress);
+			stat_rc = stat(filename, &statbuf);
+			crm_free(filename);
+			if (stat_rc == 0) {
+				break;
+			}
+		}
+
+		if (stat_rc == 0) {
+			snprintf(info, sizeof(info), "%ld", statbuf.st_mtime);
+			ret = strdup(MSG_OK);
+			ret = mgmt_msg_append(ret, info);
+		} else {
+			mgmt_log(LOG_WARNING, "Cannot stat the transition file \"%s/%s-%s.*\": %s",
+				pe_state_dir, argv[1], argv[2], strerror(errno));
+			ret = strdup(MSG_FAIL"\nThe specified transition doesn't exist");
+		}
+	}
+
 	return ret;
 }
 
@@ -2024,18 +2275,39 @@ static char*
 on_gen_pe_graph(char* argv[], int argc)
 {
 	char* ret = NULL;
+	char* filename = NULL;
+	struct stat statbuf;
+	int stat_rc = -1;
 	char cmd[MAX_STRLEN];
 	char buf[MAX_STRLEN];
 	char str[MAX_STRLEN];
 	char *dotfile = NULL;
 	FILE *fstream = NULL;
+	int compress = TRUE;
 
-	ARGC_CHECK(2)
-	if (STRNCMP_CONST(argv[1], "live") == 0){
+	ARGC_CHECK(3)
+	if (STRNCMP_CONST(argv[1], "live") == 0) {
 		strncpy(cmd, "ptest -L", sizeof(cmd)-1);
-	}
-	else{
-		snprintf(cmd, sizeof(cmd), "ptest -x %s/%s", pe_state_dir, argv[1]);
+	} else {
+		for (compress = 1, stat_rc = -1; compress >= 0; compress--) {
+			filename = generate_series_filename(
+                        	pe_state_dir, argv[1], crm_int_helper(argv[2], NULL), compress);
+			stat_rc = stat(filename, &statbuf);
+			if (stat_rc == 0) {
+				break;
+			} else {
+				crm_free(filename);
+			}
+		}
+
+		if (stat_rc == 0) {
+			snprintf(cmd, sizeof(cmd), "ptest -x %s", filename);
+			crm_free(filename);
+		} else {
+			mgmt_log(LOG_WARNING, "Cannot stat the transition file \"%s/%s-%s.*\": %s",
+				pe_state_dir, argv[1], argv[2], strerror(errno));
+			return strdup(MSG_FAIL"\nThe specified transition doesn't exist");
+		}
 	}
 
 	strncat(cmd, " -D ", sizeof(cmd)-strlen(cmd)-1);
@@ -2071,25 +2343,45 @@ static char*
 on_gen_pe_info(char* argv[], int argc)
 {
 	char* ret = NULL;
+	char* filename = NULL;
+	struct stat statbuf;
+	int stat_rc = -1;
 	char cmd[MAX_STRLEN];
 	int i;
 	char buf[MAX_STRLEN];
 	char str[MAX_STRLEN];
 	FILE *fstream = NULL;
+	int compress = TRUE;
 
-	ARGC_CHECK(3)
+	ARGC_CHECK(4)
 	if (STRNCMP_CONST(argv[1], "live") == 0){
 		strncpy(cmd, "ptest -L", sizeof(cmd)-1);
-	}
-	else{
-		snprintf(cmd, sizeof(cmd), "ptest -x %s/%s", pe_state_dir, argv[1]);
+	} else {
+		for (compress = 1, stat_rc = -1; compress >= 0; compress--) {
+			filename = generate_series_filename(
+                        	pe_state_dir, argv[1], crm_int_helper(argv[2], NULL), compress);
+			stat_rc = stat(filename, &statbuf);
+			if (stat_rc == 0) {
+				break;
+			} else {
+				crm_free(filename);
+			}
+		}
+
+		if (stat_rc == 0) {
+			snprintf(cmd, sizeof(cmd), "ptest -x %s", filename);
+			crm_free(filename);
+		} else {
+			mgmt_log(LOG_WARNING, "Cannot stat the transition file \"%s/%s-%s.*\": %s",
+				pe_state_dir, argv[1], argv[2], strerror(errno));
+			return strdup(MSG_FAIL"\nThe specified transition doesn't exist");
+		}
 	}
 	
-	if (STRNCMP_CONST(argv[2], "scores") == 0){
+	if (STRNCMP_CONST(argv[3], "scores") == 0) {
 		strncat(cmd, " -s", sizeof(cmd)-strlen(cmd)-1);
-	}
-	else{
-		for (i = 0; i < atoi(argv[2]); i++){
+	} else {
+		for (i = 0; i < atoi(argv[3]); i++) {
 			if (i == 0){
 				strncat(cmd, " -V", sizeof(cmd)-strlen(cmd)-1);
 			}

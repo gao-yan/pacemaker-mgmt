@@ -4698,9 +4698,8 @@ class ObjectViewDlg :
 			self.dialog.set_response_sensitive(gtk.RESPONSE_APPLY, False)
 
 class TransitionInfoDlg :
-	def __init__(self, input_info_list) :
+	def __init__(self) :
 		global top_window
-		self.input_info_list = input_info_list
 		self.G = None
 		dialog = gtk.Dialog("Transition Information", top_window, gtk.DIALOG_MODAL,
 			(gtk.STOCK_HELP, gtk.RESPONSE_HELP, gtk.STOCK_CLOSE, gtk.RESPONSE_CLOSE, 
@@ -4718,34 +4717,28 @@ class TransitionInfoDlg :
 		hbox.pack_start(self.live_radio_btn, False, padding=2)
 
 		history_radio_btn = gtk.RadioButton(self.live_radio_btn, _("History") + _(":"))
-		if len(input_info_list) < 1 : 
-			history_radio_btn.set_sensitive(False)
 		hbox.pack_start(history_radio_btn, False, padding=2)
 
-		if len(input_info_list) > 0 :
-			max_num = len(input_info_list) - 1
-		else :
-			max_num = 0
-		adj = gtk.Adjustment(float(max_num), 0, float(max_num), 1, 5)
-		self.spin_btn = gtk.SpinButton(adj, 0, 0)
-		self.spin_btn.set_width_chars(len(str(max_num)))
-		self.spin_btn.set_wrap(True)
-		self.spin_btn.set_sensitive(False)
-		hbox.pack_start(self.spin_btn, False, padding=2)
+		self.search_btn = gtk.Button(stock=gtk.STOCK_FIND)
+		self.search_btn.set_sensitive(False)
+		hbox.pack_start(self.search_btn, False, padding=2)
 
-		if len(input_info_list) > 0 :
-			time_str = input_info_list[-1][1]
-		else :
-			time_str = ""
-		self.time_label = gtk.Label(time_str)
-		self.time_label.set_alignment(0, 0.5)
-		self.time_label.set_sensitive(False)
-		hbox.pack_start(self.time_label, False, padding=2)
+		store = gtk.ListStore(str, str)
+		self.combo_entry = gtk.ComboBoxEntry(store)
+		cell = gtk.CellRendererText()
+		self.combo_entry.pack_start(cell, True)
+		self.combo_entry.set_sensitive(False)
+		self.combo_entry.add_attribute(cell, 'text', 1)
+		hbox.pack_start(self.combo_entry, True, padding=2)
 
 		self.refresh_btn = gtk.Button(stock=gtk.STOCK_REFRESH)
 		hbox.pack_start(self.refresh_btn, False, padding=2)
 
 		dialog.vbox.pack_start(hbox, False, padding=2)
+
+		self.summary_label = gtk.Label()
+		self.summary_label.set_alignment(0, 0.5)
+		dialog.vbox.pack_start(self.summary_label, False, padding=5)
 
 		notebook = gtk.Notebook()
 		dialog.vbox.pack_start(notebook, True)
@@ -4808,7 +4801,9 @@ class TransitionInfoDlg :
 		sw.add(self.pe_scores_text)
 
 		history_radio_btn.connect("toggled", self.on_radio_changed)
-		self.spin_btn.connect("value-changed", self.on_value_changed)
+		self.search_btn.connect("clicked", self.on_search)
+		self.combo_entry.connect("changed", self.on_value_changed)
+		self.combo_entry.child.connect("activate", self.on_refresh)
 		self.refresh_btn.connect("clicked", self.on_refresh)
 		self.detail_spin_btn.connect("value-changed", self.on_detail_value_changed)
 		self.detail_refresh_btn.connect("clicked", self.on_detail_refresh)
@@ -4840,41 +4835,170 @@ class TransitionInfoDlg :
 
 	def on_radio_changed(self, radio_btn) :
 		radio_active = radio_btn.get_active()
-		self.spin_btn.set_sensitive(radio_active)
-		self.time_label.set_sensitive(radio_active)
+		self.search_btn.set_sensitive(radio_active)
+		self.combo_entry.set_sensitive(radio_active)
 
 		self.refresh_btn.set_sensitive(True)
 
-	def on_value_changed(self, spin_btn) :
-		value = int(spin_btn.get_value())
-		self.time_label.set_text(self.input_info_list[value][1])
-
+	def on_value_changed(self, combo_entry) :
 		self.refresh_btn.set_sensitive(True)
+
+	def on_search(self, search_btn) :
+		rpdlg = TimeFrameDlg()
+		pe_params = rpdlg.set_params(_("Transtion"), (True, True, True, False))
+		if pe_params == None :
+			return
+
+		if pe_params.get("ftime") != None :
+			pe_params["ftime"] = int(time.mktime(pe_params["ftime"]))
+		if pe_params.get("ttime") != None :
+			pe_params["ttime"] = int(time.mktime(pe_params["ttime"]))
+
+		input_info_list = self.get_pe_inputs(pe_params.get("ftime", ""), pe_params.get("ttime", ""))
+		if input_info_list == None :
+			return
+
+		store = gtk.ListStore(str, str)
+		for input_info in input_info_list :
+			store.append(input_info)
+		self.combo_entry.set_model(store)
+
+	def get_pe_inputs(self, ftime, ttime) :
+		input_info = manager.do_cmd("get_pe_inputs\n%s\n%s"%(ftime, ttime))
+		if manager.failed_reason != "" :
+			msgbox(manager.failed_reason)
+			return None
+		elif input_info == None or len(input_info) < 1 :
+			msgbox(_("Cannot find any transition record"))
+			return None
+
+		input_dict = {}
+		for i in range(len(input_info)) :
+			input_list = input_info[i].split()
+			j = 0
+			while j < len(input_list) :
+				time_stamp = float(input_list[j+1])
+				if not input_dict.has_key(time_stamp) :
+					input_dict[time_stamp] = []
+				input_dict[time_stamp].append(input_list[j])
+				j += 2
+
+		input_time_list = input_dict.keys()
+		input_time_list.sort(reverse = True)
+
+		input_info_list = []
+		for i in range(len(input_time_list)) :
+			input_time = input_time_list[i]
+
+			input_files = input_dict[input_time]
+			input_files.sort()
+			for input_file in input_files :
+				input_id = os.path.splitext(input_file)[0]
+				info_text = time.ctime(input_time)
+				input_info_list.append([input_id, info_text])
+
+		return input_info_list
 
 	def on_detail_value_changed(self, spin_btn) :
 		self.detail_refresh_btn.set_sensitive(True)
 
 	def on_refresh(self, btn=None) :
-		self.show_pe_graph()
-		self.show_pe_detail()
-		self.show_pe_scores()
+		pe_input = self.get_pe_input_id()
+		if pe_input == None :
+			return
+
+		pe_summary = manager.do_cmd("get_pe_summary\n%s\n%s"%(pe_input[0], pe_input[1]))
+		if pe_summary == None or len(pe_summary) < 1 :
+			msgbox(_("The specified transtion doesn't exist"))
+			return
+
+		if pe_input[0] == "live" :
+			label_text = "Live"
+		else :
+			label_text = "-".join(pe_input)
+
+		time_str = time.ctime(float(pe_summary[0]))
+		label_text +=  "  (" + time_str + ")"
+		self.summary_label.set_markup('<b>' + label_text + '</b>')
+
+		self.show_pe_graph(pe_input)
+		self.show_pe_detail(pe_input)
+		self.show_pe_scores(pe_input)
 		self.refresh_btn.set_sensitive(False)
 		self.detail_refresh_btn.set_sensitive(False)
 
 	def on_detail_refresh(self, btn=None) :
-		self.show_pe_detail()
+		pe_input = self.get_pe_input_id_label()
+		if pe_input == None :
+			return
+
+		self.show_pe_detail(pe_input)
 		self.detail_refresh_btn.set_sensitive(False)
 
-	def show_pe_graph(self) :
+	def get_pe_input_id(self) :
+		if self.live_radio_btn.get_active() :
+			pe_input = ("live", "")
+		else :
+			pe_series = ["error", "warn", "input"]
+			error_str = _("Please specify a proper identity of a transition") + _(".") + "\n" \
+					+ _("Such as") + _(":")  \
+					+ "\"pe-error-100\", \"warn-36\", \"input 62\", \"pe-error-45.bz2\"..." + "\n" \
+					+ _("Transition type: \"error\", \"warn\" or \"input\"")
+			pe_str = self.combo_entry.child.get_text()
+			if len(pe_str) == 0 :
+				msgbox(error_str)
+				return None
+				
+			pe_str_lower = pe_str.lower()
+			for pe_type in pe_series :
+				if pe_str_lower.count(pe_type) :
+					break
+			else :
+				msgbox(error_str)
+				return None
+
+			for i in range(len(pe_str)) :
+				if pe_str[i].isdigit() :
+					num_start = i
+					break
+			else :
+				msgbox(error_str)
+				return None
+
+			for i in range(num_start, len(pe_str)) :
+				if not pe_str[i].isdigit() :
+					pe_num = pe_str[num_start:i]
+					break
+			else :
+				pe_num = pe_str[num_start:]
+
+			pe_input = ("pe-" + pe_type, pe_num)
+
+		return pe_input
+
+	def get_pe_input_id_label(self) :
+		summary_text = self.summary_label.get_text()
+		pe_input_id = summary_text.split("(")[0].rstrip()
+		if pe_input_id == "Live" :
+			pe_input = ("live", "")
+		elif pe_input_id.startswith("pe-") :
+			id_split = pe_input_id.split("-")
+			if len(id_split) == 3 :
+				pe_input = (id_split[0] + "-" + id_split[1], id_split[2])
+			else :
+				pe_input = None
+		else :
+			pe_input = None
+
+		return pe_input
+
+	def show_pe_graph(self, pe_input) :
 		if not support_gv :
 			return
-		if self.live_radio_btn.get_active() :
-			pe_input = "live"
-		else :
-			pe_input = self.input_info_list[int(self.spin_btn.get_value())][0]
 
 		if self.G != None :
 			gv.rm(self.G)
+			self.G = None
 		self.image.clear()
 		graph_str = self.gen_pe_graph(pe_input)
 		if graph_str != None :
@@ -4893,7 +5017,7 @@ class TransitionInfoDlg :
 		self.graph_str = graph_str
 
 	def gen_pe_graph(self, pe_input) :
-		graph_lines = manager.do_cmd("gen_pe_graph\n%s"%pe_input)
+		graph_lines = manager.do_cmd("gen_pe_graph\n%s\n%s"%(pe_input[0], pe_input[1]))
 		if manager.failed_reason != "" :
 			msgbox(manager.failed_reason)
 			return None
@@ -4903,16 +5027,11 @@ class TransitionInfoDlg :
 		graph_str = "\n".join(graph_lines)
 		return graph_str
 
-	def show_pe_detail(self) :
-		if self.live_radio_btn.get_active() :
-			pe_input = "live"
-		else :
-			pe_input = self.input_info_list[int(self.spin_btn.get_value())][0]
-
+	def show_pe_detail(self, pe_input) :
 		verbosity = int(self.detail_spin_btn.get_value())
 
 		self.pe_detail_textbuffer.set_text("")
-		detail_lines = manager.do_cmd("gen_pe_info\n%s\n%s"%(pe_input, verbosity))
+		detail_lines = manager.do_cmd("gen_pe_info\n%s\n%s\n%s"%(pe_input[0], pe_input[1], verbosity))
 		if manager.failed_reason != "" :
 			msgbox(manager.failed_reason)
 			return
@@ -4922,14 +5041,9 @@ class TransitionInfoDlg :
 
 		self.pe_detail_textbuffer.set_text(detail_str)
 
-	def show_pe_scores(self) :
-		if self.live_radio_btn.get_active() :
-			pe_input = "live"
-		else :
-			pe_input = self.input_info_list[int(self.spin_btn.get_value())][0]
-
+	def show_pe_scores(self, pe_input) :
 		self.pe_scores_textbuffer.set_text("")
-		scores_lines = manager.do_cmd("gen_pe_info\n%s\nscores"%pe_input)
+		scores_lines = manager.do_cmd("gen_pe_info\n%s\n%s\nscores"%(pe_input[0], pe_input[1]))
 		if manager.failed_reason != "" :
 			msgbox(manager.failed_reason)
 			return
@@ -5039,10 +5153,10 @@ class TransitionInfoDlg :
 		dialog.destroy()
 		top_window = save_top_window
 
-class ClusterReportDlg :
-	def set_params(self) :
+class TimeFrameDlg :
+	def set_params(self, title, (from_chkbtn, from_sensitive, to_chkbtn, to_sensitive)) :
 		global top_window
-		dialog = gtk.Dialog(_("Cluster Report"), top_window, gtk.DIALOG_MODAL,
+		dialog = gtk.Dialog(title, top_window, gtk.DIALOG_MODAL,
 			(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK))
 		dialog.set_border_width(5)
 		self.dialog = dialog
@@ -5051,8 +5165,8 @@ class ClusterReportDlg :
 		from_time = time.localtime(current_time - 1800)
 		to_time = time.localtime(current_time)
 
-		fdatetime = self.render_time_widgets("<b>"+_("From")+"</b>", from_time, False)
-		tdatetime = self.render_time_widgets("<b>"+_("To")+"</b>", to_time, True)
+		fdatetime = self.render_time_widgets("<b>"+_("From")+"</b>", from_time, from_chkbtn, from_sensitive)
+		tdatetime = self.render_time_widgets("<b>"+_("To")+"</b>", to_time, to_chkbtn, to_sensitive)
 
 		save_top_window = top_window
 		top_window = dialog
@@ -5065,43 +5179,50 @@ class ClusterReportDlg :
 				dialog.destroy()
 				return None
 			else :
-				ftime = fdatetime.get_time() 
+				if fdatetime.time_hbox.get_property("sensitive") :
+					ftime = fdatetime.get_time() 
+				else :
+					ftime = None
+
 				if tdatetime.time_hbox.get_property("sensitive") :
 					ttime = tdatetime.get_time()
 				else :
 					ttime = None
 
 				passed = True
-				if ttime != None and time.mktime(ftime) > time.mktime(ttime) :
+				if ftime != None and ttime != None and time.mktime(ftime) > time.mktime(ttime) :
 					msgbox(_("The \"From\" time should before the \"To\" one"))
 					passed = False
 
 				if passed :
-					report_params = {}
-					report_params["ftime"] = time.strftime("%F %T", ftime)
+					params = {}
+					if ftime != None :
+						params["ftime"] = ftime
 					if ttime != None :
-						report_params["ttime"] = time.strftime("%F %T", ttime)
+						params["ttime"] = ttime
 
 					top_window = save_top_window
 					dialog.destroy()
-					return report_params
+					return params
 
-	def render_time_widgets(self, label, default_time, sensibility) :
+	def render_time_widgets(self, label, default_time, chkbtn, sensitive) :
 		time_label = gtk.Label()
 		time_label.set_markup(_(label))
 		time_label.set_alignment(0, 0.5)
 		
 		datetime = DateTime(default_time)
 
-		if sensibility :
+		if chkbtn :
 			time_checkbutton = gtk.CheckButton()
 			time_checkbutton.add(time_label)
+			if sensitive :
+				time_checkbutton.set_active(True)
 			time_checkbutton.connect("toggled", self.on_checkbutton_toggled, datetime.time_hbox)
 			self.dialog.vbox.pack_start(time_checkbutton, False, padding=2)
-			datetime.time_hbox.set_sensitive(False)
 		else :
 			self.dialog.vbox.pack_start(time_label, False, padding=2)
 
+		datetime.time_hbox.set_sensitive(sensitive)
 		self.dialog.vbox.pack_start(datetime.time_hbox, False, padding=2)
 
 		return datetime
@@ -5949,46 +6070,17 @@ class MainWindow :
 		self.switch_submenu.show_all()
 
 	def on_transition_info(self, action) :
-		input_info = manager.do_cmd("get_pe_inputs")
-		if manager.failed_reason != "" :
-			msgbox(manager.failed_reason)
-			return
-		elif input_info == None or len(input_info) < 1 :
-			msgbox(_("Cannot find any transition record"))
-			return
-
-		input_dict = {}
-		for i in range(len(input_info)) :
-			input_list = input_info[i].split()
-			j = 0
-			while j < len(input_list) :
-				time_stamp = float(input_list[j+1])
-				if not input_dict.has_key(time_stamp) :
-					input_dict[time_stamp] = []
-				input_dict[time_stamp].append(input_list[j])
-				j += 2
-
-		input_time_list = input_dict.keys()
-		input_time_list.sort()
-
-		input_info_list = []
-		for i in range(len(input_time_list)) :
-			input_time = input_time_list[i]
-
-			input_files = input_dict[input_time]
-			input_files.sort()
-			for input_file in input_files :
-				info_text = input_file.split("-")[1].replace("input", "info").upper()
-				info_text += ": " + time.ctime(input_time)
-				input_info_list.append([input_file, info_text])
-
-		tidlg = TransitionInfoDlg(input_info_list)
+		tidlg = TransitionInfoDlg()
 
 	def on_cluster_report(self, action) :
-		rpdlg = ClusterReportDlg()
-		report_params = rpdlg.set_params()
+		rpdlg = TimeFrameDlg()
+		report_params = rpdlg.set_params(_("Cluster Report"), (False, True, True, False))
 		if report_params == None :
 			return
+
+		report_params["ftime"] = time.strftime("%F %T", report_params["ftime"])
+		if report_params.get("ttime") != None :
+			report_params["ttime"] = time.strftime("%F %T", report_params["ttime"])
 
 		report_cmd = "gen_cluster_report\n%s\n%s"%(report_params["ftime"], report_params.get("ttime", ""))
 		manager.async_do_cmd(report_cmd)
