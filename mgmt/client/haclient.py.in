@@ -5031,13 +5031,13 @@ class TransitionInfoDlg :
 		self.graph_str = graph_str
 
 	def gen_pe_graph(self, pe_input) :
-		graph_lines = manager.do_cmd("gen_pe_graph\n%s\n%s"%(pe_input[0], pe_input[1]))
-		if manager.failed_reason != "" :
-			msgbox(manager.failed_reason)
+		cmd = "gen_pe_graph\n%s\n%s"%(pe_input[0], pe_input[1])
+		graph_lines = window.do_cmd_with_pbar(cmd, _("Transition Graph"),
+				_("Generating the transition graph may take a while..."),
+				_("Failed to generate the transition graph"))
+		if graph_lines == None :
 			return None
-		elif graph_lines == None or len(graph_lines) < 1 :
-			msgbox(_("Failed to generate the transition graph"))
-			return None
+
 		graph_str = "\n".join(graph_lines)
 		return graph_str
 
@@ -5045,23 +5045,26 @@ class TransitionInfoDlg :
 		verbosity = int(self.detail_spin_btn.get_value())
 
 		self.pe_detail_textbuffer.set_text("")
-		detail_lines = manager.do_cmd("gen_pe_info\n%s\n%s\n%s"%(pe_input[0], pe_input[1], verbosity))
-		if manager.failed_reason != "" :
-			msgbox(manager.failed_reason)
+
+		cmd = "gen_pe_info\n%s\n%s\n%s"%(pe_input[0], pe_input[1], verbosity)
+		detail_lines = window.do_cmd_with_pbar(cmd, _("Transition Detail"),
+				_("Generating the transition detail may take a while..."),
+				_("Failed to generate the transition detail"))
+		if detail_lines == None :
 			return
-		elif detail_lines == None or len(detail_lines) < 1 :
-			return
+
 		detail_str = "\n".join(detail_lines)
 
 		self.pe_detail_textbuffer.set_text(detail_str)
 
 	def show_pe_scores(self, pe_input) :
 		self.pe_scores_textbuffer.set_text("")
-		scores_lines = manager.do_cmd("gen_pe_info\n%s\n%s\nscores"%(pe_input[0], pe_input[1]))
-		if manager.failed_reason != "" :
-			msgbox(manager.failed_reason)
-			return
-		elif scores_lines == None or len(scores_lines) < 1 :
+
+		cmd = "gen_pe_info\n%s\n%s\nscores"%(pe_input[0], pe_input[1])
+		scores_lines = window.do_cmd_with_pbar(cmd, _("Transition Scores"),
+				_("Generating the transition scores may take a while..."),
+				_("Failed to generate the transition scores"))
+		if scores_lines == None :
 			return
 		scores_str = "\n".join(scores_lines)
 
