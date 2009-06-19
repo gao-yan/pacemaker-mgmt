@@ -4845,7 +4845,7 @@ class TransitionInfoDlg :
 
 	def on_search(self, search_btn) :
 		rpdlg = TimeFrameDlg()
-		pe_params = rpdlg.set_params(_("Transtion"), (True, True, True, False))
+		pe_params = rpdlg.set_params(_("Transitions"), (True, True, True, False))
 		if pe_params == None :
 			return
 
@@ -4876,12 +4876,14 @@ class TransitionInfoDlg :
 		self.combo_entry.set_model(store)
 
 	def get_pe_inputs(self, ftime, ttime) :
-		input_info = manager.do_cmd("get_pe_inputs\n%s\n%s"%(ftime, ttime))
-		if manager.failed_reason != "" :
-			msgbox(manager.failed_reason)
-			return None
-		elif input_info == None or len(input_info) < 1 :
-			msgbox(_("Cannot find any transition record"))
+		cmd = "get_pe_inputs\n%s\n%s"%(ftime, ttime)
+
+		input_info = window.do_cmd_with_pbar(cmd, _("Transitions"),
+				_("Searching the transitions may take a while,") + "\n"
+				+ _("depending on the number of transitions..."),
+				_("Cannot find any transition record"))
+
+		if input_info == None :
 			return None
 
 		input_dict = {}
@@ -5678,6 +5680,30 @@ class MainWindow :
 		#self.cur_view.on_after_show()
 		if self.view_status.get(self.cur_type) != None :
 			self.cur_view.restore_status(self.view_status[self.cur_type])
+
+	def do_cmd_with_pbar(self, cmd, title, msg, fail_msg) :
+		manager.async_do_cmd(cmd)
+		pbar = ProgressPulse(title, msg, None, None,
+				lambda : manager.async_ret_list.has_key(cmd))
+		ret = pbar.run()
+		if ret in [gtk.RESPONSE_CANCEL, gtk.RESPONSE_DELETE_EVENT] :
+			return None
+
+		manager.async_ret_lock.acquire()
+		if manager.async_ret_list.has_key(cmd) :
+			ret_list = manager.async_ret_list.pop(cmd)
+		else :
+			ret_list = None
+		manager.async_ret_lock.release()
+
+		if manager.failed_reason != "" :
+			msgbox(manager.failed_reason)
+			return None
+		elif ret_list == None or len(ret_list) < 1 :
+			msgbox(fail_msg)
+			return None
+
+		return ret_list
 			
 	# ui event handler	
 	def on_quit(self, action) :
@@ -6095,22 +6121,16 @@ class MainWindow :
 			report_params["ttime"] = time.strftime("%F %T", report_params["ttime"])
 
 		report_cmd = "gen_cluster_report\n%s\n%s"%(report_params["ftime"], report_params.get("ttime", ""))
-		manager.async_do_cmd(report_cmd)
 
-		pbar = ProgressPulse(_("Cluster Report"), 
+		str_list = window.do_cmd_with_pbar(report_cmd, _("Cluster Report"), 
 					_("Generating the cluster report may take a while,")+"\n"
-					+_("depending on the size of logs..."), 
-					None, None,
-					lambda : manager.async_ret_list.has_key(report_cmd))
-		ret = pbar.run()
-		if ret not in [gtk.RESPONSE_CANCEL, gtk.RESPONSE_DELETE_EVENT] :
-			self.save_cluster_report(manager.async_ret_list.pop(report_cmd))
+					+_("depending on the size of logs..."),
+					_("Failed to generate the cluster report"))
+		if str_list != None :
+			self.save_cluster_report(str_list)
 
 	def save_cluster_report(self, str_list) :
-		if manager.failed_reason != "" :
-			msgbox(manager.failed_reason)
-			return
-		elif str_list == None or len(str_list) < 2 :
+		if str_list == None or len(str_list) < 2 :
 			msgbox(_("Failed to generate the cluster report"))
 			return
 
@@ -6522,7 +6542,8 @@ class Manager :
 	failed_reason = ""
 	dtd_elems = {}
 	session_lock = thread.allocate_lock()
-	async_ret_str = {}
+	async_ret_lock = thread.allocate_lock()
+	#async_ret_str = {}
 	async_ret_list = {} 
 	xml_nodes = {}
 	active_cib = None
@@ -6675,26 +6696,35 @@ class Manager :
 		debug(str(string.split(command, "\n"))+":"+ str(ret_list))
 		return ret_list[1:]
 
-	def async_sendmsg(self, command) :
-		self.session_lock.acquire()
-		self.async_ret_str[command] = mgmt_thread_sendmsg(command)
-		self.session_lock.release()
-		
-	def async_do_cmd(self, command) :
-		self.session_lock.acquire()
-		self.async_ret_str = {}
-		self.async_ret_list = {}
-		self.session_lock.release()
-		thread.start_new(self.async_sendmsg, (command, ))
-
-	def process_async_ret(self, command) :
+	def process_ret(self, command, ret_str) :
 		self.failed_reason = ""
-		if self.async_ret_str.get(command) == None :
+		if ret_str == None :
 			debug(str(string.split(command, "\n"))+":None")
 			self.failed_reason == "return None"
 			return None
 
-		self.async_ret_list[command] = self.ret_str2list(self.async_ret_str.pop(command), command)
+		return self.ret_str2list(ret_str, command)
+
+	def async_sendmsg(self, command) :
+		self.session_lock.acquire()
+		gobject.source_remove(self.io_tag)
+		async_ret_str = mgmt_thread_sendmsg(command)
+		fd = mgmt_inputfd()
+		self.io_tag = gobject.io_add_watch(fd, gobject.IO_IN, self.on_event, None)
+		self.session_lock.release()
+
+		self.async_ret_lock.acquire()
+		self.async_ret_list[command] = self.process_ret(command, async_ret_str)
+		self.async_ret_lock.release()
+		
+	def async_do_cmd(self, command) :
+		self.async_ret_lock.acquire()
+		#self.async_ret_str = {}
+		#self.async_ret_list = {}
+		if self.async_ret_list.has_key(command) :
+			self.async_ret_list.pop(command)
+		self.async_ret_lock.release()
+		thread.start_new(self.async_sendmsg, (command, ))
 		
 	def logout(self) :
 		mgmt_disconnect()
@@ -6734,14 +6764,6 @@ class Manager :
 		self.update_timer = gobject.timeout_add(500, self.update)
 	
 	def on_event(self, source, condition, event_str) :
-		self.session_lock.acquire()
-		if len(self.async_ret_str) > 0 :
-			for command in self.async_ret_str.keys() :
-				self.process_async_ret(command)
-			self.session_lock.release()
-			return True
-		self.session_lock.release()
-
 		if event_str == None : 	# called by gtk
 			self.session_lock.acquire()
 			event = mgmt_recvmsg()
