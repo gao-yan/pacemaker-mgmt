@@ -2211,13 +2211,88 @@ class ClusterView :
 		notebook.append_page(cluster_info_vbox, tab_label)
 		self.cluster_info_vbox = cluster_info_vbox
 
-		cib_attrs_vbox = gtk.VBox()
-		cib_attrs_vbox.set_border_width(5)
+		cib_vbox = gtk.VBox()
+		cib_vbox.set_border_width(5)
 		tab_label = gtk.Label(_("CIB"))
-		notebook.append_page(cib_attrs_vbox, tab_label)
+		notebook.append_page(cib_vbox, tab_label)
+
+		cib_attrs_vbox = gtk.VBox()
+		cib_vbox.pack_start(cib_attrs_vbox)
 		self.cib_attrs_vbox = cib_attrs_vbox
 
+		bbox = gtk.HButtonBox()
+		bbox.set_layout(gtk.BUTTONBOX_END)
+		bbox.set_spacing(5)
+		xml_btn = gtk.Button(_("View XML"))
+		bbox.add(xml_btn)
+		cib_vbox.pack_start(bbox, False)
+
+		xml_menu = gtk.Menu()
+		for obj_type in ["cib", "configuration"] :
+			if obj_type == "cib" :
+				label_text = _("The Whole CIB")
+			elif obj_type == "configuration" :
+				label_text = _("The Configuration Section")
+			xml_menu_item = gtk.MenuItem(label_text)
+			xml_menu.append(xml_menu_item)
+			xml_menu_item.connect("activate", self.edit_xml, obj_type)
+
+		xml_menu.show_all()
+		xml_btn.connect_object("event", self.popup_menu, xml_menu)
+
 		self.update()
+
+	def popup_menu(self, menu, event) :
+		if event.type == gtk.gdk.BUTTON_PRESS :
+			menu.popup(None, None, None, event.button, event.time)
+			return True
+		elif event.type == gtk.gdk.KEY_PRESS and event.keyval == gtk.keysyms.Return :
+			menu.popup(None, None, None, event.keyval, event.time)
+			return True
+		return False
+
+	def edit_xml(self, widget, obj_type) :
+		init_cib_xml_node = manager.xml_nodes["cib"]
+
+		if obj_type == "cib" :
+			xml_node = init_cib_xml_node
+		else :
+			xml_nodes = init_cib_xml_node.getElementsByTagName(obj_type)
+			if len(xml_nodes) < 1 :
+				msgbox(_("The object \"%s\" doesn't exist")%obj_type)
+				return
+			xml_node = xml_nodes[0]
+
+		orig_xml_node = xml_node.cloneNode(True)
+		replace_xml_node = xml_node
+		xml_dlg = EditXMLDlg(xml_node)
+		while True :
+			new_xml_node = xml_dlg.run()
+			if new_xml_node == None :
+				if obj_type != "cib" :
+					replace_xml_node.parentNode.replaceChild(orig_xml_node, replace_xml_node)
+				self.update()
+				break
+
+			if obj_type == "cib" :
+				init_cib_xml_node = new_xml_node
+			else :
+				replace_xml_node.parentNode.replaceChild(new_xml_node, replace_xml_node)
+				replace_xml_node = new_xml_node
+
+			xml_str = new_xml_node.toxml().replace("\n", "")
+			if not manager.validate_cib(init_cib_xml_node) :
+				continue
+			manager.cib_do_cmd("cib_replace\n%s\n%s"%(str(xml_node.tagName), str(xml_str)))
+			if manager.failed_reason != "" :
+				msgbox(manager.failed_reason)
+			else :
+				if obj_type == "cib" :
+					manager.set_update()
+				else :
+					self.update()
+				xml_dlg.destroy()
+				break
 
 	def save_status(self) :
 		page_num = self.notebook.get_current_page()
@@ -2999,6 +3074,7 @@ class EditXMLDlg:
 		dialog.show_all()
 		self.dialog = dialog
 		self.save_top_window = top_window
+		top_window = dialog
 
 	def on_changed(self, widget) :
 		self.dialog.set_response_sensitive(gtk.RESPONSE_APPLY, True)
