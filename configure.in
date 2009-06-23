@@ -1250,6 +1250,22 @@ HA_NOARCHDATAHBDIR="${datadir}/heartbeat"
 AC_DEFINE_UNQUOTED(HA_NOARCHDATAHBDIR,"$HA_NOARCHDATAHBDIR", Heartbeat noarch data directory)
 AC_SUBST(HA_NOARCHDATAHBDIR)
 
+AC_PATH_PROGS(HG, hg false)
+AC_MSG_CHECKING(build revision)
+BUILD_REVISION=unknown
+if test -f $srcdir/.hg_archival.txt; then
+   BUILD_REVISION=`cat $srcdir/.hg_archival.txt | awk '/node:/ { print $2 }'`
+elif test -x $HG -a -d .hg; then
+   BUILD_REVISION=`$HG id -itb`
+   if test $? != 0; then
+       BUILD_REVISION=unknown
+   fi
+fi
+
+AC_DEFINE_UNQUOTED(BUILD_REVISION, "$BUILD_REVISION", Build revision)
+AC_MSG_RESULT($BUILD_REVISION)
+AC_SUBST(BUILD_REVISION)
+
 dnl ========================================================================
 dnl    Cluster infrastructure - Heartbeat
 dnl ========================================================================
@@ -2183,7 +2199,7 @@ dnl *****************
 
 AC_MSG_RESULT([])
 AC_MSG_RESULT([$PACKAGE configuration:])
-AC_MSG_RESULT([  Version                  = ${VERSION}])
+AC_MSG_RESULT([  Version                  = ${VERSION} (Build: $BUILD_REVISION)])
 
 AC_MSG_RESULT([  Prefix                   = ${prefix}])
 AC_MSG_RESULT([  Executables              = ${sbindir}])
