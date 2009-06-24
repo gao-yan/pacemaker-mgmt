@@ -3,26 +3,31 @@
 '''haclient.py, the GUI manamgement tool for Linux-HA
 '''
 
-__copyright__='''
-Author: Huang Zhen <zhenhltc@cn.ibm.com>
-Copyright (C) 2005 International Business Machines
+__authors__ ='''
+Yan Gao <ygao@novell.com>
+Huang Zhen <zhenhltc@cn.ibm.com>, 2005-2006
 '''
 
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+__copyright__='''
+Copyright (C) 2007-2009 Yan Gao <ygao@novell.com>
+Copyright (C) 2005-2006 International Business Machines
+'''
 
+__license__ = '''
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+'''
 
 import sys, os, string, socket, syslog, webbrowser, pickle, xml, gc, time, binascii, thread, tarfile, tempfile
 from stat import *
@@ -6399,6 +6404,91 @@ class MainWindow :
 			if os.access(dir_path, os.F_OK) :
 				delete_dir(dir_path)
 
+	def on_about(self, action) :
+		global top_window
+		name = "@PACKAGE@".capitalize()
+		#version = "@VERSION@"
+		version = ""
+		comments = "Pacemaker Management GUI"
+		revision = "Revision: @BUILD_REVISION@"
+		website = "http://www.clusterlabs.org"
+		website_label = "Pacemaker Website"
+		authors = __authors__.strip().split('\n')
+		license = __license__.strip()
+		copyright = "Copyright \xc2\xa9 2007-2009 Yan Gao <ygao@novell.com>" + "\n" \
+				+ "Copyright \xc2\xa9 2005-2006 Huang Zhen <zhenhltc@cn.ibm.com>"
+		copyright0 = "Copyright \xc2\xa9 2007-2009 Yan Gao" + "\n" \
+				+ "Copyright \xc2\xa9 2005-2006 Huang Zhen"
+		translators = "Hideo Yamauchi <renayama19661014@ybb.ne.jp>\n" \
+				+ "Yan Gao <ygao@novell.com>"
+
+		if not pygtk_newer(2, 6) :
+			dialog = gtk.Dialog(_("About") + " " + name, top_window, gtk.DIALOG_MODAL)
+			dialog.set_has_separator(False)
+			dialog.set_border_width(5)
+			dialog.set_resizable(False)
+			dialog.vbox.set_spacing(5)
+			im = gtk.Image()
+			im.set_from_stock("ha", gtk.ICON_SIZE_DIALOG)
+			dialog.vbox.pack_start(im, False)
+			markup_text_list = ['<span size="xx-large"><b>' + name + ' ' + version  + '</b></span>',
+						comments,
+						revision,
+						'<span size="small">' + copyright0 + '</span>',
+						website]
+			for markup_text in markup_text_list :
+				markup_label = gtk.Label()
+				markup_label.set_justify(gtk.JUSTIFY_CENTER)
+				if markup_text == website :
+					markup_text = '<span foreground="blue"><u>' + website_label + '</u></span>'
+					linkbtn = gtk.Button()
+					linkbtn.add(markup_label)
+					linkbtn.set_relief(gtk.RELIEF_NONE)
+					linkbtn.connect("clicked", self.open_url, website)
+					hbox = gtk.HBox(True)
+					hbox.pack_start(linkbtn, False, False)
+					tooltips = gtk.Tooltips()
+					tooltips.set_tip(linkbtn, website)
+					widget = hbox
+				else :
+					markup_label.set_selectable(True)
+					widget = markup_label
+					
+				markup_label.set_markup(markup_text)
+				dialog.vbox.pack_start(widget, False)
+
+			close_btn = dialog.add_button(gtk.STOCK_CLOSE, gtk.RESPONSE_CANCEL)
+			close_btn.grab_default()
+			close_btn.grab_focus()
+
+			dialog.show_all()
+		else :
+			dialog = gtk.AboutDialog()
+			dialog.set_transient_for(top_window)
+
+			dialog.set_name(name)
+			dialog.set_version(version)
+			dialog.set_copyright(copyright)
+			dialog.set_license(_(license))
+			comments += "\n" + revision
+			dialog.set_comments(comments)
+			gtk.about_dialog_set_url_hook(self.open_url)
+			dialog.set_website(website)
+			dialog.set_website_label(website_label)
+			dialog.set_authors(authors)
+			dialog.set_translator_credits(translators)
+			dialog.set_logo(gtk.gdk.pixbuf_new_from_file("@HA_DATADIR@/heartbeat-gui/ha.png"))
+
+		save_top_window = top_window
+             	top_window = dialog
+		dialog.run()
+		
+		top_window = save_top_window
+		dialog.destroy()
+
+	def open_url(self, widget, link) :
+		webbrowser.open(link)
+
 	def change_mode_level(self, action, current) :
 		global mode_level
 		mode_level = action.get_current_value()
@@ -6420,8 +6510,10 @@ class MainWindow :
 		win_widget.set_icon_from_file("@HA_DATADIR@/heartbeat-gui/ha.png")
 
 		# add the icons to gtk stock
-		#self.load_icon("ha-login","@HA_DATADIR@/heartbeat-gui/login.png")
-		#self.load_icon("ha-logout","@HA_DATADIR@/heartbeat-gui/logout.png")
+		self.load_icon("ha", "@HA_DATADIR@/heartbeat-gui/ha.png")
+		if not pygtk_newer(2, 6) :
+			self.load_icon("ha-login","@HA_DATADIR@/heartbeat-gui/login.png")
+			self.load_icon("ha-logout","@HA_DATADIR@/heartbeat-gui/logout.png")
 		self.load_icon("ha-standby-node","@HA_DATADIR@/heartbeat-gui/standby-node.png")
 		self.load_icon("ha-active-node","@HA_DATADIR@/heartbeat-gui/active-node.png")
 		self.load_icon("ha-start-resource","@HA_DATADIR@/heartbeat-gui/start-resource.png")
@@ -6474,6 +6566,9 @@ class MainWindow :
 				<menu action="tools">
 					<menuitem action="transition-info"/>
 					<menuitem action="report"/>
+				</menu>
+				<menu action="help">
+					<menuitem action="about"/>
 				</menu>
 			</menubar>
 			<popup name="connection_popup">
@@ -6529,7 +6624,9 @@ class MainWindow :
 			('tools', None, _('Tools')),
 			('transition-info', gtk.STOCK_CONVERT, _('Transition Information'), None,
 				_('Show Transition Information'), self.on_transition_info),
-			('report', gtk.STOCK_FIND_AND_REPLACE, _('Cluster Report'), None, _('generate a cluster report'), self.on_cluster_report)
+			('report', gtk.STOCK_FIND_AND_REPLACE, _('Cluster Report'), None, _('generate a cluster report'), self.on_cluster_report),
+			('help', None, _('Help')),
+			('about', gtk.STOCK_ABOUT, _('About'), None, _('About'), self.on_about)
 			])
 
 		uimanager.insert_action_group(actiongroup, 0)
