@@ -718,34 +718,34 @@ class ManageView :
 			stoprsc_icon = "ha-stop-resource"
 
 		rsc_actions = [
-			('startrsc', startrsc_icon, _('Start'), None,_('Start resource'), self.on_rsc_action),
-			('stoprsc', stoprsc_icon, _('Stop'), None,_('Stop resource'), self.on_rsc_action),
-			('defaultrsc', gtk.STOCK_EXECUTE, _('Default'), None,_('Work as default'), self.on_rsc_action),
-			('cleanuprsc', gtk.STOCK_CLEAR, _('Cleanup Resource'), None,_('Cleanup resource'), self.on_rsc_cleanup),
-			('migratersc', gtk.STOCK_GO_FORWARD, _('Migrate Resource'), None, _('Migrate a resource to specified node'), 
+			('startrsc', startrsc_icon, _('St_art'), None,_('Start resource'), self.on_rsc_action),
+			('stoprsc', stoprsc_icon, _('_Stop'), None,_('Stop resource'), self.on_rsc_action),
+			('defaultrsc', gtk.STOCK_EXECUTE, _('_Default'), None,_('Work as default'), self.on_rsc_action),
+			('cleanuprsc', gtk.STOCK_CLEAR, _('_Cleanup Resource'), None,_('Cleanup resource'), self.on_rsc_cleanup),
+			('migratersc', gtk.STOCK_GO_FORWARD, _('Migra_te Resource'), None, _('Migrate a resource to specified node'), 
 				self.on_migrate_rsc),
-			('unmigratersc', gtk.STOCK_GO_BACK, _('Clear Migrate Constraints'),
+			('unmigratersc', gtk.STOCK_GO_BACK, _('Clea_r Migrate Constraints'),
 				None, _('Clear constraints created by migrate'),
 				self.on_unmigrate_rsc),
-			('unmanagersc', "ha-unmanage-resource", _('Unmanage Resource'), None, _('Put a resource into unmanaged mode'), 
+			('unmanagersc', "ha-unmanage-resource", _('_Unmanage Resource'), None, _('Put a resource into unmanaged mode'), 
 				self.on_manage_rsc),
-			('managersc', "ha-manage-resource", _('Manage Resource'), None, _('Put a resource into managed mode'), 
+			('managersc', "ha-manage-resource", _('_Manage Resource'), None, _('Put a resource into managed mode'), 
 				self.on_manage_rsc),
-			('refresh', gtk.STOCK_REFRESH, _('Refresh Resources'), None, _('Refresh CIB from the LRM status'), 
+			('refresh', gtk.STOCK_REFRESH, _('Re_fresh Resources'), None, _('Refresh CIB from the LRM status'), 
 				self.on_crm_rsc_cmd),
-			('reprobe', gtk.STOCK_FIND, _('Reprobe Resources'), None, _('Reprobe for resources started outside of the CRM'), 
+			('reprobe', gtk.STOCK_FIND, _('Re_probe Resources'), None, _('Reprobe for resources started outside of the CRM'), 
 				self.on_crm_rsc_cmd),
 			]
 		node_actions = [
-			('standby', "ha-standby-node", _('Standby'), None,_('Make the node standby'), self.on_standby),
-			('active', "ha-active-node", _('Active'), None,_('Make the node active'), self.on_active)
+			('standby', "ha-standby-node", _('_Standby'), None,_('Make the node standby'), self.on_standby),
+			('active', "ha-active-node", _('_Active'), None,_('Make the node active'), self.on_active)
 			]
 
 		toggle_tool_actions = [
-			('group-by-node', gtk.STOCK_SORT_DESCENDING, _('Group By Node'), None, _('Group resources by node'), self.change_group_mode),
-			('maintenance-mode', "administration", _('Maintenance Mode'), None,
+			('group-by-node', gtk.STOCK_SORT_DESCENDING, _('_Group By Node'), None, _('Group resources by node'), self.change_group_mode),
+			('maintenance-mode', "administration", _('_Maintenance Mode'), None,
 				_('Switch to maintenance mode'), self.change_maintenance_mode),
-			('record-pending', "record-pending", _('Indicate Pending Operations'), None,
+			('record-pending', "record-pending", _('_Indicate Pending Operations'), None,
 				_('Indicate pending(starting/stopping) operations'), self.change_record_pending),
 			]
 
@@ -3028,9 +3028,9 @@ class EditXMLDlg:
 		</ui>'''
 
 		actions = [
-			("import", gtk.STOCK_REVERT_TO_SAVED, _("Import"), "<control>O",
+			("import", gtk.STOCK_REVERT_TO_SAVED, _("Import"), "<Ctrl>o",
 				_("Import XML"), self.import_xml),
-			("export", gtk.STOCK_SAVE_AS, _("Export"), "<control>S",
+			("export", gtk.STOCK_SAVE_AS, _("Export"), "<Ctrl>s",
 				_("Export XML"), self.export_xml)
 			 ]
 
@@ -6596,7 +6596,7 @@ class MainWindow :
 		</ui>'''
 		uimanager = gtk.UIManager()
 
-		self.accelgroup = gtk.AccelGroup()
+		self.accelgroup = uimanager.get_accel_group()
 		win_widget.add_accel_group(self.accelgroup)
 
 		actiongroup = gtk.ActionGroup('haclient')
@@ -6609,32 +6609,32 @@ class MainWindow :
 			logout_icon = "ha-logout"
 
 		actiongroup.add_actions([
-			('connection', None, _('Connection')),
-			('login', login_icon, _('Login...'), None,_('login to cluster'), self.on_login),
-			('logout', logout_icon, _('Logout'), None,_('logout from cluster'), self.on_logout),
-			('quit', gtk.STOCK_QUIT, _('Quit'), None,_('Quit the Program'), self.on_quit),
-			('view', None, _('View')),
-			('shadow', None, _('Shadow')),
-			('new', gtk.STOCK_NEW, _('New'), None,_('Create a new shadow CIB'), self.on_create_cib),
-			('diff', gtk.STOCK_COPY, _('Diff'), None,_('Differences between the live CIB and the shadow CIB'), self.on_shadow_diff),
-			('reset', None, _('Reset'), None,_('Recreate a shadow CIB from the live CIB'), self.on_shadow_action),
-			('delete', gtk.STOCK_DELETE, _('Delete'), None,_('Delete a shadow CIB'), self.on_shadow_action),
-			('commit', gtk.STOCK_SAVE, _('Commit'), None,_('Upload a shadow CIB to the cluster'), self.on_shadow_action),
-			('switch', None, _('Switch'), None,_('Switch working CIB'), self.render_switch_submenu),
-			('tools', None, _('Tools')),
-			('transition-info', gtk.STOCK_CONVERT, _('Transition Information'), None,
+			('connection', None, _('_Connection')),
+			('login', login_icon, _('Log_in'), '<Ctrl>i', _('login to cluster'), self.on_login),
+			('logout', logout_icon, _('Log_out'), '<Ctrl>o', _('logout from cluster'), self.on_logout),
+			('quit', gtk.STOCK_QUIT, _('_Quit'), None,_('Quit the Program'), self.on_quit),
+			('view', None, _('_View')),
+			('shadow', None, _('_Shadow')),
+			('new', gtk.STOCK_NEW, _('_New'), None,_('Create a new shadow CIB'), self.on_create_cib),
+			('diff', gtk.STOCK_COPY, _('Di_ff'), '<Ctrl>f', _('Differences between the live CIB and the shadow CIB'), self.on_shadow_diff),
+			('reset', None, _('_Reset'), '<Ctrl>r', _('Recreate a shadow CIB from the live CIB'), self.on_shadow_action),
+			('delete', gtk.STOCK_DELETE, _('_Delete'), '<Ctrl>d', _('Delete a shadow CIB'), self.on_shadow_action),
+			('commit', gtk.STOCK_SAVE, _('_Commit'), '<Ctrl>c', _('Upload a shadow CIB to the cluster'), self.on_shadow_action),
+			('switch', None, _('_Switch'), None, _('Switch working CIB'), self.render_switch_submenu),
+			('tools', None, _('_Tools')),
+			('transition-info', gtk.STOCK_CONVERT, _('_Transition Information'), '<Ctrl>t',
 				_('Show Transition Information'), self.on_transition_info),
-			('report', gtk.STOCK_FIND_AND_REPLACE, _('Cluster Report'), None, _('generate a cluster report'), self.on_cluster_report),
-			('help', None, _('Help')),
-			('about', gtk.STOCK_ABOUT, _('About'), None, _('About'), self.on_about)
+			('report', gtk.STOCK_FIND_AND_REPLACE, _('Cluster Re_port'), '<Ctrl>p', _('generate a cluster report'), self.on_cluster_report),
+			('help', None, _('_Help')),
+			('about', gtk.STOCK_ABOUT, _('_About'), '<Ctrl>a', _('About'), self.on_about)
 			])
 
 		uimanager.insert_action_group(actiongroup, 0)
 
 		radio_tool_actions = [
-			('simple-mode', None, _('Simple Mode'), None, _('Switch to simple mode'), 0),
-			('expert-mode', None, _('Expert Mode'), None, _('Switch to expert mode'), 1),
-			('hack-mode', None, _('Hack Mode'), None, _('Switch to hack mode'), 2),
+			('simple-mode', None, _('_Simple Mode'), '<Shift><Ctrl>s', _('Switch to simple mode'), 0),
+			('expert-mode', None, _('_Expert Mode'), '<Shift><Ctrl>e', _('Switch to expert mode'), 1),
+			('hack-mode', None, _('_Hack Mode'), '<Shift><Ctrl>h', _('Switch to hack mode'), 2),
 			]
 
 		self.radio_tool_action_group = gtk.ActionGroup("radio_mode_level")
