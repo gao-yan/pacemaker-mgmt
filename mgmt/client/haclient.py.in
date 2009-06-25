@@ -5788,7 +5788,7 @@ class MainWindow :
 		if self.view_status.get(self.cur_type) != None :
 			self.cur_view.restore_status(self.view_status[self.cur_type])
 
-	def do_cmd_with_pbar(self, cmd, title, msg, fail_msg) :
+	def do_cmd_with_pbar(self, cmd, title, msg, failed_msg, show_msgbox = True) :
 		manager.async_do_cmd(cmd)
 		pbar = ProgressPulse(title, msg, None, None,
 				lambda : manager.async_ret_list.has_key(cmd))
@@ -5804,10 +5804,12 @@ class MainWindow :
 		manager.async_ret_lock.release()
 
 		if manager.failed_reason != "" :
-			msgbox(manager.failed_reason)
+			if show_msgbox :
+				msgbox(manager.failed_reason)
 			return None
 		elif ret_list == None or len(ret_list) < 1 :
-			msgbox(fail_msg)
+			if show_msgbox :
+				msgbox(failed_msg)
 			return None
 
 		return ret_list
@@ -6002,7 +6004,12 @@ class MainWindow :
 
 		reinit_name = manager.active_cib
 		manager.do_cmd("shutdown_cib")
-		shadow_diff = manager.do_cmd("crm_shadow\ndiff\n\n")
+
+		cmd = "crm_shadow\ndiff\n\n"
+		shadow_diff = window.do_cmd_with_pbar(cmd, _("Shadow CIB Diff"),
+				_("Generating the shadow CIB differences may take a while..."),
+				_("Failed to generate the shadow CIB differences"), False)
+
 		if shadow_diff == None :
 		#else :
 			shadow_diff_textbuffer.set_text(manager.failed_reason)
