@@ -4198,7 +4198,7 @@ class AddWizard :
 		clone_basic_options = [
 		("clone-max", [],
 		 _("Maximum number of copies (Defaults to the number of nodes in the cluster)")),
-		("clone-node-max", [["1", "[ default ]"]],
+		("clone-node-max", [["1", _("[ default ]")]],
 		 _("Maximum number of copies on a single node (Defaults to 1)")),
 		]
 		clone_other_options = [
@@ -4211,9 +4211,9 @@ class AddWizard :
 		]
 
 		master_basic_options = [
-		("master-max", [["1", "[ default ]"]],
+		("master-max", [["1", _("[ default ]")]],
 		 _("Maximum number of master copies (Defaults to 1)")),
-		("master-node-max", [["1", "[ default ]"]],
+		("master-node-max", [["1", _("[ default ]")]],
 		 _("Maximum number of master copies on a single node (Defaults to 1)"))
 		]
 
@@ -4232,7 +4232,7 @@ class AddWizard :
 			else :
 				key = option[0]
 			for (value, decl) in option[1] :
-				if decl.count("default") > 0 :
+				if decl.count(_("[ default ]")) > 0 :
 					self.default_meta_attributes[key] = value
 
 	def first_page_render(self) :
@@ -9308,7 +9308,7 @@ class MetaAttrsNV(ObjectAttrs) :
 		clone_basic_options = [
 		("clone-max", [],
 		 _("How many copies of the resource to start. Defaults to the number of nodes in the cluster.")),
-		("clone-node-max", [["1", "[ default ]"]],
+		("clone-node-max", [["1", _("[ default ]")]],
 		 _("How many copies of the resource can be started on a single node.")),
 		]
 		clone_other_options = [
@@ -9323,9 +9323,9 @@ class MetaAttrsNV(ObjectAttrs) :
 		]
 
 		master_basic_options = [
-		("master-max", [["1", "[ default ]"]],
+		("master-max", [["1", _("[ default ]")]],
 		 _("How many copies of the resource can be promoted to master status.")),
-		("master-node-max", [["1", "[ default ]"]],
+		("master-node-max", [["1", _("[ default ]")]],
 		 _("How many copies of the resource can be promoted to master status on a single node."))
 		]
 
