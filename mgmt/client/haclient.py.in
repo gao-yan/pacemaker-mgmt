@@ -4800,7 +4800,7 @@ class TransitionInfoDlg :
 	def __init__(self) :
 		global top_window
 		self.G = None
-		dialog = gtk.Dialog("Transition Information", top_window, gtk.DIALOG_MODAL,
+		dialog = gtk.Dialog(_("Transition Information"), top_window, gtk.DIALOG_MODAL,
 			(gtk.STOCK_HELP, gtk.RESPONSE_HELP, gtk.STOCK_CLOSE, gtk.RESPONSE_CLOSE, 
 			gtk.STOCK_SAVE, gtk.RESPONSE_APPLY))
 		dialog.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_NORMAL)
@@ -5024,7 +5024,7 @@ class TransitionInfoDlg :
 
 		pe_summary = manager.do_cmd("get_pe_summary\n%s\n%s"%(pe_input[0], pe_input[1]))
 		if pe_summary == None or len(pe_summary) < 1 :
-			msgbox(_("The specified transtion doesn't exist"))
+			msgbox(_("The specified transition doesn't exist"))
 			return
 
 		if pe_input[0] == "live" :

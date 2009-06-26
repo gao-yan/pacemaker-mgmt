@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pacemaker-mgmt 2.0.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-04-24 19:08+0800\n"
+"POT-Creation-Date: 2009-06-26 14:48+0800\n"
 "PO-Revision-Date: 2009-04-17 15:37+0800\n"
 "Last-Translator: Yan Gao <ygao@novell.com>\n"
 "Language-Team: Simplified Chinese <language@novell.com>\n"
@@ -16,62 +16,61 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: ../mgmt/client/haclient.py.in:121
+#: ../mgmt/client/haclient.py.in:132
 msgid "Do not delete the root directory"
 msgstr "请不要删除根目录"
 
-#: ../mgmt/client/haclient.py.in:129 ../mgmt/client/haclient.py.in:135
-#: ../mgmt/client/haclient.py.in:140 ../mgmt/client/haclient.py.in:3093
-#: ../mgmt/client/haclient.py.in:3101 ../mgmt/client/haclient.py.in:4954
-#: ../mgmt/client/haclient.py.in:4960 ../mgmt/client/haclient.py.in:5124
-#: ../mgmt/client/haclient.py.in:5744 ../mgmt/client/haclient.py.in:5750
-#: ../mgmt/client/haclient.py.in:5997 ../mgmt/client/haclient.py.in:6142
-#: ../mgmt/client/haclient.py.in:6151 ../mgmt/client/haclient.py.in:6802
-#: ../mgmt/client/haclient.py.in:6810
+#: ../mgmt/client/haclient.py.in:140 ../mgmt/client/haclient.py.in:146
+#: ../mgmt/client/haclient.py.in:151 ../mgmt/client/haclient.py.in:3202
+#: ../mgmt/client/haclient.py.in:3210 ../mgmt/client/haclient.py.in:5222
+#: ../mgmt/client/haclient.py.in:5228 ../mgmt/client/haclient.py.in:5401
+#: ../mgmt/client/haclient.py.in:6055 ../mgmt/client/haclient.py.in:6061
+#: ../mgmt/client/haclient.py.in:6278 ../mgmt/client/haclient.py.in:6423
+#: ../mgmt/client/haclient.py.in:6432 ../mgmt/client/haclient.py.in:7193
+#: ../mgmt/client/haclient.py.in:7201
 msgid "System error"
 msgstr "系统错误"
 
-#: ../mgmt/client/haclient.py.in:129 ../mgmt/client/haclient.py.in:135
-#: ../mgmt/client/haclient.py.in:140 ../mgmt/client/haclient.py.in:2506
-#: ../mgmt/client/haclient.py.in:2645 ../mgmt/client/haclient.py.in:3020
-#: ../mgmt/client/haclient.py.in:3066 ../mgmt/client/haclient.py.in:3072
-#: ../mgmt/client/haclient.py.in:3093 ../mgmt/client/haclient.py.in:3101
-#: ../mgmt/client/haclient.py.in:4954 ../mgmt/client/haclient.py.in:4960
-#: ../mgmt/client/haclient.py.in:5113 ../mgmt/client/haclient.py.in:5124
-#: ../mgmt/client/haclient.py.in:5685 ../mgmt/client/haclient.py.in:5744
-#: ../mgmt/client/haclient.py.in:5750 ../mgmt/client/haclient.py.in:5997
-#: ../mgmt/client/haclient.py.in:6013 ../mgmt/client/haclient.py.in:6016
-#: ../mgmt/client/haclient.py.in:6024 ../mgmt/client/haclient.py.in:6043
-#: ../mgmt/client/haclient.py.in:6050 ../mgmt/client/haclient.py.in:6066
-#: ../mgmt/client/haclient.py.in:6082 ../mgmt/client/haclient.py.in:6086
-#: ../mgmt/client/haclient.py.in:6106 ../mgmt/client/haclient.py.in:6110
-#: ../mgmt/client/haclient.py.in:6123 ../mgmt/client/haclient.py.in:6128
-#: ../mgmt/client/haclient.py.in:6142 ../mgmt/client/haclient.py.in:6151
-#: ../mgmt/client/haclient.py.in:6637 ../mgmt/client/haclient.py.in:6763
-#: ../mgmt/client/haclient.py.in:6769 ../mgmt/client/haclient.py.in:6802
-#: ../mgmt/client/haclient.py.in:6810 ../mgmt/client/haclient.py.in:6833
-#: ../mgmt/client/haclient.py.in:6841 ../mgmt/client/haclient.py.in:6849
-#: ../mgmt/client/haclient.py.in:7190
+#: ../mgmt/client/haclient.py.in:140 ../mgmt/client/haclient.py.in:146
+#: ../mgmt/client/haclient.py.in:151 ../mgmt/client/haclient.py.in:2613
+#: ../mgmt/client/haclient.py.in:2754 ../mgmt/client/haclient.py.in:3130
+#: ../mgmt/client/haclient.py.in:3175 ../mgmt/client/haclient.py.in:3181
+#: ../mgmt/client/haclient.py.in:3202 ../mgmt/client/haclient.py.in:3210
+#: ../mgmt/client/haclient.py.in:5125 ../mgmt/client/haclient.py.in:5222
+#: ../mgmt/client/haclient.py.in:5228 ../mgmt/client/haclient.py.in:5390
+#: ../mgmt/client/haclient.py.in:5401 ../mgmt/client/haclient.py.in:5991
+#: ../mgmt/client/haclient.py.in:6055 ../mgmt/client/haclient.py.in:6061
+#: ../mgmt/client/haclient.py.in:6266 ../mgmt/client/haclient.py.in:6278
+#: ../mgmt/client/haclient.py.in:6294 ../mgmt/client/haclient.py.in:6297
+#: ../mgmt/client/haclient.py.in:6305 ../mgmt/client/haclient.py.in:6324
+#: ../mgmt/client/haclient.py.in:6331 ../mgmt/client/haclient.py.in:6347
+#: ../mgmt/client/haclient.py.in:6363 ../mgmt/client/haclient.py.in:6367
+#: ../mgmt/client/haclient.py.in:6387 ../mgmt/client/haclient.py.in:6391
+#: ../mgmt/client/haclient.py.in:6404 ../mgmt/client/haclient.py.in:6409
+#: ../mgmt/client/haclient.py.in:6423 ../mgmt/client/haclient.py.in:6432
+#: ../mgmt/client/haclient.py.in:7150 ../mgmt/client/haclient.py.in:7156
+#: ../mgmt/client/haclient.py.in:7186 ../mgmt/client/haclient.py.in:7193
+#: ../mgmt/client/haclient.py.in:7201
 msgid ": "
 msgstr "： "
 
-#: ../mgmt/client/haclient.py.in:173
+#: ../mgmt/client/haclient.py.in:184
 msgid "Message"
 msgstr "消息"
 
-#: ../mgmt/client/haclient.py.in:193
+#: ../mgmt/client/haclient.py.in:204
 msgid "Confirm"
 msgstr "确认"
 
-#: ../mgmt/client/haclient.py.in:235
+#: ../mgmt/client/haclient.py.in:246
 msgid "The specified time should be numeric prefixed."
 msgstr "指定的时间应为数字开头。"
 
-#: ../mgmt/client/haclient.py.in:246
+#: ../mgmt/client/haclient.py.in:257
 msgid "The specified time should default with second unit, "
 msgstr "指定的时间应该缺省单位为秒，"
 
-#: ../mgmt/client/haclient.py.in:247
+#: ../mgmt/client/haclient.py.in:258
 #, python-format
 msgid ""
 "or should be suffixed with one of the following units:\n"
@@ -80,559 +79,620 @@ msgstr ""
 "或者应该以如下任一单位结尾：\n"
 " %s"
 
-#: ../mgmt/client/haclient.py.in:313
+#: ../mgmt/client/haclient.py.in:331
 msgid "Add Parameter"
 msgstr "添加参数"
 
-#: ../mgmt/client/haclient.py.in:315
+#: ../mgmt/client/haclient.py.in:333
 msgid "Add Operation"
 msgstr "添加操作"
 
-#: ../mgmt/client/haclient.py.in:356 ../mgmt/client/haclient.py.in:7985
-#: ../mgmt/client/haclient.py.in:8266
+#: ../mgmt/client/haclient.py.in:374 ../mgmt/client/haclient.py.in:8391
+#: ../mgmt/client/haclient.py.in:8675
 msgid " can't be empty"
 msgstr "不能为空"
 
-#: ../mgmt/client/haclient.py.in:453 ../mgmt/client/haclient.py.in:604
-#: ../mgmt/client/haclient.py.in:1618
+#: ../mgmt/client/haclient.py.in:471 ../mgmt/client/haclient.py.in:622
+#: ../mgmt/client/haclient.py.in:1638
 msgid "Type"
 msgstr "类型"
 
-#: ../mgmt/client/haclient.py.in:605
+#: ../mgmt/client/haclient.py.in:623
 msgid "ID"
 msgstr "标识符"
 
-#: ../mgmt/client/haclient.py.in:710
-msgid "Start"
-msgstr "启动"
+#: ../mgmt/client/haclient.py.in:728
+msgid "St_art"
+msgstr "启动(_A)"
 
-#: ../mgmt/client/haclient.py.in:710
+#: ../mgmt/client/haclient.py.in:728
 msgid "Start resource"
 msgstr "启动资源"
 
-#: ../mgmt/client/haclient.py.in:711
-msgid "Stop"
-msgstr "停止"
+#: ../mgmt/client/haclient.py.in:729
+msgid "_Stop"
+msgstr "停止(_S)"
 
-#: ../mgmt/client/haclient.py.in:711
+#: ../mgmt/client/haclient.py.in:729
 msgid "Stop resource"
 msgstr "停止资源"
 
-#: ../mgmt/client/haclient.py.in:712 ../mgmt/client/haclient.py.in:2225
-#: ../mgmt/client/haclient.py.in:2506
-msgid "Default"
-msgstr "缺省"
+#: ../mgmt/client/haclient.py.in:730
+msgid "_Default"
+msgstr "缺省(_D)"
 
-#: ../mgmt/client/haclient.py.in:712
+#: ../mgmt/client/haclient.py.in:730
 msgid "Work as default"
 msgstr "缺省运行"
 
-#: ../mgmt/client/haclient.py.in:713 ../mgmt/client/haclient.py.in:1240
-msgid "Cleanup Resource"
-msgstr "清理资源"
+#: ../mgmt/client/haclient.py.in:731
+msgid "_Cleanup Resource"
+msgstr "清理资源(_C)"
 
-#: ../mgmt/client/haclient.py.in:713
+#: ../mgmt/client/haclient.py.in:731
 msgid "Cleanup resource"
 msgstr "清理资源"
 
-#: ../mgmt/client/haclient.py.in:714 ../mgmt/client/haclient.py.in:1273
-msgid "Migrate Resource"
-msgstr "迁移资源"
+#: ../mgmt/client/haclient.py.in:732
+msgid "Migra_te Resource"
+msgstr "迁移资源(_T)"
 
-#: ../mgmt/client/haclient.py.in:714
+#: ../mgmt/client/haclient.py.in:732
 msgid "Migrate a resource to specified node"
 msgstr "迁移资源到指定节点"
 
-#: ../mgmt/client/haclient.py.in:716 ../mgmt/client/haclient.py.in:1442
-msgid "Clear Migrate Constraints"
-msgstr "清理迁移限制"
+#: ../mgmt/client/haclient.py.in:734
+msgid "Clea_r Migrate Constraints"
+msgstr "清理迁移限制(_R)"
 
-#: ../mgmt/client/haclient.py.in:717
+#: ../mgmt/client/haclient.py.in:735
 msgid "Clear constraints created by migrate"
 msgstr "清理迁移时所创建的限制条件"
 
-#: ../mgmt/client/haclient.py.in:719
-msgid "Unmanage Resource"
-msgstr "停止管理资源"
+#: ../mgmt/client/haclient.py.in:737
+msgid "_Unmanage Resource"
+msgstr "不管理资源(_U)"
 
-#: ../mgmt/client/haclient.py.in:719
+#: ../mgmt/client/haclient.py.in:737
 msgid "Put a resource into unmanaged mode"
 msgstr "将资源置为非管理模式"
 
-#: ../mgmt/client/haclient.py.in:721
-msgid "Manage Resource"
-msgstr "管理资源"
+#: ../mgmt/client/haclient.py.in:739
+msgid "_Manage Resource"
+msgstr "管理资源(_M)"
 
-#: ../mgmt/client/haclient.py.in:721
+#: ../mgmt/client/haclient.py.in:739
 msgid "Put a resource into managed mode"
 msgstr "将资源置为管理模式"
 
-#: ../mgmt/client/haclient.py.in:723
-msgid "Refresh Resources"
-msgstr "刷新资源"
+#: ../mgmt/client/haclient.py.in:741
+msgid "Re_fresh Resources"
+msgstr "刷新资源(_F)"
 
-#: ../mgmt/client/haclient.py.in:723
+#: ../mgmt/client/haclient.py.in:741
 msgid "Refresh CIB from the LRM status"
 msgstr "从 LRM 状态刷新 CIB"
 
-#: ../mgmt/client/haclient.py.in:725
-msgid "Reprobe Resources"
-msgstr "重新检查资源"
+#: ../mgmt/client/haclient.py.in:743
+msgid "Re_probe Resources"
+msgstr "重新检查资源(_P)"
 
-#: ../mgmt/client/haclient.py.in:725
+#: ../mgmt/client/haclient.py.in:743
 msgid "Reprobe for resources started outside of the CRM"
 msgstr "重新检查在 CRM 之外启动的资源"
 
-#: ../mgmt/client/haclient.py.in:729
-msgid "Standby"
-msgstr "备用"
+#: ../mgmt/client/haclient.py.in:747
+msgid "_Standby"
+msgstr "备用(_S)"
 
-#: ../mgmt/client/haclient.py.in:729
+#: ../mgmt/client/haclient.py.in:747
 msgid "Make the node standby"
 msgstr "让节点备用"
 
-#: ../mgmt/client/haclient.py.in:730
-msgid "Active"
-msgstr "活动"
+#: ../mgmt/client/haclient.py.in:748
+msgid "_Active"
+msgstr "活动(_A)"
 
-#: ../mgmt/client/haclient.py.in:730
+#: ../mgmt/client/haclient.py.in:748
 msgid "Make the node active"
 msgstr "让节点活动"
 
-#: ../mgmt/client/haclient.py.in:734
-msgid "Group By Node"
-msgstr "按节点分组资源"
+#: ../mgmt/client/haclient.py.in:752
+msgid "_Group By Node"
+msgstr "按节点分组资源(_G)"
 
-#: ../mgmt/client/haclient.py.in:734
+#: ../mgmt/client/haclient.py.in:752
 msgid "Group resources by node"
 msgstr "按节点分组资源"
 
-#: ../mgmt/client/haclient.py.in:735
-msgid "Maintenance Mode"
-msgstr "维护模式"
+#: ../mgmt/client/haclient.py.in:753
+msgid "_Maintenance Mode"
+msgstr "维护模式(_M)"
 
-#: ../mgmt/client/haclient.py.in:736
+#: ../mgmt/client/haclient.py.in:754
 msgid "Switch to maintenance mode"
 msgstr "切换到维护模式"
 
-#: ../mgmt/client/haclient.py.in:737
-msgid "Indicate Pending Operations"
-msgstr "显示进行中的操作"
+#: ../mgmt/client/haclient.py.in:755
+msgid "_Indicate Pending Operations"
+msgstr "显示进行中的操作(_I)"
 
-#: ../mgmt/client/haclient.py.in:738
+#: ../mgmt/client/haclient.py.in:756
 msgid "Indicate pending(starting/stopping) operations"
 msgstr "显示进行中的（启动中／停止中）的操作"
 
-#: ../mgmt/client/haclient.py.in:918 ../mgmt/client/haclient.py.in:955
-#: ../mgmt/client/haclient.py.in:1206 ../mgmt/client/haclient.py.in:1287
-#: ../mgmt/client/haclient.py.in:1495 ../mgmt/client/haclient.py.in:2165
-#: ../mgmt/client/haclient.py.in:2177 ../mgmt/client/haclient.py.in:3466
-#: ../mgmt/client/haclient.py.in:3603 ../mgmt/client/haclient.py.in:4184
-#: ../mgmt/client/haclient.py.in:4693 ../mgmt/client/haclient.py.in:4701
-#: ../mgmt/client/haclient.py.in:4743 ../mgmt/client/haclient.py.in:5333
-#: ../mgmt/client/haclient.py.in:5342 ../mgmt/client/haclient.py.in:5536
-#: ../mgmt/client/haclient.py.in:5777 ../mgmt/client/haclient.py.in:7891
-#: ../mgmt/client/haclient.py.in:8107 ../mgmt/client/haclient.py.in:8228
-#: ../mgmt/client/haclient.py.in:8266 ../mgmt/client/haclient.py.in:9408
+#: ../mgmt/client/haclient.py.in:936 ../mgmt/client/haclient.py.in:973
+#: ../mgmt/client/haclient.py.in:1224 ../mgmt/client/haclient.py.in:1306
+#: ../mgmt/client/haclient.py.in:1515 ../mgmt/client/haclient.py.in:2197
+#: ../mgmt/client/haclient.py.in:2209 ../mgmt/client/haclient.py.in:3575
+#: ../mgmt/client/haclient.py.in:3714 ../mgmt/client/haclient.py.in:4298
+#: ../mgmt/client/haclient.py.in:4810 ../mgmt/client/haclient.py.in:4818
+#: ../mgmt/client/haclient.py.in:4862 ../mgmt/client/haclient.py.in:5059
+#: ../mgmt/client/haclient.py.in:5582 ../mgmt/client/haclient.py.in:5597
+#: ../mgmt/client/haclient.py.in:5611 ../mgmt/client/haclient.py.in:5620
+#: ../mgmt/client/haclient.py.in:5840 ../mgmt/client/haclient.py.in:6088
+#: ../mgmt/client/haclient.py.in:8296 ../mgmt/client/haclient.py.in:8513
+#: ../mgmt/client/haclient.py.in:8636 ../mgmt/client/haclient.py.in:8675
+#: ../mgmt/client/haclient.py.in:9817
 msgid ":"
 msgstr "："
 
-#: ../mgmt/client/haclient.py.in:1006
+#: ../mgmt/client/haclient.py.in:1024
 #, python-format
 msgid "last failure at \"%s\""
 msgstr "上次失败于“%s”"
 
-#: ../mgmt/client/haclient.py.in:1150 ../mgmt/client/haclient.py.in:1155
-#: ../mgmt/client/haclient.py.in:1546 ../mgmt/client/haclient.py.in:1871
+#: ../mgmt/client/haclient.py.in:1168 ../mgmt/client/haclient.py.in:1173
+#: ../mgmt/client/haclient.py.in:1566 ../mgmt/client/haclient.py.in:1901
+#: ../mgmt/client/haclient.py.in:1903
 msgid "standby"
 msgstr "备用"
 
-#: ../mgmt/client/haclient.py.in:1151 ../mgmt/client/haclient.py.in:1156
-#: ../mgmt/client/haclient.py.in:1856
+#: ../mgmt/client/haclient.py.in:1169 ../mgmt/client/haclient.py.in:1174
+#: ../mgmt/client/haclient.py.in:1879
 msgid "never started"
 msgstr "未曾启动"
 
-#: ../mgmt/client/haclient.py.in:1203
+#: ../mgmt/client/haclient.py.in:1221
 msgid "Caused by your previous action, this attribute has been set to \""
 msgstr "您之前的操作将此属性设置为“"
 
-#: ../mgmt/client/haclient.py.in:1205
+#: ../mgmt/client/haclient.py.in:1223
 msgid "\"."
 msgstr "”。"
 
-#: ../mgmt/client/haclient.py.in:1206
+#: ../mgmt/client/haclient.py.in:1224
 msgid "Recommended"
 msgstr "建议"
 
-#: ../mgmt/client/haclient.py.in:1207
+#: ../mgmt/client/haclient.py.in:1225
 msgid "Select \"Clear\" to remove the set."
 msgstr "选择“清除”删除此设置。"
 
-#: ../mgmt/client/haclient.py.in:1208
+#: ../mgmt/client/haclient.py.in:1226
 msgid "The sub-resource will inherit this attribute from its parent."
 msgstr "子资源将从其父资源继承此属性。"
 
-#: ../mgmt/client/haclient.py.in:1212
+#: ../mgmt/client/haclient.py.in:1230
 #, python-format
 msgid "Retain the \"%s\" set for sub-resource \""
-msgstr "保留对子资源的 \"%s\" 设置： “"
+msgstr "保留对子资源的“%s”设置： “"
 
-#: ../mgmt/client/haclient.py.in:1213
+#: ../mgmt/client/haclient.py.in:1231
 msgid "\"?"
 msgstr "”？"
 
-#: ../mgmt/client/haclient.py.in:1232 ../mgmt/client/haclient.py.in:1246
+#: ../mgmt/client/haclient.py.in:1250 ../mgmt/client/haclient.py.in:1264
 msgid "all resources"
 msgstr "所有资源"
 
-#: ../mgmt/client/haclient.py.in:1238 ../mgmt/client/haclient.py.in:1242
-#: ../mgmt/client/haclient.py.in:1260
+#: ../mgmt/client/haclient.py.in:1256 ../mgmt/client/haclient.py.in:1260
+#: ../mgmt/client/haclient.py.in:1278
 msgid "all nodes"
 msgstr "所有节点"
 
-#: ../mgmt/client/haclient.py.in:1241 ../mgmt/client/haclient.py.in:1443
+#: ../mgmt/client/haclient.py.in:1258
+msgid "Cleanup Resource"
+msgstr "清理资源"
+
+#: ../mgmt/client/haclient.py.in:1259 ../mgmt/client/haclient.py.in:1462
 msgid "Resource"
 msgstr "资源"
 
-#: ../mgmt/client/haclient.py.in:1242
+#: ../mgmt/client/haclient.py.in:1260
 msgid "Node"
 msgstr "节点"
 
-#: ../mgmt/client/haclient.py.in:1433
+#: ../mgmt/client/haclient.py.in:1291
+msgid "Migrate Resource"
+msgstr "迁移资源"
+
+#: ../mgmt/client/haclient.py.in:1452
 msgid "all migrated resources"
 msgstr "所有被迁移的资源"
 
+#: ../mgmt/client/haclient.py.in:1461
+msgid "Clear Migrate Constraints"
+msgstr "清理迁移限制"
+
 #. node_options = node_list[:]
 #. node_options.insert(0, "")
-#: ../mgmt/client/haclient.py.in:1487
+#: ../mgmt/client/haclient.py.in:1506
 #, python-format
 msgid "%s Resources"
 msgstr "%s资源"
 
-#: ../mgmt/client/haclient.py.in:1546 ../mgmt/client/haclient.py.in:1553
+#: ../mgmt/client/haclient.py.in:1566 ../mgmt/client/haclient.py.in:1573
 msgid "Make"
 msgstr "让"
 
-#: ../mgmt/client/haclient.py.in:1553
+#: ../mgmt/client/haclient.py.in:1573
 msgid "active"
 msgstr "活动"
 
-#: ../mgmt/client/haclient.py.in:1619
+#: ../mgmt/client/haclient.py.in:1639
 msgid "Name"
 msgstr "名称"
 
-#: ../mgmt/client/haclient.py.in:1620
+#: ../mgmt/client/haclient.py.in:1640
 msgid "Status"
 msgstr "状态"
 
-#: ../mgmt/client/haclient.py.in:1621
+#: ../mgmt/client/haclient.py.in:1641
 msgid "Details"
 msgstr "详细信息"
 
-#: ../mgmt/client/haclient.py.in:1677 ../mgmt/client/haclient.py.in:1955
-msgid "not running"
-msgstr "未运行"
+#: ../mgmt/client/haclient.py.in:1697
+msgid "unmanaged"
+msgstr "未管理"
 
-#: ../mgmt/client/haclient.py.in:1679 ../mgmt/client/haclient.py.in:1957
-#: ../mgmt/client/haclient.py.in:1967
-msgid "running"
-msgstr "运行"
+#: ../mgmt/client/haclient.py.in:1698 ../mgmt/client/haclient.py.in:1894
+msgid "unclean"
+msgstr "未知"
 
-#: ../mgmt/client/haclient.py.in:1681 ../mgmt/client/haclient.py.in:1959
-msgid "fail"
+#: ../mgmt/client/haclient.py.in:1700
+msgid "failed"
 msgstr "失败"
 
-#: ../mgmt/client/haclient.py.in:1683
+#: ../mgmt/client/haclient.py.in:1702
 msgid "starting"
 msgstr "启动中"
 
-#: ../mgmt/client/haclient.py.in:1685
+#: ../mgmt/client/haclient.py.in:1704
 msgid "stopping"
 msgstr "停止中"
 
-#: ../mgmt/client/haclient.py.in:1691 ../mgmt/client/haclient.py.in:1858
-#: ../mgmt/client/haclient.py.in:1965
+#: ../mgmt/client/haclient.py.in:1706 ../mgmt/client/haclient.py.in:1987
+msgid "not running"
+msgstr "未运行"
+
+#: ../mgmt/client/haclient.py.in:1708 ../mgmt/client/haclient.py.in:1989
+#: ../mgmt/client/haclient.py.in:1999
+msgid "running"
+msgstr "运行"
+
+#: ../mgmt/client/haclient.py.in:1714 ../mgmt/client/haclient.py.in:1881
+#: ../mgmt/client/haclient.py.in:1997
 msgid "ping node"
 msgstr "ping 节点"
 
-#: ../mgmt/client/haclient.py.in:1693 ../mgmt/client/haclient.py.in:1869
+#: ../mgmt/client/haclient.py.in:1716 ../mgmt/client/haclient.py.in:1887
 msgid "online"
 msgstr "在线"
 
-#: ../mgmt/client/haclient.py.in:1776
+#: ../mgmt/client/haclient.py.in:1799
 msgid "have quorum"
 msgstr "节点个数有效"
 
-#: ../mgmt/client/haclient.py.in:1778
+#: ../mgmt/client/haclient.py.in:1801
 msgid "no quorum"
 msgstr "节点个数无效"
 
-#: ../mgmt/client/haclient.py.in:1789 ../mgmt/client/haclient.py.in:1806
-#: ../mgmt/client/haclient.py.in:2192
+#: ../mgmt/client/haclient.py.in:1812 ../mgmt/client/haclient.py.in:1829
+#: ../mgmt/client/haclient.py.in:2224
 msgid "Cluster"
 msgstr "集群"
 
-#: ../mgmt/client/haclient.py.in:1792
+#: ../mgmt/client/haclient.py.in:1815
 msgid "Inactive resources"
 msgstr "停止的资源"
 
-#: ../mgmt/client/haclient.py.in:1809
+#: ../mgmt/client/haclient.py.in:1832
 msgid "Resources"
 msgstr "资源"
 
-#: ../mgmt/client/haclient.py.in:1823
+#: ../mgmt/client/haclient.py.in:1846
 msgid " on "
 msgstr "于 "
 
-#: ../mgmt/client/haclient.py.in:1852
+#: ../mgmt/client/haclient.py.in:1875
 msgid "unknown"
 msgstr "情况不明"
 
-#: ../mgmt/client/haclient.py.in:1860
+#: ../mgmt/client/haclient.py.in:1883
 msgid "unknown type"
 msgstr "未知类型"
 
-#: ../mgmt/client/haclient.py.in:1863
+#: ../mgmt/client/haclient.py.in:1889
+msgid "pending"
+msgstr "操作中"
+
+#: ../mgmt/client/haclient.py.in:1891
 msgid "offline"
 msgstr "离线"
 
-#: ../mgmt/client/haclient.py.in:1867
-msgid "online(dc)"
-msgstr "在线(主控节点)"
+#: ../mgmt/client/haclient.py.in:1897
+msgid "dc"
+msgstr "主控节点"
 
-#: ../mgmt/client/haclient.py.in:1954
+#: ../mgmt/client/haclient.py.in:1901
+msgid "on-fail"
+msgstr "失败"
+
+#: ../mgmt/client/haclient.py.in:1986
 msgid "primitive"
 msgstr "普通资源"
 
-#: ../mgmt/client/haclient.py.in:1971
+#: ../mgmt/client/haclient.py.in:1991
+msgid "fail"
+msgstr "失败"
+
+#: ../mgmt/client/haclient.py.in:2003
 msgid "group"
 msgstr "资源组"
 
-#: ../mgmt/client/haclient.py.in:1971
+#: ../mgmt/client/haclient.py.in:2003
 msgid "resources"
 msgstr "资源"
 
-#: ../mgmt/client/haclient.py.in:1971
+#: ../mgmt/client/haclient.py.in:2003
 msgid "clone"
 msgstr "克隆资源"
 
-#: ../mgmt/client/haclient.py.in:1971
+#: ../mgmt/client/haclient.py.in:2003
 msgid "master"
 msgstr "主从资源"
 
-#: ../mgmt/client/haclient.py.in:1973
+#: ../mgmt/client/haclient.py.in:2005
 msgid "orders"
 msgstr "顺序"
 
-#: ../mgmt/client/haclient.py.in:1973
+#: ../mgmt/client/haclient.py.in:2005
 msgid "locations"
 msgstr "位置"
 
-#: ../mgmt/client/haclient.py.in:1973
+#: ../mgmt/client/haclient.py.in:2005
 msgid "colocations"
 msgstr "协同"
 
-#: ../mgmt/client/haclient.py.in:1996 ../mgmt/client/haclient.py.in:4697
-#: ../mgmt/client/haclient.py.in:5889
+#: ../mgmt/client/haclient.py.in:2028 ../mgmt/client/haclient.py.in:4814
+#: ../mgmt/client/haclient.py.in:6201
 msgid "Live"
 msgstr ""
 
-#: ../mgmt/client/haclient.py.in:1998
+#: ../mgmt/client/haclient.py.in:2030
 msgid "Shadow: "
 msgstr ""
 
-#: ../mgmt/client/haclient.py.in:2033
+#: ../mgmt/client/haclient.py.in:2065
 msgid "Management"
 msgstr "管理"
 
-#: ../mgmt/client/haclient.py.in:2198
+#: ../mgmt/client/haclient.py.in:2230
 msgid "CIB"
 msgstr ""
 
-#: ../mgmt/client/haclient.py.in:2227 ../mgmt/client/haclient.py.in:2919
-#: ../mgmt/client/haclient.py.in:4637 ../mgmt/client/haclient.py.in:6281
+#: ../mgmt/client/haclient.py.in:2240
+msgid "View XML"
+msgstr "查看 XML"
+
+#: ../mgmt/client/haclient.py.in:2247
+msgid "The Whole CIB"
+msgstr "完整的CIB"
+
+#: ../mgmt/client/haclient.py.in:2249
+msgid "The Configuration Section"
+msgstr "配置段"
+
+#: ../mgmt/client/haclient.py.in:2276
+#, python-format
+msgid "The object \"%s\" doesn't exist"
+msgstr "对象“%s”不存在"
+
+#: ../mgmt/client/haclient.py.in:2332 ../mgmt/client/haclient.py.in:2613
+msgid "Default"
+msgstr "缺省"
+
+#: ../mgmt/client/haclient.py.in:2334 ../mgmt/client/haclient.py.in:3028
+#: ../mgmt/client/haclient.py.in:4753
 msgid "Reset"
 msgstr "重置"
 
-#: ../mgmt/client/haclient.py.in:2335
+#: ../mgmt/client/haclient.py.in:2442
 msgid "Multiple \"Cluster Property Set\" in \"CRM Config\"."
 msgstr "“CRM 配置”中存在多个“集群属性集”。"
 
-#: ../mgmt/client/haclient.py.in:2336 ../mgmt/client/haclient.py.in:3195
-#: ../mgmt/client/haclient.py.in:3217 ../mgmt/client/haclient.py.in:3320
-#: ../mgmt/client/haclient.py.in:3341
+#: ../mgmt/client/haclient.py.in:2443 ../mgmt/client/haclient.py.in:3304
+#: ../mgmt/client/haclient.py.in:3326 ../mgmt/client/haclient.py.in:3429
+#: ../mgmt/client/haclient.py.in:3450
 msgid "We are switching to \"Hack Mode\" to view them properly."
 msgstr "现在自动切换至“Hack 模式”以便正确显示。"
 
-#: ../mgmt/client/haclient.py.in:2408
+#: ../mgmt/client/haclient.py.in:2515
 msgid "There are unsaved changes in current page."
 msgstr "在当前页中有未保存的修改。"
 
-#: ../mgmt/client/haclient.py.in:2408 ../mgmt/client/haclient.py.in:5465
+#: ../mgmt/client/haclient.py.in:2515 ../mgmt/client/haclient.py.in:5743
 msgid "Apply the changes?"
 msgstr "您想应用修改吗？"
 
-#: ../mgmt/client/haclient.py.in:2426
+#: ../mgmt/client/haclient.py.in:2533
 msgid "Policy Engine"
 msgstr "策略引擎"
 
-#: ../mgmt/client/haclient.py.in:2438
+#: ../mgmt/client/haclient.py.in:2545
 msgid "CRM Daemon"
 msgstr "CRM 守护程序"
 
-#: ../mgmt/client/haclient.py.in:2500 ../mgmt/client/haclient.py.in:2503
-#: ../mgmt/client/haclient.py.in:8862 ../mgmt/client/haclient.py.in:8865
-#: ../mgmt/client/haclient.py.in:9121 ../mgmt/client/haclient.py.in:9124
+#: ../mgmt/client/haclient.py.in:2607 ../mgmt/client/haclient.py.in:2610
+#: ../mgmt/client/haclient.py.in:5058 ../mgmt/client/haclient.py.in:9271
+#: ../mgmt/client/haclient.py.in:9274 ../mgmt/client/haclient.py.in:9530
+#: ../mgmt/client/haclient.py.in:9533
 msgid "."
 msgstr "。"
 
-#: ../mgmt/client/haclient.py.in:2520 ../mgmt/client/haclient.py.in:2573
-#: ../mgmt/client/haclient.py.in:2577 ../mgmt/client/haclient.py.in:7922
-#: ../mgmt/client/haclient.py.in:7941 ../mgmt/client/haclient.py.in:8279
-#: ../mgmt/client/haclient.py.in:9036 ../mgmt/client/haclient.py.in:9040
-#: ../mgmt/client/haclient.py.in:9094
+#: ../mgmt/client/haclient.py.in:2627 ../mgmt/client/haclient.py.in:2680
+#: ../mgmt/client/haclient.py.in:2684 ../mgmt/client/haclient.py.in:8327
+#: ../mgmt/client/haclient.py.in:8346 ../mgmt/client/haclient.py.in:8688
+#: ../mgmt/client/haclient.py.in:9445 ../mgmt/client/haclient.py.in:9449
+#: ../mgmt/client/haclient.py.in:9503
 msgid "default"
 msgstr "缺省"
 
-#: ../mgmt/client/haclient.py.in:2636
+#: ../mgmt/client/haclient.py.in:2745
 msgid "List Mode"
 msgstr "列表模式"
 
-#: ../mgmt/client/haclient.py.in:2637
+#: ../mgmt/client/haclient.py.in:2746
 msgid "Tree Mode"
 msgstr "树形模式"
 
-#: ../mgmt/client/haclient.py.in:2638
+#: ../mgmt/client/haclient.py.in:2747
 msgid "XML Mode"
 msgstr "XML 模式"
 
-#: ../mgmt/client/haclient.py.in:2645
+#: ../mgmt/client/haclient.py.in:2754
 msgid "Show"
 msgstr "显示"
 
-#: ../mgmt/client/haclient.py.in:2909
+#: ../mgmt/client/haclient.py.in:3018
 msgid "The object doesn't exist"
 msgstr "对象不存在"
 
-#: ../mgmt/client/haclient.py.in:2918
+#: ../mgmt/client/haclient.py.in:3027
 msgid "Edit XML"
 msgstr "编辑 XML"
 
-#: ../mgmt/client/haclient.py.in:2933
+#: ../mgmt/client/haclient.py.in:3042
 msgid "Import"
 msgstr "导入"
 
-#: ../mgmt/client/haclient.py.in:2934
+#: ../mgmt/client/haclient.py.in:3043
 msgid "Import XML"
 msgstr "导入 XML"
 
-#: ../mgmt/client/haclient.py.in:2935
+#: ../mgmt/client/haclient.py.in:3044
 msgid "Export"
 msgstr "导出"
 
-#: ../mgmt/client/haclient.py.in:2936
+#: ../mgmt/client/haclient.py.in:3045
 msgid "Export XML"
 msgstr "导出 XML"
 
-#: ../mgmt/client/haclient.py.in:2999
+#: ../mgmt/client/haclient.py.in:3109
 msgid "OVR"
 msgstr "覆盖"
 
-#: ../mgmt/client/haclient.py.in:3001
+#: ../mgmt/client/haclient.py.in:3111
 msgid "INS"
 msgstr "插入"
 
-#: ../mgmt/client/haclient.py.in:3004
+#: ../mgmt/client/haclient.py.in:3114
 #, python-format
 msgid "Ln %d, Col %d\t%s"
 msgstr "行 %d, 列 %d\t%s"
 
-#: ../mgmt/client/haclient.py.in:3020
+#: ../mgmt/client/haclient.py.in:3130
 msgid "Failed to parse the XML"
 msgstr "解析 XML 失败"
 
-#: ../mgmt/client/haclient.py.in:3032
+#: ../mgmt/client/haclient.py.in:3142
 msgid "Open File"
 msgstr "打开文件"
 
-#: ../mgmt/client/haclient.py.in:3042
+#: ../mgmt/client/haclient.py.in:3151
 msgid "All files"
 msgstr "所有文件"
 
-#: ../mgmt/client/haclient.py.in:3047
+#: ../mgmt/client/haclient.py.in:3156
 msgid "XML files"
 msgstr "XML 文件"
 
-#: ../mgmt/client/haclient.py.in:3066 ../mgmt/client/haclient.py.in:3072
-#: ../mgmt/client/haclient.py.in:6013 ../mgmt/client/haclient.py.in:6043
-#: ../mgmt/client/haclient.py.in:6050 ../mgmt/client/haclient.py.in:6066
-#: ../mgmt/client/haclient.py.in:6082 ../mgmt/client/haclient.py.in:6106
-#: ../mgmt/client/haclient.py.in:6123
+#: ../mgmt/client/haclient.py.in:3175 ../mgmt/client/haclient.py.in:3181
+#: ../mgmt/client/haclient.py.in:5125 ../mgmt/client/haclient.py.in:6266
+#: ../mgmt/client/haclient.py.in:6294 ../mgmt/client/haclient.py.in:6324
+#: ../mgmt/client/haclient.py.in:6331 ../mgmt/client/haclient.py.in:6347
+#: ../mgmt/client/haclient.py.in:6363 ../mgmt/client/haclient.py.in:6387
+#: ../mgmt/client/haclient.py.in:6404 ../mgmt/client/haclient.py.in:7186
 msgid "I/O error"
 msgstr "输入输出错误"
 
-#: ../mgmt/client/haclient.py.in:3193 ../mgmt/client/haclient.py.in:3318
+#: ../mgmt/client/haclient.py.in:3302 ../mgmt/client/haclient.py.in:3427
 #, python-format
 msgid "The \"%s\" has multiple \"%s\" sets."
 msgstr "“%s”存在多个“%s”集。"
 
-#: ../mgmt/client/haclient.py.in:3214 ../mgmt/client/haclient.py.in:3338
+#: ../mgmt/client/haclient.py.in:3323 ../mgmt/client/haclient.py.in:3447
 #, python-format
 msgid "The \"%s\" has a \"%s\"."
 msgstr "“%s”中存在“%s”。"
 
-#: ../mgmt/client/haclient.py.in:3568 ../mgmt/client/haclient.py.in:4126
-#: ../mgmt/client/haclient.py.in:4530 ../mgmt/client/haclient.py.in:4631
+#: ../mgmt/client/haclient.py.in:3678 ../mgmt/client/haclient.py.in:4239
+#: ../mgmt/client/haclient.py.in:4644 ../mgmt/client/haclient.py.in:4747
 msgid "Add"
 msgstr "添加"
 
-#: ../mgmt/client/haclient.py.in:3603
+#: ../mgmt/client/haclient.py.in:3714
 msgid "Other"
 msgstr "其它"
 
-#: ../mgmt/client/haclient.py.in:3628
+#: ../mgmt/client/haclient.py.in:3740
 msgid "Please specify the type of object you want to add"
 msgstr "请指定添加对象的类型"
 
-#: ../mgmt/client/haclient.py.in:3669
+#: ../mgmt/client/haclient.py.in:3782
 msgid "Wizard"
 msgstr "向导"
 
-#: ../mgmt/client/haclient.py.in:3672
+#: ../mgmt/client/haclient.py.in:3785
 msgid "Dialog"
 msgstr "对话"
 
-#: ../mgmt/client/haclient.py.in:3913
+#: ../mgmt/client/haclient.py.in:4026
 #, python-format
 msgid "This will delete the %s \"%s\""
-msgstr "这会删除%s \"%s\""
+msgstr "这会删除%s “%s”"
 
-#: ../mgmt/client/haclient.py.in:3915
+#: ../mgmt/client/haclient.py.in:4028
 msgid "Delete the selected object?"
 msgstr "删除选定的对象？"
 
-#: ../mgmt/client/haclient.py.in:4082
+#: ../mgmt/client/haclient.py.in:4195
 msgid "Initial state of resource"
 msgstr "资源的初始状态"
 
-#: ../mgmt/client/haclient.py.in:4087
+#: ../mgmt/client/haclient.py.in:4200
 msgid ""
 "Maximum number of copies (Defaults to the number of nodes in the cluster)"
 msgstr "最大实例个数（缺省为集群的节点个数）"
 
-#: ../mgmt/client/haclient.py.in:4089
+#: ../mgmt/client/haclient.py.in:4201 ../mgmt/client/haclient.py.in:4205
+#: ../mgmt/client/haclient.py.in:4207 ../mgmt/client/haclient.py.in:4209
+#: ../mgmt/client/haclient.py.in:4214 ../mgmt/client/haclient.py.in:4216
+#: ../mgmt/client/haclient.py.in:4235 ../mgmt/client/haclient.py.in:9298
+#: ../mgmt/client/haclient.py.in:9300 ../mgmt/client/haclient.py.in:9309
+#: ../mgmt/client/haclient.py.in:9318 ../mgmt/client/haclient.py.in:9322
+#: ../mgmt/client/haclient.py.in:9324 ../mgmt/client/haclient.py.in:9326
+#: ../mgmt/client/haclient.py.in:9328 ../mgmt/client/haclient.py.in:9333
+#: ../mgmt/client/haclient.py.in:9335
+msgid "[ default ]"
+msgstr "［ 缺省 ］"
+
+#: ../mgmt/client/haclient.py.in:4202
 msgid "Maximum number of copies on a single node (Defaults to 1)"
 msgstr "单个节点上的最大实例个数（缺省为 1）"
 
-#: ../mgmt/client/haclient.py.in:4092 ../mgmt/client/haclient.py.in:4094
-#: ../mgmt/client/haclient.py.in:4096 ../mgmt/client/haclient.py.in:8889
-#: ../mgmt/client/haclient.py.in:8891 ../mgmt/client/haclient.py.in:8900
-#: ../mgmt/client/haclient.py.in:8913 ../mgmt/client/haclient.py.in:8915
-#: ../mgmt/client/haclient.py.in:8917 ../mgmt/client/haclient.py.in:8919
-msgid "[ default ]"
-msgstr "[ 缺省 ]"
-
-#: ../mgmt/client/haclient.py.in:4093
+#: ../mgmt/client/haclient.py.in:4206
 msgid ""
 "Notify all the other copies before stopping or starting a copy and when the "
 "action was successful (Defaults to false)"
@@ -640,13 +700,13 @@ msgstr ""
 "在启动或停止一个实例之前, 并且在成功完成之时，通知所有其它实例（缺省为 "
 "false）"
 
-#: ../mgmt/client/haclient.py.in:4095
+#: ../mgmt/client/haclient.py.in:4208
 msgid ""
 "Globally Unique (Does each copy of the clone perform a different function? "
 "Defaults to false)"
 msgstr "全局唯一（克隆的每个实例执行不同的功能？ 缺省为 false）"
 
-#: ../mgmt/client/haclient.py.in:4097
+#: ../mgmt/client/haclient.py.in:4210
 msgid ""
 "Interleave (Changes the behavior of ordering constraints (between clones/"
 "masters) so that instances can start/stop as soon as their peer instance has "
@@ -657,123 +717,196 @@ msgstr ""
 "实例启动或停止之后立刻启停（不必等待另一克隆资源的每个实例操作完成）。 缺省"
 "为 false）"
 
-#: ../mgmt/client/haclient.py.in:4102
+#: ../mgmt/client/haclient.py.in:4215
 msgid "Maximum number of master copies (Defaults to 1)"
 msgstr "最大主实例个数 （缺省为 1）"
 
-#: ../mgmt/client/haclient.py.in:4104
+#: ../mgmt/client/haclient.py.in:4217
 msgid "Maximum number of master copies on a single node (Defaults to 1)"
 msgstr "单个节点上的最大主实例个数 （缺省为 1）"
 
-#: ../mgmt/client/haclient.py.in:4135
+#: ../mgmt/client/haclient.py.in:4249
 msgid "Basic Settings"
 msgstr "基本设置"
 
-#: ../mgmt/client/haclient.py.in:4157
+#: ../mgmt/client/haclient.py.in:4271
 msgid "Options"
 msgstr "选项"
 
-#: ../mgmt/client/haclient.py.in:4256
+#: ../mgmt/client/haclient.py.in:4370
 msgid "Add monitor operation"
 msgstr "添加监视操作"
 
-#: ../mgmt/client/haclient.py.in:4540
+#: ../mgmt/client/haclient.py.in:4656
 #, python-format
 msgid "Summary Of \"%s\""
 msgstr "“%s” 概要"
 
-#: ../mgmt/client/haclient.py.in:4542
+#: ../mgmt/client/haclient.py.in:4658
 msgid "Summary"
 msgstr "概要"
 
-#: ../mgmt/client/haclient.py.in:4561
+#: ../mgmt/client/haclient.py.in:4677
 #, python-format
 msgid "Sub-resource For \"%s\""
 msgstr "“%s”的子资源"
 
-#: ../mgmt/client/haclient.py.in:4563
+#: ../mgmt/client/haclient.py.in:4679
 msgid "Sub-resource"
 msgstr "子资源"
 
-#: ../mgmt/client/haclient.py.in:4565
+#: ../mgmt/client/haclient.py.in:4681
 msgid "Add "
 msgstr "添加"
 
-#: ../mgmt/client/haclient.py.in:4566
+#: ../mgmt/client/haclient.py.in:4682
 msgid "Continue Adding "
 msgstr "继续添加"
 
-#: ../mgmt/client/haclient.py.in:4633
+#: ../mgmt/client/haclient.py.in:4749
 msgid "Edit"
 msgstr "编辑"
 
-#: ../mgmt/client/haclient.py.in:4674
+#: ../mgmt/client/haclient.py.in:4791
 msgid ""
 "This will reset the current object attributes and all sub-objects to the "
 "initial configurations."
 msgstr "这会重置当前对象属性以及所有子对象为初始设置。"
 
-#: ../mgmt/client/haclient.py.in:4676
+#: ../mgmt/client/haclient.py.in:4793
 msgid "Reset the configurations?"
 msgstr "重置设置？"
 
-#: ../mgmt/client/haclient.py.in:4693
+#: ../mgmt/client/haclient.py.in:4803
+msgid "Transition Information"
+msgstr "集群操作信息"
+
+#: ../mgmt/client/haclient.py.in:4810
 msgid "Transition"
 msgstr "集群操作"
 
-#: ../mgmt/client/haclient.py.in:4701
+#: ../mgmt/client/haclient.py.in:4818
 msgid "History"
 msgstr "历史"
 
-#: ../mgmt/client/haclient.py.in:4728
+#: ../mgmt/client/haclient.py.in:4847
 msgid "Graph"
 msgstr "图解"
 
-#: ../mgmt/client/haclient.py.in:4739
+#: ../mgmt/client/haclient.py.in:4858
 msgid "Detail"
 msgstr "详细信息"
 
-#: ../mgmt/client/haclient.py.in:4743
+#: ../mgmt/client/haclient.py.in:4862
 msgid "Verbosity"
 msgstr "详细程度"
 
-#: ../mgmt/client/haclient.py.in:4769
+#: ../mgmt/client/haclient.py.in:4888
 msgid "Scores"
 msgstr "得分"
 
-#: ../mgmt/client/haclient.py.in:4865
+#: ../mgmt/client/haclient.py.in:4949 ../mgmt/client/haclient.py.in:4982
+msgid "Transitions"
+msgstr "集群操作"
+
+#: ../mgmt/client/haclient.py.in:4971
+#, python-format
+msgid "[Omitted %d transitions...]"
+msgstr "［省略 %d 个集群操作...］"
+
+#: ../mgmt/client/haclient.py.in:4983
+msgid "Searching the transitions may take a while,"
+msgstr "搜索集群操作需要一段时间，"
+
+#: ../mgmt/client/haclient.py.in:4984
+msgid "depending on the number of transitions..."
+msgstr "取决于集群操作的数量..."
+
+#: ../mgmt/client/haclient.py.in:4985
+msgid "Cannot find any transition record"
+msgstr "无法获取任何集群操作记录"
+
+#: ../mgmt/client/haclient.py.in:5027
+msgid "The specified transition doesn't exist"
+msgstr "指定的集群操作不存在"
+
+#: ../mgmt/client/haclient.py.in:5058
+msgid "Please specify a proper identity of a transition"
+msgstr "请指定集群操作的正确标识"
+
+#: ../mgmt/client/haclient.py.in:5059
+msgid "Such as"
+msgstr "例如"
+
+#: ../mgmt/client/haclient.py.in:5061
+msgid "Transition type: \"error\", \"warn\" or \"input\""
+msgstr "集群操作类型：“error”，“warn”或者“input”"
+
+#: ../mgmt/client/haclient.py.in:5136
+msgid "Transition Graph"
+msgstr "集群操作图解"
+
+#: ../mgmt/client/haclient.py.in:5137
+msgid "Generating the transition graph may take a while..."
+msgstr "生成集群操作图解需要一段时间..."
+
+#: ../mgmt/client/haclient.py.in:5138
 msgid "Failed to generate the transition graph"
 msgstr "生成集群操作图解失败"
 
-#: ../mgmt/client/haclient.py.in:4910
+#: ../mgmt/client/haclient.py.in:5151
+msgid "Transition Detail"
+msgstr "集群操作详细信息"
+
+#: ../mgmt/client/haclient.py.in:5152
+msgid "Generating the transition detail may take a while..."
+msgstr "生成集群操作详细信息需要一段时间..."
+
+#: ../mgmt/client/haclient.py.in:5153
+msgid "Failed to generate the transition detail"
+msgstr "生成集群操作详细信息失败"
+
+#: ../mgmt/client/haclient.py.in:5165
+msgid "Transition Scores"
+msgstr "集群操作得分"
+
+#: ../mgmt/client/haclient.py.in:5166
+msgid "Generating the transition scores may take a while..."
+msgstr "生成集群操作得分需要一段时间..."
+
+#: ../mgmt/client/haclient.py.in:5167
+msgid "Failed to generate the transition scores"
+msgstr "生成集群操作得分失败"
+
+#: ../mgmt/client/haclient.py.in:5178
 msgid "Cannot save the graph for specified transition"
 msgstr "无法保存指定的集群操作图解"
 
-#: ../mgmt/client/haclient.py.in:4913
+#: ../mgmt/client/haclient.py.in:5181
 msgid "PNG Image"
 msgstr "PNG 图像"
 
-#: ../mgmt/client/haclient.py.in:4914
+#: ../mgmt/client/haclient.py.in:5182
 msgid "JPEG Image"
 msgstr "JPEG 图像"
 
-#: ../mgmt/client/haclient.py.in:4915
+#: ../mgmt/client/haclient.py.in:5183
 msgid "GIF Image"
 msgstr "GIF 图像"
 
-#: ../mgmt/client/haclient.py.in:4916
+#: ../mgmt/client/haclient.py.in:5184
 msgid "TIFF Image"
 msgstr "TIFF 图像"
 
-#: ../mgmt/client/haclient.py.in:4917
+#: ../mgmt/client/haclient.py.in:5185
 msgid "Dot File"
 msgstr "Dot 文件"
 
-#: ../mgmt/client/haclient.py.in:4948
+#: ../mgmt/client/haclient.py.in:5216
 msgid "Cannot save the information for specified transition"
 msgstr "无法保存指定的集群操作信息"
 
-#: ../mgmt/client/haclient.py.in:4968
+#: ../mgmt/client/haclient.py.in:5236
 msgid ""
 "Interpreting the graph:\n"
 "* Arrows indicate ordering dependancies\n"
@@ -807,492 +940,507 @@ msgstr ""
 "* 任何动作如果依赖于红色边框的动作，则不能执行\n"
 "* 如果遇到环路情况，请报告给开发团队。"
 
-#: ../mgmt/client/haclient.py.in:5009 ../mgmt/client/haclient.py.in:5959
-#: ../mgmt/client/haclient.py.in:6288
-msgid "Cluster Report"
-msgstr "集群报告"
-
-#: ../mgmt/client/haclient.py.in:5018
+#: ../mgmt/client/haclient.py.in:5288
 msgid "From"
 msgstr "起始"
 
-#: ../mgmt/client/haclient.py.in:5019
+#: ../mgmt/client/haclient.py.in:5289
 msgid "To"
 msgstr "目标"
 
-#: ../mgmt/client/haclient.py.in:5040
+#: ../mgmt/client/haclient.py.in:5314
 msgid "The \"From\" time should before the \"To\" one"
 msgstr "\"起始\"时间应早于\"截止\"时间"
 
-#: ../mgmt/client/haclient.py.in:5079
+#: ../mgmt/client/haclient.py.in:5356
 msgid "Save as ..."
 msgstr "保存为..."
 
-#: ../mgmt/client/haclient.py.in:5109
+#: ../mgmt/client/haclient.py.in:5386
 msgid "Permission denied"
 msgstr "权限不够"
 
-#: ../mgmt/client/haclient.py.in:5113
+#: ../mgmt/client/haclient.py.in:5390
 msgid "A file with the same name already exists"
 msgstr "同名文件已经存在"
 
-#: ../mgmt/client/haclient.py.in:5115
+#: ../mgmt/client/haclient.py.in:5392
 msgid "Do you want to overwrite it?"
 msgstr "您想要覆盖该文件吗？"
 
-#: ../mgmt/client/haclient.py.in:5118
+#: ../mgmt/client/haclient.py.in:5395
 msgid "Replace it?"
 msgstr "替换？"
 
-#: ../mgmt/client/haclient.py.in:5291
+#: ../mgmt/client/haclient.py.in:5569
 msgid "Description of Cluster Report"
 msgstr "集群报告描述"
 
-#: ../mgmt/client/haclient.py.in:5304
+#: ../mgmt/client/haclient.py.in:5582
 msgid "Severity"
 msgstr "严重性"
 
-#: ../mgmt/client/haclient.py.in:5319
+#: ../mgmt/client/haclient.py.in:5597
 msgid "Component"
 msgstr "组件"
 
-#: ../mgmt/client/haclient.py.in:5333
+#: ../mgmt/client/haclient.py.in:5611
 msgid "Subject"
 msgstr "主题"
 
-#: ../mgmt/client/haclient.py.in:5342
+#: ../mgmt/client/haclient.py.in:5620
 msgid "Detailed description"
 msgstr "详细描述"
 
-#: ../mgmt/client/haclient.py.in:5447 ../mgmt/client/haclient.py.in:6475
+#: ../mgmt/client/haclient.py.in:5725 ../mgmt/client/haclient.py.in:6849
 msgid "Connected to "
 msgstr "已连接至 "
 
-#: ../mgmt/client/haclient.py.in:5449
+#: ../mgmt/client/haclient.py.in:5727
 msgid "Not connected"
 msgstr "未连接"
 
-#: ../mgmt/client/haclient.py.in:5451 ../mgmt/client/haclient.py.in:5453
-#: ../mgmt/client/haclient.py.in:5455
+#: ../mgmt/client/haclient.py.in:5729 ../mgmt/client/haclient.py.in:5731
+#: ../mgmt/client/haclient.py.in:5733
 msgid "("
 msgstr "（"
 
-#: ../mgmt/client/haclient.py.in:5451 ../mgmt/client/haclient.py.in:6294
+#: ../mgmt/client/haclient.py.in:5729
 msgid "Simple Mode"
 msgstr "简单模式"
 
-#: ../mgmt/client/haclient.py.in:5451 ../mgmt/client/haclient.py.in:5453
-#: ../mgmt/client/haclient.py.in:5455
+#: ../mgmt/client/haclient.py.in:5729 ../mgmt/client/haclient.py.in:5731
+#: ../mgmt/client/haclient.py.in:5733
 msgid ")"
 msgstr "）"
 
-#: ../mgmt/client/haclient.py.in:5453 ../mgmt/client/haclient.py.in:6295
+#: ../mgmt/client/haclient.py.in:5731
 msgid "Expert Mode"
 msgstr "专家模式"
 
-#: ../mgmt/client/haclient.py.in:5455 ../mgmt/client/haclient.py.in:6296
+#: ../mgmt/client/haclient.py.in:5733
 msgid "Hack Mode"
 msgstr "Hack 模式"
 
-#: ../mgmt/client/haclient.py.in:5465
+#: ../mgmt/client/haclient.py.in:5743
 msgid "The data of current view have been changed."
 msgstr "当前视图中的数据已更改。"
 
-#: ../mgmt/client/haclient.py.in:5515
+#: ../mgmt/client/haclient.py.in:5819
 msgid "Do you want to quit ?"
 msgstr "您想要退出吗？"
 
-#: ../mgmt/client/haclient.py.in:5524
+#: ../mgmt/client/haclient.py.in:5828
 msgid "Login"
 msgstr "登录"
 
-#: ../mgmt/client/haclient.py.in:5587
+#: ../mgmt/client/haclient.py.in:5892
 msgid "Do you want to logout ?"
 msgstr "您想要断开吗？"
 
-#: ../mgmt/client/haclient.py.in:5594
+#: ../mgmt/client/haclient.py.in:5899
 msgid "\"Indicate pending operations\" has been activated."
 msgstr "“显示进行中的操作” 已被激活。"
 
-#: ../mgmt/client/haclient.py.in:5595
+#: ../mgmt/client/haclient.py.in:5900
 msgid "It could affect the performance."
 msgstr "这会影响集群性能。"
 
-#: ../mgmt/client/haclient.py.in:5596
+#: ../mgmt/client/haclient.py.in:5901
 msgid "Turn it off ?"
 msgstr "将其关闭吗？"
 
-#: ../mgmt/client/haclient.py.in:5605
+#: ../mgmt/client/haclient.py.in:5910
 msgid "Cannot get any shadow CIB"
 msgstr "无法获取任何 Shadow CIB"
 
-#: ../mgmt/client/haclient.py.in:5624
+#: ../mgmt/client/haclient.py.in:5929
 msgid "Shadow CIB"
 msgstr ""
 
-#: ../mgmt/client/haclient.py.in:5626
+#: ../mgmt/client/haclient.py.in:5931
 msgid "Recreate the specified shadow CIB from the live CIB"
 msgstr "重新从 Live CIB 创建指定的 Shadow CIB"
 
-#: ../mgmt/client/haclient.py.in:5628
+#: ../mgmt/client/haclient.py.in:5933
 msgid "Delete the specified shadow CIB"
 msgstr "删除选定的 Shadow CIB"
 
-#: ../mgmt/client/haclient.py.in:5630
+#: ../mgmt/client/haclient.py.in:5935
 msgid "Upload the specified shadow CIB to the cluster"
 msgstr "加载指定的 Shadow CIB 到集群"
 
-#: ../mgmt/client/haclient.py.in:5633
+#: ../mgmt/client/haclient.py.in:5938
 msgid "Shadow Name"
 msgstr "Shadow 名称"
 
-#: ../mgmt/client/haclient.py.in:5656
+#: ../mgmt/client/haclient.py.in:5961
 #, python-format
 msgid "The shadow CIB \"%s\"has been successfully commited."
 msgstr "成功提交 Shadow CIB “%s”"
 
-#: ../mgmt/client/haclient.py.in:5657 ../mgmt/client/haclient.py.in:5659
+#: ../mgmt/client/haclient.py.in:5962 ../mgmt/client/haclient.py.in:5964
 msgid "Switch to the live CIB?"
 msgstr "转到 Live CIB？"
 
-#: ../mgmt/client/haclient.py.in:5679
+#: ../mgmt/client/haclient.py.in:5984 ../mgmt/client/haclient.py.in:6009
 msgid "Shadow CIB Diff"
 msgstr "Shadow CIB 差异"
 
-#: ../mgmt/client/haclient.py.in:5685
+#: ../mgmt/client/haclient.py.in:5991
 #, python-format
 msgid "Differences between the live CIB and the shadow CIB \"%s\""
 msgstr "Live CIB 与 Shadow CIB “%s” 之间的差异"
 
-#: ../mgmt/client/haclient.py.in:5728
+#: ../mgmt/client/haclient.py.in:6010
+msgid "Generating the shadow CIB differences may take a while..."
+msgstr "生成 shadow CIB 差异需要一段时间..."
+
+#: ../mgmt/client/haclient.py.in:6011
+msgid "Failed to generate the shadow CIB differences"
+msgstr "生成 shadow CIB 差异失败"
+
+#: ../mgmt/client/haclient.py.in:6039
 msgid "Diff Files"
 msgstr "Diff 文件"
 
-#: ../mgmt/client/haclient.py.in:5729
+#: ../mgmt/client/haclient.py.in:6040
 msgid "All Files"
 msgstr "所有文件"
 
-#: ../mgmt/client/haclient.py.in:5738
+#: ../mgmt/client/haclient.py.in:6049
 msgid "Cannot save the shadow diff"
 msgstr "无法保存 Shadow 差异"
 
-#: ../mgmt/client/haclient.py.in:5765
+#: ../mgmt/client/haclient.py.in:6076
 msgid "Create Shadow CIB"
 msgstr "创建 Shadow CIB"
 
-#: ../mgmt/client/haclient.py.in:5787
+#: ../mgmt/client/haclient.py.in:6099
 msgid "A copy of the live CIB"
 msgstr "Live CIB 的拷贝"
 
-#: ../mgmt/client/haclient.py.in:5791
+#: ../mgmt/client/haclient.py.in:6103
 msgid "A new CIB with empty cluster configuration"
 msgstr "新的空配置的 CIB"
 
-#: ../mgmt/client/haclient.py.in:5820
+#: ../mgmt/client/haclient.py.in:6132
 msgid "Please specify a name for the shadow CIB."
 msgstr "请指定 Shadow CIB 的名称"
 
-#: ../mgmt/client/haclient.py.in:5823
+#: ../mgmt/client/haclient.py.in:6135
 msgid "Please specify another name for avoiding confusion."
 msgstr "请指定其它的名称以防混淆。"
 
-#: ../mgmt/client/haclient.py.in:5826
+#: ../mgmt/client/haclient.py.in:6138
 #, python-format
 msgid "A shadow CIB \"%s\" already exists and it's currently active."
 msgstr "Shadow CIB “%s” 已经存在并且正在操作当中。"
 
-#: ../mgmt/client/haclient.py.in:5829
+#: ../mgmt/client/haclient.py.in:6141
 #, python-format
 msgid "A shadow CIB \"%s\" already exists."
 msgstr "Shadow CIB “%s” 已经存在。"
 
-#: ../mgmt/client/haclient.py.in:5830
+#: ../mgmt/client/haclient.py.in:6142
 msgid "Specify another name, or select \"Force\" if you want to override it."
 msgstr "请指定其它的名称， 或者选择“强制”将其覆盖。"
 
 #. else :
-#: ../mgmt/client/haclient.py.in:5849
+#: ../mgmt/client/haclient.py.in:6161
 #, python-format
 msgid "A new shadow CIB \"%s\" has been successfully created."
 msgstr "成功创建新的 Shadow CIB “%s”。"
 
-#: ../mgmt/client/haclient.py.in:5850
+#: ../mgmt/client/haclient.py.in:6162
 msgid "Switch to it now?"
 msgstr "转到此 CIB？"
 
-#: ../mgmt/client/haclient.py.in:5852
+#: ../mgmt/client/haclient.py.in:6164
 #, python-format
 msgid "Switch to the new created shadow CIB \"%s\"?"
 msgstr "转到新创建的 Shadow CIB “%s”？"
 
-#: ../mgmt/client/haclient.py.in:5920
-msgid "Cannot find any transition record"
-msgstr "无法获取任何集群操作记录"
+#: ../mgmt/client/haclient.py.in:6231 ../mgmt/client/haclient.py.in:6241
+msgid "Cluster Report"
+msgstr "集群报告"
 
-#: ../mgmt/client/haclient.py.in:5960
+#: ../mgmt/client/haclient.py.in:6242
 msgid "Generating the cluster report may take a while,"
 msgstr "生成集群报告需要一段时间，"
 
-#: ../mgmt/client/haclient.py.in:5961
+#: ../mgmt/client/haclient.py.in:6243
 msgid "depending on the size of logs..."
 msgstr "取决于日志的大小..."
 
-#: ../mgmt/client/haclient.py.in:5973
+#: ../mgmt/client/haclient.py.in:6244 ../mgmt/client/haclient.py.in:6250
 msgid "Failed to generate the cluster report"
 msgstr "生成集群报告失败"
 
-#: ../mgmt/client/haclient.py.in:5983
+#: ../mgmt/client/haclient.py.in:6260
 msgid "Incomplete data"
 msgstr "不完整的数据"
 
-#: ../mgmt/client/haclient.py.in:6016 ../mgmt/client/haclient.py.in:6024
-#: ../mgmt/client/haclient.py.in:6086 ../mgmt/client/haclient.py.in:6110
-#: ../mgmt/client/haclient.py.in:6128
+#: ../mgmt/client/haclient.py.in:6297 ../mgmt/client/haclient.py.in:6305
+#: ../mgmt/client/haclient.py.in:6367 ../mgmt/client/haclient.py.in:6391
+#: ../mgmt/client/haclient.py.in:6409
 msgid "Tar error"
 msgstr "归档错误"
 
-#: ../mgmt/client/haclient.py.in:6174
+#: ../mgmt/client/haclient.py.in:6458 ../mgmt/client/haclient.py.in:6661
+msgid "About"
+msgstr "关于"
+
+#: ../mgmt/client/haclient.py.in:6540
 msgid "Pacemaker GUI"
 msgstr "Pacemaker 图形用户界面"
 
-#: ../mgmt/client/haclient.py.in:6273
-msgid "Connection"
-msgstr "连接"
+#: ../mgmt/client/haclient.py.in:6644
+msgid "_Connection"
+msgstr "连接(_C)"
 
-#: ../mgmt/client/haclient.py.in:6274
-msgid "Login..."
-msgstr "登录..."
+#: ../mgmt/client/haclient.py.in:6645
+msgid "Log_in"
+msgstr "登录(_I)"
 
-#: ../mgmt/client/haclient.py.in:6274
+#: ../mgmt/client/haclient.py.in:6645
 msgid "login to cluster"
 msgstr "登录到集群"
 
-#: ../mgmt/client/haclient.py.in:6275
-msgid "Logout"
-msgstr "断开"
+#: ../mgmt/client/haclient.py.in:6646
+msgid "Log_out"
+msgstr "断开(_O)"
 
-#: ../mgmt/client/haclient.py.in:6275
+#: ../mgmt/client/haclient.py.in:6646
 msgid "logout from cluster"
 msgstr "从集群中断开"
 
-#: ../mgmt/client/haclient.py.in:6276
-msgid "Quit"
-msgstr "退出"
+#: ../mgmt/client/haclient.py.in:6647
+msgid "_Quit"
+msgstr "退出(_Q)"
 
-#: ../mgmt/client/haclient.py.in:6276
+#: ../mgmt/client/haclient.py.in:6647
 msgid "Quit the Program"
 msgstr "退出客户端"
 
-#: ../mgmt/client/haclient.py.in:6277
-msgid "View"
-msgstr "查看"
+#: ../mgmt/client/haclient.py.in:6648
+msgid "_View"
+msgstr "查看(_V)"
 
-#: ../mgmt/client/haclient.py.in:6278
-msgid "Shadow"
-msgstr "Shadow 配置"
+#: ../mgmt/client/haclient.py.in:6649
+msgid "_Shadow"
+msgstr "Shadow 配置(_S)"
 
-#: ../mgmt/client/haclient.py.in:6279
-msgid "New"
-msgstr "新建"
+#: ../mgmt/client/haclient.py.in:6650
+msgid "_New"
+msgstr "新建(_N)"
 
-#: ../mgmt/client/haclient.py.in:6279
+#: ../mgmt/client/haclient.py.in:6650
 msgid "Create a new shadow CIB"
 msgstr "创建新的 Shadow CIB"
 
-#: ../mgmt/client/haclient.py.in:6280
-msgid "Diff"
-msgstr "差异"
+#: ../mgmt/client/haclient.py.in:6651
+msgid "Di_ff"
+msgstr "差异(_F)"
 
-#: ../mgmt/client/haclient.py.in:6280
+#: ../mgmt/client/haclient.py.in:6651
 msgid "Differences between the live CIB and the shadow CIB"
 msgstr "Live CIB 与 Shadow CIB 之间的差异"
 
-#: ../mgmt/client/haclient.py.in:6281
+#: ../mgmt/client/haclient.py.in:6652
+msgid "_Reset"
+msgstr "重置(_R)"
+
+#: ../mgmt/client/haclient.py.in:6652
 msgid "Recreate a shadow CIB from the live CIB"
 msgstr "从 Live CIB 重新创建 Shadow CIB"
 
-#: ../mgmt/client/haclient.py.in:6282
-msgid "Delete"
-msgstr "删除"
+#: ../mgmt/client/haclient.py.in:6653
+msgid "_Delete"
+msgstr "删除(_D)"
 
-#: ../mgmt/client/haclient.py.in:6282
+#: ../mgmt/client/haclient.py.in:6653
 msgid "Delete a shadow CIB"
 msgstr "删除 Shadow CIB"
 
-#: ../mgmt/client/haclient.py.in:6283
-msgid "Commit"
-msgstr "提交"
+#: ../mgmt/client/haclient.py.in:6654
+msgid "_Commit"
+msgstr "提交(_C)"
 
-#: ../mgmt/client/haclient.py.in:6283
+#: ../mgmt/client/haclient.py.in:6654
 msgid "Upload a shadow CIB to the cluster"
 msgstr "加载 Shadow CIB 到集群"
 
-#: ../mgmt/client/haclient.py.in:6284
-msgid "Switch"
-msgstr "转到"
+#: ../mgmt/client/haclient.py.in:6655
+msgid "_Switch"
+msgstr "转到(_S)"
 
-#: ../mgmt/client/haclient.py.in:6284
+#: ../mgmt/client/haclient.py.in:6655
 msgid "Switch working CIB"
 msgstr "切换要操作的 CIB"
 
-#: ../mgmt/client/haclient.py.in:6285
-msgid "Tools"
-msgstr "工具"
+#: ../mgmt/client/haclient.py.in:6656
+msgid "_Tools"
+msgstr "工具(_T)"
 
-#: ../mgmt/client/haclient.py.in:6286
-msgid "Transition Information"
-msgstr "集群操作信息"
+#: ../mgmt/client/haclient.py.in:6657
+msgid "_Transition Information"
+msgstr "集群操作信息(_T)"
 
-#: ../mgmt/client/haclient.py.in:6287
+#: ../mgmt/client/haclient.py.in:6658
 msgid "Show Transition Information"
 msgstr "查看集群操作信息"
 
-#: ../mgmt/client/haclient.py.in:6288
+#: ../mgmt/client/haclient.py.in:6659
+msgid "Cluster Re_port"
+msgstr "集群报告(_P)"
+
+#: ../mgmt/client/haclient.py.in:6659
 msgid "generate a cluster report"
 msgstr "生成集群报告"
 
-#: ../mgmt/client/haclient.py.in:6294
+#: ../mgmt/client/haclient.py.in:6660
+msgid "_Help"
+msgstr "帮助(_H)"
+
+#: ../mgmt/client/haclient.py.in:6661
+msgid "_About"
+msgstr "关于(_A)"
+
+#: ../mgmt/client/haclient.py.in:6667
+msgid "_Simple Mode"
+msgstr "简单模式(_S)"
+
+#: ../mgmt/client/haclient.py.in:6667
 msgid "Switch to simple mode"
 msgstr "切换到简单模式"
 
-#: ../mgmt/client/haclient.py.in:6295
+#: ../mgmt/client/haclient.py.in:6668
+msgid "_Expert Mode"
+msgstr "专家模式(_E)"
+
+#: ../mgmt/client/haclient.py.in:6668
 msgid "Switch to expert mode"
 msgstr "切换到专家模式"
 
-#: ../mgmt/client/haclient.py.in:6296
+#: ../mgmt/client/haclient.py.in:6669
+msgid "_Hack Mode"
+msgstr "Hack 模式(_H)"
+
+#: ../mgmt/client/haclient.py.in:6669
 msgid "Switch to hack mode"
 msgstr "切换到 Hack 模式"
 
-#: ../mgmt/client/haclient.py.in:6359
+#: ../mgmt/client/haclient.py.in:6732
 msgid "Not Connected"
 msgstr "未连接"
 
-#: ../mgmt/client/haclient.py.in:6452
+#: ../mgmt/client/haclient.py.in:6826
 msgid "Can't resolve address of server "
 msgstr "无法解析服务器地址 "
 
-#: ../mgmt/client/haclient.py.in:6458 ../mgmt/client/haclient.py.in:6464
+#: ../mgmt/client/haclient.py.in:6832 ../mgmt/client/haclient.py.in:6838
 msgid "Can't connect to server "
 msgstr "无法连接到服务器 "
 
-#: ../mgmt/client/haclient.py.in:6467
+#: ../mgmt/client/haclient.py.in:6841
 msgid ""
 "Failed in the authentication.\n"
 " User Name or Password may be wrong.\n"
 " or the user doesn't belong to haclient group"
 msgstr "用户认证失败，可能是用户或密码不对，或该用户不属于 haclient 组"
 
-#: ../mgmt/client/haclient.py.in:6470
+#: ../mgmt/client/haclient.py.in:6844
 msgid ""
 "Can't login to server.\n"
 " The protocols may be mismatched."
 msgstr "无法登录到服务器，可能是协议不匹配"
 
-#: ../mgmt/client/haclient.py.in:6480 ../mgmt/client/haclient.py.in:6573
+#: ../mgmt/client/haclient.py.in:6854 ../mgmt/client/haclient.py.in:6971
 msgid "Updating data from server..."
 msgstr "正在从服务器更新数据..."
 
-#: ../mgmt/client/haclient.py.in:6582
+#: ../mgmt/client/haclient.py.in:6964
 msgid "Reconnecting..."
 msgstr "重新连接中..."
 
-#: ../mgmt/client/haclient.py.in:6631
-msgid "Cannot get the CIB"
-msgstr "无法获取 CIB"
+#: ../mgmt/client/haclient.py.in:7144
+msgid "Cannot expand the Relax-NG schema"
+msgstr "无法展开 Relax-NG Schema"
 
-#: ../mgmt/client/haclient.py.in:6637
-msgid "Failed to parse the CIB"
-msgstr "解析 CIB 失败"
-
-#: ../mgmt/client/haclient.py.in:6647
-msgid "Cannot parse the CIB"
-msgstr "无法解析 CIB"
-
-#: ../mgmt/client/haclient.py.in:6757 ../mgmt/client/haclient.py.in:6833
-msgid "Cannot get the Relax-NG schema"
-msgstr "无法获取 Relax-NG Schema"
-
-#: ../mgmt/client/haclient.py.in:6763
+#: ../mgmt/client/haclient.py.in:7150
 msgid "Failed to parse the CIB XML"
 msgstr "解析 CIB XML 失败"
 
-#: ../mgmt/client/haclient.py.in:6769 ../mgmt/client/haclient.py.in:6841
+#: ../mgmt/client/haclient.py.in:7156
 msgid "Failed to parse the Relax-NG schema"
 msgstr "解析 Relax-NG Schema 失败"
 
-#: ../mgmt/client/haclient.py.in:6849
-msgid "Cannot get started in Relax-NG schema"
-msgstr "无法获取 Relax-NG Schema 的起始点"
-
-#: ../mgmt/client/haclient.py.in:7190
-msgid "Cannot get the DTD"
-msgstr "无法获取 DTD"
-
-#: ../mgmt/client/haclient.py.in:8851 ../mgmt/client/haclient.py.in:9113
+#: ../mgmt/client/haclient.py.in:9260 ../mgmt/client/haclient.py.in:9522
 msgid ".  "
 msgstr "。 "
 
-#: ../mgmt/client/haclient.py.in:8851 ../mgmt/client/haclient.py.in:9113
+#: ../mgmt/client/haclient.py.in:9260 ../mgmt/client/haclient.py.in:9522
 msgid ".\n"
 msgstr "。\n"
 
-#: ../mgmt/client/haclient.py.in:8874 ../mgmt/client/haclient.py.in:8878
+#: ../mgmt/client/haclient.py.in:9283 ../mgmt/client/haclient.py.in:9287
 #, python-format
 msgid "\"%s\" is required"
 msgstr "“%s”是必填的"
 
-#: ../mgmt/client/haclient.py.in:8874
+#: ../mgmt/client/haclient.py.in:9283
 msgid "Class"
 msgstr "类别"
 
-#: ../mgmt/client/haclient.py.in:8878
+#: ../mgmt/client/haclient.py.in:9287
 msgid "Provider"
 msgstr "提供者"
 
-#: ../mgmt/client/haclient.py.in:8879
+#: ../mgmt/client/haclient.py.in:9288
 msgid "for an OCF primitive"
 msgstr "对于一个 OCF 的普通资源"
 
-#: ../mgmt/client/haclient.py.in:8888
+#: ../mgmt/client/haclient.py.in:9297
 msgid ""
 "If not all resources can be active, the cluster will stop lower priority "
 "resources in order to keep higher priority ones active."
 msgstr ""
 "如果资源无法全部工作， 集群会停止低优先级的资源， 以便让高优先级的资源工作。"
 
-#: ../mgmt/client/haclient.py.in:8890
+#: ../mgmt/client/haclient.py.in:9299
 msgid "What state should the cluster attempt to keep this resource in?"
 msgstr "集群试图让该资源保持的状态。"
 
-#: ../mgmt/client/haclient.py.in:8892
+#: ../mgmt/client/haclient.py.in:9301
 msgid "Is the cluster allowed to start and stop the resource?"
 msgstr "是否让集群负责启停和管理资源？"
 
-#: ../mgmt/client/haclient.py.in:8897
+#: ../mgmt/client/haclient.py.in:9306
 msgid ""
 "How much does the resource prefer to stay where it is? Defaults to the value "
 "of \"default-resource-stickiness\""
 msgstr ""
 "资源有多大程度倾向于停留在当前节点？缺省为“default-resource-stickiness”的值"
 
-#: ../mgmt/client/haclient.py.in:8899
+#: ../mgmt/client/haclient.py.in:9308
 msgid ""
 "How many failures should occur for this resource on a node before making the "
 "node ineligible to host this resource. Default: \"none\""
 msgstr ""
 "允许该资源在一个节点上的失败次数， 之后禁止该资源在其上运行。缺省： 无限制"
 
-#: ../mgmt/client/haclient.py.in:8900
+#: ../mgmt/client/haclient.py.in:9309
 msgid "(mark the resource as unmanaged)"
 msgstr "(将该资源视为失控)"
 
-#: ../mgmt/client/haclient.py.in:8901
+#: ../mgmt/client/haclient.py.in:9310
 msgid ""
 "What should the cluster do if it ever finds the resource active on more than "
 "one node."
 msgstr "如果发现资源在多个节点上运行，集群如何处理？"
 
-#: ../mgmt/client/haclient.py.in:8903
+#: ../mgmt/client/haclient.py.in:9312
 msgid ""
 "How many seconds to wait before acting as if the failure had not occurred "
 "(and potentially allowing the resource back to the node on which it failed. "
@@ -1301,31 +1449,31 @@ msgstr ""
 "等待多少秒之后就视作失败从未发生过（意味允许资源回到之前失效过的节点）缺省： "
 "从不"
 
-#: ../mgmt/client/haclient.py.in:8908
+#: ../mgmt/client/haclient.py.in:9317
 msgid ""
 "How many copies of the resource to start. Defaults to the number of nodes in "
 "the cluster."
 msgstr "能够启动的最大资源实例个数。 缺省为集群的节点个数。"
 
-#: ../mgmt/client/haclient.py.in:8910
+#: ../mgmt/client/haclient.py.in:9319
 msgid "How many copies of the resource can be started on a single node."
 msgstr "单个节点上能够启动的最大资源实例个数。"
 
-#: ../mgmt/client/haclient.py.in:8914
+#: ../mgmt/client/haclient.py.in:9323
 msgid ""
 "When stopping or starting a copy of the clone, tell all the other copies "
 "beforehand and when the action was successful."
 msgstr "在启动或停止一个实例之前, 并且在成功完成之时，通知所有其它实例"
 
-#: ../mgmt/client/haclient.py.in:8916
+#: ../mgmt/client/haclient.py.in:9325
 msgid "Does each copy of the clone perform a different function?"
 msgstr "克隆的每个实例执行不同的功能？"
 
-#: ../mgmt/client/haclient.py.in:8918
+#: ../mgmt/client/haclient.py.in:9327
 msgid "Should the copies be started in series (instead of in parallel)"
 msgstr "串行地启动实例（而非并行地）"
 
-#: ../mgmt/client/haclient.py.in:8920
+#: ../mgmt/client/haclient.py.in:9329
 msgid ""
 "Changes the behavior of ordering constraints (between clones/masters) so "
 "that instances can start/stop as soon as their peer instance has (rather "
@@ -1334,144 +1482,150 @@ msgstr ""
 "改变顺序限制条件的操作方式(克隆／主从资源之间）， 这样实例能够在相关的实例启"
 "动或停止之后立刻启停（不必等待另一克隆资源的每个实例操作完成）。 缺省为 false"
 
-#: ../mgmt/client/haclient.py.in:8925
+#: ../mgmt/client/haclient.py.in:9334
 msgid "How many copies of the resource can be promoted to master status."
 msgstr "能够提升为主状态的最大资源实例个数。"
 
-#: ../mgmt/client/haclient.py.in:8927
+#: ../mgmt/client/haclient.py.in:9336
 msgid ""
 "How many copies of the resource can be promoted to master status on a single "
 "node."
 msgstr "单个节点上能够提升为主状态的最大资源实例个数。"
 
-#: ../mgmt/client/haclient.py.in:9059
+#: ../mgmt/client/haclient.py.in:9468
 msgid "required"
 msgstr "必需"
 
-#: ../mgmt/client/haclient.py.in:9062
+#: ../mgmt/client/haclient.py.in:9471
 msgid ", "
 msgstr "， "
 
-#: ../mgmt/client/haclient.py.in:9063
+#: ../mgmt/client/haclient.py.in:9472
 msgid "unique"
 msgstr "唯一"
 
-#: ../mgmt/client/haclient.py.in:9408
+#: ../mgmt/client/haclient.py.in:9817
 #, python-format
 msgid "Invalid \"%s\""
 msgstr "无效的“%s”"
 
-#: ../mgmt/client/haclient.py.in:9485
+#: ../mgmt/client/haclient.py.in:9894
 msgid "* Specify dependencies between the actions on two resources"
 msgstr "* 指定两个资源其动作之间的依赖关系"
 
-#: ../mgmt/client/haclient.py.in:9486 ../mgmt/client/haclient.py.in:9604
+#: ../mgmt/client/haclient.py.in:9895 ../mgmt/client/haclient.py.in:10013
 msgid "* Please set the required attributes"
 msgstr "* 请设置必填的属性"
 
-#: ../mgmt/client/haclient.py.in:9491 ../mgmt/client/haclient.py.in:9507
+#: ../mgmt/client/haclient.py.in:9900 ../mgmt/client/haclient.py.in:9916
 #, python-format
 msgid "* %s %s %s %s %s"
 msgstr ""
 
-#: ../mgmt/client/haclient.py.in:9496 ../mgmt/client/haclient.py.in:9499
-#: ../mgmt/client/haclient.py.in:9511 ../mgmt/client/haclient.py.in:9514
-#: ../mgmt/client/haclient.py.in:9567 ../mgmt/client/haclient.py.in:9578
+#: ../mgmt/client/haclient.py.in:9905 ../mgmt/client/haclient.py.in:9908
+#: ../mgmt/client/haclient.py.in:9920 ../mgmt/client/haclient.py.in:9923
+#: ../mgmt/client/haclient.py.in:9976 ../mgmt/client/haclient.py.in:9987
 #, python-format
 msgid "* If cannot %s %s, do not %s %s"
 msgstr "* 如果不能 %s %s, 则不 %s %s"
 
-#: ../mgmt/client/haclient.py.in:9549
+#: ../mgmt/client/haclient.py.in:9958
 msgid "* Specify the order of actions on resources"
 msgstr "* 指定资源动作的顺序"
 
-#: ../mgmt/client/haclient.py.in:9550 ../mgmt/client/haclient.py.in:9656
+#: ../mgmt/client/haclient.py.in:9959 ../mgmt/client/haclient.py.in:10065
 msgid "* Please set the required attributes or add resource sets"
 msgstr "* 请设置必填属性或者添加资源集"
 
-#: ../mgmt/client/haclient.py.in:9561 ../mgmt/client/haclient.py.in:9575
+#: ../mgmt/client/haclient.py.in:9970 ../mgmt/client/haclient.py.in:9984
 #, python-format
 msgid "* %s %s before %s %s"
 msgstr "* 先 %s %s， 然后 %s %s"
 
-#: ../mgmt/client/haclient.py.in:9603
+#: ../mgmt/client/haclient.py.in:10012
 msgid "* Specify where a resource should run relative to another resource"
 msgstr "* 指定一个资源相对于另一资源的运行位置"
 
-#: ../mgmt/client/haclient.py.in:9611 ../mgmt/client/haclient.py.in:9621
-#: ../mgmt/client/haclient.py.in:9668
+#: ../mgmt/client/haclient.py.in:10020 ../mgmt/client/haclient.py.in:10030
+#: ../mgmt/client/haclient.py.in:10077
 #, python-format
 msgid "* Make %s %s on the same node as %s %s  ( %s according to %s )"
 msgstr "* 让 %s %s 在 %s %s 的相同节点上 （%s 参照 %s）"
 
-#: ../mgmt/client/haclient.py.in:9614 ../mgmt/client/haclient.py.in:9624
-#: ../mgmt/client/haclient.py.in:9671
+#: ../mgmt/client/haclient.py.in:10023 ../mgmt/client/haclient.py.in:10033
+#: ../mgmt/client/haclient.py.in:10080
 #, python-format
 msgid "* If %s cannot be %s on any node, then %s won't be %s anywhere"
 msgstr "* 如果 %s 无法 %s 在任何节点上， 则 %s 也不能 %s 在任何节点上"
 
-#: ../mgmt/client/haclient.py.in:9617 ../mgmt/client/haclient.py.in:9673
+#: ../mgmt/client/haclient.py.in:10026 ../mgmt/client/haclient.py.in:10082
 #, python-format
 msgid "* If %s cannot be %s on any node, %s won't be affected"
 msgstr "* 如果 %s 无法 %s 在任何节点上， %s 不受影响"
 
-#: ../mgmt/client/haclient.py.in:9627 ../mgmt/client/haclient.py.in:9637
-#: ../mgmt/client/haclient.py.in:9685
+#: ../mgmt/client/haclient.py.in:10036 ../mgmt/client/haclient.py.in:10046
+#: ../mgmt/client/haclient.py.in:10094
 #, python-format
 msgid ""
 "* Prevent %s from being %s on the same node as %s %s  ( %s according to %s )"
 msgstr "* 避免 %s %s 在 %s %s 的相同节点上 （%s 参照 %s）"
 
-#: ../mgmt/client/haclient.py.in:9630 ../mgmt/client/haclient.py.in:9640
-#: ../mgmt/client/haclient.py.in:9688
+#: ../mgmt/client/haclient.py.in:10039 ../mgmt/client/haclient.py.in:10049
+#: ../mgmt/client/haclient.py.in:10097
 #, python-format
 msgid ""
 "* If %s is %s on the only (or every) available node, then %s won't be %s "
 "anywhere"
 msgstr "* 如果 %s 在唯一的（或每个）可用节点上 %s， 则 %s 不会 %s 在任何节点上"
 
-#: ../mgmt/client/haclient.py.in:9633 ../mgmt/client/haclient.py.in:9690
+#: ../mgmt/client/haclient.py.in:10042 ../mgmt/client/haclient.py.in:10099
 #, python-format
 msgid ""
 "* If %s is %s on the only (or every) available node, %s won't be affected"
 msgstr "* 如果 %s 在唯一的（或每个）可用节点上 %s, %s 不受影响"
 
-#: ../mgmt/client/haclient.py.in:9643
+#: ../mgmt/client/haclient.py.in:10052
 msgid ""
 "* Combine this colocation score and the appropriate location scores to "
 "decide where to put the resources"
 msgstr "* 综合此协同权重以及相应的位置权重以决定资源运行位置"
 
-#: ../mgmt/client/haclient.py.in:9655
+#: ../mgmt/client/haclient.py.in:10064
 msgid "* Specify where resources should run relative to other resources"
 msgstr "* 指定资源相对于其他资源的运行位置"
 
-#: ../mgmt/client/haclient.py.in:9663
+#: ../mgmt/client/haclient.py.in:10072
 #, python-format
 msgid ""
 "* Combine this \"Score\" and corresponding location scores to decide where "
 "to place %s"
 msgstr "* 综合此“权重”以及相应的位置权重以决定资源“%s”的运行位置"
 
-#: ../mgmt/client/haclient.py.in:9676
+#: ../mgmt/client/haclient.py.in:10085
 #, python-format
 msgid ""
 "* Prefer to make %s %s on the same node as %s %s  ( %s according to %s )"
 msgstr "* 倾向于让 %s %s 在 %s %s 的相同节点上（%s 参照 %s）"
 
-#: ../mgmt/client/haclient.py.in:9693
+#: ../mgmt/client/haclient.py.in:10102
 #, python-format
 msgid ""
 "* Prefer to prevent %s from being %s on the same node as %s %s  ( %s "
 "according to %s )"
 msgstr "* 倾向于避免 %s %s 在 %s %s 的相同节点上 （%s 参照 %s）"
 
-#: ../mgmt/client/haclient.py.in:9699
+#: ../mgmt/client/haclient.py.in:10108
 #, python-format
 msgid ""
 "* Please specify a valid \"Score\" to determine the location relationship "
 "between %s and %s"
 msgstr "* 请指定有效的“权重”以决定 %s 与 %s 之间的位置关系"
+
+msgid "Delete"
+msgstr "删除"
+
+msgid "Commit"
+msgstr "提交"
 
 msgid "Clone"
 msgstr "克隆资源"
@@ -1580,12 +1734,6 @@ msgstr "资源顺序"
 
 msgid "Resource Colocation"
 msgstr "资源协同"
-
-msgid "failed"
-msgstr "失败"
-
-msgid "unmanaged"
-msgstr "未管理"
 
 msgid "Value"
 msgstr "值"
@@ -1775,3 +1923,24 @@ msgstr "顺序"
 
 msgid "Resource Ref"
 msgstr "资源引用"
+
+#~ msgid "online(dc)"
+#~ msgstr "在线(主控节点)"
+
+#~ msgid "Login..."
+#~ msgstr "登录..."
+
+#~ msgid "Cannot get the CIB"
+#~ msgstr "无法获取 CIB"
+
+#~ msgid "Failed to parse the CIB"
+#~ msgstr "解析 CIB 失败"
+
+#~ msgid "Cannot parse the CIB"
+#~ msgstr "无法解析 CIB"
+
+#~ msgid "Cannot get started in Relax-NG schema"
+#~ msgstr "无法获取 Relax-NG Schema 的起始点"
+
+#~ msgid "Cannot get the DTD"
+#~ msgstr "无法获取 DTD"
