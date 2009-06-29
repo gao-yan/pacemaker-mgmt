@@ -1,3 +1,60 @@
+pacemaker-mgmt (1.99.2-1) unstable; urgency=medium
+  * Update source tarball to revision: 0cc24125502d tip
+  * Statistics:
+      Changesets: 49
+      Diff:            13 files changed, 4164 insertions(+), 2759 deletions(-)
+
+  * Changes since pacemaker-mgmt-1.99.1
+  + Dev: haclient: Add "About"
+  + Dev: haclient: Add accelerators
+  + Dev: haclient: Add Japanese translation
+  + Dev: haclient: Improve thread synchronization
+  + Dev: haclient: Provide the progress pulse when generating the transition information
+  + Dev: haclient: Set default response for dialogs
+  + Dev: haclient: Show progress pulse when generating shadow diff
+  + Dev: haclient: Support viewing/editing/importing/exporting the whole cib xml or the configuration section
+  + Dev: mgmt: Improve the performance and the user interface of "Transition Information"
+  + Dev: mgmt: Provide more details of nodes
+  + Dev: po: Add the translation of the license
+  + Dev: po: Update pot and po
+  + High: lib: Fix huge memory leak due to the behavior of swig
+  + Low: Build: Add libgv-python dependency for Debian
+  + Low: haclient: Avoid an error if there's no pengine input exists
+  + Low: haclient: Avoid the possible key error of Manager.get_node_config()
+  + Low: haclient: Concatenate error messages with the proper type
+  + Low: haclient: Consider the possibility of IOError when creating temporary files
+  + Low: haclient: Determine labels's width and align the following widgets properly
+  + Low: haclient: Do not continue updating if the client is disconnected
+  + Low: haclient: Fill the limited number of transitions into the drop-down list
+  + Low: haclient: Make python-lxml optional
+  + Low: haclient: Make sure the variable is assigned before referenced
+  + Low: haclient: Make the marks of meta_attributes's default values consistent
+  + Low: haclient: Set the default focus on "password" entry in the login dialog
+  + Low: haclient: Set widgets's initial sizes to appropriate values for low resolutions
+  + Low: mgmt: Log version details
+  + Low: mgmt: Show its unclean resources if a node is uncleanly offline
+  + Low: mgmtd: (LF#2142) Avoid redefinitions
+  + Low: mgmtd: Add and adopt a new macro gen_msg_from_fstream()
+  + Low: mgmtd: Adopt append_str() macro in on_get_pe_inputs()
+  + Low: mgmtd: Can be compiled and work against pacemaker < 1.0.3
+  + Low: mgmtd: Optimize for tranferring schemas
+  + Low: mgmtd: Optimize message generating for transferring cluster reports
+  + Low: mgmtd: Optimize message generating for transferring crm DTD
+  + Low: mgmtd: Optimize message generating for transferring transition information
+  + Low: mgmtd: Use the variable instead of the macro directly
+  + Low: snmp_subagent: Allow specifying the cache timeout through the argument if not SUPPORT_HEARTBEAT
+  + Medium: haclient: Avoid hanging when getting or parsing CIB/schemas fail
+  + Medium: haclient: Do manager.update() via gobject timeout
+  + Medium: haclient: Increase the interval of gobject timeout to avoid consuming excessive CPU when update fails
+  + Medium: haclient: Remove the graph when it's no longer needed
+  + Medium: haclient: Set gobject timeout for manager.update() in the consistent way
+  + Medium: haclient: Update crm metadata via gobject timeout (Optimize connecting time)
+  + Medium: mgmt: Display the proper status of resources on the node which is uncleanly offline
+  + Medium: mgmtd: Destroy the crmd channel in the end of on_cleanup_rsc()
+  + Medium: mgmtd: Fix memory leaks
+
+ -- Yan Gao <ygao@novell.com>  Mon, 29 Jun 2009 14:05:12 +0800
+
 pacemaker-mgmt (1.99.1-1) unstable; urgency=medium
   * Update source tarball to revision: pacemaker-mgmt-1.99.1 (484883b2efe8+ tip)
   * Statistics:
