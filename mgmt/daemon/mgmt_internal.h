@@ -25,9 +25,17 @@
 
 #include <mgmt/mgmt_common.h>
 
+#ifndef ENV_PREFIX
 #define ENV_PREFIX 	"HA_"
+#endif
+
+#ifndef KEY_LOGDAEMON
 #define KEY_LOGDAEMON   "use_logd"
-#define HADEBUGVAL	"HA_DEBUG"
+#endif
+
+#ifndef HADEBUGVAL
+#define HADEBUGVAL	"HA_debug"
+#endif
 
 #define mgmt_log(priority, fmt...) \
                 cl_log(priority, fmt); \
