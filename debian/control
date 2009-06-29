@@ -24,7 +24,7 @@ Priority: optional
 Architecture: any
 Conflicts: pacemaker-pygui
 Replaces: pacemaker-pygui
-Depends: ${python:Depends}, python-xml, python-gtk2, python-lxml
+Depends: ${python:Depends}, python-xml, python-gtk2, python-lxml, libgv-python
 XB-Python-Version: ${python:Versions}
 Description: Pacemaker Management Tools
  A client/server GUI and a SNMP subagent for configuring, managing and monitoring
