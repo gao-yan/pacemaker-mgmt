@@ -5099,20 +5099,10 @@ class TransitionInfoDlg :
 				msgbox(error_str)
 				return None
 
-			for i in range(len(pe_str)) :
-				if pe_str[i].isdigit() :
-					num_start = i
-					break
-			else :
+			pe_num = extract_int(pe_str)
+			if pe_num == None :
 				msgbox(error_str)
 				return None
-
-			for i in range(num_start, len(pe_str)) :
-				if not pe_str[i].isdigit() :
-					pe_num = pe_str[num_start:i]
-					break
-			else :
-				pe_num = pe_str[num_start:]
 
 			pe_input = ("pe-" + pe_type, pe_num)
 
