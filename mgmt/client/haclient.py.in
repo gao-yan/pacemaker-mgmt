@@ -258,6 +258,20 @@ def is_valid_time(time_input) :
 				_("or should be suffixed with one of the following units:\n %s")%(", ".join(unit_list)))
 	return (True, None)
 
+def extract_int(int_str) :
+	for i in range(len(int_str)) :
+		if int_str[i].isdigit() :
+			num_start = i
+			break
+	else :
+		return None
+
+	for i in range(num_start, len(int_str)) :
+		if not int_str[i].isdigit() :
+			return int_str[num_start:i]
+	else :
+			return int_str[num_start:]
+
 def kvbox(title, description, fields, auto_fill = None) :
 	global top_window
 	dialog = gtk.Dialog(title, top_window, gtk.DIALOG_MODAL,
@@ -2464,6 +2478,15 @@ class CRMConfigView(View) :
 		default_crm_config = {}
 		for parameter in metadata.parameters :
 			default_crm_config[parameter["name"]] = str(parameter["content"]["default"])
+			if parameter["content"]["type"] == "integer" :
+				try :
+					default_value = float(parameter["content"]["default"])
+					if default_value == float("inf") :
+						default_crm_config[parameter["name"]] = "1000000"
+					elif default_value == float("-inf") :
+						default_crm_config[parameter["name"]] = "-1000000"
+				except :
+					pass
 
 		impl = getDOMImplementation()
 		for attr_name, value in new_crm_config.iteritems() :
@@ -2646,26 +2669,30 @@ class CRMConfigView(View) :
 				checkbuttons[param_name] = checkbutton
 			elif param_type == "integer" and param_name.count("time") == 0 :
 				try :
-					default_value = int(param_default)
+					default_value = float(param_default)
 				except :
-					try :
-						default_value = int(param_default.replace("s", ""))
-					except :
+					default_value = float(extract_int(param_default))
+					if default_value == None :
 						default_value = 0
 
-				if default_value < 0 :
-					adj = gtk.Adjustment(default_value, default_value, 9999, 1, 100)
-					spinbutton = gtk.SpinButton(adj, 0, 0)
-					spinbutton.set_width_chars(4)
-				elif param_name.count("stickiness") :
-					adj = gtk.Adjustment(default_value, 0000000, 1000000, 1, 100)
-					spinbutton = gtk.SpinButton(adj, 0, 0)
-					spinbutton.set_width_chars(7)
-				else :
-					adj = gtk.Adjustment(default_value, 0000, 9999, 1, 10)
-					spinbutton = gtk.SpinButton(adj, 0, 0)
-					spinbutton.set_width_chars(4)
+				if default_value == float("inf") :
+					default_value = 1000000
+				elif default_value == float("-inf") :
+					default_value = -1000000
 
+				if param_name.count("node-health") or param_name.count("stickiness") :
+					min_value = -1000000
+					page_incr = 100
+				elif default_value < 0 :
+					min_value = default_value
+					page_incr = 100
+				else :
+					min_value = 0
+					page_incr = 10
+				
+				adj = gtk.Adjustment(default_value, min_value, 1000000, 1, page_incr)
+				spinbutton = gtk.SpinButton(adj, 0, 0)
+				#spinbutton.set_width_chars(7)
 				spinbutton.set_wrap(True)
 
 				spinbutton.connect("changed", self.on_changed)
