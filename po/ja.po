@@ -3,7 +3,6 @@
 # This file is distributed under the same license as the PACKAGE package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: pacemaker-mgmt 2.0.0\n"
@@ -102,135 +101,120 @@ msgid "ID"
 msgstr "ID"
 
 #: ../mgmt/client/haclient.py.in:728
-#, fuzzy
 msgid "St_art"
-msgstr "開始"
+msgstr "開始(_A)"
 
 #: ../mgmt/client/haclient.py.in:728
 msgid "Start resource"
 msgstr "リソースの開始"
 
 #: ../mgmt/client/haclient.py.in:729
-#, fuzzy
 msgid "_Stop"
-msgstr "停止"
+msgstr "停止(_S)"
 
 #: ../mgmt/client/haclient.py.in:729
 msgid "Stop resource"
 msgstr "リソースの停止"
 
 #: ../mgmt/client/haclient.py.in:730
-#, fuzzy
 msgid "_Default"
-msgstr "デフォルト"
+msgstr "デフォルト(_D)"
 
 #: ../mgmt/client/haclient.py.in:730
 msgid "Work as default"
 msgstr "作業デフォルト"
 
 #: ../mgmt/client/haclient.py.in:731
-#, fuzzy
 msgid "_Cleanup Resource"
-msgstr "リソースのクリーンアップ"
+msgstr "リソースのクリーンアップ(_C)"
 
 #: ../mgmt/client/haclient.py.in:731
 msgid "Cleanup resource"
 msgstr "リソースのクリーンアップ"
 
 #: ../mgmt/client/haclient.py.in:732
-#, fuzzy
 msgid "Migra_te Resource"
-msgstr "リソースの移動"
+msgstr "リソースの移動(_T)"
 
 #: ../mgmt/client/haclient.py.in:732
 msgid "Migrate a resource to specified node"
 msgstr "リソースを指定ノードに移動"
 
 #: ../mgmt/client/haclient.py.in:734
-#, fuzzy
 msgid "Clea_r Migrate Constraints"
-msgstr "移動制約のクリア"
+msgstr "移動制約のクリア(_R)"
 
 #: ../mgmt/client/haclient.py.in:735
 msgid "Clear constraints created by migrate"
 msgstr "移動によって設定された制約をクリア"
 
 #: ../mgmt/client/haclient.py.in:737
-#, fuzzy
 msgid "_Unmanage Resource"
-msgstr "リソースを管理外に設定"
+msgstr "リソースを管理外に設定(_U)"
 
 #: ../mgmt/client/haclient.py.in:737
 msgid "Put a resource into unmanaged mode"
 msgstr "リソースを管理外に設定"
 
 #: ../mgmt/client/haclient.py.in:739
-#, fuzzy
 msgid "_Manage Resource"
-msgstr "リソースを管理状態に設定"
+msgstr "リソースを管理状態に設定(_M)"
 
 #: ../mgmt/client/haclient.py.in:739
 msgid "Put a resource into managed mode"
 msgstr "リソースを管理状態に設定"
 
 #: ../mgmt/client/haclient.py.in:741
-#, fuzzy
 msgid "Re_fresh Resources"
-msgstr "リソースのリフレッシュ"
+msgstr "リソースのリフレッシュ(_F)"
 
 #: ../mgmt/client/haclient.py.in:741
 msgid "Refresh CIB from the LRM status"
 msgstr "LRMステータスからのCIBのリフレッシュ"
 
 #: ../mgmt/client/haclient.py.in:743
-#, fuzzy
 msgid "Re_probe Resources"
-msgstr "リソースの再プローブ"
+msgstr "リソースの再プローブ(_P)"
 
 #: ../mgmt/client/haclient.py.in:743
 msgid "Reprobe for resources started outside of the CRM"
 msgstr "CRM外で開始されるリソースの為の再プローブ"
 
 #: ../mgmt/client/haclient.py.in:747
-#, fuzzy
 msgid "_Standby"
-msgstr "スタンバイ"
+msgstr "スタンバイ(_S)"
 
 #: ../mgmt/client/haclient.py.in:747
 msgid "Make the node standby"
 msgstr "ノードをスタンバイに設定"
 
 #: ../mgmt/client/haclient.py.in:748
-#, fuzzy
 msgid "_Active"
-msgstr "アクティブ"
+msgstr "アクティブ(_A)"
 
 #: ../mgmt/client/haclient.py.in:748
 msgid "Make the node active"
 msgstr "ノードをアクティブに設定"
 
 #: ../mgmt/client/haclient.py.in:752
-#, fuzzy
 msgid "_Group By Node"
-msgstr "ノードでグループ化"
+msgstr "ノードでグループ化(_G)"
 
 #: ../mgmt/client/haclient.py.in:752
 msgid "Group resources by node"
 msgstr "ノードのリソースでグループ化"
 
 #: ../mgmt/client/haclient.py.in:753
-#, fuzzy
 msgid "_Maintenance Mode"
-msgstr "保守モード"
+msgstr "保守モード(_M)"
 
 #: ../mgmt/client/haclient.py.in:754
 msgid "Switch to maintenance mode"
 msgstr "保守モードへ切換え"
 
 #: ../mgmt/client/haclient.py.in:755
-#, fuzzy
 msgid "_Indicate Pending Operations"
-msgstr "待ち操作の表示"
+msgstr "待ち操作の表示(_I)"
 
 #: ../mgmt/client/haclient.py.in:756
 msgid "Indicate pending(starting/stopping) operations"
@@ -363,7 +347,7 @@ msgstr "管理外"
 
 #: ../mgmt/client/haclient.py.in:1698 ../mgmt/client/haclient.py.in:1894
 msgid "unclean"
-msgstr ""
+msgstr "非クリーン"
 
 #: ../mgmt/client/haclient.py.in:1700
 msgid "failed"
@@ -429,7 +413,6 @@ msgid "unknown type"
 msgstr "不明なタイプ"
 
 #: ../mgmt/client/haclient.py.in:1889
-#, fuzzy
 msgid "pending"
 msgstr "Pingノード障害検出時間"
 
@@ -439,10 +422,9 @@ msgstr "オフライン"
 
 #: ../mgmt/client/haclient.py.in:1897
 msgid "dc"
-msgstr ""
+msgstr "dc"
 
 #: ../mgmt/client/haclient.py.in:1901
-#, fuzzy
 msgid "on-fail"
 msgstr "故障"
 
@@ -500,23 +482,20 @@ msgid "CIB"
 msgstr "CIB"
 
 #: ../mgmt/client/haclient.py.in:2240
-#, fuzzy
 msgid "View XML"
-msgstr "ビュー"
+msgstr "XMLビュー"
 
 #: ../mgmt/client/haclient.py.in:2247
 msgid "The Whole CIB"
-msgstr ""
+msgstr "CIB全体"
 
 #: ../mgmt/client/haclient.py.in:2249
-#, fuzzy
 msgid "The Configuration Section"
-msgstr "構成"
+msgstr "構成セクション"
 
 #: ../mgmt/client/haclient.py.in:2276
-#, fuzzy, python-format
 msgid "The object \"%s\" doesn't exist"
-msgstr "オブジェクトが存在しません"
+msgstr "オブジェクト\"%s\"が存在しません"
 
 #: ../mgmt/client/haclient.py.in:2332 ../mgmt/client/haclient.py.in:2613
 msgid "Default"
@@ -800,7 +779,6 @@ msgid "Reset the configurations?"
 msgstr "構成をリセットしますか?"
 
 #: ../mgmt/client/haclient.py.in:4803
-#, fuzzy
 msgid "Transition Information"
 msgstr "遷移情報"
 
@@ -829,22 +807,19 @@ msgid "Scores"
 msgstr "スコア"
 
 #: ../mgmt/client/haclient.py.in:4949 ../mgmt/client/haclient.py.in:4982
-#, fuzzy
 msgid "Transitions"
 msgstr "遷移"
 
 #: ../mgmt/client/haclient.py.in:4971
 #, python-format
 msgid "[Omitted %d transitions...]"
-msgstr ""
+msgstr "[リスト表示から省略された %d 個の遷移情報があります...]"
 
 #: ../mgmt/client/haclient.py.in:4983
-#, fuzzy
 msgid "Searching the transitions may take a while,"
-msgstr "クラスタリポートを作成中です"
+msgstr "遷移情報を検索中です"
 
 #: ../mgmt/client/haclient.py.in:4984
-#, fuzzy
 msgid "depending on the number of transitions..."
 msgstr "必要となるサイズを計算していてます..."
 
@@ -853,66 +828,56 @@ msgid "Cannot find any transition record"
 msgstr "遷移情報が見付かりません"
 
 #: ../mgmt/client/haclient.py.in:5027
-#, fuzzy
 msgid "The specified transition doesn't exist"
 msgstr "オブジェクトが存在しません"
 
 #: ../mgmt/client/haclient.py.in:5058
-#, fuzzy
 msgid "Please specify a proper identity of a transition"
 msgstr "システムで予約された名前の為、別の名前で指定して下さい."
 
 #: ../mgmt/client/haclient.py.in:5059
 msgid "Such as"
-msgstr ""
+msgstr "例"
 
 #: ../mgmt/client/haclient.py.in:5061
 msgid "Transition type: \"error\", \"warn\" or \"input\""
-msgstr ""
+msgstr "遷移情報タイプ: \"error\", \"warn\" or \"input\""
 
 #: ../mgmt/client/haclient.py.in:5136
-#, fuzzy
 msgid "Transition Graph"
 msgstr "遷移"
 
 #: ../mgmt/client/haclient.py.in:5137
-#, fuzzy
 msgid "Generating the transition graph may take a while..."
-msgstr "クラスタリポートを作成中です"
+msgstr "遷移グラフを作成中です。暫くお待ち下さい..."
 
 #: ../mgmt/client/haclient.py.in:5138
 msgid "Failed to generate the transition graph"
 msgstr "遷移グラフの生成に失敗しました"
 
 #: ../mgmt/client/haclient.py.in:5151
-#, fuzzy
 msgid "Transition Detail"
 msgstr "遷移"
 
 #: ../mgmt/client/haclient.py.in:5152
-#, fuzzy
 msgid "Generating the transition detail may take a while..."
-msgstr "クラスタリポートを作成中です"
+msgstr "遷移詳細を作成中です。暫くお待ち下さい..."
 
 #: ../mgmt/client/haclient.py.in:5153
-#, fuzzy
 msgid "Failed to generate the transition detail"
-msgstr "遷移グラフの生成に失敗しました"
+msgstr "遷移詳細の生成に失敗しました"
 
 #: ../mgmt/client/haclient.py.in:5165
-#, fuzzy
 msgid "Transition Scores"
-msgstr "遷移"
+msgstr "遷移スコア"
 
 #: ../mgmt/client/haclient.py.in:5166
-#, fuzzy
 msgid "Generating the transition scores may take a while..."
-msgstr "クラスタリポートを作成中です"
+msgstr "遷移スコアを作成中です。暫くお待ち下さい..."
 
 #: ../mgmt/client/haclient.py.in:5167
-#, fuzzy
 msgid "Failed to generate the transition scores"
-msgstr "遷移グラフの生成に失敗しました"
+msgstr "遷移スコアの生成に失敗しました"
 
 #: ../mgmt/client/haclient.py.in:5178
 msgid "Cannot save the graph for specified transition"
@@ -1132,14 +1097,12 @@ msgid "Differences between the live CIB and the shadow CIB \"%s\""
 msgstr "ライブCIBとシャドーCIB \"%s\" の違い"
 
 #: ../mgmt/client/haclient.py.in:6010
-#, fuzzy
 msgid "Generating the shadow CIB differences may take a while..."
-msgstr "クラスタリポートを作成中です"
+msgstr "シャドーCIBとの違いを生成中です。暫くお待ち下さい..."
 
 #: ../mgmt/client/haclient.py.in:6011
-#, fuzzy
 msgid "Failed to generate the shadow CIB differences"
-msgstr "クラスタリポートの生成に失敗しました"
+msgstr "シャドーCIBとの違いの生成に失敗しました"
 
 #: ../mgmt/client/haclient.py.in:6039
 msgid "Diff Files"
@@ -1208,7 +1171,7 @@ msgstr "クラスタリポート"
 
 #: ../mgmt/client/haclient.py.in:6242
 msgid "Generating the cluster report may take a while,"
-msgstr "クラスタリポートを作成中です"
+msgstr "クラスタリポートを作成中です。暫くお待ち下さい..."
 
 #: ../mgmt/client/haclient.py.in:6243
 msgid "depending on the size of logs..."
@@ -1230,126 +1193,111 @@ msgstr "圧縮(Tar)エラー"
 
 #: ../mgmt/client/haclient.py.in:6458 ../mgmt/client/haclient.py.in:6661
 msgid "About"
-msgstr ""
+msgstr "Pacemaker GUIについて"
 
 #: ../mgmt/client/haclient.py.in:6540
 msgid "Pacemaker GUI"
 msgstr "Pacemaker GUI"
 
 #: ../mgmt/client/haclient.py.in:6644
-#, fuzzy
 msgid "_Connection"
-msgstr "接続"
+msgstr "接続(_C)"
 
 #: ../mgmt/client/haclient.py.in:6645
-#, fuzzy
 msgid "Log_in"
-msgstr "ログイン"
+msgstr "ログイン(_I)"
 
 #: ../mgmt/client/haclient.py.in:6645
 msgid "login to cluster"
 msgstr "クラスタにログイン"
 
 #: ../mgmt/client/haclient.py.in:6646
-#, fuzzy
 msgid "Log_out"
-msgstr "ログアウト"
+msgstr "ログアウト(_O)"
 
 #: ../mgmt/client/haclient.py.in:6646
 msgid "logout from cluster"
 msgstr "クラスタからログアウト"
 
 #: ../mgmt/client/haclient.py.in:6647
-#, fuzzy
 msgid "_Quit"
-msgstr "終了"
+msgstr "終了(_Q)"
 
 #: ../mgmt/client/haclient.py.in:6647
 msgid "Quit the Program"
 msgstr "プログラムを終了"
 
 #: ../mgmt/client/haclient.py.in:6648
-#, fuzzy
 msgid "_View"
-msgstr "ビュー"
+msgstr "ビュー(_V)"
 
 #: ../mgmt/client/haclient.py.in:6649
-#, fuzzy
 msgid "_Shadow"
-msgstr "シャドー"
+msgstr "シャドー(_S)"
 
 #: ../mgmt/client/haclient.py.in:6650
-#, fuzzy
 msgid "_New"
-msgstr "新規"
+msgstr "新規(_N)"
 
 #: ../mgmt/client/haclient.py.in:6650
 msgid "Create a new shadow CIB"
 msgstr "シャドーCIBの作成"
 
 #: ../mgmt/client/haclient.py.in:6651
-#, fuzzy
 msgid "Di_ff"
-msgstr "差分"
+msgstr "差分(_F)"
 
 #: ../mgmt/client/haclient.py.in:6651
 msgid "Differences between the live CIB and the shadow CIB"
 msgstr "ライブCIBとシャドーCIBの違い"
 
 #: ../mgmt/client/haclient.py.in:6652
-#, fuzzy
 msgid "_Reset"
-msgstr "リセット"
+msgstr "リセット(_R)"
 
 #: ../mgmt/client/haclient.py.in:6652
 msgid "Recreate a shadow CIB from the live CIB"
 msgstr "ライブCIBでシャドーCIBを再作成"
 
 #: ../mgmt/client/haclient.py.in:6653
-#, fuzzy
 msgid "_Delete"
-msgstr "削除"
+msgstr "削除(_D)"
 
 #: ../mgmt/client/haclient.py.in:6653
 msgid "Delete a shadow CIB"
 msgstr "シャドーCIBの削除"
 
 #: ../mgmt/client/haclient.py.in:6654
-#, fuzzy
 msgid "_Commit"
-msgstr "コミット"
+msgstr "コミット(_C)"
 
 #: ../mgmt/client/haclient.py.in:6654
 msgid "Upload a shadow CIB to the cluster"
 msgstr "シャドーCIBをクラスタにアップロード"
 
 #: ../mgmt/client/haclient.py.in:6655
-#, fuzzy
 msgid "_Switch"
-msgstr "切り換え"
+msgstr "切り換え(_S)"
 
 #: ../mgmt/client/haclient.py.in:6655
 msgid "Switch working CIB"
 msgstr "作業中のCIBに切り換え"
 
 #: ../mgmt/client/haclient.py.in:6656
-#, fuzzy
 msgid "_Tools"
-msgstr "ツール"
+msgstr "ツール(_T)"
 
 #: ../mgmt/client/haclient.py.in:6657
-#, fuzzy
 msgid "_Transition Information"
-msgstr "遷移情報"
+msgstr "遷移情報(_T)"
 
 #: ../mgmt/client/haclient.py.in:6658
 msgid "Show Transition Information"
 msgstr "遷移情報の表示"
 
 #: ../mgmt/client/haclient.py.in:6659
-#, fuzzy
 msgid "Cluster Re_port"
-msgstr "クラスタリポート"
+msgstr "クラスタリポート(_R)"
 
 #: ../mgmt/client/haclient.py.in:6659
 msgid "generate a cluster report"
@@ -1357,34 +1305,31 @@ msgstr "クラスタリポートの生成"
 
 #: ../mgmt/client/haclient.py.in:6660
 msgid "_Help"
-msgstr ""
+msgstr "ヘルプ(_H)"
 
 #: ../mgmt/client/haclient.py.in:6661
 msgid "_About"
-msgstr ""
+msgstr "Pacemaker GUIについて(_A)"
 
 #: ../mgmt/client/haclient.py.in:6667
-#, fuzzy
 msgid "_Simple Mode"
-msgstr "簡単モード"
+msgstr "簡単モード(_S)"
 
 #: ../mgmt/client/haclient.py.in:6667
 msgid "Switch to simple mode"
 msgstr "簡単モードに切り換え"
 
 #: ../mgmt/client/haclient.py.in:6668
-#, fuzzy
 msgid "_Expert Mode"
-msgstr "エキスパートモード"
+msgstr "エキスパートモード(_E)"
 
 #: ../mgmt/client/haclient.py.in:6668
 msgid "Switch to expert mode"
 msgstr "エキスパートモードに切り換え"
 
 #: ../mgmt/client/haclient.py.in:6669
-#, fuzzy
 msgid "_Hack Mode"
-msgstr "Hackモード"
+msgstr "Hackモード(_H)"
 
 #: ../mgmt/client/haclient.py.in:6669
 msgid "Switch to hack mode"
@@ -1429,7 +1374,6 @@ msgid "Reconnecting..."
 msgstr "再接続しています..."
 
 #: ../mgmt/client/haclient.py.in:7144
-#, fuzzy
 msgid "Cannot expand the Relax-NG schema"
 msgstr "Relax-NGスキーマを取得出来ませんでした"
 
@@ -1711,11 +1655,9 @@ msgid ""
 msgstr ""
 "* %s と %s の場所の関係を決定する為に、有効な\"スコア\"を指定して下さい"
 
-#, fuzzy
 msgid "Delete"
 msgstr "削除"
 
-#, fuzzy
 msgid "Commit"
 msgstr "コミット"
 
