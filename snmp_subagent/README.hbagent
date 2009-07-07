@@ -131,7 +131,20 @@ This should be taken care of by the 'make install' though.
     LINUX-HA-MIB::LHADebugFile.0 = STRING: /var/log/ha-debug
     LINUX-HA-MIB::LHALogFacility.0 = STRING: local0
 
-8. Bugs
+8. About LHAIFStatus
+
+   LHAIFStatus shows the status of a heartbeat link, as the
+   "cl_status hblinkstatus <node-name> <interface-name>" command
+   does. That indicates whether the local node can recieve the
+   heartbeats from "node-name" through "interface-name".
+
+   Note: If you have set "ucast <ethn> <peer-ip-addr>" as the
+   heartbeat communication in the ha.cf file, the LHAIFStatus of
+   the local node will be shown as "down". Because for this case,
+   the local node isn't meant to send itself any heartbeat traffic.
+   That doesn't affect the cluster membership. You could ignore that.
+
+9. Bugs
  
     Please forward all bug report to Linux-HA dev mailing list.
 
