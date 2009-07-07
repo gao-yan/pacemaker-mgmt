@@ -246,3 +246,11 @@ Master/Slave Set: ms-sf
         2) Fix some memory leaks.
              debug with valgrind.
         3) Update SNMPAgentSanityCheck to keep up with the new functionality.
+
+6. Work with OpenAIS
+
+   You have to manually start the SNMP subagent for an openAIS based cluster as
+   the following : 
+   # export HA_cluster_type=openais; /usr/lib/heartbeat/hbagent &
+
+   Note: People on 64-bit platforms will probably need to replace lib with lib64 
