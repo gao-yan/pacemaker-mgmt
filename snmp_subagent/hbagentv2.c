@@ -353,16 +353,11 @@ hbagentv2_update_diff(const char *event, crm_data_t *msg)
             free_xml(diff);
             return;
         }
-
-#if SUPPORT_HEARTBEAT
-        if (is_heartbeat_cluster()) {
-            if (STRNCMP_CONST(node_id, myuuid) != 0) {
-                /* This change is not at my node */
-                free_xml(diff);
-                return;
-            }
+        if (myuuid != NULL && STRNCMP_CONST(node_id, myuuid) != 0) {
+            /* This change is not at my node */
+            free_xml(diff);
+            return;
         }
-#endif
 
         /* get the head pointer of <lrm_resource>  */
         lrm_rsc = find_xml_node(node_state, XML_CIB_TAG_LRM, FALSE);

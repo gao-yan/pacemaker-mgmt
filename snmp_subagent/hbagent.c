@@ -39,6 +39,8 @@
 #if SUPPORT_HEARTBEAT
 #include "hb_api.h"
 #include "heartbeat.h"
+#else
+#include <crm/common/cluster.h>
 #endif
 
 #include "clplumbing/cl_log.h"
@@ -77,6 +79,7 @@
 #include <sys/types.h> /* getpid() */
 #include <sys/stat.h> /* fstat() */
 #include <unistd.h>
+#include <sys/utsname.h>
 
 #include <errno.h>
 
@@ -85,11 +88,12 @@
 #endif
 #include "clplumbing/cl_uuid.h" /* UU_UNPARSE_SIZEOF */
 
+char * myid = NULL; /* my node id */
+char * myuuid = NULL; /* my node uuid */
+
 #if SUPPORT_HEARTBEAT
 static unsigned long hbInitialized = 0;
 static ll_cluster_t * hb = NULL; /* heartbeat handle */
-char * myid = NULL; /* my node id */
-char * myuuid = NULL; /* my node uuid */
 static SaClmHandleT clm = 0;
 static unsigned long clmInitialized = 0;
 
@@ -123,10 +127,11 @@ int walk_iftable(void);
 int nodestatus_trap(const char * node, const char * status);
 int ifstatus_trap(const char * node, const char * lnk, const char * status);
 int membership_trap(const char * node, SaClmClusterChangesT status);
-int hbagent_trap(int online, const char * node);
 
 int ping_membership(int * mem_fd);
 #endif
+
+int hbagent_trap(int online, const char * node);
 
 /* LHAHeartbeatConfigInfo partial-mode */
 #define DEFAULT_REFRESH_TIMING  (0)
@@ -1214,60 +1219,6 @@ ifstatus_trap(const char * node, const char * lnk, const char * status)
 }
 
 int 
-hbagent_trap(int online, const char * node)
-{
-    netsnmp_variable_list *notification_vars = NULL;
-
-    oid objid_snmptrap[] = { 1, 3, 6, 1, 6, 3, 1, 1, 4, 1, 0 };
-    size_t objid_snmptrap_len = OID_LENGTH(objid_snmptrap);
-
-    oid  nodename_oid[] = { 1, 3, 6, 1, 4, 1, 4682, 2, 1, 2 };
-    size_t nodename_oid_len = OID_LENGTH(nodename_oid);
-
-  /* this is the oid for the hbagent online trap */
-    oid  trap_oid[] = { 1, 3, 6, 1, 4, 1, 4682, 900, 7 };
-    size_t trap_oid_len = OID_LENGTH(trap_oid);
-
-    /* this is the oid for the offline trap */
-    if (!online) {
-	    trap_oid[trap_oid_len - 1] = 9;
-    }
-
-
-    snmp_varlist_add_variable(&notification_vars,
-                              /*
-                               * the snmpTrapOID.0 variable
-                               */
-                              objid_snmptrap, objid_snmptrap_len,
-                              /*
-                               * value type is an OID
-                               */
-                              ASN_OBJECT_ID,
-                              /*
-                               * value contents is our notification OID
-                               */
-                              (u_char *) trap_oid,
-                              /*
-                               * size in bytes = oid length * sizeof(oid)
-                               */
-                              trap_oid_len * sizeof(oid));
-
-    snmp_varlist_add_variable(&notification_vars,
-                              nodename_oid, 
-			      nodename_oid_len,
-                              ASN_OCTET_STR,
-                              (const u_char *) node,
-                              strlen(node)); /* do NOT use strlen() +1 */
-
-    cl_log(LOG_INFO, "sending hbagent trap. status:%d", online);
-    send_v2trap(notification_vars);
-    snmp_free_varbind(notification_vars);
-
-    return HA_OK;
-}
-
-
-int 
 membership_trap(const char * node, SaClmClusterChangesT status)
 {
     oid objid_snmptrap[] = { 1, 3, 6, 1, 6, 3, 1, 1, 4, 1, 0 };
@@ -1346,6 +1297,59 @@ rsinfo_get_int_value(lha_attribute_t attr, size_t index, uint32_t * value)
   return 0;
 }
 #endif
+
+int 
+hbagent_trap(int online, const char * node)
+{
+    netsnmp_variable_list *notification_vars = NULL;
+
+    oid objid_snmptrap[] = { 1, 3, 6, 1, 6, 3, 1, 1, 4, 1, 0 };
+    size_t objid_snmptrap_len = OID_LENGTH(objid_snmptrap);
+
+    oid  nodename_oid[] = { 1, 3, 6, 1, 4, 1, 4682, 2, 1, 2 };
+    size_t nodename_oid_len = OID_LENGTH(nodename_oid);
+
+  /* this is the oid for the hbagent online trap */
+    oid  trap_oid[] = { 1, 3, 6, 1, 4, 1, 4682, 900, 7 };
+    size_t trap_oid_len = OID_LENGTH(trap_oid);
+
+    /* this is the oid for the offline trap */
+    if (!online) {
+	    trap_oid[trap_oid_len - 1] = 9;
+    }
+
+
+    snmp_varlist_add_variable(&notification_vars,
+                              /*
+                               * the snmpTrapOID.0 variable
+                               */
+                              objid_snmptrap, objid_snmptrap_len,
+                              /*
+                               * value type is an OID
+                               */
+                              ASN_OBJECT_ID,
+                              /*
+                               * value contents is our notification OID
+                               */
+                              (u_char *) trap_oid,
+                              /*
+                               * size in bytes = oid length * sizeof(oid)
+                               */
+                              trap_oid_len * sizeof(oid));
+
+    snmp_varlist_add_variable(&notification_vars,
+                              nodename_oid, 
+			      nodename_oid_len,
+                              ASN_OCTET_STR,
+                              (const u_char *) node,
+                              strlen(node)); /* do NOT use strlen() +1 */
+
+    cl_log(LOG_INFO, "sending hbagent trap. status:%d", online);
+    send_v2trap(notification_vars);
+    snmp_free_varbind(notification_vars);
+
+    return HA_OK;
+}
 
 static void
 usage(void)
@@ -1467,6 +1471,24 @@ main(int argc, char ** argv)
 	}
 #endif
 
+#if SUPPORT_AIS
+	if (is_openais_cluster()) {
+#if SUPPORT_HEARTBEAT
+		struct utsname name;
+		if(uname(&name) < 0) {
+			cl_log(LOG_ERR, "uname(2) call failed: %s", strerror(errno));
+		} else {
+			myid = strdup(name.nodename);
+		}
+
+		if (myid != NULL) {
+			myuuid = strdup(myid);
+		}
+#else
+		crm_cluster_connect(&myid, &myuuid, NULL, NULL, NULL);
+#endif
+	}
+#endif
 	/*
 	if ((ret = init_membership() != HA_OK) ||
 		(mem_fd = get_membership_fd()) <= 0) {
@@ -1510,11 +1532,7 @@ main(int argc, char ** argv)
 
 	snmp_log(LOG_INFO,"LHA-agent is up and running.\n");
 
-#if SUPPORT_HEARTBEAT
-	if (is_heartbeat_cluster()) {
-		hbagent_trap(1, myid);
-	}
-#endif
+	hbagent_trap(1, myid);
 
 	hbconfig_refresh_cnt = 0;
 
@@ -1655,25 +1673,22 @@ process_pending:
 
 	/* at shutdown time */
 	
-#if SUPPORT_HEARTBEAT
-	if (is_heartbeat_cluster()) {
-		hbagent_trap(0, myid);
-	}
-#endif
+	hbagent_trap(0, myid);
 	snmp_shutdown("LHA-agent");
 
 	free_hbagentv2();
-#if SUPPORT_HEARTBEAT
-        if (is_heartbeat_cluster()) {
- 		free_hbconfig();
+	if (myid != NULL) {
 		free(myid);
-		free(myuuid);
-		free_storage();
 	}
-#endif
+	if (myuuid != NULL) {
+		free(myuuid);
+	}
 
 #if SUPPORT_HEARTBEAT
         if (is_heartbeat_cluster()) {
+ 		free_hbconfig();
+		free_storage();
+
 		if (!hb_already_dead && hb->llc_ops->signoff(hb, TRUE) != HA_OK) {
 			cl_log(LOG_ERR, "Cannot sign off from heartbeat.");
 			cl_log(LOG_ERR, "REASON: %s", hb->llc_ops->errmsg(hb));
