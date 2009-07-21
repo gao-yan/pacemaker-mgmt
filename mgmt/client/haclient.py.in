@@ -34,6 +34,7 @@ from stat import *
 from xml.dom.minidom import parseString
 from xml.dom.minidom import getDOMImplementation
 from xml.parsers.xmlproc.xmldtd import load_dtd_string
+import re
 
 import locale, gettext
 app_name = "haclient"
@@ -257,6 +258,12 @@ def is_valid_time(time_input) :
 		return (False, _("The specified time should default with second unit, ") +
 				_("or should be suffixed with one of the following units:\n %s")%(", ".join(unit_list)))
 	return (True, None)
+
+def is_valid_id(id) :
+	if id == None :
+		return False
+	id_regex = "^[A-Za-z_][\w.-]*$"
+	return re.match(id_regex, id)
 
 def extract_int(int_str) :
 	for i in range(len(int_str)) :
@@ -7362,6 +7369,13 @@ class Manager :
 				sorted_nodes.append(rng_node)
 		return sorted_nodes
 
+	def get_rng_attr_type(self, attr_rng_node) :
+		sub_rng_nodes = self.sorted_sub_rng_nodes_by_node(*attr_rng_node[0])
+		for sub_rng_node in sub_rng_nodes.get("data", []) :
+			return sub_rng_nodes["data"][0][0][1].getAttribute("type")
+
+		return None
+
 	def real_add_obj_type(self, xml_node, obj_type_name, is_wizard = False) :
 		sub_attr_is_any_name = False 
 		if validate_type == "dtd" :
@@ -8684,13 +8698,20 @@ class ObjectAttrs(WidgetGroup) :
 		choice_attrs = []
 		for attr_node in self.attr_rng_nodes :
 			attr_name = attr_node[0][1].getAttribute("name")
+
+			attr_value = object.get(attr_name)
+			if attr_value !=  None and manager.get_rng_attr_type(attr_node) in ["ID", "IDREF"]:
+				if not is_valid_id(attr_value) :
+					msgbox(_(name_cap(attr_name))+ _(": ")+_("Invalid identifier \"%s\"")%attr_value)
+					passed = False
+
 			if object.has_key(attr_name) or manager.find_decl(attr_node, "optional") != 0 \
 					or manager.find_decl(attr_node, "zeroOrMore") != 0 :
 				continue
 
 			if manager.find_decl(attr_node, "choice") == 0  :
 				msgbox(_(name_cap(attr_name))+ _(":")+_(" can't be empty"))
-				passed =False
+				passed = False
 			else :
 				choice_attrs.append(attr_node)
 
