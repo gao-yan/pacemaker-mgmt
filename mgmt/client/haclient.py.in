@@ -3856,7 +3856,7 @@ class ElementNotebook :
 				tmp_elem.parentNode.removeChild(tmp_elem)
 				if new_mid_elem != None :
 					new_mid_elem.parentNode.removeChild(new_mid_elem)
-				if self.is_topview :
+				if self.is_topview and window.cur_view != None :
 					window.cur_view.update()
 				return 2
 			if not self.is_topview :
@@ -4028,7 +4028,8 @@ class ElementNotebook :
 				if not self.is_topview :
 					self.on_changed()
 				else :
-					window.cur_view.update()
+					if window.cur_view != None :
+						window.cur_view.update()
 				return
 			if not self.is_topview :
 				objdlg.destroy()
@@ -4049,7 +4050,8 @@ class ElementNotebook :
 				if manager.failed_reason != "" :
 					msgbox(manager.failed_reason)
 				else :
-					window.cur_view.update()
+					if window.cur_view != None :
+						window.cur_view.update()
 					objdlg.destroy()
 					return
 
