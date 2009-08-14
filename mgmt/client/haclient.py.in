@@ -7802,7 +7802,12 @@ class Manager :
 		return self.query("all_rsc")
 
 	def get_rsc_type(self, rsc_id) :
-		rsc_type = self.query("rsc_type\n"+rsc_id)[0]
+		rsc_type_ret = self.query("rsc_type\n"+rsc_id)
+		if rsc_type_ret != None and len(rsc_type_ret) > 0 :
+			rsc_type = rsc_type_ret[0]
+		else :
+			rsc_type = None
+
 		if rsc_type == "native" :
 			return "primitive"
 		else :
