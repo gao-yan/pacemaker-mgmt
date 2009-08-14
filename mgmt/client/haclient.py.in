@@ -6773,6 +6773,7 @@ class Manager :
 	update_timer = -1
 	active_nodes = []
 	all_nodes = []
+	try_nodes = []
 	failed_reason = ""
 	dtd_elems = {}
 	session_lock = thread.allocate_lock()
@@ -6842,14 +6843,16 @@ class Manager :
 	def login(self, server, username, password) :
 		# connect to one of the cluster
 		self.failed_reason = ""
-		self.server = server
-		port = ""
 		if string.find(server, ":") != -1 :
-			server,port = string.split(server,":")
+			server_host, port = string.split(server,":")
+		else :
+			server_host = server
+			port = ""
+
 		try :
-			ip = socket.gethostbyname(server)
+			ip = socket.gethostbyname(server_host)
 		except socket.error :
-			self.failed_reason = _("Can't resolve address of server ")+server
+			self.failed_reason = _("Can't resolve address of server ")+server_host
 			return False
 
 		try :
@@ -6872,8 +6875,11 @@ class Manager :
 			return False
 
 		window.statusbar.pop(1)	
-		window.statusbar.push(1,_("Connected to ")+server)
+		window.statusbar.push(1,_("Connected to ")+server_host)
 		self.connected = True
+		if server != None and server not in self.try_nodes :
+			self.try_nodes.insert(0, server)
+		self.server = server_host
 		self.username = username
 		self.password = password
 
@@ -6972,8 +6978,14 @@ class Manager :
 		if self.all_nodes == [] :
 			window.statusbar.pop(1)
 			return False
-		for server in self.all_nodes :
-			if self.login(self.server, self.username, self.password) :
+
+		try_nodes = self.try_nodes[:]
+		for node in self.all_nodes :
+			if node not in try_nodes :
+				try_nodes.append(node)
+
+		for server in try_nodes :
+			if self.login(server, self.username, self.password) :
 				return False
 		return True
 
@@ -6983,8 +6995,14 @@ class Manager :
 
 		elif event == None or event == "evt:disconnected" :
 			self.logout()
-			for server in self.active_nodes :
-				if self.login(self.server, self.username, self.password) :
+
+			try_nodes = self.try_nodes[:]
+			for active_node in self.active_nodes :
+				if active_node not in try_nodes :
+					try_nodes.append(active_node)
+
+			for server in try_nodes :
+				if self.login(server, self.username, self.password) :
 					break
 			else :
 				window.statusbar.push(1,_("Reconnecting..."))
@@ -7724,9 +7742,15 @@ class Manager :
 		return self.query("dc")
 
 	def get_all_nodes(self) :
-		self.all_nodes = self.query("all_nodes")
-		if self.all_nodes == None :
-			self.all_nodes = self.query("crm_nodes")
+		all_nodes = self.query("all_nodes")
+		if all_nodes == None :
+			all_nodes = self.query("crm_nodes")
+
+		if all_nodes != None :
+			self.all_nodes = all_nodes
+		else :
+			self.all_nodes = []
+
 		return self.all_nodes
 
 	def get_nodetype(self, node):
@@ -7748,7 +7772,12 @@ class Manager :
 		return normal_nodes
 
 	def get_active_nodes(self):
-		self.active_nodes = self.query("active_nodes")
+		active_nodes = self.query("active_nodes")
+		if active_nodes != None :
+			self.active_nodes = active_nodes
+		else :
+			self.active_nodes = []
+
 		return self.active_nodes
 	
 	def get_crm_nodes(self):
