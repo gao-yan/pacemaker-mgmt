@@ -59,5 +59,5 @@ endif
 libhbmgmt_la_CFLAGS = $(INCLUDES)
 libhbmgmt_la_LDFLAGS = $(GNUTLSLIBS)
 libhbmgmt_la_LIBADD = $(top_builddir)/lib/mgmt/libhbmgmttls.la 			\
-		  	-lcib -lcrmcommon -lapphb -lpe_status	\
+		  	-lcib -lcrmcommon -lpe_status	\
 			$(COMMONLIBS) $(CLUSTERLIBS) $(CURSESLIBS)

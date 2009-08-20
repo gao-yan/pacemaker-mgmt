@@ -26,7 +26,14 @@
 #include <sys/wait.h>
 #include <time.h>
 
+#if HAVE_HB_CONFIG_H
 #include <hb_config.h>
+#endif
+
+#if HAVE_GLUE_CONFIG_H
+#include <glue_config.h>
+#endif
+
 #include <clplumbing/cl_log.h>
 #include <clplumbing/cl_syslog.h>
 #include <clplumbing/lsb_exitcodes.h>

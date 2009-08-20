@@ -25,9 +25,9 @@ dnl   - include/config.h.in is generated automatically by autoheader
 dnl   - NOT to be included in any header files except lha_internal.h
 dnl     (which is also not to be included in any other header files)
 dnl
-dnl External header: include/hb_config.h
+dnl External header: include/mgmt_config.h
 dnl   - Contains a subset of defines checked here
-dnl   - Manually edit include/hb_config.h.in to have configure include
+dnl   - Manually edit include/mgmt_config.h.in to have configure include
 dnl     new defines
 dnl   - Should not include HAVE_* defines
 dnl   - Safe to include anywhere
@@ -867,8 +867,6 @@ AC_CHECK_HEADERS([stdint.h unistd.h])
 AC_CHECK_HEADERS(sys/termios.h)
 AC_CHECK_HEADERS(sys/reboot.h)
 AC_CHECK_HEADERS(termios.h)
-AC_CHECK_HEADERS(hb_config.h)
-
 
 dnl ************************************************************************
 dnl  FreeBSD requires sys/param.h and in.h to compile test netinet headers.
@@ -1205,41 +1203,49 @@ AC_DEFINE_UNQUOTED(DTD_DIRECTORY,"$DTD_DIRECTORY", Location for the Pacemaker Re
 AC_SUBST(DTD_DIRECTORY)
 
 AC_CHECK_HEADERS(hb_config.h)
-if test "$ac_cv_header_hb_config_h" != "yes"; then
-   AC_MSG_FAILURE(The heartbeat-common development headers were not found)
+AC_CHECK_HEADERS(glue_config.h)
+GLUE_HEADER=none
+if test "$ac_cv_header_glue_config_h" = "yes";  then
+   GLUE_HEADER=glue_config.h
+
+elif test "$ac_cv_header_hb_config_h" = "yes"; then
+   GLUE_HEADER=hb_config.h
+
+else
+   AC_MSG_FAILURE(Core development headers were not found)
 fi
 
-HA_HBCONF_DIR=`extract_heartbeat_define hb_config.h HA_HBCONF_DIR`
+HA_HBCONF_DIR=`extract_heartbeat_define $GLUE_HEADER HA_HBCONF_DIR`
 AC_SUBST(HA_HBCONF_DIR)
 
-HB_RA_DIR=`extract_heartbeat_define hb_config.h HB_RA_DIR`
+HB_RA_DIR=`extract_heartbeat_define $GLUE_HEADER HB_RA_DIR`
 AC_SUBST(HB_RA_DIR)
 
-HA_LIBDIR=`extract_heartbeat_define hb_config.h HA_LIBDIR`
+HA_LIBDIR=`extract_heartbeat_define $GLUE_HEADER HA_LIBDIR`
 AC_SUBST(HA_LIBDIR)
 
-hb_libdir=`extract_heartbeat_define hb_config.h HA_LIBHBDIR`
+hb_libdir=`extract_heartbeat_define $GLUE_HEADER HA_LIBHBDIR`
 AC_SUBST(hb_libdir)
 
-HA_VARRUNDIR=`extract_heartbeat_define hb_config.h HA_VARRUNDIR`
+HA_VARRUNDIR=`extract_heartbeat_define $GLUE_HEADER HA_VARRUNDIR`
 AC_DEFINE_UNQUOTED(HA_VARRUNDIR,"$HA_VARRUNDIR", Location for sockets)
 AC_SUBST(HA_VARRUNDIR)
 
-HA_VARLIBDIR=`extract_heartbeat_define hb_config.h HA_VARLIBDIR`
+HA_VARLIBDIR=`extract_heartbeat_define $GLUE_HEADER HA_VARLIBDIR`
 AC_SUBST(HA_VARLIBDIR)
 
-OCF_ROOT_DIR=`extract_heartbeat_define hb_config.h OCF_ROOT_DIR`
+OCF_ROOT_DIR=`extract_heartbeat_define $GLUE_HEADER OCF_ROOT_DIR`
 AC_DEFINE_UNQUOTED(OCF_ROOT_DIR,"$OCF_ROOT_DIR", OCF root directory - specified by the OCF standard)
 AC_SUBST(OCF_ROOT_DIR)
 
-OCF_RA_DIR=`extract_heartbeat_define hb_config.h OCF_RA_DIR`
+OCF_RA_DIR=`extract_heartbeat_define $GLUE_HEADER OCF_RA_DIR`
 AC_DEFINE_UNQUOTED(OCF_RA_DIR,"$OCF_RA_DIR", Location for OCF RAs)
 AC_SUBST(OCF_RA_DIR)
 
-HA_APIGROUP=`extract_heartbeat_define hb_config.h HA_APIGROUP`
+HA_APIGROUP=`extract_heartbeat_define $GLUE_HEADER HA_APIGROUP`
 AC_SUBST(HA_APIGROUP)
 
-HA_CCMUSER=`extract_heartbeat_define hb_config.h HA_CCMUSER`
+HA_CCMUSER=`extract_heartbeat_define $GLUE_HEADER HA_CCMUSER`
 AC_SUBST(HA_CCMUSER)
 
 HA_DATADIR="${datadir}"
