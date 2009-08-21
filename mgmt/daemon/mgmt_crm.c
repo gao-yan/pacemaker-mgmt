@@ -1984,7 +1984,7 @@ on_gen_cluster_report(char* argv[], int argc)
 #ifdef PE_STATE_DIR
 static const char* pe_state_dir = PE_STATE_DIR;
 #else
-static const char* pe_state_dir = HA_VARLIBDIR"/heartbeat/pengine";
+static const char* pe_state_dir = HA_VARLIBHBDIR"/pengine";
 #endif
 
 typedef struct pe_series_s

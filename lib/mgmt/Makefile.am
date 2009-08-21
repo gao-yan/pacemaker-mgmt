@@ -28,8 +28,8 @@ guilibdir                       =       $(libdir)/heartbeat-gui
 havarlibdir			=	$(localstatedir)/lib/@HB_PKG@
 COMMONLIBS			=	$(GLIBLIB)
 MGMT_DIR 			=	mgmt
-mgmtdir				=	$(HA_VARLIBDIR)/$(HB_PKG)/$(MGMT_DIR)
-apigid                          =       @HA_APIGID@
+mgmtdir				=	$(HA_VARLIBHBDIR)/$(MGMT_DIR)
+apigid                          =       @HA_APIGROUP@
 
 EXTRA_DIST			=	pymgmt.i
 

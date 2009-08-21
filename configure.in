@@ -1221,8 +1221,9 @@ AC_SUBST(HA_HBCONF_DIR)
 HB_RA_DIR=`extract_heartbeat_define $GLUE_HEADER HB_RA_DIR`
 AC_SUBST(HB_RA_DIR)
 
-HA_LIBDIR=`extract_heartbeat_define $GLUE_HEADER HA_LIBDIR`
+HA_LIBDIR="${libdir}"
 AC_SUBST(HA_LIBDIR)
+AC_DEFINE_UNQUOTED(HA_LIBDIR,"$HA_LIBDIR", lib directory)
 
 hb_libdir=`extract_heartbeat_define $GLUE_HEADER HA_LIBHBDIR`
 AC_SUBST(hb_libdir)
@@ -1231,8 +1232,8 @@ HA_VARRUNDIR=`extract_heartbeat_define $GLUE_HEADER HA_VARRUNDIR`
 AC_DEFINE_UNQUOTED(HA_VARRUNDIR,"$HA_VARRUNDIR", Location for sockets)
 AC_SUBST(HA_VARRUNDIR)
 
-HA_VARLIBDIR=`extract_heartbeat_define $GLUE_HEADER HA_VARLIBDIR`
-AC_SUBST(HA_VARLIBDIR)
+HA_VARLIBHBDIR=`extract_heartbeat_define $GLUE_HEADER HA_VARLIBHBDIR`
+AC_SUBST(HA_VARLIBHBDIR)
 
 OCF_ROOT_DIR=`extract_heartbeat_define $GLUE_HEADER OCF_ROOT_DIR`
 AC_DEFINE_UNQUOTED(OCF_ROOT_DIR,"$OCF_ROOT_DIR", OCF root directory - specified by the OCF standard)
