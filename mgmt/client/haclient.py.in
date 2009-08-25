@@ -40,7 +40,7 @@ import locale, gettext
 app_name = "haclient"
 
 sys.path.append("@HA_DATADIR@/heartbeat-gui")
-sys.path.append("@HA_LIBDIR@/heartbeat-gui")
+sys.path.append("@LIBDIR@/heartbeat-gui")
 from pymgmt import *
 
 import pygtk

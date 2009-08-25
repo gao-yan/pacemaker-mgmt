@@ -10,7 +10,7 @@
 LOG_LVL=0
 ONLINE=0
 OFFLINE=3
-HB_BIN_DIR=@HA_LIBDIR@/@HB_PKG@
+HB_BIN_DIR=@HA_LIBHBDIR@
 TSA_EVENTD=${HB_BIN_DIR}/tsa_eventd
 MSG_NOUNAME='Cannot determine OS - exit.'
 MSG_NOJAVA='Cannot find Java - exit.'

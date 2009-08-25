@@ -1154,7 +1154,7 @@ cim_get_software_identity(void)
 	char ** out = NULL;
 	int     ret;
 	DEBUG_ENTER();
-	run_shell_cmnd(HA_LIBDIR"/heartbeat/heartbeat -V", &ret, &out, NULL);
+	run_shell_cmnd(HA_LIBHBDIR"/heartbeat -V", &ret, &out, NULL);
 
 	if ( out ) {
 		struct ha_msg * msg;
