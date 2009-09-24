@@ -3986,12 +3986,13 @@ class ElementNotebook :
 				if decl_rng_nodes.get("choice") != None :
 					for sorted_nodes in [ref_sorted_nodes, ref_elem_sorted_nodes] :
 						if decl_rng_nodes["choice"] in sorted_nodes["choice"] :
-							if (manager.find_decl(rng_node, "zeroOrMore", False) != 0 and
-									manager.find_decl(rng_node, "zeroOrMore", False) >
-										manager.find_decl(rng_node, "choice", False)) \
-									or (manager.find_decl(rng_node, "oneOrMore", False) != 0 and
-									manager.find_decl(rng_node, "oneOrMore", False) >
-										manager.find_decl(rng_node, "choice", False)) :
+							if manager.find_decl(rng_node, "zeroOrMore") != 0 and \
+									manager.find_decl(rng_node, "zeroOrMore") > \
+										manager.find_decl(rng_node, "choice") :
+								continue
+							if manager.find_decl(rng_node, "oneOrMore") != 0 and \
+									manager.find_decl(rng_node, "oneOrMore") > \
+										manager.find_decl(rng_node, "choice") :
 								continue
 							if len(sorted_nodes["group"]) == 0 :
 									can_add = False
