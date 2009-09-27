@@ -1476,29 +1476,46 @@ char*
 on_crm_rsc_cmd(char* argv[], int argc)
 {
 	char cmd[MAX_STRLEN];
+	pe_working_set_t* data_set;
+	resource_t* rsc;
 	char* ret = NULL;
 	FILE* fstream = NULL;
 	char buf[MAX_STRLEN];
 
-	ARGC_CHECK(3)
+	ARGC_CHECK(4)
 
-	if (STRNCMP_CONST(argv[1], "refresh") == 0){
+	if (STRNCMP_CONST(argv[2], "refresh") == 0){
 		strncpy(cmd, "crm_resource -R", sizeof(cmd)-1) ;
 	}
-	else if (STRNCMP_CONST(argv[1], "reprobe") == 0){
+	else if (STRNCMP_CONST(argv[2], "reprobe") == 0){
 		strncpy(cmd, "crm_resource -P", sizeof(cmd)-1) ;
+	}
+	else if (STRNCMP_CONST(argv[2], "cleanup") == 0){
+		strncpy(cmd, "crm_resource -C", sizeof(cmd)-1) ;
+	}
+	else if (STRNCMP_CONST(argv[2], "fail") == 0){
+		strncpy(cmd, "crm_resource -F", sizeof(cmd)-1) ;
 	}
 	else{
 		return strdup(MSG_FAIL"\nNo such command");
 	}
 
-	if (strlen(argv[2]) > 0){
-		if (uname2id(argv[2]) == NULL){
+	if (strlen(argv[1]) > 0){
+		data_set = get_data_set();
+		GET_RESOURCE()
+		free_data_set(data_set);
+
+		strncat(cmd, " -r ", sizeof(cmd)-strlen(cmd)-1);
+		strncat(cmd, argv[1], sizeof(cmd)-strlen(cmd)-1);
+	}
+
+	if (strlen(argv[3]) > 0){
+		if (uname2id(argv[3]) == NULL){
 			return strdup(MSG_FAIL"\nNo such node");
 		}
 		else{
 			strncat(cmd, " -H ", sizeof(cmd)-strlen(cmd)-1);
-			strncat(cmd, argv[2], sizeof(cmd)-strlen(cmd)-1);
+			strncat(cmd, argv[3], sizeof(cmd)-strlen(cmd)-1);
 		}
 	}
 

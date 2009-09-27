@@ -495,7 +495,7 @@ or
 description:
 	execute specified crm_resource command
 format:
-	MSG_CRM_RSC_CMD command [host_uname]
+	MSG_CRM_RSC_CMD <rsc_id|""> command <host_uname|"">
 return:
 	MSG_OK
 or

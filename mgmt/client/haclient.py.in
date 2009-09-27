@@ -1303,7 +1303,8 @@ class ManageView :
 					
 			for rsc in cleanup_rscs :
 				for node in cleanup_nodes :
-					manager.do_cmd("cleanup_rsc\n"+ node + "\n" + rsc)
+					#manager.do_cmd("cleanup_rsc\n" + node + "\n" + rsc)
+					manager.do_cmd("crm_rsc_cmd\n%s\ncleanup\n%s"%(rsc, node))
 
 	def on_migrate_rsc(self, action) :
 		global top_window
@@ -1575,7 +1576,7 @@ class ManageView :
 		#if cmd_args == None :
 		#	return
 
-		manager.do_cmd("crm_rsc_cmd\n%s\n%s"%(cmd, cmd_args.get("node", "")))
+		manager.do_cmd("crm_rsc_cmd\n\n%s\n%s"%(cmd, cmd_args.get("node", "")))
 		if manager.failed_reason != "" :
 			msgbox(manager.failed_reason)
 
