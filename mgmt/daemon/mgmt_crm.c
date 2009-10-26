@@ -811,7 +811,7 @@ on_crm_attribute(char* argv[], int argc)
 	const char* nv_regex = "^[A-Za-z0-9_-]+$";
 	FILE *fstream = NULL;
 
-	ARGC_CHECK(5);
+	ARGC_CHECK(6);
 
 	snprintf(cmd, sizeof(cmd), "crm_attribute -t %s", argv[1]);
 
@@ -840,6 +840,16 @@ on_crm_attribute(char* argv[], int argc)
 		else {
 			mgmt_log(LOG_ERR, "invalid attribute value specified: \"%s\"", argv[4]);
 			return strdup(MSG_FAIL"\nInvalid attribute value");
+		}
+	}
+
+	if (STRNCMP_CONST(argv[5], "") != 0){
+		if (uname2id(argv[5]) == NULL) {
+			return strdup(MSG_FAIL"\nNo such node");
+		}
+		else{
+			strncat(cmd, " -N ", sizeof(cmd)-strlen(cmd)-1);
+			strncat(cmd, argv[5], sizeof(cmd)-strlen(cmd)-1);
 		}
 	}
 
