@@ -10,7 +10,7 @@ usr/lib/libhbmgmtclient.so.0
 usr/lib/heartbeat/mgmtd
 usr/lib/heartbeat/mgmtdtest
 usr/lib/heartbeat/hbagent
-usr/share/heartbeat/SNMPAgentSanityCheck
+usr/lib/heartbeat/SNMPAgentSanityCheck
 usr/share/snmp/mibs/LINUX-HA-MIB.txt
 usr/share/doc/pacemaker-mgmt/README.hbagent
 usr/share/doc/pacemaker-mgmt/README.hbagentv2

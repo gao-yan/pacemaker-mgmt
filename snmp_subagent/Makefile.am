@@ -83,7 +83,7 @@ endif
 hbagent_LDFLAGS		= @SNMPAGENTLIB@ 
 
 # test cases
-testdir			= $(HA_NOARCHDATAHBDIR)
+testdir			= $(HA_LIBHBDIR)
 test_SCRIPTS		= $(test_scrs)
 
 hadir                   = $(sysconfdir)/ha.d
