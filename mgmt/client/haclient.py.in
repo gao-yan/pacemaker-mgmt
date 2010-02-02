@@ -534,6 +534,7 @@ class ElementList:
 				"instance_attributes": gtk.STOCK_PREFERENCES,
 				"meta_attributes": gtk.STOCK_PREFERENCES,
 				"attributes": gtk.STOCK_PREFERENCES,
+				"utilization": gtk.STOCK_PREFERENCES,
 				"life_time": gtk.STOCK_INDENT,
 				"rule" : gtk.STOCK_JUSTIFY_FILL,
 				"expression": gtk.STOCK_MEDIA_STOP,
@@ -3330,7 +3331,7 @@ class ElementNotebook :
 					if len(sub_dtd_elem.get_attr_list()) == 0 \
 							or (mode_level != 2 and name in
 							["meta_attributes", "instance_attributes", "operations",
-							"cluster_property_set"]) :
+							"cluster_property_set", "utilization"]) :
 						if len(elem_node_list) > 1 and len(sub_dtd_elem.get_attr_list()) > 0 :
 							mode_level = 2
 							window.radio_tool_action_group.get_action("hack-mode").set_active(True)
@@ -3455,7 +3456,7 @@ class ElementNotebook :
 					if len(sub_attr_rng_nodes) == 0 \
 							or (mode_level != 2 and name in 
 							["meta_attributes", "instance_attributes", "operations",
-							"cluster_property_set"]) :
+							"cluster_property_set", "utilization"]) :
 						if len(elem_node_list) > 1 and len(sub_attr_rng_nodes) > 0 :
 							mode_level = 2
 							window.radio_tool_action_group.get_action("hack-mode").set_active(True)
@@ -7433,7 +7434,7 @@ class Manager :
 		if not sub_attr_is_any_name and (len(sub_attr_list) == 0 \
 				or ((mode_level != 2 or is_wizard) and obj_type_name in
 				["meta_attributes", "instance_attributes", "operations",
-				"cluster_property_set"])) :
+				"cluster_property_set", "utilization"])) :
 			new_mid_elem = None
 			impl = getDOMImplementation()
 			elem_node_list = []
