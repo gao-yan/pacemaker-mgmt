@@ -2897,6 +2897,8 @@ class ObjectView :
 						obj_attrs = MetaAttrsNV(self.xml_node, is_newobj, self.change_call_back)
 					elif self.xml_node.parentNode.parentNode.tagName == "cluster_property_set" :
 						obj_attrs = CRMConfNV(self.xml_node, is_newobj, self.change_call_back)
+					elif self.xml_node.parentNode.parentNode.tagName == "utilization" :
+						obj_attrs = UtilizationNV(self.xml_node, is_newobj, self.change_call_back)
 					else :
 						obj_attrs = ObjectAttrs(self.xml_node, is_newobj, self.change_call_back)
 				else :
@@ -2916,6 +2918,8 @@ class ObjectView :
 							obj_attrs = MetaAttrsNV(self.xml_node, is_newobj, self.change_call_back)
 					elif self.xml_node.parentNode.tagName == "cluster_property_set" :
 						obj_attrs = CRMConfNV(self.xml_node, is_newobj, self.change_call_back)
+					elif self.xml_node.parentNode.tagName == "utilization" :
+						obj_attrs = UtilizationNV(self.xml_node, is_newobj, self.change_call_back)
 					else :
 						obj_attrs = ObjectAttrs(self.xml_node, is_newobj, self.change_call_back)
 
@@ -9651,6 +9655,14 @@ class OPInstAttrsNV(ObjectAttrs) :
 	def auto_fill(self) :
 		widgets = self.widgets
 		name_store = [["OCF_CHECK_LEVEL", ""]]
+		if widgets.get("combo_entries", {}).has_key("name") :
+			self.combobox_store_append(widgets["combo_entries"]["name"], name_store)
+
+class UtilizationNV(ObjectAttrs) :
+	def auto_fill(self) :
+		widgets = self.widgets
+		utilization_names = ["cpu", "memory"]
+		name_store = [[name, ""] for name in utilization_names]
 		if widgets.get("combo_entries", {}).has_key("name") :
 			self.combobox_store_append(widgets["combo_entries"]["name"], name_store)
 
