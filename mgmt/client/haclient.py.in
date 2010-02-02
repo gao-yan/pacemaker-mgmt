@@ -3706,7 +3706,7 @@ class ElementNotebook :
 					or (validate_type != "dtd" and option_list[0][0][1].getAttribute("name") != "lifetime")) :
 			obj_type = option_list[0]
 		elif not invoked_by_wizard and mode_level == 0 and (
-					self.obj_type in ["primitive", "group"]
+					self.obj_type in ["node", "primitive", "group"]
 					or (self.obj_type in ["clone", "master"]
 						and (self.pages.count("primitive") > 0 
 							or self.pages.count("group") > 0))
