@@ -1475,7 +1475,7 @@ on_get_sub_rsc(char* argv[], int argc)
 	ret = strdup(MSG_OK);
 	while (cur != NULL) {
 		resource_t* rsc = (resource_t*)cur->data;
-		gboolean is_active = rsc->fns->active(rsc, FALSE);
+		gboolean is_active = rsc->fns->active(rsc, TRUE);
 		if (is_not_set(rsc->flags, pe_rsc_orphan) || is_active) {
 			ret = mgmt_msg_append(ret, rsc->id);
 		}
