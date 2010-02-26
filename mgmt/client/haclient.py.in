@@ -2651,8 +2651,11 @@ class CRMConfigView(View) :
 					tip = default_str 
 				
 
-			tooltips = gtk.Tooltips()
-			tooltips.set_tip(label, tip)
+			if pygtk_newer(2, 12) :
+				label.set_tooltip_text(tip)
+			else :
+				tooltips = gtk.Tooltips()
+				tooltips.set_tip(label, tip)
 
 			if param_type == "enum" and parameters[row]["content"].has_key("values"):
 				store = gtk.ListStore(str, str)
