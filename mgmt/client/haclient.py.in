@@ -3555,7 +3555,9 @@ class ElementNotebook :
 			down_btn.connect("clicked", self.on_down)
 
 			self.hbox.show_all()
-			self.notebook.set_size_request(280, 180)
+			self.notebook.set_size_request(350, 180)
+			self.notebook.set_scrollable(True)
+			self.notebook.popup_enable()
 			self.notebook.connect("switch-page", self.on_switch_page)
 
 		return True
@@ -6576,7 +6578,7 @@ class MainWindow :
 		win_widget = gtk.Window()
 		win_widget.connect("delete_event", self.on_delete_event)
 		win_widget.set_title(_("Pacemaker GUI"))
-		win_widget.set_default_size(780, 550)
+		win_widget.set_default_size(790, 550)
 		win_widget.set_icon_from_file("@HA_DATADIR@/heartbeat-gui/ha.png")
 
 		# add the icons to gtk stock
