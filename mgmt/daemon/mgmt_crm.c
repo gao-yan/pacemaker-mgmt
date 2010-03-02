@@ -1279,7 +1279,7 @@ on_cleanup_rsc(char* argv[], int argc)
 				argv[1], cib_error2string(rc));
 	} else {
 		buffer = crm_concat("fail-count", argv[2], '-');
-		delete_attr(cib_conn, cib_sync_call, XML_CIB_TAG_STATUS, dest_node, NULL,
+		delete_attr(cib_conn, cib_sync_call, XML_CIB_TAG_STATUS, dest_node, NULL, NULL,
 				NULL, buffer, NULL, FALSE);
 		crm_free(dest_node);
 		crm_free(buffer);
@@ -1289,7 +1289,7 @@ on_cleanup_rsc(char* argv[], int argc)
 	sleep(2); /* wait for the refresh */
 	now_s = crm_itoa(now);
 	update_attr(cib_conn, cib_sync_call,
-		    XML_CIB_TAG_CRMCONFIG, NULL, NULL, NULL, "last-lrm-refresh", now_s, FALSE);
+		    XML_CIB_TAG_CRMCONFIG, NULL, NULL, NULL, NULL, "last-lrm-refresh", now_s, FALSE);
 	crm_free(now_s);
 
 	crmd_channel->ops->destroy(crmd_channel);
