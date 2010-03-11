@@ -5935,7 +5935,7 @@ class MainWindow :
 			self.update_ui()
 
 	def confirm_record_pending(self) :
-		if manager.find_attribute("op_defaults", "record-pending") == "true" :
+		if manager.xml_nodes.has_key("cib") and manager.find_attribute("op_defaults", "record-pending") == "true" :
 			retval = confirmbox((_("\"Indicate pending operations\" has been activated.") + "\n"
 					+ _("It could affect the performance.") + "\n"
 					+ _("Turn it off ?")))
