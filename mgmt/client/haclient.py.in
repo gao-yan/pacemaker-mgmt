@@ -9400,7 +9400,9 @@ class MetaAttrsNV(ObjectAttrs) :
 		("multiple-active", [["stop_start", _("[ default ]")], ["stop_only", ""], ["block", _("(mark the resource as unmanaged)")]],
 		 _("What should the cluster do if it ever finds the resource active on more than one node.")),
 		("failure-timeout", [],
-		 _("How many seconds to wait before acting as if the failure had not occurred (and potentially allowing the resource back to the node on which it failed. Default: \"never\""))
+		 _("How many seconds to wait before acting as if the failure had not occurred (and potentially allowing the resource back to the node on which it failed. Default: \"never\"")),
+		("allow-migrate", [["false", _("[ default ]")], ["true", ""]],
+		 _("Allow resource migration for resources which support migrate_to/migrate_from actions"))
 		]
 
 		clone_basic_options = [
