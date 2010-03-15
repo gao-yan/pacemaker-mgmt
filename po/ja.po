@@ -1387,9 +1387,9 @@ msgid "Failed to parse the Relax-NG schema"
 msgstr "Relax-NGスキーマのパースに失敗しました"
 
 #: ../mgmt/client/haclient.py.in:8758
-#, fuzzy, python-format
+#, python-format
 msgid "Invalid identifier \"%s\""
-msgstr "無効 \"%s\""
+msgstr "無効な識別子 \"%s\""
 
 #: ../mgmt/client/haclient.py.in:9351 ../mgmt/client/haclient.py.in:9615
 msgid ".  "
@@ -1474,6 +1474,7 @@ msgid ""
 "Allow resource migration for resources which support migrate_to/migrate_from "
 "actions"
 msgstr ""
+"マイグレーション(migrate_to/migrate_from)動作をサポートするリソースの、移動を許可するか."
 
 #: ../mgmt/client/haclient.py.in:9410
 msgid ""
@@ -1910,9 +1911,8 @@ msgstr "メタ属性"
 msgid "Instance Attributes"
 msgstr "インスタンス属性"
 
-#, fuzzy
 msgid "Utilization"
-msgstr "配置"
+msgstr "利用制限"
 
 msgid "Nvpair"
 msgstr "名前・設定値"
