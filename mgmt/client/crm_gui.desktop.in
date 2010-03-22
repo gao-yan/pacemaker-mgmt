@@ -1,6 +1,6 @@
 [Desktop Entry]
 Type=Application
-Categories=GNOME;GTK;Settings;System;SystemSetup;X-SuSE-YaST;X-SuSE-YaST-Misc;
+Categories=GNOME;GTK;Settings;System;SystemSetup;X-SuSE-YaST;X-SuSE-YaST-High_Availability;
 
 X-KDE-ModuleType=Library
 X-KDE-RootOnly=false
@@ -9,7 +9,7 @@ X-KDE-Library=yast2
 X-KDE-SubstituteUID=false
 
 X-SuSE-YaST-Call=/usr/bin/crm_gui
-X-SuSE-YaST-Group=Misc
+X-SuSE-YaST-Group=High_Availability
 X-SuSE-YaST-Argument=
 X-SuSE-YaST-RootOnly=false
 X-SuSE-YaST-Geometry=
