@@ -654,6 +654,9 @@ on_event(const char* event)
 	}
 	id_list = g_hash_table_lookup(evt_map, args[0]);
 	if (id_list == NULL) {
+		if (STRNCMP_CONST(args[0],EVT_DISCONNECTED) == 0) {
+			goto do_exit;
+		}
 		mgmt_del_args(args);
 		return -1;
 	}
@@ -680,6 +683,8 @@ on_event(const char* event)
 	if (list_changed == 1) {
 		g_hash_table_replace(evt_map, strdup(args[0]), (gpointer)id_list);
 	}	
+
+do_exit:
 	if (STRNCMP_CONST(args[0],EVT_DISCONNECTED) == 0) {
 		mgmt_log(LOG_ERR,"Connection to the CIB terminated... exiting");
 		/*cib exits abnormally, mgmtd exits too and
