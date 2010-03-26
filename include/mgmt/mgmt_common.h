@@ -228,7 +228,7 @@ or
 description:
 	get or set specified attribute
 format:
-	MSG_CRM_ATTRIBUTE type <get|set|del> attribute <value|""> <node_name|"">
+	MSG_CRM_ATTRIBUTE type <get|set|del> attribute <value|""> <node_name|""> <set_id|""> <attr_id|"">
 return:
 	MSG_OK [value]
 or

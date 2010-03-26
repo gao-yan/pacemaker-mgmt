@@ -878,15 +878,19 @@ class ManageView :
 
 	def change_maintenance_mode(self, action) :
 		if action.get_active() :
-			manager.do_cmd("crm_attribute\ncrm_config\nset\nmaintenance-mode\ntrue\n")
+			value = "true"
 		else :
-			manager.do_cmd("crm_attribute\ncrm_config\ndel\nmaintenance-mode\n\n")
+			value = "false"
+
+		manager.set_crm_attribute("crm_config", "maintenance-mode", value)
 
 	def change_record_pending(self, action) :
 		if action.get_active() :
-			manager.do_cmd("crm_attribute\nop_defaults\nset\nrecord-pending\ntrue\n")
+			value = "true"
 		else :
-			manager.do_cmd("crm_attribute\nop_defaults\ndel\nrecord-pending\n\n")
+			value = "false"
+
+		manager.set_crm_attribute("op_defaults", "record-pending", value)
 
 	def on_after_show(self, treeview = None) :
 		for child in self.sub_vbox.get_children() :
@@ -1588,7 +1592,7 @@ class ManageView :
 		(cur_type, cur_name) = self.manage_tree.get_selected_node()
 		if confirmbox(_("Make") +" " +cur_name + " " +_("standby")+"?") == gtk.RESPONSE_YES:
 			#manager.do_cmd("standby\n"+cur_name + "\n" + "on")
-			manager.do_cmd("crm_attribute\nnodes\nset\nstandby\non\n%s"%cur_name)
+			manager.do_cmd("crm_attribute\nnodes\nset\nstandby\non\n%s\n\n"%cur_name)
 			if manager.failed_reason != "" :
 				msgbox(manager.failed_reason)
 
@@ -1596,7 +1600,7 @@ class ManageView :
 		(cur_type, cur_name) = self.manage_tree.get_selected_node()
 		if confirmbox(_("Make") +" " +cur_name + " " + _("active")+"?") == gtk.RESPONSE_YES :
 			#manager.do_cmd("standby\n"+cur_name + "\n" + "off")
-			manager.do_cmd("crm_attribute\nnodes\nset\nstandby\noff\n%s"%cur_name)
+			manager.do_cmd("crm_attribute\nnodes\nset\nstandby\noff\n%s\n\n"%cur_name)
 			if manager.failed_reason != "" :
 				msgbox(manager.failed_reason)
 
@@ -1617,7 +1621,7 @@ class ManageView :
 		self.on_after_show()
 
 	def update_tool_button(self) :
-		#value = manager.do_cmd("crm_attribute\ncrm_config\nget\nmaintenance-mode\n\n")
+		#value = manager.do_cmd("crm_attribute\ncrm_config\nget\nmaintenance-mode\n\n\n\n")
 		#if value != None and len(value) > 0 and value[0].count("true") :
 		value = manager.find_attribute("crm_config", "maintenance-mode")
 		action = self.toggle_tool_action_group.get_action("maintenance-mode")
@@ -1634,7 +1638,7 @@ class ManageView :
 		if pygtk_newer(2, 10) and pygobject_newer(2, 12, 3) :
 			action.connect("toggled", self.change_maintenance_mode)
 
-		#value = manager.do_cmd("crm_attribute\nop_defaults\nget\nrecord-pending\n\n")
+		#value = manager.do_cmd("crm_attribute\nop_defaults\nget\nrecord-pending\n\n\n\n")
 		#if value != None and len(value) > 0 and value[0].count("true") :
 		value = manager.find_attribute("op_defaults", "record-pending")
 		action = self.toggle_tool_action_group.get_action("record-pending")
@@ -5940,7 +5944,7 @@ class MainWindow :
 					+ _("It could affect the performance.") + "\n"
 					+ _("Turn it off ?")))
 			if retval ==  gtk.RESPONSE_YES :
-				manager.do_cmd("crm_attribute\nop_defaults\ndel\nrecord-pending\n\n")
+				manager.set_crm_attribute("op_defaults", "record-pending", "false")
 
 	def on_shadow_action(self, action) :
 		global top_window
@@ -7175,6 +7179,25 @@ class Manager :
 				if nv_xml_node.getAttribute("name") == attribute_name :
 					return nv_xml_node.getAttribute("value")
 		return None
+
+	def set_crm_attribute(self, type, name, value) :
+		for xml_node in self.xml_nodes["cib"].getElementsByTagName(type) :
+			for attr_node in xml_node.getElementsByTagName("nvpair") :
+				if attr_node.getAttribute("name") == name :
+					attr_id = str(attr_node.getAttribute("id"))
+					self.do_cmd("crm_attribute\n%s\nset\n%s\n%s\n\n\n%s"
+							%(type, name, value, attr_id))
+					return
+
+			for child_node in xml_node.childNodes :
+	                        if child_node.nodeType != xml.dom.Node.ELEMENT_NODE :
+	                                continue
+				set_id = str(child_node.getAttribute("id"))
+				self.do_cmd("crm_attribute\n%s\nset\n%s\n%s\n\n%s\n"
+						%(type, name, value, set_id))
+				return
+
+		self.do_cmd("crm_attribute\n%s\nset\n%s\n%s\n\n\n"%(type, name, value))
 
 	def node_name(self, node_id) :
 		for node_xml_node in manager.xml_nodes["cib"].getElementsByTagName("node") :

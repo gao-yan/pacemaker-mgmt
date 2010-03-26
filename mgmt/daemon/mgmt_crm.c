@@ -811,7 +811,7 @@ on_crm_attribute(char* argv[], int argc)
 	const char* nv_regex = "^[A-Za-z0-9_-]+$";
 	FILE *fstream = NULL;
 
-	ARGC_CHECK(6);
+	ARGC_CHECK(8);
 
 	snprintf(cmd, sizeof(cmd), "crm_attribute -t %s", argv[1]);
 
@@ -850,6 +850,30 @@ on_crm_attribute(char* argv[], int argc)
 		else{
 			strncat(cmd, " -N ", sizeof(cmd)-strlen(cmd)-1);
 			strncat(cmd, argv[5], sizeof(cmd)-strlen(cmd)-1);
+		}
+	}
+
+	if (STRNCMP_CONST(argv[6], "") != 0){
+		if (regex_match(nv_regex, argv[6])){
+			strncat(cmd, " -s \"", sizeof(cmd)-strlen(cmd)-1);
+			strncat(cmd, argv[6], sizeof(cmd)-strlen(cmd)-1);
+			strncat(cmd, "\"", sizeof(cmd)-strlen(cmd)-1);
+		}
+		else {
+			mgmt_log(LOG_ERR, "invalid attribute set ID specified: \"%s\"", argv[6]);
+			return strdup(MSG_FAIL"\nInvalid attribute set ID");
+		}
+	}
+
+	if (STRNCMP_CONST(argv[7], "") != 0){
+		if (regex_match(nv_regex, argv[7])){
+			strncat(cmd, " -i \"", sizeof(cmd)-strlen(cmd)-1);
+			strncat(cmd, argv[7], sizeof(cmd)-strlen(cmd)-1);
+			strncat(cmd, "\"", sizeof(cmd)-strlen(cmd)-1);
+		}
+		else {
+			mgmt_log(LOG_ERR, "invalid attribute ID specified: \"%s\"", argv[7]);
+			return strdup(MSG_FAIL"\nInvalid attribute ID");
 		}
 	}
 
