@@ -1886,21 +1886,27 @@ bz2_installed="yes"
 AC_CHECK_HEADERS(bzlib.h, , [bz2_installed="no"],)
 AC_CHECK_LIB(bz2, BZ2_bzBuffToBuffCompress , , [bz2_intalled="no"])
 
-dnl
-dnl Lex and yacc can't be trusted to produce code that won't produce
-dnl warnings
-dnl
-NON_FATAL_CFLAGS="$CFLAGS $NON_FATAL_CC_WARNINGS"
-AC_SUBST(NON_FATAL_CFLAGS)
+dnl ************************************************************************
 
-dnl
-dnl We reset CFLAGS to include our warnings *after* all function
-dnl checking goes on, so that our warning flags don't keep the
-dnl AC_*FUNCS() calls above from working.  In particular, -Werror will
-dnl *always* cause us troubles if we set it before here.
-dnl
-dnl
-CFLAGS="$CFLAGS $CC_WARNINGS"
+AC_CHECK_HEADERS(gnutls/gnutls.h)
+AC_CHECK_HEADERS(security/pam_appl.h pam/pam_appl.h)
+
+dnl GNUTLS library: Attempt to determine by 'libgnutls-config' program.
+dnl If no 'libgnutls-config', try traditional autoconf means.
+AC_PATH_PROGS(LIBGNUTLS_CONFIG, libgnutls-config)
+
+if test -n "$LIBGNUTLS_CONFIG"; then
+	AC_MSG_CHECKING(for gnutls header flags)
+	GNUTLSHEAD="`$LIBGNUTLS_CONFIG --cflags`";
+	AC_MSG_RESULT($GNUTLSHEAD)
+	AC_MSG_CHECKING(for gnutls library flags)
+	GNUTLSLIBS="`$LIBGNUTLS_CONFIG --libs`";
+	AC_MSG_RESULT($GNUTLSLIBS)
+else
+	AC_CHECK_LIB(gnutls, gnutls_init)
+fi
+AC_SUBST(GNUTLSHEAD)
+AC_SUBST(GNUTLSLIBS)
 
 dnl NOTE:
 dnl This check should only be done after CFLAGS is set. Otherwise
@@ -1916,6 +1922,22 @@ dnl     sigignore: Only on Solaris.
 dnl             it is a solaris replacement for signal(s,SIG_IGN).
 dnl
 AC_CHECK_FUNCS(sigignore)
+
+dnl
+dnl Lex and yacc can't be trusted to produce code that won't produce
+dnl warnings
+dnl
+NON_FATAL_CFLAGS="$CFLAGS $NON_FATAL_CC_WARNINGS"
+AC_SUBST(NON_FATAL_CFLAGS)
+
+dnl
+dnl We reset CFLAGS to include our warnings *after* all function
+dnl checking goes on, so that our warning flags don't keep the
+dnl AC_*FUNCS() calls above from working.  In particular, -Werror will
+dnl *always* cause us troubles if we set it before here.
+dnl
+dnl
+CFLAGS="$CFLAGS $CC_WARNINGS"
 
 dnl
 dnl Make sure that CFLAGS is not exported. If the user did
@@ -1955,28 +1977,6 @@ AC_SUBST(LIBADD_INTL)	dnl extra flags for GNU gettext stuff...
 AC_SUBST(LOCALE)
 
 CRM_ENABLED=1
-
-dnl ************************************************************************
-
-AC_CHECK_HEADERS(gnutls/gnutls.h)
-AC_CHECK_HEADERS(security/pam_appl.h pam/pam_appl.h)
-
-dnl GNUTLS library: Attempt to determine by 'libgnutls-config' program.
-dnl If no 'libgnutls-config', try traditional autoconf means.
-AC_PATH_PROGS(LIBGNUTLS_CONFIG, libgnutls-config)
-
-if test -n "$LIBGNUTLS_CONFIG"; then
-	AC_MSG_CHECKING(for gnutls header flags)
-	GNUTLSHEAD="`$LIBGNUTLS_CONFIG --cflags`";
-	AC_MSG_RESULT($GNUTLSHEAD)
-	AC_MSG_CHECKING(for gnutls library flags)
-	GNUTLSLIBS="`$LIBGNUTLS_CONFIG --libs`";
-	AC_MSG_RESULT($GNUTLSLIBS)
-else
-	AC_CHECK_LIB(gnutls, gnutls_init)
-fi
-AC_SUBST(GNUTLSHEAD)
-AC_SUBST(GNUTLSLIBS)
 
 if test "X$OCF_ROOT_DIR" = X; then
   FatalMissingThing "OCF directory" "Could not locate OCF directory"
