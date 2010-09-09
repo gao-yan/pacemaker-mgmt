@@ -4916,7 +4916,8 @@ class TransitionInfoDlg :
 		label = gtk.Label(_("Verbosity") + _(":"))
 		hbox.pack_start(label, False, padding=2)
 
-		adj = gtk.Adjustment(3, 0, 99, 1, 5)
+		default_verbosity = 4
+		adj = gtk.Adjustment(default_verbosity, 0, 99, 1, 5)
 		self.detail_spin_btn = gtk.SpinButton(adj, 0, 0)
 		self.detail_spin_btn.set_width_chars(2)
 		self.detail_spin_btn.set_wrap(True)
@@ -5851,9 +5852,13 @@ class MainWindow :
 			if show_msgbox :
 				msgbox(manager.failed_reason)
 			return None
-		elif ret_list == None or len(ret_list) < 1 :
+		elif len(ret_list) < 1 :
 			if show_msgbox :
-				msgbox(failed_msg)
+				msgbox(failed_msg + _(": ") + _("Empty information returned"))
+			return None
+		elif ret_list == None :
+			if show_msgbox :
+				msgbox(failed_msg + _(": ") + _("Nothing returned"))
 			return None
 
 		return ret_list
