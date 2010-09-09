@@ -9613,7 +9613,17 @@ class MetaNV(ObjectAttrs) :
 						options = []
 						default_value = param["content"]["default"]
 						if param_type == "boolean" :
-							options = ["true", "false"]
+							boolean_values = [["true", "false"], ["yes", "no"], ["1", "0"]]
+							if default_value :
+								options = None
+								for value_pair in boolean_values :
+									if default_value in value_pair :
+										options = value_pair
+										break
+								if options == None :
+									options = [default_value]
+							else :
+								options = boolean_values[0]
 						elif param_type == "enum" and param["content"].has_key("values"):
 							options =  param["content"]["values"]
 						elif default_value != None :
