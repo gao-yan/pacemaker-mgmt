@@ -1229,9 +1229,9 @@ class ManageView :
 	def on_rsc_action(self, action) :
 		(cur_type, cur_name) = self.manage_tree.get_selected_node()
 		if action.get_name() == "startrsc" :
-			target_role = "started"
+			target_role = "Started"
 		elif action.get_name() == "stoprsc" :
-			target_role = "stopped"
+			target_role = "Stopped"
 		else :
 			target_role = "#default"
 
@@ -1240,32 +1240,84 @@ class ManageView :
 		else :
 			metaattr_name = "target-role"
 
-		for subrsc in manager.get_all_real_subrsc(cur_name) :
-			value = manager.do_cmd("get_rsc_attr\n%s\nmeta\n%s"%(subrsc, metaattr_name))
-			if value == None or len(value) == 0 :
+		real_rsc_id = cur_name.partition(":")[0]
+		
+		rsc_xml = None
+		for resources_node in manager.xml_nodes["cib"].cloneNode(True).getElementsByTagName("resources") :
+			for rsc_node in resources_node.getElementsByTagName(cur_type) :
+				if rsc_node.getAttribute("id") == real_rsc_id :
+					rsc_xml = rsc_node
+					break
+
+		if rsc_xml == None : 
+			msgbox(_("Cannot find the %s: %s")%(cur_type, real_rsc_id))
+			return
+
+		supported_rsc_types = manager.get_supported_rsc_types()
+
+		found_nv = False
+		clear_all = False
+		for nv_xml_node in rsc_xml.getElementsByTagName("nvpair") :
+			if nv_xml_node.getAttribute("name") != metaattr_name :
 				continue
-			retval = confirmbox(_("Caused by your previous action, this attribute has been set to \"")
-						+value[0]
+
+			target_rsc = nv_xml_node
+			while target_rsc.tagName not in supported_rsc_types :
+				target_rsc = target_rsc.parentNode
+
+			target_rsc_id = target_rsc.getAttribute("id")
+			current_value = nv_xml_node.getAttribute("value")
+			
+			if target_rsc_id == real_rsc_id :
+				found_nv = True
+				if target_role == "#default" :
+					nv_xml_node.parentNode.removeChild(nv_xml_node)
+				else :
+					nv_xml_node.setAttribute("value", target_role)
+			else :
+				if not clear_all :
+					retval = confirmbox(_("Caused by your previous action, this attribute has been set to \"")
+						+current_value
 						+_("\".")+"\n\n"
 						+_("Recommended") + _(":")+"\n"
-						+_("Select \"Clear\" to remove the set.")+"\n"
-						+_("The sub-resource will inherit this attribute from its parent."),
+						+_("Select \"Clear All\" to remove the attributes for all of the sub-resources.")+"\n"
+						+_("All of the sub-resources will inherit the attributes from their parent."),
 						(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
-						gtk.STOCK_YES, gtk.RESPONSE_YES,
-						gtk.STOCK_CLEAR, gtk.RESPONSE_NO),
-						_("Retain the \"%s\" set for sub-resource \"")%metaattr_name
-						+subrsc+_("\"?"))
-			if retval in [gtk.RESPONSE_CANCEL, gtk.RESPONSE_DELETE_EVENT] :
-				return	
-			if retval == gtk.RESPONSE_NO:
-				manager.do_cmd("del_rsc_attr\n%s\nmeta\n%s"%(subrsc, metaattr_name))
+						gtk.STOCK_NO, gtk.RESPONSE_NO,
+						gtk.STOCK_CLEAR, gtk.RESPONSE_OK,
+						"Clear All", gtk.RESPONSE_YES),
+						_("Clear the %s=\"%s\" attribute for sub-resource \"")%(metaattr_name, current_value)
+						+target_rsc_id+_("\"?"))
+					if retval in [gtk.RESPONSE_CANCEL, gtk.RESPONSE_DELETE_EVENT] :
+						return	
 
-		if target_role == "#default" :
-			manager.do_cmd("del_rsc_attr\n%s\nmeta\n%s"%(manager.obj_real_id(cur_name), metaattr_name))
-		else :
-			manager.do_cmd("set_rsc_attr\n%s\nmeta\n%s\n%s"%(manager.obj_real_id(cur_name), metaattr_name, target_role))
-			if manager.failed_reason != "" :
-				msgbox(manager.failed_reason)
+					if retval in [gtk.RESPONSE_OK, gtk.RESPONSE_YES] :
+						nv_xml_node.parentNode.removeChild(nv_xml_node)
+
+					if retval == gtk.RESPONSE_YES :
+						clear_all = True
+				else :
+					nv_xml_node.parentNode.removeChild(nv_xml_node)
+
+		if not found_nv and target_role != "#default" :
+			(parent_xml_node, add_obj_type, new_mid_elem) = manager.real_add_obj_type(rsc_xml, "meta_attributes", True)
+			if parent_xml_node == None :
+				msg_box(_("Cannot %s %s: XML processing error")%(target_role, real_rsc_id))
+				return
+
+			impl = getDOMImplementation()
+			newdoc = impl.createDocument(None, "nvpair", None)
+			nv = newdoc.documentElement
+			parent_xml_node.appendChild(nv)
+			attr_id = manager.auto_unique_id(nv, metaattr_name)
+			nv.setAttribute("id", attr_id)
+			nv.setAttribute("name", metaattr_name)
+			nv.setAttribute("value", target_role)
+
+		xml_str = rsc_xml.toxml().replace("\n", "")
+		manager.cib_do_cmd("cib_replace\n%s\n%s"%(str(rsc_xml.tagName), str(xml_str)))
+		if manager.failed_reason != "" :
+			msgbox(manager.failed_reason)
 
 	def on_rsc_cleanup(self, action) :
 		(cur_type, cur_name) = self.manage_tree.get_selected_node()
