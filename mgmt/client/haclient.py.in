@@ -68,7 +68,7 @@ name_cap = lambda name: name.replace("-"," ").replace("_"," ").title().replace("
 				replace("Cib", "CIB").replace("Ccm", "CCM").replace("Ha", "HA").\
 				replace("Id", "ID").replace("Dtd", "DTD").replace("Uuid", "UUID").\
 				replace("HAve", "Have").replace("Op ", "Operation ").replace("Rsc", "Resource").\
-				replace("Lrm", "LRM")
+				replace("Lrm", "LRM").replace("Acl", "ACL")
 
 window = None
 manager = None
@@ -432,21 +432,26 @@ class ElementList:
 	id_index = None
 	idref_index = None
 
-	def __init__(self, obj_type, elem_node_list) :
-		self.obj_type = obj_type
+	def __init__(self, obj_types, elem_node_list) :
 		treeiter = {}
 		attr_is_any_name = False
 		elem_is_any_name = False
 		id_is_idref = False
-		if validate_type == "dtd" :
+
+		attr_list = []
+		sub_obj_list = []
+		for obj_type in obj_types :
+		    if validate_type == "dtd" :
 			self.dtd_elem = manager.get_dtd_elem(obj_type)
-			attr_list = self.dtd_elem.get_attr_list()
-			sub_obj_list = self.dtd_elem.get_content_model()[1]
-		else :
+			for attr in self.dtd_elem.get_attr_list() :
+				if attr_list.count(attr) == 0 :
+					attr_list.append(attr)
+			for sub_obj in self.dtd_elem.get_content_model()[1] :
+				if sub_obj_list.count(sub_obj) == 0 :
+					sub_obj_list.append(sub_obj)
+		    else :
 			sorted_rng_nodes = manager.sorted_sub_rng_nodes_by_name(obj_type)
 
-			attr_list = []
-			sub_obj_list = []
 			if sorted_rng_nodes != None :
 				attr_rng_nodes = sorted_rng_nodes.get("attribute", [])
 				elem_rng_nodes = sorted_rng_nodes.get("element", [])
@@ -489,7 +494,13 @@ class ElementList:
 
 		self.store = gtk.ListStore(*(tuple(str for i in range(len(attr_list)+1))))
 		tree = gtk.TreeView(self.store)
-		add_column(tree, _("Type"), 0, self.render_icon, visible=False)
+
+		if len(obj_types) > 1 :
+			visible = True
+		else :
+			visible = False
+		add_column(tree, _("Type"), 0, self.render_icon, visible=visible)
+
 		for i in range(len(attr_list)) :
 			if i == 0 :
 				icon_func = self.render_icon
@@ -547,7 +558,12 @@ class ElementList:
 				"lrm": gtk.STOCK_FIND,
 				"lrm_resources": gtk.STOCK_DND_MULTIPLE,
 				"lrm_resource": gtk.STOCK_DND,
-				"lrm_rsc_op": gtk.STOCK_DIALOG_AUTHENTICATION
+				"lrm_rsc_op": gtk.STOCK_DIALOG_AUTHENTICATION,
+				"acl_user": gtk.STOCK_ORIENTATION_LANDSCAPE,
+				"acl_role": gtk.STOCK_ORIENTATION_LANDSCAPE,
+				"read": gtk.STOCK_FIND,
+				"write": gtk.STOCK_FIND_AND_REPLACE,
+				"deny": gtk.STOCK_DIALOG_ERROR,
 			
 			}
 		pb = self.tree.render_icon(icons.get(model.get_value(iter, 0), gtk.STOCK_MEDIA_STOP),
@@ -561,7 +577,7 @@ class ElementList:
 		self.nodes = {}
 		model = self.tree.get_model()
 		for elem_node in elem_node_list :
-			values = [self.obj_type]
+			values = [elem_node.tagName]
 			values.extend([elem_node.getAttribute(attr_name) for attr_name in self.attr_list])
 			iter = self.store.append(values)
 			#elem_type = elem_node.tagName
@@ -637,8 +653,7 @@ class ElementList:
 		return (type, id)
 
 class ElementTree(ElementList):
-	def __init__(self, obj_type, elem_node_list) :
-		self.obj_type = obj_type
+	def __init__(self, obj_types, elem_node_list) :
 		self.store = gtk.TreeStore(*(tuple(str for i in range(2))))
 		tree = gtk.TreeView(self.store)
 		add_column(tree, _("Type"), 0, self.render_icon)
@@ -2044,6 +2059,7 @@ class MainTree(ElementList) :
 				"nodes": "nodes",
 				"resources": gtk.STOCK_DIRECTORY,
 				"constraints": gtk.STOCK_PROPERTIES,
+				"acls": gtk.STOCK_DIALOG_AUTHENTICATION,
 				"management" : gtk.STOCK_EXECUTE
 			}
  		icons = {-2:gtk.STOCK_DIALOG_INFO,
@@ -2996,8 +3012,13 @@ class ObjectView :
 			self.obj_attrs = obj_attrs
 			
 		if has_elem :
+			if obj_type in ["acl_user", "acl_role"] :
+				single_page = True
+			else :
+				single_page = False
+
 			self.elem_notebook = ElementNotebook(self.xml_node, self.is_topview, self.elem_change_call_back,
-						self.show_mode, self.is_fake_xml_node, self.missing_opt_obj_parent_type)
+						self.show_mode, self.is_fake_xml_node, self.missing_opt_obj_parent_type, single_page)
 			if self.elem_notebook.update(self.xml_node) :
 				obj_box.pack_start(self.elem_notebook.widget, True, padding = 5)
 				self.vbox.pack_start(self.elem_notebook.bbox, False, padding = 2)
@@ -3317,12 +3338,13 @@ class ElementNotebook :
 	notebook = None
 	new_page_type = None
 	def __init__(self, xml_node, is_topview = False, change_call_back = None, show_mode = 0,
-				is_fake_xml_node = False, missing_opt_obj_parent_type = None) :
+				is_fake_xml_node = False, missing_opt_obj_parent_type = None, single_page = False) :
 		self.is_topview = is_topview
 		self.change_call_back = change_call_back
 		self.show_mode = show_mode
 		self.is_fake_xml_node = is_fake_xml_node
 		self.missing_opt_obj_parent_type = missing_opt_obj_parent_type
+		self.single_page = single_page
 		vbox = gtk.VBox()
 		self.widget = vbox
 
@@ -3366,7 +3388,27 @@ class ElementNotebook :
 
 		if validate_type == "dtd" :
 			self.dtd_elem = manager.get_dtd_elem(self.obj_type)
-			for (name, mod) in self.dtd_elem.get_content_model()[1] :
+			names = [name for (name, mod) in self.dtd_elem.get_content_model()[1]]
+			if self.single_page :
+				elem_node_list = []
+				for elem_node in self.xml_node.childNodes :
+					if elem_node.nodeType != xml.dom.Node.ELEMENT_NODE :
+						continue
+					elem_node_list.append(elem_node)
+
+				self.pages.append(None)
+
+				if self.show_mode == 0 :
+					elem_list = ElementList(names, elem_node_list)
+				else :
+					elem_list = ElementTree(names, elem_node_list)
+				self.notebook.append_page(elem_list.widget)
+				self.notebook.set_show_tabs(False)
+				self.elem_lists.append(elem_list)
+				elem_list.tree.connect("cursor-changed", self.on_cursor_changed)
+				elem_list.tree.connect("event-after", self.on_click)
+			else :
+			    for name in names :
 				elem_node_list = []
 				for elem_node in self.xml_node.getElementsByTagName(name) :
 					if elem_node in self.xml_node.childNodes :
@@ -3441,9 +3483,9 @@ class ElementNotebook :
 							elem_node_list = sub_sub_elem_node_list
 
 					if self.show_mode == 0 :
-						elem_list = ElementList(name, elem_node_list)
+						elem_list = ElementList([name], elem_node_list)
 					else :
-						elem_list = ElementTree(name, elem_node_list)
+						elem_list = ElementTree([name], elem_node_list)
 					self.notebook.append_page(elem_list.widget, tab_label)
 					self.elem_lists.append(elem_list)
 					elem_list.tree.connect("cursor-changed", self.on_cursor_changed)
@@ -3491,8 +3533,33 @@ class ElementNotebook :
 				for name in elem_node_dict.keys() :
 					if elem_type_list.count(name) == 0 :
 						other_elem_types.append(name)
-				
-			for rng_node in self.elem_rng_nodes :
+
+			if self.single_page :
+				names = []
+			    	for rng_node in self.elem_rng_nodes :
+					name = rng_node[0][1].getAttribute("name")
+					if names.count(name) == 0 :
+						names.append(name)
+
+				elem_node_list = []
+				for elem_node in self.xml_node.childNodes :
+					if elem_node.nodeType != xml.dom.Node.ELEMENT_NODE :
+						continue
+					elem_node_list.append(elem_node)
+
+				self.pages.append(None)
+
+				if self.show_mode == 0 :
+					elem_list = ElementList(names, elem_node_list)
+				else :
+					elem_list = ElementTree(names, elem_node_list)
+				self.notebook.append_page(elem_list.widget)
+				self.notebook.set_show_tabs(False)
+				self.elem_lists.append(elem_list)
+				elem_list.tree.connect("cursor-changed", self.on_cursor_changed)
+				elem_list.tree.connect("event-after", self.on_click)
+			else :
+			    for rng_node in self.elem_rng_nodes :
 				name = rng_node[0][1].getAttribute("name")
 				elem_node_list = elem_node_dict.get(name, [])
 				if len(elem_node_list) == 0 :
@@ -3554,9 +3621,9 @@ class ElementNotebook :
 							elem_node_list = sub_elem_node_list
 							break
 				if self.show_mode == 0 :
-					elem_list = ElementList(name, elem_node_list)
+					elem_list = ElementList([name], elem_node_list)
 				else :
-					elem_list = ElementTree(name, elem_node_list)
+					elem_list = ElementTree([name], elem_node_list)
 				self.notebook.append_page(elem_list.widget, tab_label)
 				self.elem_lists.append(elem_list)
 				elem_list.tree.connect("cursor-changed", self.on_cursor_changed)
@@ -3586,9 +3653,9 @@ class ElementNotebook :
 					elem_node_list = sub_elem_node_list
 
 				if self.show_mode == 0 :
-					elem_list = ElementList(name, elem_node_list)
+					elem_list = ElementList([name], elem_node_list)
 				else :
-					elem_list = ElementTree(name, elem_node_list)
+					elem_list = ElementTree([name], elem_node_list)
 				self.notebook.append_page(elem_list.widget, tab_label)
 				self.elem_lists.append(elem_list)
 				elem_list.tree.connect("cursor-changed", self.on_cursor_changed)
@@ -5866,11 +5933,11 @@ class MainWindow :
 			self.cur_view = CRMConfigView()
 			if not self.cur_view.update() :
 				return
-		elif type in ["crm_config", "nodes", "resources", "constraints", "status", "rsc_defaults", "op_defaults"] \
+		elif type in ["crm_config", "nodes", "resources", "constraints", "status", "rsc_defaults", "op_defaults", "acls"] \
 				and manager.xml_nodes["cib"].getElementsByTagName(type) != [] :
 			self.cur_view = ObjectView(manager.xml_nodes["cib"].getElementsByTagName(type)[0],
 					is_topview = True, show_mode = last_show_mode)
-		elif type in ["rsc_defaults", "op_defaults"] \
+		elif type in ["rsc_defaults", "op_defaults", "acls"] \
 				and manager.xml_nodes["cib"].getElementsByTagName(type) == [] :
 			self.cur_view = ObjectView(type, is_topview = True, missing_opt_obj_parent_type = "configuration",
 					show_mode = last_show_mode)
@@ -7596,7 +7663,7 @@ class Manager :
 	def exist_ids(self, xml_node = None) :
 		all_ids = manager.get_obj_ids(manager.xml_nodes["cib"])
 
-		top_types = ["crm_config","rsc_defaults", "op_defaults", "nodes", "resources", "constraints", "status"]
+		top_types = ["crm_config","rsc_defaults", "op_defaults", "nodes", "resources", "constraints", "acls", "status"]
 
 		if xml_node == None :
 			return all_ids
@@ -8335,7 +8402,9 @@ class ObjectAttrs(WidgetGroup) :
 			if self.is_newobj :
 				if self.widgets.has_key("combo_entries") and self.widgets["combo_entries"].has_key("id") :
 					if len(self.widgets["combo_entries"]["id"].child.get_text()) == 0 :
-						self.widgets["combo_entries"]["id"].child.set_text(self.obj_type + "-" + gen_uuid())
+						#self.widgets["combo_entries"]["id"].child.set_text(self.obj_type + "-" + gen_uuid())
+						obj_id = manager.auto_unique_id(self.xml_node, self.obj_type)
+						self.widgets["combo_entries"]["id"].child.set_text(obj_id)
 		#			self.widgets["name_labels"]["id"].hide_all()
 		#			self.widgets["combo_entries"]["id"].hide_all()
 		#	else :
@@ -8346,7 +8415,7 @@ class ObjectAttrs(WidgetGroup) :
 		else :
 			if self.is_newobj and not self.id_is_idref and self.obj_type not in \
 					["node", "primitive", "group", "clone", "master","master_slave", \
-					"rsc_location", "rsc_colocation", "rsc_order"] :
+					"rsc_location", "rsc_colocation", "rsc_order", "acl_user", "acl_role"] :
 				if self.widgets.has_key("combo_entries") and self.widgets["combo_entries"].has_key("id") \
 						and len(self.widgets["combo_entries"]["id"].child.get_text()) == 0 :
 					obj_id = manager.auto_unique_id(self.xml_node, self.obj_type)
@@ -8889,7 +8958,17 @@ class ObjectAttrs(WidgetGroup) :
 			for key in ["node"] :
 				if widgets["combo_entries"].has_key(key) :
 					self.combobox_store_append(widgets["combo_entries"][key], node_store)
-					
+
+			if widgets["combo_entries"].has_key("role-ref") :
+				acl_roles = []
+				for acls in manager.xml_nodes["cib"].getElementsByTagName("acls") :
+					for acl_role in acls.getElementsByTagName("acl_role") :
+						acl_role_id = acl_role.getAttribute("id")
+						if acl_role_id != "" and acl_roles.count(acl_role_id) == 0 :
+							acl_roles.append(acl_role_id)
+				acl_role_store = [[acl_role, ""] for acl_role in acl_roles]
+				self.combobox_store_append(widgets["combo_entries"]["role-ref"], acl_role_store)
+
 		role_attr_type = None
 		if validate_type == "dtd" :
 			try :
