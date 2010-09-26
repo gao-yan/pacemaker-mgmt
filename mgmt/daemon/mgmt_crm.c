@@ -58,10 +58,16 @@ extern resource_t *group_find_child(resource_t *rsc, const char *id);
 extern crm_data_t * do_calculations(
 	pe_working_set_t *data_set, crm_data_t *xml_input, ha_time_t *now);
 
+extern int *client_id;
+
 cib_t*	cib_conn = NULL;
 int in_shutdown = FALSE;
 int init_crm(int cache_cib);
 void final_crm(void);
+int set_crm(void);
+
+static GHashTable* cib_conns = NULL;
+static GHashTable* cib_envs = NULL;
 
 static void on_cib_diff(const char *event, crm_data_t *msg);
 
@@ -136,6 +142,12 @@ int pclose2(FILE *fp_in, FILE *fp_out, pid_t pid);
 
 pe_working_set_t* cib_cached = NULL;
 int cib_cache_enable = FALSE;
+
+#define CIB_CHECK() \
+	if (cib_conn == NULL) { \
+		mgmt_log(LOG_ERR, "No cib connection: client_id=%d", *client_id); \
+		return strdup(MSG_FAIL"\nNo cib connection"); \
+	}
 
 #define GET_CIB_NAME(cib_name) \
 	if (getenv("CIB_shadow") == NULL) { \
@@ -349,7 +361,7 @@ init_crm(int cache_cib)
 
 	GET_CIB_NAME(cib_name)
 
-	mgmt_log(LOG_INFO,"init_crm: %s", cib_name);
+	mgmt_log(LOG_INFO,"init_crm: client_id=%d cib_name=%s", *client_id, cib_name);
 	crm_log_level = LOG_ERR;
 	cib_conn = cib_new();
 	in_shutdown = FALSE;
@@ -357,18 +369,18 @@ init_crm(int cache_cib)
 	cib_cache_enable = cache_cib?TRUE:FALSE;
 	cib_cached = NULL;
 	
-	for (i = 0; i < max_try ; i++) {
+	for (i = 1; i <= max_try ; i++) {
 		ret = cib_conn->cmds->signon(cib_conn, client_name, cib_command);
 		if (ret == cib_ok) {
 			break;
 		}
-		mgmt_log(LOG_INFO,"login to cib %s: %d, ret:%d",cib_name,i,ret);
+		mgmt_log(LOG_INFO,"login to cib '%s': %d, ret=%d (%s)", cib_name, i, ret, cib_error2string(ret));
 		sleep(1);
 	}
 	if (ret != cib_ok) {
-		mgmt_log(LOG_INFO,"login to cib failed: %s", cib_name);
+		mgmt_log(LOG_INFO,"login to cib '%s' failed: %s", cib_name, cib_error2string(ret));
 		cib_conn = NULL;
-		return -1;
+		return ret;
 	}
 
 	ret = cib_conn->cmds->add_notify_callback(cib_conn, T_CIB_DIFF_NOTIFY
@@ -424,6 +436,17 @@ init_crm(int cache_cib)
 	reg_msg(MSG_CIB_UPDATE, on_cib_update);
 	reg_msg(MSG_CIB_REPLACE, on_cib_replace);
 	reg_msg(MSG_CIB_DELETE, on_cib_delete);
+
+	if (cib_conns == NULL) {
+		cib_conns = g_hash_table_new(g_int_hash, g_int_equal);
+	}
+	g_hash_table_insert(cib_conns, client_id, cib_conn);
+
+	if (cib_envs == NULL) {
+		cib_envs = g_hash_table_new_full(g_direct_hash, g_direct_equal, NULL, g_hash_destroy_str);
+	}
+	g_hash_table_insert(cib_envs, cib_conn, getenv("CIB_shadow")?strdup(getenv("CIB_shadow")):NULL);
+
 	return 0;
 }	
 void
@@ -433,15 +456,50 @@ final_crm(void)
 	
 	GET_CIB_NAME(cib_name)
 
-	mgmt_log(LOG_INFO,"final_crm: %s", cib_name);
+	mgmt_log(LOG_INFO,"final_crm: client_id=%d cib_name=%s", *client_id, cib_name);
 	if(cib_conn != NULL) {
 		in_shutdown = TRUE;
 		cib_conn->cmds->signoff(cib_conn);
 		cib_delete(cib_conn);
+
+		g_hash_table_remove(cib_conns, client_id);
+		g_hash_table_remove(cib_envs, cib_conn);
 		cib_conn = NULL;
+
+		if (g_hash_table_size(cib_conns) == 0) {
+			g_hash_table_destroy(cib_conns);
+			cib_conns = NULL;
+		}
+
+		if (g_hash_table_size(cib_envs) == 0) {
+			g_hash_table_destroy(cib_envs);
+			cib_envs = NULL;
+		}
 	}
 
 	free_cib_cached();
+}
+
+int
+set_crm(void)
+{
+	free_cib_cached();
+
+	cib_conn = g_hash_table_lookup(cib_conns, client_id);
+	if (cib_conn != NULL) {
+		const char *env = g_hash_table_lookup(cib_envs, cib_conn);
+		if (env == NULL) {
+			unsetenv("CIB_shadow");
+		} else {
+			setenv("CIB_shadow", env, 1);
+		}
+		mgmt_log(LOG_DEBUG, "set_crm: client_id=%d cib_conn=%p cib_name=%s", *client_id, cib_conn, env);
+
+		return 0;
+	}
+
+	mgmt_log(LOG_WARNING, "No cib connection recorded for set_crm: client_id=%d", *client_id);
+	return -1;
 }
 
 /* event handler */
@@ -494,6 +552,7 @@ on_init_cib(char* argv[], int argc)
 	char buf[MAX_STRLEN];
 	char* ret = NULL;
 	char cib_name[MAX_STRLEN];
+	int rc = cib_ok;
 
 	ARGC_CHECK(2);
 
@@ -505,9 +564,9 @@ on_init_cib(char* argv[], int argc)
 		snprintf(cib_name, sizeof(cib_name), "shadow.%s", argv[1]);
 	}
 
-	if (init_crm(TRUE) != 0 ) {
+	if ((rc = init_crm(TRUE)) != cib_ok) {
 		ret = strdup(MSG_FAIL);
-		snprintf(buf, sizeof(buf), "Cannot initiate CIB: %s", cib_name);
+		snprintf(buf, sizeof(buf), "Cannot initiate CIB '%s': %s", cib_name, cib_error2string(rc));
 		ret = mgmt_msg_append(ret, buf);
 	} else {
 		ret = strdup(MSG_OK);
@@ -523,6 +582,7 @@ on_switch_cib(char* argv[], int argc)
 	char buf[MAX_STRLEN];
 	char* ret = NULL;
 	const char* saved_env = getenv("CIB_shadow");
+	int rc = cib_ok;
 
 	ARGC_CHECK(2)
 
@@ -536,25 +596,38 @@ on_switch_cib(char* argv[], int argc)
 		snprintf(cib_name, sizeof(cib_name), "shadow.%s", argv[1]);
 	}
 
-	mgmt_log(LOG_INFO, "Switch to the specified CIB: %s", cib_name);
+	mgmt_log(LOG_INFO, "Switch to the CIB '%s'", cib_name);
 
-	if (init_crm(TRUE) != 0 ) {
-		mgmt_log(LOG_ERR, "Cannot switch to the specified CIB: %s", cib_name);
+	if ((rc = init_crm(TRUE)) != cib_ok) {
+		mgmt_log(LOG_ERR, "Cannot switch to the CIB '%s': %s", cib_name, cib_error2string(rc));
 		ret = strdup(MSG_FAIL);
-		snprintf(buf, sizeof(buf), "Cannot switch to the specified CIB: %s", cib_name);
+		snprintf(buf, sizeof(buf), "Cannot switch to the CIB '%s': %s", cib_name, cib_error2string(rc));
 		ret = mgmt_msg_append(ret, buf);
 
 		if (saved_env == NULL) {
 			unsetenv("CIB_shadow");
+			strncpy(cib_name, "live", sizeof(cib_name)-1);
 		} else {
 			setenv("CIB_shadow", saved_env, 1);
+			snprintf(cib_name, sizeof(cib_name), "shadow.%s", saved_env);
 		}
-		if (init_crm(TRUE) != 0) {
-			mgmt_log(LOG_ERR, "Cannot switch back to the previous CIB: %s", cib_name);
+		if ((rc = init_crm(TRUE)) != cib_ok) {
+			mgmt_log(LOG_ERR, "Cannot switch back to the previous CIB '%s': %s", cib_name, cib_error2string(rc));
 			memset(buf, 0, sizeof(buf));
-			snprintf(buf, sizeof(buf), "Cannot switch back to the previous CIB: %s", cib_name);
+			snprintf(buf, sizeof(buf), "Cannot switch back to the previous CIB '%s': %s", cib_name, cib_error2string(rc));
 			ret = mgmt_msg_append(ret, buf);
-			
+
+			if (saved_env) {
+				unsetenv("CIB_shadow");
+				strncpy(cib_name, "live", sizeof(cib_name)-1);
+
+				if ((rc = init_crm(TRUE)) != cib_ok) {
+					mgmt_log(LOG_ERR, "Cannot recover to the CIB '%s': %s", cib_name, cib_error2string(rc));
+					memset(buf, 0, sizeof(buf));
+					snprintf(buf, sizeof(buf), "Cannot recover to the CIB '%s': %s", cib_name, cib_error2string(rc));
+					ret = mgmt_msg_append(ret, buf);
+				}
+			}
 		}
 	} else {
 		ret = strdup(MSG_OK);
@@ -1835,6 +1908,7 @@ on_cib_query(char* argv[], int argc)
 	const char* type = NULL;
 	char* ret = NULL;
 	char* buffer = NULL;
+	CIB_CHECK()
 	ARGC_CHECK(2)
 
 	type = argv[1];

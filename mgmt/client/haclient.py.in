@@ -898,6 +898,8 @@ class ManageView :
 			value = "false"
 
 		manager.set_crm_attribute("crm_config", "maintenance-mode", value)
+		if manager.failed_reason != "" :
+			msgbox(manager.failed_reason)
 
 	def change_record_pending(self, action) :
 		if action.get_active() :
@@ -906,6 +908,8 @@ class ManageView :
 			value = "false"
 
 		manager.set_crm_attribute("op_defaults", "record-pending", value)
+		if manager.failed_reason != "" :
+			msgbox(manager.failed_reason)
 
 	def on_after_show(self, treeview = None) :
 		for child in self.sub_vbox.get_children() :
@@ -5886,7 +5890,7 @@ class MainWindow :
 
 		window.statusbar.pop(1)
 		if manager.connected :
-			status_str = _("Connected to ") + manager.server
+			status_str = _("Connected to ") + manager.username + "@" + manager.server
 		else :
 			status_str = _("Not connected")
 		if mode_level == 0 :
@@ -6345,6 +6349,8 @@ class MainWindow :
 			manager.do_cmd("switch_cib\n")
 		else :
 			manager.do_cmd("switch_cib\n%s"%(switch_name[len("shadow."):]))
+		if manager.failed_reason != "" :
+			msgbox(manager.failed_reason + "\n"+ _("Or you don't have the permission."))
 
 		manager.set_update()
 
@@ -7017,7 +7023,7 @@ class Manager :
 			return False
 
 		window.statusbar.pop(1)	
-		window.statusbar.push(1,_("Connected to ")+server_host)
+		window.statusbar.push(1,_("Connected to ")+username+"@"+server_host)
 		self.connected = True
 		if server != None and server not in self.try_nodes :
 			self.try_nodes.insert(0, server)
