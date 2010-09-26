@@ -89,6 +89,7 @@ static int _mgmt_session_sendmsg(void* session, const char* msg);
 typedef struct
 {
 	int		id;
+	uid_t		uid;
 	GIOChannel*	ch;
 	void*		session;
 }client_t;
@@ -103,15 +104,16 @@ static gboolean on_msg_arrived(GIOChannel *source
 ,			       gpointer data);
 
 
-static int new_client(int sock, void* session);
+static int new_client(int sock, void* session, const char *user);
 static client_t* lookup_client(int id);
+static gboolean end_client(gpointer key, gpointer value, gpointer user_data);
 static int del_client(int id);
 
 static int pam_auth(const char* user, const char* passwd);
 static int pam_conv(int n, const struct pam_message **msg,
 		    struct pam_response **resp, void *data);
 
-static char* dispatch_msg(const char* msg, int client_id);
+static char* dispatch_msg(const char* msg, client_t *client);
 
 const char* mgmtd_name 	= "mgmtd";
 const char* mgmtd_pam 	= "hbmgmtd";
@@ -122,6 +124,13 @@ int port = -1;
 static GMainLoop* mainloop 	= NULL;
 static GHashTable* clients	= NULL;
 static GHashTable* evt_map	= NULL;		
+
+static gid_t gid = 0;
+
+int *client_id = NULL;
+extern int init_crm(int cache_cib);
+extern void final_crm(void);
+extern int set_crm(void);
 
 int
 main(int argc, char ** argv)
@@ -420,6 +429,9 @@ init_start ()
 	g_main_run(mainloop);
 
 	/* exit, clean the pid file */
+	g_hash_table_foreach_remove(clients, end_client, NULL);
+	g_hash_table_destroy(clients);
+
 	final_mgmt_lib();
 	if (cl_unlock_pidfile(PID_FILE) == 0) {
 		mgmt_log(LOG_DEBUG, "[%s] stopped", mgmtd_name);
@@ -494,11 +506,21 @@ on_listen(GIOChannel *source, GIOCondition condition, gpointer data)
 			mgmt_log(LOG_ERR, "%s pam auth failed", __FUNCTION__);
 			return TRUE;
 		}
+
+		if (new_client(csock, session, args[1]) !=0) {
+			mgmt_del_args(args);
+			mgmt_del_msg(msg);
+			_mgmt_session_sendmsg(session, MSG_FAIL"Processing for the new client failed");
+			tls_detach(session);
+			close(csock);
+			mgmt_log(LOG_ERR, "%s processing for the new client failed", __FUNCTION__);
+			return TRUE;
+		}
+
 		mgmt_del_args(args);
 		mgmt_del_msg(msg);
 		mgmt_debug(LOG_DEBUG, "send msg: %s", MSG_OK);
 		_mgmt_session_sendmsg(session, MSG_OK);
-		new_client(csock, session);
 		return TRUE;
 		
 	}
@@ -525,7 +547,7 @@ on_msg_arrived(GIOChannel *source, GIOCondition condition, gpointer data)
 			del_client(client->id);
 			return FALSE;
 		}
-		ret = dispatch_msg(msg, client->id);
+		ret = dispatch_msg(msg, client);
 		if (ret != NULL) {
 			mgmt_debug(LOG_DEBUG, "send msg: %s", ret);
 			_mgmt_session_sendmsg(client->session, ret);
@@ -542,15 +564,55 @@ on_msg_arrived(GIOChannel *source, GIOCondition condition, gpointer data)
 }
 
 int
-new_client(int sock, void* session)
+new_client(int sock, void* session, const char *user)
 {
 	static int id = 1;
-	client_t* client = malloc(sizeof(client_t));
+	struct passwd *pwd = NULL;
+	client_t* client = NULL;
+	
+	pwd = getpwnam(user);
+	if (pwd == NULL) {
+		mgmt_log(LOG_ERR, "error on getpwnam: %s", strerror(errno));
+		return -1;
+	}
+
+	client = malloc(sizeof(client_t));
 	if (client == NULL) {
 		mgmt_log(LOG_ERR, "malloc failed for new client");
 		return -1;
 	}
 	client->id = id;
+	client->uid = pwd->pw_uid;
+
+	if (ENABLE_CRM) {
+		int rc = 0;
+		client_id = &client->id;
+		unsetenv("CIB_shadow");
+
+		if (setresgid(gid, gid, -1) < 0) {
+			mgmt_log(LOG_ERR, "Could not set group to %d: %s", gid, strerror(errno));
+			return -1;
+		}
+		if (setresuid(client->uid, client->uid, -1) < 0){
+			mgmt_log(LOG_ERR, "Could not set user to %d: %s", client->uid, strerror(errno));
+			return -1;
+		}
+
+		rc = init_crm(CACHE_CIB);
+
+		if (setresuid(0, 0, -1) < 0) {
+			mgmt_log(LOG_ERR, "Could not reset user to 0: %s", strerror(errno));
+		}
+		if (setresgid(0, 0, -1) < 0) {
+			mgmt_log(LOG_ERR, "Could not reset group to 0: %s", strerror(errno));
+		}
+
+		if (rc != 0) {
+			free(client);
+			return -1;
+		}
+	}
+
 	client->ch = g_io_channel_unix_new(sock);
 	g_io_channel_set_close_on_unref(client->ch,TRUE);
 	g_io_add_watch(client->ch, G_IO_IN|G_IO_ERR|G_IO_HUP
@@ -567,6 +629,25 @@ lookup_client(int id)
 	client_t* client = (client_t*)g_hash_table_lookup(clients, &id);
 	return client;
 }
+
+static gboolean
+end_client(gpointer key, gpointer value, gpointer user_data)
+{
+	client_t *client = value;
+
+	if (ENABLE_CRM) {
+		client_id = &client->id;
+		if (set_crm() == 0) {
+			final_crm();
+		}
+	}
+	tls_detach(client->session);
+	g_io_channel_unref(client->ch);
+	free(client);
+
+	return TRUE;
+}
+
 int
 del_client(int id)
 {
@@ -574,10 +655,10 @@ del_client(int id)
 	if (client == NULL) {
 		return -1;
 	}
-	tls_detach(client->session);
-	g_io_channel_unref(client->ch);
+
 	g_hash_table_remove(clients, (gpointer)&client->id);
-	free(client);
+	end_client(&id, client, NULL);
+
 	return 0;
 }
 
@@ -696,7 +777,7 @@ do_exit:
 }
 		
 char*
-dispatch_msg(const char* msg, int client_id)
+dispatch_msg(const char* msg, client_t *client)
 {
 	char* ret;
 	int num;
@@ -706,13 +787,34 @@ dispatch_msg(const char* msg, int client_id)
 	}
 	if (strncmp(args[0], MSG_REGEVT, strlen(MSG_REGEVT)) == 0) {
 		GList* id_list = g_hash_table_lookup(evt_map, args[1]);
-		id_list = g_list_append(id_list, GINT_TO_POINTER(client_id));
+		id_list = g_list_append(id_list, GINT_TO_POINTER(client->id));
 		g_hash_table_replace(evt_map, strdup(args[1]), (gpointer)id_list);
 		reg_event(args[1], on_event);
 		ret = strdup(MSG_OK);
 	}
 	else  {
+		if (ENABLE_CRM) {
+			client_id = &client->id;
+			set_crm();
+		}
+
+		if (setresgid(gid, gid, -1) < 0) {
+			mgmt_log(LOG_ERR, "Could not set group to %d: %s", gid, strerror(errno));
+			return NULL;
+		}
+		if (setresuid(client->uid, client->uid, -1) < 0){
+			mgmt_log(LOG_ERR, "Could not set user to %d: %s", client->uid, strerror(errno));
+			return NULL;
+		}
+
 		ret = process_msg(msg);
+
+		if (setresuid(0, 0, -1) < 0) {
+			mgmt_log(LOG_ERR, "Could not reset user to 0: %s", strerror(errno));
+		}
+		if (setresgid(0, 0, -1) < 0) {
+			mgmt_log(LOG_ERR, "Could not reset group to 0: %s", strerror(errno));
+		}
 	}
 	mgmt_del_args(args);
 	return ret;
@@ -759,6 +861,7 @@ usr_belong_grp(const char* usr, const char* grp)
 	grp_usr = gren->gr_mem[index];
 	while (grp_usr != NULL) {
 		if (strncmp(usr,grp_usr,MAX_STRLEN) == 0) {
+			gid = gren->gr_gid;
 			return 1;
 		}
 		index ++;

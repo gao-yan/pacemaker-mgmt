@@ -20,7 +20,9 @@
  */
 
 #include <unistd.h>
+#include <stdlib.h>
 #include <stdarg.h>
+#include <string.h>
 #include <errno.h>
 #include <fcntl.h>
 #if HAVE_SECURITY_PAM_APPL_H
@@ -48,8 +50,6 @@
 #include <clplumbing/coredumps.h>
 #include <clplumbing/cl_pidfile.h>
 
-#include <crm/crm.h>
-
 #ifdef SUPPORT_AIS
 #undef SUPPORT_AIS
 #endif
@@ -69,8 +69,6 @@
 /* the initial func for modules */
 extern int init_general(void);
 extern void final_general(void);
-extern int init_crm(int cache_cib);
-extern void final_crm(void);
 #if SUPPORT_HEARTBEAT
 extern int init_heartbeat(void);
 #endif
@@ -107,20 +105,12 @@ init_mgmt_lib(const char* client, int enable_components)
 			return -1;
 		}
 	}
-	if (components & ENABLE_CRM) {
-		if (init_crm(components & CACHE_CIB) != 0 ) {
-			return -1;
-		}
-	}
 	return 0;
 }
 
 int
 final_mgmt_lib()
 {
-	if (components & ENABLE_CRM) {
-		final_crm();
-	}
 	if (components & ENABLE_LRM) {
 		final_lrm();
 	}
