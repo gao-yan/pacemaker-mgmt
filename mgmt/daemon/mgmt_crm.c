@@ -25,6 +25,7 @@
 #include <dirent.h>
 #include <sys/wait.h>
 #include <time.h>
+#include <libgen.h>
 
 #if HAVE_HB_CONFIG_H
 #include <hb_config.h>
@@ -639,21 +640,32 @@ on_switch_cib(char* argv[], int argc)
 char*
 on_get_shadows(char* argv[], int argc)
 {
-	char* ret = NULL;
+	char *ret = NULL;
+	char *test_file = NULL;
+	const char *shadow_dir = NULL;
 	struct dirent *dirp;
 	DIR *dp;
 	char fullpath[MAX_STRLEN];
 	struct stat statbuf;
 
-	if ((dp = opendir(CRM_CONFIG_DIR)) == NULL){
-		mgmt_log(LOG_ERR, "error on opendir \"%s\": %s", CRM_CONFIG_DIR, strerror(errno));
-		return strdup(MSG_FAIL"\nCannot open the crm working directory");
+	if ((test_file = get_shadow_file("test"))) {
+		shadow_dir = dirname(test_file);
+	} else {
+		shadow_dir = CRM_CONFIG_DIR;
+	}
+
+	if ((dp = opendir(shadow_dir)) == NULL){
+		mgmt_log(LOG_ERR, "error on opendir \"%s\": %s", shadow_dir, strerror(errno));
+		if (test_file) {
+			crm_free(test_file);
+		}
+		return strdup(MSG_FAIL"\nCannot open the CIB shadow directory");
 	}
 
 	ret = strdup(MSG_OK);
 	while ((dirp = readdir(dp)) != NULL) {
 		if (strstr(dirp->d_name, "shadow.") == dirp->d_name) {
-			snprintf(fullpath, sizeof(fullpath), "%s/%s", CRM_CONFIG_DIR, dirp->d_name);
+			snprintf(fullpath, sizeof(fullpath), "%s/%s", shadow_dir, dirp->d_name);
 
 			if (stat(fullpath, &statbuf) < 0){
 				mgmt_log(LOG_WARNING, "Cannot stat the file \"%s\": %s", fullpath, strerror(errno));
@@ -666,7 +678,11 @@ on_get_shadows(char* argv[], int argc)
 	}
 
 	if (closedir(dp) < 0){
-		mgmt_log(LOG_WARNING, "failed to closedir \"%s\": %s", CRM_CONFIG_DIR, strerror(errno) );
+		mgmt_log(LOG_WARNING, "failed to closedir \"%s\": %s", shadow_dir, strerror(errno) );
+	}
+
+	if (test_file) {
+		crm_free(test_file);
 	}
 	return ret;
 }
