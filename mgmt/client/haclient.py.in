@@ -1259,7 +1259,7 @@ class ManageView :
 		else :
 			metaattr_name = "target-role"
 
-		real_rsc_id = cur_name.partition(":")[0]
+		real_rsc_id = cur_name.split(":")[0]
 		
 		rsc_xml = None
 		for resources_node in manager.xml_nodes["cib"].cloneNode(True).getElementsByTagName("resources") :
