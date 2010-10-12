@@ -254,9 +254,9 @@ msgid "never started"
 msgstr "開始しない"
 
 #: ../mgmt/client/haclient.py.in:1272
-#, fuzzy, python-format
+#, python-format
 msgid "Cannot find the %s: %s"
-msgstr "CIBを取得出来ませんでした"
+msgstr "%s: %sが見付かりません."
 
 #: ../mgmt/client/haclient.py.in:1298
 msgid "Caused by your previous action, this attribute has been set to \""
@@ -271,20 +271,18 @@ msgid "Recommended"
 msgstr "推奨する操作"
 
 #: ../mgmt/client/haclient.py.in:1302
-#, fuzzy
 msgid ""
 "Select \"Clear All\" to remove the attributes for all of the sub-resources."
-msgstr "選択・クリアを解除の為に選択して下さい."
+msgstr "サブリソースの属性を解除の為に\"Clear All\"を選択して下さい."
 
 #: ../mgmt/client/haclient.py.in:1303
-#, fuzzy
 msgid "All of the sub-resources will inherit the attributes from their parent."
-msgstr "配下のリソースは、親の属性を継承します."
+msgstr "全てのサブリソースは、親の属性を継承します."
 
 #: ../mgmt/client/haclient.py.in:1308
-#, fuzzy, python-format
+#, python-format
 msgid "Clear the %s=\"%s\" attribute for sub-resource \""
-msgstr "配下のリソース \"%s\" の属性を保持しますか \""
+msgstr "サブリソースの属性値 %s=\"%s\" をクリアしますか \""
 
 #: ../mgmt/client/haclient.py.in:1309
 msgid "\"?"
@@ -293,7 +291,7 @@ msgstr "\"?"
 #: ../mgmt/client/haclient.py.in:1324
 #, python-format
 msgid "Cannot %s %s: XML processing error"
-msgstr ""
+msgstr "%s に %s を出来ません。XML処理エラーです."
 
 #: ../mgmt/client/haclient.py.in:1347 ../mgmt/client/haclient.py.in:1361
 msgid "all resources"
@@ -860,7 +858,7 @@ msgstr "遷移情報タイプ: \"error\", \"warn\" or \"input\""
 
 #: ../mgmt/client/haclient.py.in:5304
 msgid "Transition Graph"
-msgstr "遷移"
+msgstr "遷移グラフ"
 
 #: ../mgmt/client/haclient.py.in:5305
 msgid "Generating the transition graph may take a while..."
@@ -872,7 +870,7 @@ msgstr "遷移グラフの生成に失敗しました"
 
 #: ../mgmt/client/haclient.py.in:5319
 msgid "Transition Detail"
-msgstr "遷移"
+msgstr "遷移詳細"
 
 #: ../mgmt/client/haclient.py.in:5320
 msgid "Generating the transition detail may take a while..."
@@ -1047,11 +1045,11 @@ msgstr "表示しているビューの元のデータが変更されました."
 
 #: ../mgmt/client/haclient.py.in:5980
 msgid "Empty information returned"
-msgstr ""
+msgstr "空の情報が返されました."
 
 #: ../mgmt/client/haclient.py.in:5984
 msgid "Nothing returned"
-msgstr ""
+msgstr "何も返されませんでした."
 
 #: ../mgmt/client/haclient.py.in:5991
 msgid "Do you want to quit ?"
@@ -1190,7 +1188,7 @@ msgstr "新しいシャドーCIB \"%s\"に切り換えますか?"
 
 #: ../mgmt/client/haclient.py.in:6353
 msgid "Or you don't have the permission."
-msgstr ""
+msgstr "または、あなたは権限を持っていません."
 
 #: ../mgmt/client/haclient.py.in:6405 ../mgmt/client/haclient.py.in:6415
 msgid "Cluster Report"
