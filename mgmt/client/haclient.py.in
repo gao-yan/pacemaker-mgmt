@@ -2547,14 +2547,14 @@ class CRMConfigView(View) :
 	def update_crm_config(self, metadata, new_crm_config) :
 		crm_config_xml_nodes = manager.xml_nodes["cib"].getElementsByTagName("crm_config")
 		if len(crm_config_xml_nodes) < 1 :
-			msgbox("Cannot update the crm configuration: No \"crm_config\" in CIB")
+			msgbox(_("Cannot update the crm configuration: No \"crm_config\" in CIB"))
 			return
 
 		(parent_xml_node, add_obj_type, new_mid_elem) = \
 				manager.real_add_obj_type(crm_config_xml_nodes[0], "cluster_property_set")
 
 		if parent_xml_node == None :
-			msgbox("Cannot update the crm configuration")
+			msgbox(_("Cannot update the crm configuration"))
 			return
 
 		nv_xml_nodes = {}
@@ -6323,7 +6323,7 @@ class MainWindow :
 					%(create_cmd, shadow_name, create_shadow.get("force", "")))
 			if cmd_ret == None :
 				if manager.failed_reason == "" :
-					#msgbox("Failed creating shadow CIB")
+					#msgbox(_("Failed creating shadow CIB"))
 					break
 
 				if manager.failed_reason.count("A new shadow instance was created") == 0 :
