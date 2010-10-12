@@ -1321,7 +1321,7 @@ class ManageView :
 		if not found_nv and target_role != "#default" :
 			(parent_xml_node, add_obj_type, new_mid_elem) = manager.real_add_obj_type(rsc_xml, "meta_attributes", True)
 			if parent_xml_node == None :
-				msg_box(_("Cannot %s %s: XML processing error")%(target_role, real_rsc_id))
+				msgbox(_("Cannot %s %s: XML processing error")%(target_role, real_rsc_id))
 				return
 
 			impl = getDOMImplementation()
@@ -2547,14 +2547,14 @@ class CRMConfigView(View) :
 	def update_crm_config(self, metadata, new_crm_config) :
 		crm_config_xml_nodes = manager.xml_nodes["cib"].getElementsByTagName("crm_config")
 		if len(crm_config_xml_nodes) < 1 :
-			msg_box("Cannot update the crm configuration: No \"crm_config\" in CIB")
+			msgbox("Cannot update the crm configuration: No \"crm_config\" in CIB")
 			return
 
 		(parent_xml_node, add_obj_type, new_mid_elem) = \
 				manager.real_add_obj_type(crm_config_xml_nodes[0], "cluster_property_set")
 
 		if parent_xml_node == None :
-			msg_box("Cannot update the crm configuration")
+			msgbox("Cannot update the crm configuration")
 			return
 
 		nv_xml_nodes = {}
