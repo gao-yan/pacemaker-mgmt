@@ -361,7 +361,7 @@ init_start ()
 	register_pid(FALSE, sigterm_action);
 
 	/* enable coredumps */
-	mgmt_log(LOG_DEBUG, "Enabling coredumps");
+	mgmt_debug(LOG_DEBUG, "Enabling coredumps");
  	cl_cdtocoredir();
 	cl_enable_coredumps(TRUE);	
 	cl_set_all_coredump_signal_handlers();
@@ -424,7 +424,7 @@ init_start ()
 	g_io_add_watch(sch, G_IO_IN|G_IO_ERR|G_IO_HUP, on_listen, NULL);
 	
 	/* run the mainloop */
-	mgmt_log(LOG_DEBUG, "main: run the loop...");
+	mgmt_debug(LOG_DEBUG, "main: run the loop...");
 	mgmt_log(LOG_INFO, "Started.");
 	g_main_run(mainloop);
 
