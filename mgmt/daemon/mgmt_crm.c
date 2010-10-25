@@ -494,7 +494,7 @@ set_crm(void)
 		} else {
 			setenv("CIB_shadow", env, 1);
 		}
-		mgmt_log(LOG_DEBUG, "set_crm: client_id=%d cib_conn=%p cib_name=%s", *client_id, cib_conn, env);
+		mgmt_debug(LOG_DEBUG, "set_crm: client_id=%d cib_conn=%p cib_name=%s", *client_id, cib_conn, env);
 
 		return 0;
 	}
