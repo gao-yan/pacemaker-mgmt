@@ -7168,7 +7168,7 @@ class Manager :
 			self.session_lock.acquire()
 			event = mgmt_recvmsg()
 			self.session_lock.release()
-			log("on_event:"+str(event))
+			debug("on_event:"+str(event))
 			self.process_event(event)
 			return True
 		else :					# called by do_cmd
