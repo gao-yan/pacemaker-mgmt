@@ -50,6 +50,8 @@
 #include <clplumbing/coredumps.h>
 #include <clplumbing/cl_pidfile.h>
 
+#include <crm/crm.h>
+
 #ifdef SUPPORT_AIS
 #undef SUPPORT_AIS
 #endif
