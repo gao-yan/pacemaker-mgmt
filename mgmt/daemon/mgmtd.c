@@ -793,6 +793,9 @@ dispatch_msg(const char* msg, client_t *client)
 		ret = strdup(MSG_OK);
 	}
 	else  {
+		const char *saved_env = getenv("HOME");
+		unsetenv("HOME");
+
 		if (ENABLE_CRM) {
 			client_id = &client->id;
 			set_crm();
@@ -815,6 +818,8 @@ dispatch_msg(const char* msg, client_t *client)
 		if (setresgid(0, 0, -1) < 0) {
 			mgmt_log(LOG_ERR, "Could not reset group to 0: %s", strerror(errno));
 		}
+
+		setenv("HOME", saved_env, 1);
 	}
 	mgmt_del_args(args);
 	return ret;
