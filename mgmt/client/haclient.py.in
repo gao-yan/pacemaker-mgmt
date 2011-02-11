@@ -33,7 +33,6 @@ import sys, os, string, socket, syslog, webbrowser, pickle, xml, gc, time, binas
 from stat import *
 from xml.dom.minidom import parseString
 from xml.dom.minidom import getDOMImplementation
-from xml.parsers.xmlproc.xmldtd import load_dtd_string
 import re
 
 import locale, gettext
@@ -46,6 +45,13 @@ from pymgmt import *
 import pygtk
 pygtk.require('2.0')
 import gtk, gobject
+
+support_pyxml = False
+try:
+	from xml.parsers.xmlproc.xmldtd import load_dtd_string
+	support_pyxml = True
+except ImportError :
+	pass
 
 support_lxml = False
 try :
@@ -7229,6 +7235,10 @@ class Manager :
 		self.validate_name = self.get_validate_name()
 
 		if validate_type == "dtd" :
+			if not support_pyxml :
+				log("Pacemaker GUI requires pyxml package to process DTD")
+				msgbox(_("Pacemaker GUI requires pyxml package to process DTD"))
+				sys.exit()
 			dtd_elem = self.get_dtd_elem("cib")
 			for (name, mod) in dtd_elem.get_content_model()[1] :
 				if mod != '' :
