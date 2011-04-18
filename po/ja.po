@@ -533,12 +533,11 @@ msgstr "モードを\"Hackモード\"に切り替えて、プロパティを確�
 
 #: ../mgmt/client/haclient.py.in:2556
 msgid "Cannot update the crm configuration: No \"crm_config\" in CIB"
-msgstr ""
+msgstr "CIBの中に\"crm_config\"が存在しないため、構成を更新出来ません."
 
 #: ../mgmt/client/haclient.py.in:2563
-#, fuzzy
 msgid "Cannot update the crm configuration"
-msgstr "構成をリセットしますか?"
+msgstr "構成を更新出来ません."
 
 #: ../mgmt/client/haclient.py.in:2631
 msgid "There are unsaved changes in current page."
@@ -1410,7 +1409,7 @@ msgstr "再接続しています..."
 
 #: ../mgmt/client/haclient.py.in:7240
 msgid "Pacemaker GUI requires pyxml package to process DTD"
-msgstr ""
+msgstr "Pacemaker GUIにはpyxmlパッケージが必要です"
 
 #: ../mgmt/client/haclient.py.in:7365
 msgid "Cannot expand the Relax-NG schema"
