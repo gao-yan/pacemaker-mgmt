@@ -1509,6 +1509,10 @@ on_get_rsc_status(char* argv[], int argc)
 				strncat(buf, " (orphaned)", sizeof(buf)-strlen(buf)-1);
 			}
 
+			if(is_set(rsc->flags, pe_rsc_failure_ignored)) {
+				strncat(buf, " (failure ignored)", sizeof(buf)-strlen(buf)-1);
+			}
+
 			ret = mgmt_msg_append(ret, buf);
 			break;
 		case pe_group:
