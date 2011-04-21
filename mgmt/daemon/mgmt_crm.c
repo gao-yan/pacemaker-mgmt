@@ -42,6 +42,7 @@
 #include <crm/cib.h>
 #include <crm/msg_xml.h>
 #include <crm/pengine/status.h>
+#include <crm/common/cluster.h>
 
 #ifdef SUPPORT_AIS
 #undef SUPPORT_AIS
