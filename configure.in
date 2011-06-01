@@ -138,7 +138,7 @@ CheckMissingThings() {
   fi
 }
 
-extract_heartbeat_define() {
+extract_header_define() {
 	  AC_MSG_CHECKING(for $2 in $1)
 	  Cfile=/tmp/extract_define.$2.${$}
 	  printf "#include <stdio.h>\n" > ${Cfile}.c
@@ -1215,41 +1215,41 @@ else
    AC_MSG_FAILURE(Core development headers were not found)
 fi
 
-HA_HBCONF_DIR=`extract_heartbeat_define $GLUE_HEADER HA_HBCONF_DIR`
+HA_HBCONF_DIR=`extract_header_define $GLUE_HEADER HA_HBCONF_DIR`
 AC_SUBST(HA_HBCONF_DIR)
 
-HB_RA_DIR=`extract_heartbeat_define $GLUE_HEADER HB_RA_DIR`
+HB_RA_DIR=`extract_header_define $GLUE_HEADER HB_RA_DIR`
 AC_SUBST(HB_RA_DIR)
 
 LIBDIR="${libdir}"
 AC_SUBST(LIBDIR)
 AC_DEFINE_UNQUOTED(LIBDIR,"$LIBDIR", lib directory)
 
-HA_LIBDIR=`extract_heartbeat_define $GLUE_HEADER HA_LIBDIR`
+HA_LIBDIR=`extract_header_define $GLUE_HEADER HA_LIBDIR`
 AC_SUBST(HA_LIBDIR)
 
-HA_LIBHBDIR=`extract_heartbeat_define $GLUE_HEADER HA_LIBHBDIR`
+HA_LIBHBDIR=`extract_header_define $GLUE_HEADER HA_LIBHBDIR`
 AC_SUBST(HA_LIBHBDIR)
 
-HA_VARRUNDIR=`extract_heartbeat_define $GLUE_HEADER HA_VARRUNDIR`
+HA_VARRUNDIR=`extract_header_define $GLUE_HEADER HA_VARRUNDIR`
 AC_DEFINE_UNQUOTED(HA_VARRUNDIR,"$HA_VARRUNDIR", Location for sockets)
 AC_SUBST(HA_VARRUNDIR)
 
-HA_VARLIBHBDIR=`extract_heartbeat_define $GLUE_HEADER HA_VARLIBHBDIR`
+HA_VARLIBHBDIR=`extract_header_define $GLUE_HEADER HA_VARLIBHBDIR`
 AC_SUBST(HA_VARLIBHBDIR)
 
-OCF_ROOT_DIR=`extract_heartbeat_define $GLUE_HEADER OCF_ROOT_DIR`
+OCF_ROOT_DIR=`extract_header_define $GLUE_HEADER OCF_ROOT_DIR`
 AC_DEFINE_UNQUOTED(OCF_ROOT_DIR,"$OCF_ROOT_DIR", OCF root directory - specified by the OCF standard)
 AC_SUBST(OCF_ROOT_DIR)
 
-OCF_RA_DIR=`extract_heartbeat_define $GLUE_HEADER OCF_RA_DIR`
+OCF_RA_DIR=`extract_header_define $GLUE_HEADER OCF_RA_DIR`
 AC_DEFINE_UNQUOTED(OCF_RA_DIR,"$OCF_RA_DIR", Location for OCF RAs)
 AC_SUBST(OCF_RA_DIR)
 
-HA_APIGROUP=`extract_heartbeat_define $GLUE_HEADER HA_APIGROUP`
+HA_APIGROUP=`extract_header_define $GLUE_HEADER HA_APIGROUP`
 AC_SUBST(HA_APIGROUP)
 
-HA_CCMUSER=`extract_heartbeat_define $GLUE_HEADER HA_CCMUSER`
+HA_CCMUSER=`extract_header_define $GLUE_HEADER HA_CCMUSER`
 AC_SUBST(HA_CCMUSER)
 
 HA_DATADIR="${datadir}"
@@ -1259,6 +1259,23 @@ AC_DEFINE_UNQUOTED(HA_DATADIR,"$HA_DATADIR", data (arch-independent) directory)
 HA_NOARCHDATAHBDIR="${datadir}/heartbeat"
 AC_DEFINE_UNQUOTED(HA_NOARCHDATAHBDIR,"$HA_NOARCHDATAHBDIR", Heartbeat noarch data directory)
 AC_SUBST(HA_NOARCHDATAHBDIR)
+
+AC_CHECK_HEADERS(crm_config.h)
+
+CRM_HEADER=none
+if test "$ac_cv_header_crm_config_h" = "yes";  then
+   CRM_HEADER=crm_config.h
+
+else
+   AC_MSG_FAILURE(Pacemaker development headers were not found)
+fi
+
+CRM_DAEMON_DIR=`extract_header_define $CRM_HEADER CRM_DAEMON_DIR`
+if test x"$CRM_DAEMON_DIR" = x""; then
+
+   CRM_DAEMON_DIR=`$PKGCONFIG pcmk --variable=daemondir`
+   AC_DEFINE_UNQUOTED(CRM_DAEMON_DIR,"$CRM_DAEMON_DIR", Location for Pacemaker daemons)
+fi
 
 AC_PATH_PROGS(HG, hg false)
 AC_MSG_CHECKING(build revision)
