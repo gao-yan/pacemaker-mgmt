@@ -1669,6 +1669,15 @@ process_pending:
 		run_alarms();
 		netsnmp_check_outstanding_agent_requests();
 
+#if SUPPORT_HEARTBEAT
+		if (is_heartbeat_cluster()) {
+			if ((ret = handle_heartbeat_msg()) == HA_FAIL) {
+				cl_log(LOG_DEBUG, "no heartbeat. quit now.");
+				hb_already_dead = 1;
+				break;
+			}
+		}
+#endif
 	}
 
 	/* at shutdown time */
