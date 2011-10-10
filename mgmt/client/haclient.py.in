@@ -1801,7 +1801,8 @@ class ManageTree :
 		iter_status = 0
 		if type == "primitive" :
 			if string.find(status, _("unmanaged")) != -1 \
-					or string.find(status, _("unclean")) != -1 :
+					or string.find(status, _("unclean")) != -1 \
+					or string.find(status, _("failure ignored")) != -1 :
 				iter_status = 2
 			elif string.find(status, _("failed")) != -1 :
 				iter_status = 3
