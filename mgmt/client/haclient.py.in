@@ -539,6 +539,7 @@ class ElementList:
 				"cluster_property_set": gtk.STOCK_PREFERENCES,
 				"node": "node",
 				"primitive": gtk.STOCK_DND,
+				"template": gtk.STOCK_DND,
 				"group": gtk.STOCK_DND_MULTIPLE,
 				"clone": gtk.STOCK_COPY,
 				"master": gtk.STOCK_COPY,
@@ -2962,7 +2963,7 @@ class ObjectView :
 			obj_box = self.vbox
 
 		if has_attr :
-			if obj_type == "primitive" :
+			if obj_type in ["primitive", "template"] :
 				obj_attrs = Primitive(self.xml_node, is_newobj, self.change_call_back)
 			elif obj_type == "rsc_order" :
 				obj_attrs = RscOrder(self.xml_node, is_newobj, self.change_call_back)
@@ -2971,7 +2972,7 @@ class ObjectView :
 			elif obj_type == "nvpair" :
 				if validate_type == "dtd" :
 					if self.xml_node.parentNode.parentNode.tagName == "instance_attributes" and \
-							self.xml_node.parentNode.parentNode.parentNode.tagName == "primitive" :
+							self.xml_node.parentNode.parentNode.parentNode.tagName in ["primitive", "template"] :
 						obj_attrs = PrimInstAttrsNV(self.xml_node, is_newobj, self.change_call_back)
 					elif self.xml_node.parentNode.parentNode.tagName == "instance_attributes" and \
 							self.xml_node.parentNode.parentNode.parentNode.tagName == "op" :
@@ -2989,7 +2990,7 @@ class ObjectView :
 						obj_attrs = ObjectAttrs(self.xml_node, is_newobj, self.change_call_back)
 				else :
 					if self.xml_node.parentNode.tagName == "instance_attributes" and \
-							self.xml_node.parentNode.parentNode.tagName == "primitive" :
+							self.xml_node.parentNode.parentNode.tagName in ["primitive", "template"]:
 						obj_attrs = PrimInstAttrsNV(self.xml_node, is_newobj, self.change_call_back)
 					elif self.xml_node.parentNode.tagName == "instance_attributes" and \
 							self.xml_node.parentNode.parentNode.tagName == "op" :
@@ -3845,7 +3846,7 @@ class ElementNotebook :
 					or (validate_type != "dtd" and option_list[0][0][1].getAttribute("name") != "lifetime")) :
 			obj_type = option_list[0]
 		elif not invoked_by_wizard and mode_level == 0 and (
-					self.obj_type in ["node", "primitive", "group"]
+					self.obj_type in ["node", "primitive", "template", "group"]
 					or (self.obj_type in ["clone", "master"]
 						and (self.pages.count("primitive") > 0 
 							or self.pages.count("group") > 0))
@@ -4403,6 +4404,7 @@ class AddWizard :
 
 		meta_attributes_options = {
 		"primitive": common_options,
+		"template": common_options,
 		"group": common_options,
 		"clone": common_options + clone_basic_options + clone_other_options,
 		"master": common_options + clone_basic_options + master_basic_options + clone_other_options,
@@ -4440,7 +4442,7 @@ class AddWizard :
 		separator.show()
 		dialog.vbox.pack_start(separator, False, padding = 2)
 
-		if self.obj_type == "primitive" :
+		if self.obj_type in ["primitive", "template"] :
 			obj_attrs = Primitive(self.xml_node, True, hide_optional = True)
 		else :
 			obj_attrs = obj_attrs = ObjectAttrs(self.xml_node, True, hide_optional = True)
@@ -4550,7 +4552,7 @@ class AddWizard :
 		widget_group = WidgetGroup(widgets)
 		self.widget_group = widget_group
 
-		if self.obj_type == "primitive" :
+		if self.obj_type in ["primitive", "template"]:
 			label = gtk.Label(_("Add monitor operation"))
 			self.monitor_checkbutton = gtk.CheckButton()
 			self.monitor_checkbutton.add(label)
@@ -4577,7 +4579,7 @@ class AddWizard :
 		tmp_meta_attributes.update(meta_attributes)
 		self.widget_group.show_values(tmp_meta_attributes)
 
-		if self.obj_type == "primitive" :
+		if self.obj_type in ["primitive", "template"]:
 			monitors = self.get_monitors()
 			if len(monitors) > 0 :
 				self.monitor_checkbutton.set_active(True)
@@ -4602,7 +4604,7 @@ class AddWizard :
 				top_window = save_top_window
 
 				self.set_meta_attributes()
-				if self.obj_type == "primitive" :
+				if self.obj_type in ["primitive", "template"] :
 					meta = self.get_rsc_meta()
 					self.set_monitor(meta)
 					self.set_inst_attributes(meta)
@@ -4679,7 +4681,7 @@ class AddWizard :
 		return meta
 
 	def set_monitor(self, meta) :
-		if self.obj_type != "primitive" or meta == None :
+		if self.obj_type not in ["primitive", "template"] or meta == None :
 			return
 
 		monitors = self.get_monitors()
@@ -4813,7 +4815,7 @@ class AddWizard :
 					break
 				iter = model.iter_next(iter)
 
-		if self.obj_type == "primitive" :
+		if self.obj_type in ["primitive", "template"] :
 			self.monitor_checkbutton.set_active(True)
 
 		return self.first_page_run()
@@ -4856,7 +4858,7 @@ class AddWizard :
 
 		dialog.vbox.show_all()
 
-		if self.obj_type != "primitive" and add_prompt :
+		if self.obj_type not in ["primitive", "template"] and add_prompt :
 			if rsc_id != "" :
 				title_suffix = _("Sub-resource For \"%s\"")%rsc_id
 			else :
@@ -8431,7 +8433,7 @@ class ObjectAttrs(WidgetGroup) :
 
 		else :
 			if self.is_newobj and not self.id_is_idref and self.obj_type not in \
-					["node", "primitive", "group", "clone", "master","master_slave", \
+					["node", "primitive", "template", "group", "clone", "master","master_slave", \
 					"rsc_location", "rsc_colocation", "rsc_order", "acl_user", "acl_role"] :
 				if self.widgets.has_key("combo_entries") and self.widgets["combo_entries"].has_key("id") \
 						and len(self.widgets["combo_entries"]["id"].child.get_text()) == 0 :
@@ -9607,6 +9609,7 @@ class MetaAttrsNV(ObjectAttrs) :
 
 		self.meta_attributes_options = {
 		"primitive": common_options + primitive_options,
+		"template": common_options + primitive_options,
 		"group": common_options,
 		"clone": common_options + clone_basic_options + clone_other_options,
 		"master": common_options + clone_basic_options + master_basic_options + clone_other_options,
@@ -9671,7 +9674,7 @@ class MetaAttrsNV(ObjectAttrs) :
 		widgets = self.widgets
 		attr_store = []
 
-		if self.target_type in ["primitive", "group", "clone", "master_slave"] :
+		if self.target_type in ["primitive", "template", "group", "clone", "master_slave"] :
 			attr_store.append(["target_role", ""])
 
 		for attr_name in self.target_attrlist :
