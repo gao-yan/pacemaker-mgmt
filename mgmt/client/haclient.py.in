@@ -8085,6 +8085,15 @@ class Manager :
 					return (rsc_class, rsc_type, rsc_provider)
 		return None
 
+	def get_all_templates(self) :
+		templates = []
+		for resources_node in manager.xml_nodes["cib"].getElementsByTagName("resources") :
+			for template_node in resources_node.getElementsByTagName("template") :
+				template_id = template_node.getAttribute("id")
+				if template_id and template_id not in templates:
+					templates.append(template_id)
+		return templates
+
 	def get_locale_desc(self, node, tag) :
 		desc_en = ""
 		desc_match = ""
@@ -8959,7 +8968,8 @@ class ObjectAttrs(WidgetGroup) :
 	def auto_fill(self) :
 		widgets = self.widgets
 		rsc_store = gtk.ListStore(str, str)
-		for rsc in manager.get_all_real_rsc() :
+		all_real_rsc = manager.get_all_real_rsc()
+		for rsc in all_real_rsc :
 			rsc_store.append([rsc, ""])
 
 		node_list = manager.get_normal_nodes()
@@ -8967,12 +8977,26 @@ class ObjectAttrs(WidgetGroup) :
 			node_list = []
 		node_store = [[node, ""] for node in node_list]
 
+		all_templates = manager.get_all_templates()
+		template_store = [[template, ""] for template in all_templates]
+
+		rsc_refs = all_real_rsc[:]
+		rsc_refs.extend(all_templates)
+		rsc_refs_store = [[rsc, ""] for rsc in rsc_refs]
+
 		if widgets.has_key("combo_entries") :
 			for key in ["rsc", "with-rsc", "first", "then", "from", "to"] :
 				if widgets["combo_entries"].has_key(key) :
-					self.combobox_store_append(widgets["combo_entries"][key], rsc_store)
+					if self.obj_type == "rsc_location" :
+						self.combobox_store_append(widgets["combo_entries"][key], rsc_store)
+					else :
+						self.combobox_store_append(widgets["combo_entries"][key], rsc_refs_store)
 			if widgets["combo_entries"].has_key("id") and self.id_is_idref :
 				self.combobox_store_append(widgets["combo_entries"]["id"], rsc_store)
+
+			for key in ["template"] :
+				if widgets["combo_entries"].has_key(key) :
+					self.combobox_store_append(widgets["combo_entries"][key], template_store)
 
 			for key in ["node"] :
 				if widgets["combo_entries"].has_key(key) :
