@@ -4674,9 +4674,10 @@ class AddWizard :
 		return monitors
 
 	def get_rsc_meta(self) :
-		primitive_class = str(self.xml_node.getAttribute("class"))
-		primitive_type = str(self.xml_node.getAttribute("type"))
-		primitive_provider = str(self.xml_node.getAttribute("provider"))
+		primitive_attrs = manager.get_rsc_attrs(self.xml_node, ["class", "type", "provider"])
+		primitive_class = str(primitive_attrs.get("class", ""))
+		primitive_type = str(primitive_attrs.get("type", ""))
+		primitive_provider = str(primitive_attrs.get("provider", ""))
 		meta = manager.get_rsc_meta(primitive_class, primitive_type, primitive_provider)
 		return meta
 
@@ -8079,10 +8080,42 @@ class Manager :
 		for resources_node in manager.xml_nodes["cib"].getElementsByTagName("resources") :
 			for primitive_node in resources_node.getElementsByTagName("primitive") :
 				if primitive_node.getAttribute("id") == rsc_id :
-					rsc_class = str(primitive_node.getAttribute("class"))
-					rsc_type = str(primitive_node.getAttribute("type"))
-					rsc_provider = str(primitive_node.getAttribute("provider"))
+					primitive_attrs = self.get_rsc_attrs(primitive_node, ["class", "type", "provider"])
+					rsc_class = str(primitive_attrs.get("class", ""))
+					rsc_type = str(primitive_attrs.get("type", ""))
+					rsc_provider = str(primitive_attrs.get("provider", ""))
 					return (rsc_class, rsc_type, rsc_provider)
+		return None
+
+	def get_rsc_attrs(self, primitive_node, attr_names) :
+		attrs ={}
+
+		ref_node = primitive_node
+		while ref_node and ref_node.nodeType == xml.dom.Node.ELEMENT_NODE :
+			for attr_name in attr_names :
+				if attrs.get(attr_name) :
+					continue
+
+				attr_value = ref_node.getAttribute(attr_name)
+				if attr_value :
+					attrs[attr_name] = str(attr_value)
+
+			template_id = ref_node.getAttribute("template")
+			if template_id :
+				ref_node = self.get_template(template_id)
+			else :
+				break
+
+		return attrs
+
+	def get_template(self, template_id) :
+		if not template_id :
+			return None
+
+		for resources_node in manager.xml_nodes["cib"].getElementsByTagName("resources") :
+			for template_node in resources_node.getElementsByTagName("template") :
+				if template_node.getAttribute("id") == template_id :
+					return template_node
 		return None
 
 	def get_all_templates(self) :
@@ -9534,13 +9567,32 @@ class Primitive(ObjectAttrs) :
 				and widget == widgets["combo_entries"]["provider"] :
 			desc = self.get_meta_desc()
 
+		if widgets.has_key("combo_entries") and widgets["combo_entries"].has_key("template") \
+				and widget == widgets["combo_entries"]["template"] :
+			desc = self.get_meta_desc()
+
 		return desc
 
 	def get_meta_desc(self) :
 		primitive = self.get_values()
-		primitive_class = primitive.get("class", "")
-		primitive_type = primitive.get("type", "")
-		primitive_provider = primitive.get("provider", "heartbeat")
+		primitive_template = primitive.get("template")
+
+		title = ""
+		if not primitive_template :
+			primitive_class = primitive.get("class", "")
+			primitive_type = primitive.get("type", "")
+			primitive_provider = primitive.get("provider", "heartbeat")
+		else :
+			template_node = manager.get_template(primitive_template)
+			if template_node == None :
+				return [""]
+
+			primitive_attrs = manager.get_rsc_attrs(template_node, ["class", "type", "provider"])
+			primitive_class = str(primitive_attrs.get("class", ""))
+			primitive_type = str(primitive_attrs.get("type", ""))
+			primitive_provider = str(primitive_attrs.get("provider", "heartbeat"))
+
+			title = "%s:%s:%s\n\n"%(primitive_class, primitive_provider, primitive_type)
 
 		meta = manager.get_rsc_meta(primitive_class, primitive_type, primitive_provider) 
 		if meta == None :
@@ -9557,14 +9609,14 @@ class Primitive(ObjectAttrs) :
 			shortdesc = ""
 
 		if len(longdesc) == 0 :
-			desc = [shortdesc]
+			desc = [title + shortdesc]
 		elif longdesc.find(shortdesc) > -1 :
-			desc = [longdesc]
+			desc = [title + longdesc]
 		else :
 			if shortdesc.endswith(_(".")) :
-				desc = [shortdesc + "\n" + longdesc]
+				desc = [title + shortdesc + "\n" + longdesc]
 			else :
-				desc = [shortdesc + _(".") + "\n" + longdesc]
+				desc = [title + shortdesc + _(".") + "\n" + longdesc]
 		return desc
 
 	def verify_values(self) :
@@ -9868,9 +9920,12 @@ class PrimInstAttrsNV(MetaNV) :
 			primitive_node = xml_node.parentNode.parentNode.parentNode
 		else :
 			primitive_node = xml_node.parentNode.parentNode
-		primitive_class = str(primitive_node.getAttribute("class"))
-		primitive_type = str(primitive_node.getAttribute("type"))
-		primitive_provider = str(primitive_node.getAttribute("provider"))
+
+		primitive_attrs = manager.get_rsc_attrs(primitive_node, ["class", "type", "provider"])
+		primitive_class = str(primitive_attrs.get("class", ""))
+		primitive_type = str(primitive_attrs.get("type", ""))
+		primitive_provider = str(primitive_attrs.get("provider", ""))
+
 		self.meta = manager.get_rsc_meta(primitive_class, primitive_type, primitive_provider)
 		MetaNV.__init__(self, xml_node, is_newobj, change_call_back)
 
@@ -10005,9 +10060,10 @@ class OP(ObjectAttrs) :
 		if mode_level == 0 :
 			self.dynamic_layout = self.dynamic_layout_simple
 		primitive_node = xml_node.parentNode.parentNode
-		primitive_class = str(primitive_node.getAttribute("class"))
-		primitive_type = str(primitive_node.getAttribute("type"))
-		primitive_provider = str(primitive_node.getAttribute("provider"))
+		primitive_attrs = manager.get_rsc_attrs(primitive_node, ["class", "type", "provider"])
+		primitive_class = str(primitive_attrs.get("class", ""))
+		primitive_type = str(primitive_attrs.get("type", ""))
+		primitive_provider = str(primitive_attrs.get("provider", ""))
 		meta = manager.get_rsc_meta(primitive_class, primitive_type, primitive_provider)
 		self.meta = meta
 		ObjectAttrs.__init__(self, xml_node, is_newobj, change_call_back)
