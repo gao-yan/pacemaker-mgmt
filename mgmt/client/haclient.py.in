@@ -9624,8 +9624,8 @@ class Primitive(ObjectAttrs) :
 			return False
 
 		primitive = self.get_values()
-		if primitive.get("class", "") == "" :
-			msgbox(_("\"%s\" is required")%_("Class"))
+		if primitive.get("template", "") == "" and primitive.get("class", "") == "" :
+			msgbox(_("\"%s\" or \"%s\" is required")%(_("Class"), _("Template")))
 			return False
 
 		if primitive.get("class", "") == "ocf" and primitive.get("provider", "") == "" :
