@@ -547,6 +547,7 @@ class ElementList:
 				"rsc_order": gtk.STOCK_PROPERTIES,
 				"rsc_location": gtk.STOCK_PROPERTIES,
 				"rsc_colocation": gtk.STOCK_PROPERTIES,
+				"rsc_ticket": gtk.STOCK_PROPERTIES,
 				"operations": gtk.STOCK_DIALOG_AUTHENTICATION,
 				"op": gtk.STOCK_DIALOG_AUTHENTICATION,
 				"instance_attributes": gtk.STOCK_PREFERENCES,
@@ -8476,7 +8477,7 @@ class ObjectAttrs(WidgetGroup) :
 		else :
 			if self.is_newobj and not self.id_is_idref and self.obj_type not in \
 					["node", "primitive", "template", "group", "clone", "master","master_slave", \
-					"rsc_location", "rsc_colocation", "rsc_order", "acl_user", "acl_role"] :
+					"rsc_location", "rsc_colocation", "rsc_order", "rsc_ticket", "acl_user", "acl_role"] :
 				if self.widgets.has_key("combo_entries") and self.widgets["combo_entries"].has_key("id") \
 						and len(self.widgets["combo_entries"]["id"].child.get_text()) == 0 :
 					obj_id = manager.auto_unique_id(self.xml_node, self.obj_type)
