@@ -24,7 +24,9 @@ INCLUDES                	=	-I$(top_builddir)/include -I$(top_srcdir)/include \
 					-I$(top_builddir)          -I$(top_srcdir)
 
 halibdir			=	$(libdir)/@HB_PKG@
+if MGMT_CLIENT_BUILD
 guilibdir                       =       $(libdir)/heartbeat-gui
+endif
 havarlibdir			=	$(localstatedir)/lib/@HB_PKG@
 COMMONLIBS			=	$(GLIBLIB)
 MGMT_DIR 			=	mgmt
@@ -47,6 +49,7 @@ libhbmgmtcommon_la_SOURCES = mgmt_common_lib.c
 libhbmgmtcommon_la_LIBADD = $(COMMONLIBS) $(top_builddir)/replace/libreplace.la
 libhbmgmtcommon_la_CFLAGS = $(INCLUDES)
 
+if MGMT_CLIENT_BUILD
 guilib_LTLIBRARIES = _pymgmt.la
 _pymgmt_la_SOURCES = pymgmt_wrap.c mgmt_client_lib.c mgmt_tls_lib.c mgmt_common_lib.c
 _pymgmt_la_CFLAGS = @PYTHON_INCLUDES@ -I$(top_builddir)/include -w
@@ -57,6 +60,7 @@ guilib_DATA = pymgmt.py
 
 pymgmt_wrap.c pymgmt.py: pymgmt.i
 	$(SWIG) -python $^
+endif
 
 install-exec-local:
 	$(mkinstalldirs) $(DESTDIR)$(mgmtdir)

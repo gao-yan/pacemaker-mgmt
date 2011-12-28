@@ -41,7 +41,11 @@ if SNMP_SUBAGENT_BUILD
 SNMP_SUBAGENT_DIR = snmp_subagent
 endif
 
-SUBDIRS	= $(LIBLTDL_DIR) replace include lib mgmt $(CIM_PROVIDER_DIR) $(TSA_PLUGIN_DIR) $(SNMP_SUBAGENT_DIR) doc po
+SUBDIRS	= $(LIBLTDL_DIR) replace include lib mgmt $(CIM_PROVIDER_DIR) $(TSA_PLUGIN_DIR) $(SNMP_SUBAGENT_DIR) doc
+
+if MGMT_CLIENT_BUILD
+SUBDIRS += po
+endif
 
 tgz:
 	rm -f $(TARFILE)
@@ -84,10 +88,12 @@ factory:	tgz
 	ssh $(OBS_SERVER) -- "cd $(OBS_PREFIX)/server:ha-clustering:Factory/$(OBS_PROJECT); /usr/bin/osc commit -m \"New $(OBS_PROJECT) snapshot - $(shell $(HG) id)\""
 
 install-exec-local:
+if MGMT_CLIENT_BUILD
 	-mkdir -p $(DESTDIR)$(bindir)
 	-cd $(DESTDIR)$(libdir)/heartbeat-gui && rm -f haclient.py && ln -s $(datadir)/heartbeat-gui/haclient.py .
 	-cd $(DESTDIR)$(bindir) && rm -f crm_gui && ln -s $(datadir)/heartbeat-gui/haclient.py crm_gui
 	-cd $(DESTDIR)$(bindir) && rm -f hb_gui && ln -s $(datadir)/heartbeat-gui/haclient.py hb_gui
+endif
 
 dist-clean-local:
 	rm -f autoconf automake autoheader

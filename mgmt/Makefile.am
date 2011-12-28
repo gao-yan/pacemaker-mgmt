@@ -17,4 +17,8 @@
 #
 MAINTAINERCLEANFILES = Makefile.in
 
-SUBDIRS = daemon client 
+SUBDIRS = daemon 
+
+if MGMT_CLIENT_BUILD
+SUBDIRS += client 
+endif
