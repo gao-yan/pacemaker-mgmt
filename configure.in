@@ -1526,7 +1526,7 @@ dnl
 dnl    mgmt checks
 dnl
 
-AM_CONDITIONAL(MGMT_CLIENT_BUILD,  test "x${enable_mgmt_client}" = "xyes")
+AM_CONDITIONAL(MGMT_CLIENT_BUILD,  test "x${enable_mgmt_client}" != "xno")
 
 dnl
 dnl    SNMP checks
@@ -2146,7 +2146,7 @@ AC_CHECK_FILE($sysconfdir/pam.d/common-auth)
 AM_CONDITIONAL(USE_PAM_COMMON, test -f $sysconfdir/pam.d/common-account -a \
 				    -f /etc/pam.d/common-auth)
 
-	if test "x${PYTHON_INCLUDES}" = "x"; then
+	if test "x${enable_mgmt_client}" != "xno" -a "x${PYTHON_INCLUDES}" = "x"; then
   		FatalMissingThing "Python.h" \
 		  "The GUI managment module needs Python.h (Linux: python-devel package)"
 	fi
@@ -2161,11 +2161,13 @@ AM_CONDITIONAL(USE_PAM_COMMON, test -f $sysconfdir/pam.d/common-account -a \
 		  "The GUI managment module needs GNU/TLS header files"
 	fi
 
-	if test -z "$SWIG"; then
+	if test "x${enable_mgmt_client}" != "xno" -a -z "$SWIG"; then
 		FatalMissingThing "swig" \
 		  "The GUI managment module needs swig" \
 		  "You can get it from http://swig.org/"
 	fi
+
+CheckMissingThings
 
 dnl **********************************************
 dnl TSA plugin configuration
