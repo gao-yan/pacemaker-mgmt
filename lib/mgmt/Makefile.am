@@ -29,8 +29,8 @@ guilibdir                       =       $(libdir)/heartbeat-gui
 endif
 havarlibdir			=	$(localstatedir)/lib/@HB_PKG@
 COMMONLIBS			=	$(GLIBLIB)
-MGMT_DIR 			=	mgmt
-mgmtdir				=	$(HA_VARLIBHBDIR)/$(MGMT_DIR)
+#MGMT_DIR 			=	mgmt
+#mgmtdir				=	$(HA_VARLIBHBDIR)/$(MGMT_DIR)
 apigid                          =       @HA_APIGROUP@
 
 EXTRA_DIST			=	pymgmt.i
@@ -62,7 +62,7 @@ pymgmt_wrap.c pymgmt.py: pymgmt.i
 	$(SWIG) -python $^
 endif
 
-install-exec-local:
-	$(mkinstalldirs) $(DESTDIR)$(mgmtdir)
-	-chgrp $(apigid) $(DESTDIR)/$(mgmtdir)
-	chmod 770 $(DESTDIR)/$(mgmtdir)
+#install-exec-local:
+#	$(mkinstalldirs) $(DESTDIR)$(mgmtdir)
+#	-chgrp $(apigid) $(DESTDIR)/$(mgmtdir)
+#	chmod 770 $(DESTDIR)/$(mgmtdir)
