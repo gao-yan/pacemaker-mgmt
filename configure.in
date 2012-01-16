@@ -1274,12 +1274,11 @@ else
    AC_MSG_FAILURE(Pacemaker development headers were not found)
 fi
 
-CRM_DAEMON_DIR=`extract_header_define $CRM_HEADER CRM_DAEMON_DIR`
+CRM_DAEMON_DIR=`$PKGCONFIG pcmk --variable=daemondir`
 if test x"$CRM_DAEMON_DIR" = x""; then
-
-   CRM_DAEMON_DIR=`$PKGCONFIG pcmk --variable=daemondir`
-   AC_DEFINE_UNQUOTED(CRM_DAEMON_DIR,"$CRM_DAEMON_DIR", Location for Pacemaker daemons)
+   CRM_DAEMON_DIR=`extract_header_define $CRM_HEADER CRM_DAEMON_DIR`
 fi
+AC_DEFINE_UNQUOTED(CRM_DAEMON_DIR,"$CRM_DAEMON_DIR", Location for Pacemaker daemons)
 
 AC_PATH_PROGS(HG, hg false)
 AC_MSG_CHECKING(build revision)
