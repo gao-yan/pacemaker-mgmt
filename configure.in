@@ -14,6 +14,8 @@ dnl Initialiase, with sanity check of a unique file in the hierarchy
 AC_INIT(README.in)
 AC_PREREQ(2.53)
 
+PKG_FEATURES=""
+
 AC_CONFIG_AUX_DIR(.)
 AC_CANONICAL_HOST
 
@@ -2222,6 +2224,9 @@ AC_SUBST(ECHO_C)
 AC_SUBST(ECHO_E)
 AC_SUBST(ECHO_CMD)
 dnl *** "echo" adjustments (end) ***
+
+AC_DEFINE_UNQUOTED(PKG_FEATURES, "$PKG_FEATURES", Set of enabled features)
+AC_SUBST(PKG_FEATURES)
 
 dnl The Makefiles and shell scripts we output
 AC_CONFIG_FILES(Makefile				        \
