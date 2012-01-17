@@ -37,8 +37,7 @@ EXTRA_DIST			=	pymgmt.i
 
 lib_LTLIBRARIES = libhbmgmttls.la libhbmgmtclient.la libhbmgmtcommon.la
 libhbmgmttls_la_SOURCES = mgmt_tls_lib.c
-libhbmgmttls_la_LIBADD  = $(COMMONLIBS)
-libhbmgmttls_la_LDFLAGS = $(GNUTLSLIBS)
+libhbmgmttls_la_LIBADD  = $(COMMONLIBS) $(GNUTLSLIBS)
 libhbmgmttls_la_CFLAGS = $(INCLUDES) $(GNUTLSHEAD)
 
 libhbmgmtclient_la_SOURCES = mgmt_client_lib.c
@@ -53,8 +52,8 @@ if MGMT_CLIENT_BUILD
 guilib_LTLIBRARIES = _pymgmt.la
 _pymgmt_la_SOURCES = pymgmt_wrap.c mgmt_client_lib.c mgmt_tls_lib.c mgmt_common_lib.c
 _pymgmt_la_CFLAGS = @PYTHON_INCLUDES@ -I$(top_builddir)/include -w
-_pymgmt_la_LDFLAGS = -module $(GNUTLSLIBS)
-_pymgmt_la_LIBADD = $(top_builddir)/replace/libreplace.la
+_pymgmt_la_LDFLAGS = -module
+_pymgmt_la_LIBADD = $(GNUTLSLIBS) $(top_builddir)/replace/libreplace.la
 
 guilib_DATA = pymgmt.py
 
