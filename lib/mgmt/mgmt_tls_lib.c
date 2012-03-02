@@ -32,6 +32,8 @@
 #include <mgmt/mgmt_tls.h>
 #include <glib.h>
 
+#include <config.h>
+
 #define DH_BITS 1024
 
 static gnutls_dh_params dh_params;
@@ -58,8 +60,13 @@ tls_attach_client(int sock)
 	int ret;
 	gnutls_session* session = (gnutls_session*)gnutls_malloc(sizeof(gnutls_session));
 	gnutls_init(session, GNUTLS_CLIENT);
+#ifdef HAVE_GNUTLS_PRIORITY_SET_DIRECT
+/*	http://www.manpagez.com/info/gnutls/gnutls-2.10.4/gnutls_81.php#Echo-Server-with-anonymous-authentication */
+	gnutls_priority_set_direct(*session, "NORMAL:+ANON-DH", NULL);
+#else
 	gnutls_set_default_priority(*session);
 	gnutls_kx_set_priority (*session, kx_prio);
+#endif
 	gnutls_credentials_set(*session, GNUTLS_CRD_ANON, anoncred_client);
 	gnutls_transport_set_ptr(*session, (gnutls_transport_ptr) GINT_TO_POINTER(sock));
 	ret = gnutls_handshake(*session);
@@ -131,8 +138,13 @@ tls_attach_server(int sock)
 	int ret;
 	gnutls_session* session = (gnutls_session*)gnutls_malloc(sizeof(gnutls_session));
 	gnutls_init(session, GNUTLS_SERVER);
+#ifdef HAVE_GNUTLS_PRIORITY_SET_DIRECT
+/*	http://www.manpagez.com/info/gnutls/gnutls-2.10.4/gnutls_81.php#Echo-Server-with-anonymous-authentication */
+	gnutls_priority_set_direct(*session, "NORMAL:+ANON-DH", NULL);
+#else
 	gnutls_set_default_priority(*session);
 	gnutls_kx_set_priority (*session, kx_prio);
+#endif
 	gnutls_credentials_set(*session, GNUTLS_CRD_ANON, anoncred_server);
 	gnutls_dh_set_prime_bits(*session, DH_BITS);
 	gnutls_transport_set_ptr(*session, (gnutls_transport_ptr) GINT_TO_POINTER(sock));
