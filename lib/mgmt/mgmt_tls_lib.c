@@ -28,9 +28,9 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
-#include <gnutls/gnutls.h>
 #include <mgmt/mgmt_tls.h>
 #include <glib.h>
+#include <gnutls/gnutls.h>
 
 #include <config.h>
 
