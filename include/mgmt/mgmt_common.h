@@ -647,7 +647,7 @@ or
 
 /*
 description:
-	generate ptest information
+	generate transition information
 format:
 	MSG_GEN_PE_INFO <live|TRANSITION_NUM> <VERBOSITY|scores>
 return:

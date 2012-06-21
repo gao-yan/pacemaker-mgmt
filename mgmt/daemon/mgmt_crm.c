@@ -2443,7 +2443,7 @@ on_gen_pe_graph(char* argv[], int argc)
 
 	ARGC_CHECK(3)
 	if (STRNCMP_CONST(argv[1], "live") == 0) {
-		strncpy(cmd, "ptest -L", sizeof(cmd)-1);
+		strncpy(cmd, "crm_simulate -L", sizeof(cmd)-1);
 	} else {
 		for (compress = 1, stat_rc = -1; compress >= 0; compress--) {
 			filename = generate_series_filename(
@@ -2457,7 +2457,7 @@ on_gen_pe_graph(char* argv[], int argc)
 		}
 
 		if (stat_rc == 0) {
-			snprintf(cmd, sizeof(cmd), "ptest -x %s", filename);
+			snprintf(cmd, sizeof(cmd), "crm_simulate -x %s", filename);
 			crm_free(filename);
 		} else {
 			mgmt_log(LOG_WARNING, "Cannot stat the transition file \"%s/%s-%s.*\": %s",
@@ -2473,7 +2473,7 @@ on_gen_pe_graph(char* argv[], int argc)
 	if (system(cmd) < 0){
 		mgmt_log(LOG_ERR, "error on execute \"%s\": %s", cmd, strerror(errno));
 		free(dotfile);
-		return strdup(MSG_FAIL"\nError on execute the ptest command");
+		return strdup(MSG_FAIL"\nError on execute the crm_simulate command");
 	}
 
 	if ((fstream = fopen(dotfile, "r")) == NULL){
@@ -2511,7 +2511,7 @@ on_gen_pe_info(char* argv[], int argc)
 
 	ARGC_CHECK(4)
 	if (STRNCMP_CONST(argv[1], "live") == 0){
-		strncpy(cmd, "ptest -L", sizeof(cmd)-1);
+		strncpy(cmd, "crm_simulate -L", sizeof(cmd)-1);
 	} else {
 		for (compress = 1, stat_rc = -1; compress >= 0; compress--) {
 			filename = generate_series_filename(
@@ -2525,7 +2525,7 @@ on_gen_pe_info(char* argv[], int argc)
 		}
 
 		if (stat_rc == 0) {
-			snprintf(cmd, sizeof(cmd), "ptest -x %s", filename);
+			snprintf(cmd, sizeof(cmd), "crm_simulate -x %s", filename);
 			crm_free(filename);
 		} else {
 			mgmt_log(LOG_WARNING, "Cannot stat the transition file \"%s/%s-%s.*\": %s",
@@ -2551,7 +2551,7 @@ on_gen_pe_info(char* argv[], int argc)
 
 	if ((fstream = popen(cmd, "r")) == NULL){
 		mgmt_log(LOG_ERR, "error on popen \"%s\": %s", cmd, strerror(errno));
-		return strdup(MSG_FAIL"\nError on popen the ptest command");
+		return strdup(MSG_FAIL"\nError on popen the crm_simulate command");
 	}
 
 	ret = strdup(MSG_OK);
