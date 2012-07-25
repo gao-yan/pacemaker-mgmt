@@ -2535,8 +2535,10 @@ on_gen_pe_info(char* argv[], int argc)
 	}
 	
 	if (STRNCMP_CONST(argv[3], "scores") == 0) {
-		strncat(cmd, " -s", sizeof(cmd)-strlen(cmd)-1);
+		strncat(cmd, " -s -Q", sizeof(cmd)-strlen(cmd)-1);
 	} else {
+		strncat(cmd, " -S", sizeof(cmd)-strlen(cmd)-1);
+
 		for (i = 0; i < atoi(argv[3]); i++) {
 			if (i == 0){
 				strncat(cmd, " -V", sizeof(cmd)-strlen(cmd)-1);
