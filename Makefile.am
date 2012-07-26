@@ -66,7 +66,7 @@ changes:
 	printf "\n  * Changes since $(LAST_RELEASE)\n"
 #	hg log -M --template "  + {desc|firstline|strip}\n" -r $(LAST_RELEASE):tip | grep -v Low: | sort -uf 
 	hg log -M --template "  + {desc|firstline|strip}\n" -r $(LAST_RELEASE):tip | sort -uf 
-	printf "\n -- Yan Gao <ygao@novell.com>  `date +"%a, %d %b %Y %T %z"`\n"
+	printf "\n -- Gao,Yan <ygao@suse.com>  `date +"%a, %d %b %Y %T %z"`\n"
 
 OBS_PROJECT	= pacemaker-mgmt
 OBS_SERVER	= c001n16.suse.de

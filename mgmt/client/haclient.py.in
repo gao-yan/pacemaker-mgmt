@@ -4,12 +4,12 @@
 '''
 
 __authors__ ='''
-Yan Gao <ygao@novell.com>
+Gao,Yan <ygao@suse.com>
 Huang Zhen <zhenhltc@cn.ibm.com>, 2005-2006
 '''
 
 __copyright__='''
-Copyright (C) 2007-2009 Yan Gao <ygao@novell.com>
+Copyright (C) 2007-2012 Gao,Yan <ygao@suse.com>
 Copyright (C) 2005-2006 International Business Machines
 '''
 
@@ -6640,12 +6640,12 @@ class MainWindow :
 		website_label = "Pacemaker Website"
 		authors = __authors__.strip().split('\n')
 		license = __license__.strip()
-		copyright = "Copyright \xc2\xa9 2007-2009 Yan Gao <ygao@novell.com>" + "\n" \
+		copyright = "Copyright \xc2\xa9 2007-2012 Gao,Yan <ygao@suse.com>" + "\n" \
 				+ "Copyright \xc2\xa9 2005-2006 Huang Zhen <zhenhltc@cn.ibm.com>"
-		copyright0 = "Copyright \xc2\xa9 2007-2009 Yan Gao" + "\n" \
+		copyright0 = "Copyright \xc2\xa9 2007-2012 Gao,Yan" + "\n" \
 				+ "Copyright \xc2\xa9 2005-2006 Huang Zhen"
 		translators = "Hideo Yamauchi <renayama19661014@ybb.ne.jp>\n" \
-				+ "Yan Gao <ygao@novell.com>"
+				+ "Gao,Yan <ygao@suse.com>"
 
 		if not pygtk_newer(2, 6) :
 			dialog = gtk.Dialog(_("About") + " " + name, top_window, gtk.DIALOG_MODAL)

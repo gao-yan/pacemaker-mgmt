@@ -1,7 +1,7 @@
 Source: pacemaker-mgmt
 Section: admin
 Priority: optional
-Maintainer: Yan Gao <ygao@novell.com>
+Maintainer: Gao,Yan <ygao@suse.com>
 Build-Depends: debhelper (>= 5.0.37.2), libsnmp10-dev | libsnmp-dev, libglib2.0-dev, net-tools, python, libtool, libcurl4-openssl-dev | libcurl3-openssl-dev, libxml2-dev, bison, flex, uuid-dev, lynx, libbz2-dev, zlib1g-dev, uuid-dev, libltdl3-dev, swig, openssh-client, libgnutls-dev, python-central (>= 0.5), python-dev, libpam0g-dev, libncurses5-dev, pacemaker-dev, heartbeat-dev, intltool
 Standards-Version: 3.7.3
 XS-Python-Version: current

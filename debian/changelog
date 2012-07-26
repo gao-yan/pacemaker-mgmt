@@ -53,7 +53,7 @@ pacemaker-mgmt (1.99.2-1) unstable; urgency=medium
   + Medium: mgmtd: Destroy the crmd channel in the end of on_cleanup_rsc()
   + Medium: mgmtd: Fix memory leaks
 
- -- Yan Gao <ygao@novell.com>  Mon, 29 Jun 2009 14:05:12 +0800
+ -- Gao,Yan <ygao@novell.com>  Mon, 29 Jun 2009 14:05:12 +0800
 
 pacemaker-mgmt (1.99.1-1) unstable; urgency=medium
   * Update source tarball to revision: pacemaker-mgmt-1.99.1 (484883b2efe8+ tip)
@@ -84,7 +84,7 @@ pacemaker-mgmt (1.99.1-1) unstable; urgency=medium
   + Medium: mgmt: Optimize viewing transition information
   + Medium: mgmtd: Avoid segmentation faults caused by missing the required user or group
 
- -- Yan Gao <ygao@novell.com>  Mon, 27 Apr 2009 11:45:06 +0800
+ -- Gao,Yan <ygao@novell.com>  Mon, 27 Apr 2009 11:45:06 +0800
 
 pacemaker-mgmt (1.99.0-3) unstable; urgency=medium
   * Update source tarball to revision: f07b59e49f79 tip
@@ -99,7 +99,7 @@ pacemaker-mgmt (1.99.0-3) unstable; urgency=medium
   + Low: haclient: Fix file filters for saving transition graph
   + Medium: haclient: Get and cache CRM metadata in advance
 
- -- Yan Gao <ygao@novell.com>  Fri, 20 Mar 2009 02:00:41 +0800
+ -- Gao,Yan <ygao@novell.com>  Fri, 20 Mar 2009 02:00:41 +0800
 
 pacemaker-mgmt (1.99.0-2) unstable; urgency=medium
   * Update source tarball to revision: 19e662ce6447+ tip
@@ -114,7 +114,7 @@ pacemaker-mgmt (1.99.0-2) unstable; urgency=medium
   + Low: haclient: Hide optional attributes for "rsc_order" in simple mode
   + Medium: Build: Fix compilation
 
- -- Yan Gao <ygao@novell.com>  Sat, 14 Mar 2009 10:05:12 +0800 
+ -- Gao,Yan <ygao@novell.com>  Sat, 14 Mar 2009 10:05:12 +0800 
 
 pacemaker-mgmt (1.99.0-1) unstable; urgency=medium
   * Update source tarball to pacemaker-mgmt-1.99.0 (revision: 286f917a201f+ tip)
@@ -125,7 +125,7 @@ pacemaker-mgmt (1.99.0-1) unstable; urgency=medium
   * Changes since pacemaker-pygui-1.4
   + Complete rewrite
 
- -- Yan Gao <ygao@novell.com>  Mon, 02 Mar 2009 16:10:14 +0800
+ -- Gao,Yan <ygao@novell.com>  Mon, 02 Mar 2009 16:10:14 +0800
 
 pygui (2.0-1) stable; urgency=medium
   * Update source tarball to revision: 1485861613b7 tip

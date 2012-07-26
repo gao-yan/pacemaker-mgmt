@@ -1,7 +1,7 @@
 # Translation of Simplified Chinese for pacemaker-mgmt.
-# Copyright (C) 2009 Yan Gao
+# Copyright (C) 2009 Gao,Yan
 # This file is distributed under the same license as the package.
-# Yan Gao <ygao@novell.com>, 2009.
+# Gao,Yan <ygao@suse.com>, 2009.
 #
 #, fuzzy
 msgid ""
@@ -10,7 +10,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-04-17 16:29+0800\n"
 "PO-Revision-Date: 2009-04-17 15:37+0800\n"
-"Last-Translator: Yan Gao <ygao@novell.com>\n"
+"Last-Translator: Gao,Yan <ygao@suse.com>\n"
 "Language-Team: Simplified Chinese <language@novell.com>\n"
 "Language: \n"
 "MIME-Version: 1.0\n"
