@@ -203,7 +203,7 @@ main(int argc, char ** argv)
 
 	cl_inherit_logging_environment(0);
 
-	mgmt_log(LOG_INFO, "Pacemaker-mgmt Hg Version: %s", BUILD_REVISION);
+	mgmt_log(LOG_INFO, "Pacemaker-mgmt Git Version: %s", BUILD_REVISION);
 
 	if (req_status){
 		return init_status(PID_FILE, mgmtd_name);
