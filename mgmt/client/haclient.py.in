@@ -1250,8 +1250,8 @@ class ManageView :
 	def update(self, xml_node = None) :
 		view_status = self.save_status()
 		self.manage_tree.update(view_status[0])
-		self.restore_status(view_status)
 		self.widget.show_all()
+		self.restore_status(view_status)
 
 	def on_rsc_action(self, action) :
 		(cur_type, cur_name) = self.manage_tree.get_selected_node()
@@ -1686,18 +1686,24 @@ class ManageView :
 	def save_status(self) :
 		group_by_node = self.toggle_tool_action_group.get_action("group-by-node").get_active()
 		tree_status = self.manage_tree.save_tree_status()
-		return (group_by_node, tree_status)
+		paned_position = self.widget.get_position()
+		return (group_by_node, tree_status, paned_position)
 
 	def restore_status(self, view_status) :
 		#if view_status == None :
 		#	return
-		(group_by_node, tree_status) = view_status
+		(group_by_node, tree_status, paned_position) = view_status
 		if group_by_node :
 			self.toggle_tool_action_group.get_action("group-by-node").set_active(group_by_node)
 
 		self.update_tool_button()
 		self.manage_tree.restore_tree_status(tree_status)
 		self.on_after_show()
+
+		if paned_position :
+			(paned_width, paned_height) = self.widget.size_request()
+			self.manage_tree.widget.set_size_request(paned_width, paned_position)
+			self.widget.set_position(paned_position)
 
 	def update_tool_button(self) :
 		#value = manager.do_cmd("crm_attribute\ncrm_config\nget\nmaintenance-mode\n\n\n\n")
@@ -1739,6 +1745,7 @@ class ManageTree :
 	tree = None
 	last_iter = None
 	def __init__(self) :
+		global top_window
 		treeiter = {}
 		self.store = gtk.TreeStore(str, str, str, str)
 
@@ -1747,7 +1754,8 @@ class ManageTree :
 		add_column(tree, _("Name"), 1, self.render_type_icon)
 		add_column(tree, _("Status"), 2, self.render_status_icon)
 		add_column(tree, _("Details"), 3)
-		tree.set_size_request(500, 280)
+		(window_width, window_height) = top_window.get_size()
+		tree.set_size_request(500, window_height / 2)
 		#tree.connect("cursor-changed", self.on_cursor_changed, tree.get_selection())
 		#tree.connect("event-after", self.on_right_click)
 
