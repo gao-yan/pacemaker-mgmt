@@ -140,7 +140,7 @@ update_resources_recursively(GListPtr reslist, GListPtr nodelist, int index)
                 attr_value = g_hash_table_lookup(node->details->attrs,
                     attr_name); 
                 rsinfo->failcount = crm_parse_int(attr_value, "0");
-                crm_free(attr_name);
+                free(attr_name);
                 free_xml(tmp_xml);
              }
 
@@ -420,7 +420,7 @@ hbagentv2_update_diff(const char *event, crm_data_t *msg)
                 free_xml(diff);
                 return;
             }
-            crm_free(uuid);
+            free(uuid);
             sprintf(tmp_rc_str, "%d\n", op_rc);
             rc_code = tmp_rc_str;
         }
