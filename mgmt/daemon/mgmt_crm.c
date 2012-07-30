@@ -162,7 +162,7 @@ int cib_cache_enable = FALSE;
 	if (rsc == NULL) {						\
 		char *as_clone = crm_concat(argv[1], "0", ':');		\
 		rsc = pe_find_resource(data_set->resources, as_clone);	\
-		crm_free(as_clone);					\
+		free(as_clone);					\
 		if (rsc == NULL) {					\
 			free_data_set(data_set);			\
 			return strdup(MSG_FAIL"\nno such resource");	\
@@ -658,7 +658,7 @@ on_get_shadows(char* argv[], int argc)
 	if ((dp = opendir(shadow_dir)) == NULL){
 		mgmt_log(LOG_ERR, "error on opendir \"%s\": %s", shadow_dir, strerror(errno));
 		if (test_file) {
-			crm_free(test_file);
+			free(test_file);
 		}
 		return strdup(MSG_FAIL"\nCannot open the CIB shadow directory");
 	}
@@ -683,7 +683,7 @@ on_get_shadows(char* argv[], int argc)
 	}
 
 	if (test_file) {
-		crm_free(test_file);
+		free(test_file);
 	}
 	return ret;
 }
@@ -1335,7 +1335,7 @@ delete_lrm_rsc(IPC_Channel *crmd_channel, const char *host_uname, const char *rs
 			     CRM_SYSTEM_CRMD, client_name, our_pid);
 
 	free_xml(msg_data);
-	crm_free(key);
+	free(key);
 
 	if(send_ipc_message(crmd_channel, cmd)) {
 		free_xml(cmd);
@@ -1395,8 +1395,8 @@ on_cleanup_rsc(char* argv[], int argc)
 		buffer = crm_concat("fail-count", argv[2], '-');
 		delete_attr(cib_conn, cib_sync_call, XML_CIB_TAG_STATUS, dest_node, NULL, NULL,
 				NULL, buffer, NULL, FALSE);
-		crm_free(dest_node);
-		crm_free(buffer);
+		free(dest_node);
+		free(buffer);
 		mgmt_log(LOG_INFO, "Delete fail-count for %s from %s", argv[2], argv[1]);
 	}
 	/* force the TE to start a transition */
@@ -1404,7 +1404,7 @@ on_cleanup_rsc(char* argv[], int argc)
 	now_s = crm_itoa(now);
 	update_attr(cib_conn, cib_sync_call,
 		    XML_CIB_TAG_CRMCONFIG, NULL, NULL, NULL, NULL, "last-lrm-refresh", now_s, FALSE);
-	crm_free(now_s);
+	free(now_s);
 
 	crmd_channel->ops->destroy(crmd_channel);
 	
@@ -1527,7 +1527,7 @@ on_get_rsc_status(char* argv[], int argc)
 	}
 	num_s = crm_itoa(rsc->migration_threshold);
 	ret = mgmt_msg_append(ret, num_s);
-	crm_free(num_s);
+	free(num_s);
 	free_data_set(data_set);
 	return ret;
 }
@@ -1945,7 +1945,7 @@ on_cib_query(char* argv[], int argc)
 #if 0		
 		mgmt_log(LOG_INFO, "%s", buffer); 
 #endif
-		crm_free(buffer);
+		free(buffer);
 		free_xml(output);
 		return ret;
 	}
@@ -2256,7 +2256,7 @@ on_get_pe_inputs(char* argv[], int argc)
 				filename = generate_series_filename(
         		                pe_state_dir, pe_series[i].name, last_seq, compress);
 				stat_rc = stat(filename, &statbuf);
-				crm_free(filename);
+				free(filename);
 				if (stat_rc == 0) {
 					break;
 				}
@@ -2291,7 +2291,7 @@ on_get_pe_inputs(char* argv[], int argc)
 				filename = generate_series_filename(
         	        	        pe_state_dir, pe_series[i].name, mid, compress);
 				stat_rc = stat(filename, &statbuf);
-				crm_free(filename);
+				free(filename);
 				if (stat_rc == 0) {
 					break;
 				}
@@ -2326,7 +2326,7 @@ on_get_pe_inputs(char* argv[], int argc)
 				filename = generate_series_filename(
         	                	pe_state_dir, pe_series[i].name, mid, compress);
 				stat_rc = stat(filename, &statbuf);
-				crm_free(filename);
+				free(filename);
 				if (stat_rc == 0) {
 					break;
 				}
@@ -2362,14 +2362,14 @@ on_get_pe_inputs(char* argv[], int argc)
 				if (stat_rc == 0) {
 					break;
 				} else {
-					crm_free(filename);
+					free(filename);
 				}
 			}
 
 			if (stat_rc == 0) {
 				snprintf(info, sizeof(info), "%s %ld ", basename(filename), (long)statbuf.st_mtime);
 				append_str(ret, buf, info);
-				crm_free(filename);
+				free(filename);
 			}
 
 			get_seq(seq, end_seq, wrap, 1, seq);
@@ -2407,7 +2407,7 @@ on_get_pe_summary(char* argv[], int argc)
 			filename = generate_series_filename(
                        		pe_state_dir, argv[1], crm_int_helper(argv[2], NULL), compress);
 			stat_rc = stat(filename, &statbuf);
-			crm_free(filename);
+			free(filename);
 			if (stat_rc == 0) {
 				break;
 			}
@@ -2452,13 +2452,13 @@ on_gen_pe_graph(char* argv[], int argc)
 			if (stat_rc == 0) {
 				break;
 			} else {
-				crm_free(filename);
+				free(filename);
 			}
 		}
 
 		if (stat_rc == 0) {
 			snprintf(cmd, sizeof(cmd), "crm_simulate -x %s", filename);
-			crm_free(filename);
+			free(filename);
 		} else {
 			mgmt_log(LOG_WARNING, "Cannot stat the transition file \"%s/%s-%s.*\": %s",
 				pe_state_dir, argv[1], argv[2], strerror(errno));
@@ -2520,13 +2520,13 @@ on_gen_pe_info(char* argv[], int argc)
 			if (stat_rc == 0) {
 				break;
 			} else {
-				crm_free(filename);
+				free(filename);
 			}
 		}
 
 		if (stat_rc == 0) {
 			snprintf(cmd, sizeof(cmd), "crm_simulate -x %s", filename);
-			crm_free(filename);
+			free(filename);
 		} else {
 			mgmt_log(LOG_WARNING, "Cannot stat the transition file \"%s/%s-%s.*\": %s",
 				pe_state_dir, argv[1], argv[2], strerror(errno));
