@@ -1389,8 +1389,8 @@ main(int argc, char ** argv)
 	/* LHAHeartbeatConfigInfo partial-mode */
 #if SUPPORT_HEARTBEAT
 	int hbconfig_refresh_timing = 0;
-#endif
 	int hbconfig_refresh_cnt;
+#endif
 
 	while ((flag = getopt(argc, argv, "dr:h")) != EOF) {
 	    	int i;
@@ -1534,7 +1534,9 @@ main(int argc, char ** argv)
 
 	hbagent_trap(1, myid);
 
+#if SUPPORT_HEARTBEAT
 	hbconfig_refresh_cnt = 0;
+#endif
 
 	/* you're main loop here... */
 	while(keep_running) {
