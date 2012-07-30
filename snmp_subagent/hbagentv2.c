@@ -184,7 +184,7 @@ update_resource_table_v2(void)
 {
     crm_data_t *cib_object = NULL;
     pe_working_set_t data_set;
-    int rc = cib_ok;
+    int rc = 0;
     int options =  cib_scope_local|cib_sync_call;
     int index;
 
@@ -195,7 +195,7 @@ update_resource_table_v2(void)
     free_resource_table_v2();
 
     rc = cib_conn->cmds->query(cib_conn, NULL, &cib_object, options);
-    if (rc != cib_ok) {
+    if (rc != 0) {
         cl_log(LOG_ERR, "CIB query failed: %s", cib_error2string(rc));
         return HA_FAIL;
     }
@@ -494,14 +494,14 @@ init_cib(void)
         return HA_FAIL;
     }
     rc = cib_conn->cmds->signon(cib_conn, LHAAGENTID, cib_query);
-    if (rc != cib_ok) {
+    if (rc != 0) {
         cl_log(LOG_ERR, "CIB connection signon failed.");
         return HA_FAIL;
     }
 
     rc = cib_conn->cmds->add_notify_callback(cib_conn, T_CIB_DIFF_NOTIFY,
                                              hbagentv2_update_diff);
-    if (rc != cib_ok) {
+    if (rc != 0) {
         cl_log(LOG_ERR, "CIB connection adding callback failed.");
         return HA_FAIL;
     }
@@ -517,7 +517,7 @@ static void
 free_cib(void)
 {
     if (cib_conn) {
-        if (cib_conn->cmds->signoff(cib_conn) != cib_ok) {
+        if (cib_conn->cmds->signoff(cib_conn) != 0) {
             cl_log(LOG_WARNING, "CIB connection signoff failed(ignored).");
         }
         cib_delete(cib_conn);
