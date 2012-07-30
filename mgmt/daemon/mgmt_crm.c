@@ -357,7 +357,7 @@ get_parent(resource_t* child)
 int
 init_crm(int cache_cib)
 {
-	int ret = cib_ok;
+	int ret = 0;
 	int i, max_try = 5;
 	char cib_name[MAX_STRLEN];
 
@@ -373,13 +373,13 @@ init_crm(int cache_cib)
 	
 	for (i = 1; i <= max_try ; i++) {
 		ret = cib_conn->cmds->signon(cib_conn, client_name, cib_command);
-		if (ret == cib_ok) {
+		if (ret == 0) {
 			break;
 		}
 		mgmt_log(LOG_INFO,"login to cib '%s': %d, ret=%d (%s)", cib_name, i, ret, cib_error2string(ret));
 		sleep(1);
 	}
-	if (ret != cib_ok) {
+	if (ret != 0) {
 		mgmt_log(LOG_INFO,"login to cib '%s' failed: %s", cib_name, cib_error2string(ret));
 		cib_conn = NULL;
 		return ret;
@@ -554,7 +554,7 @@ on_init_cib(char* argv[], int argc)
 	char buf[MAX_STRLEN];
 	char* ret = NULL;
 	char cib_name[MAX_STRLEN];
-	int rc = cib_ok;
+	int rc = 0;
 
 	ARGC_CHECK(2);
 
@@ -566,7 +566,7 @@ on_init_cib(char* argv[], int argc)
 		snprintf(cib_name, sizeof(cib_name), "shadow.%s", argv[1]);
 	}
 
-	if ((rc = init_crm(TRUE)) != cib_ok) {
+	if ((rc = init_crm(TRUE)) != 0) {
 		ret = strdup(MSG_FAIL);
 		snprintf(buf, sizeof(buf), "Cannot initiate CIB '%s': %s", cib_name, cib_error2string(rc));
 		ret = mgmt_msg_append(ret, buf);
@@ -584,7 +584,7 @@ on_switch_cib(char* argv[], int argc)
 	char buf[MAX_STRLEN];
 	char* ret = NULL;
 	const char* saved_env = getenv("CIB_shadow");
-	int rc = cib_ok;
+	int rc = 0;
 
 	ARGC_CHECK(2)
 
@@ -600,7 +600,7 @@ on_switch_cib(char* argv[], int argc)
 
 	mgmt_log(LOG_INFO, "Switch to the CIB '%s'", cib_name);
 
-	if ((rc = init_crm(TRUE)) != cib_ok) {
+	if ((rc = init_crm(TRUE)) != 0) {
 		mgmt_log(LOG_ERR, "Cannot switch to the CIB '%s': %s", cib_name, cib_error2string(rc));
 		ret = strdup(MSG_FAIL);
 		snprintf(buf, sizeof(buf), "Cannot switch to the CIB '%s': %s", cib_name, cib_error2string(rc));
@@ -613,7 +613,7 @@ on_switch_cib(char* argv[], int argc)
 			setenv("CIB_shadow", saved_env, 1);
 			snprintf(cib_name, sizeof(cib_name), "shadow.%s", saved_env);
 		}
-		if ((rc = init_crm(TRUE)) != cib_ok) {
+		if ((rc = init_crm(TRUE)) != 0) {
 			mgmt_log(LOG_ERR, "Cannot switch back to the previous CIB '%s': %s", cib_name, cib_error2string(rc));
 			memset(buf, 0, sizeof(buf));
 			snprintf(buf, sizeof(buf), "Cannot switch back to the previous CIB '%s': %s", cib_name, cib_error2string(rc));
@@ -623,7 +623,7 @@ on_switch_cib(char* argv[], int argc)
 				unsetenv("CIB_shadow");
 				strncpy(cib_name, "live", sizeof(cib_name)-1);
 
-				if ((rc = init_crm(TRUE)) != cib_ok) {
+				if ((rc = init_crm(TRUE)) != 0) {
 					mgmt_log(LOG_ERR, "Cannot recover to the CIB '%s': %s", cib_name, cib_error2string(rc));
 					memset(buf, 0, sizeof(buf));
 					snprintf(buf, sizeof(buf), "Cannot recover to the CIB '%s': %s", cib_name, cib_error2string(rc));
@@ -1388,7 +1388,7 @@ on_cleanup_rsc(char* argv[], int argc)
 	refresh_lrm(crmd_channel, NULL); 
 	
 	rc = query_node_uuid(cib_conn, argv[1], &dest_node);
-	if (rc != cib_ok) {
+	if (rc != 0) {
 		mgmt_log(LOG_WARNING, "Could not map uname=%s to a UUID: %s\n",
 				argv[1], cib_error2string(rc));
 	} else {
