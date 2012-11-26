@@ -40,6 +40,10 @@
 typedef xmlNode crm_data_t;
 #endif
 
+#if !HAVE_PCMK_STRERROR
+#  define pcmk_strerror(rc) cib_error2string(rc)
+#endif
+
 /*
  * Agent MIB value conversion macros from the internal value
  */
@@ -199,7 +203,7 @@ update_resource_table_v2(void)
 
     rc = cib_conn->cmds->query(cib_conn, NULL, &cib_object, options);
     if (rc != 0) {
-        cl_log(LOG_ERR, "CIB query failed: %s", cib_error2string(rc));
+        cl_log(LOG_ERR, "CIB query failed: %s", pcmk_strerror(rc));
         return HA_FAIL;
     }
     if (cib_object == NULL) {
