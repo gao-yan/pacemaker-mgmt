@@ -42,7 +42,6 @@
 #include <crm/cib.h>
 #include <crm/msg_xml.h>
 #include <crm/pengine/status.h>
-#include <crm/common/cluster.h>
 
 #ifdef SUPPORT_AIS
 #undef SUPPORT_AIS
@@ -53,6 +52,13 @@
 #endif
 
 #include <pygui_internal.h>
+
+#if HAVE_PACEMAKER_CRM_COMMON_CLUSTER_H
+#  include <crm/common/cluster.h>
+#endif
+#if HAVE_PACEMAKER_CRM_CLUSTER_H
+#  include <crm/cluster.h>
+#endif
 
 #include "mgmt_internal.h"
 

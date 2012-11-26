@@ -62,6 +62,13 @@
 
 #include <pygui_internal.h>
 
+#if HAVE_PACEMAKER_CRM_COMMON_CLUSTER_H
+#  include <crm/common/cluster.h>
+#endif
+#if HAVE_PACEMAKER_CRM_CLUSTER_H
+#  include <crm/cluster.h>
+#endif
+
 #include <mgmt/mgmt.h>
 #include "mgmt_internal.h"
 
