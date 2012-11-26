@@ -59,6 +59,9 @@
 #if HAVE_PACEMAKER_CRM_CLUSTER_H
 #  include <crm/cluster.h>
 #endif
+#if HAVE_PACEMAKER_CRM_SERVICES_H
+#  include <crm/services.h>
+#endif
 
 #include "mgmt_internal.h"
 
@@ -1592,7 +1595,11 @@ on_op_status2str(char* argv[], int argc)
 
 	ARGC_CHECK(2);
 	op_status = atoi(argv[1]);
+#if !HAVE_DECL_SERVICES_LRM_STATUS_STR
 	ret = mgmt_msg_append(ret, op_status2text(op_status));
+#else
+	ret = mgmt_msg_append(ret, services_lrm_status_str(op_status));
+#endif
 	return ret;
 }
 

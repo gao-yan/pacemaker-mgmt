@@ -1298,6 +1298,12 @@ if test $ac_cv_lib_crmcommon_pcmk_strerror = yes; then
    AC_DEFINE_UNQUOTED(HAVE_PCMK_STRERROR, 1, pacemaker has pcmk_strerror)
 fi
 
+dnl pacemaker >= 1.1.8
+AC_CHECK_HEADERS(pacemaker/crm/services.h)
+if test $ac_cv_header_pacemaker_crm_services_h = yes; then
+   AC_CHECK_DECLS(services_lrm_status_str,,,[[#include <pacemaker/crm/services.h>]])
+fi
+
 AC_PATH_PROGS(GIT, git false)
 AC_MSG_CHECKING(build revision)
 
