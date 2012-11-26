@@ -155,6 +155,11 @@ int pclose2(FILE *fp_in, FILE *fp_out, pid_t pid);
 pe_working_set_t* cib_cached = NULL;
 int cib_cache_enable = FALSE;
 
+#if !HAVE_PCMK_STRERROR
+#  define pcmk_strerror(rc) cib_error2string(rc)
+#endif
+
+
 #define CIB_CHECK() \
 	if (cib_conn == NULL) { \
 		mgmt_log(LOG_ERR, "No cib connection: client_id=%d", *client_id); \
@@ -293,7 +298,11 @@ crm_failed_msg(crm_data_t* output, int rc)
 	/* beekhof:
 		you can pretend that the return code is success, 
 		its an internal CIB thing*/
+#if !HAVE_PCMK_STRERROR
 	if (rc == cib_diff_resync) {
+#else
+	if (rc == -pcmk_err_diff_resync) {
+#endif
 		if (output != NULL) {
 			free_xml(output);
 		}
@@ -301,7 +310,7 @@ crm_failed_msg(crm_data_t* output, int rc)
 	}
 	
 	ret = strdup(MSG_FAIL);
-	ret = mgmt_msg_append(ret, cib_error2string((enum cib_errors)rc));
+	ret = mgmt_msg_append(ret, pcmk_strerror(rc));
 	
 	if (output == NULL) {
 		return ret;
@@ -386,11 +395,11 @@ init_crm(int cache_cib)
 		if (ret == 0) {
 			break;
 		}
-		mgmt_log(LOG_INFO,"login to cib '%s': %d, ret=%d (%s)", cib_name, i, ret, cib_error2string(ret));
+		mgmt_log(LOG_INFO,"login to cib '%s': %d, ret=%d (%s)", cib_name, i, ret, pcmk_strerror(ret));
 		sleep(1);
 	}
 	if (ret != 0) {
-		mgmt_log(LOG_INFO,"login to cib '%s' failed: %s", cib_name, cib_error2string(ret));
+		mgmt_log(LOG_INFO,"login to cib '%s' failed: %s", cib_name, pcmk_strerror(ret));
 		cib_conn = NULL;
 		return ret;
 	}
@@ -578,7 +587,7 @@ on_init_cib(char* argv[], int argc)
 
 	if ((rc = init_crm(TRUE)) != 0) {
 		ret = strdup(MSG_FAIL);
-		snprintf(buf, sizeof(buf), "Cannot initiate CIB '%s': %s", cib_name, cib_error2string(rc));
+		snprintf(buf, sizeof(buf), "Cannot initiate CIB '%s': %s", cib_name, pcmk_strerror(rc));
 		ret = mgmt_msg_append(ret, buf);
 	} else {
 		ret = strdup(MSG_OK);
@@ -611,9 +620,9 @@ on_switch_cib(char* argv[], int argc)
 	mgmt_log(LOG_INFO, "Switch to the CIB '%s'", cib_name);
 
 	if ((rc = init_crm(TRUE)) != 0) {
-		mgmt_log(LOG_ERR, "Cannot switch to the CIB '%s': %s", cib_name, cib_error2string(rc));
+		mgmt_log(LOG_ERR, "Cannot switch to the CIB '%s': %s", cib_name, pcmk_strerror(rc));
 		ret = strdup(MSG_FAIL);
-		snprintf(buf, sizeof(buf), "Cannot switch to the CIB '%s': %s", cib_name, cib_error2string(rc));
+		snprintf(buf, sizeof(buf), "Cannot switch to the CIB '%s': %s", cib_name, pcmk_strerror(rc));
 		ret = mgmt_msg_append(ret, buf);
 
 		if (saved_env == NULL) {
@@ -624,9 +633,9 @@ on_switch_cib(char* argv[], int argc)
 			snprintf(cib_name, sizeof(cib_name), "shadow.%s", saved_env);
 		}
 		if ((rc = init_crm(TRUE)) != 0) {
-			mgmt_log(LOG_ERR, "Cannot switch back to the previous CIB '%s': %s", cib_name, cib_error2string(rc));
+			mgmt_log(LOG_ERR, "Cannot switch back to the previous CIB '%s': %s", cib_name, pcmk_strerror(rc));
 			memset(buf, 0, sizeof(buf));
-			snprintf(buf, sizeof(buf), "Cannot switch back to the previous CIB '%s': %s", cib_name, cib_error2string(rc));
+			snprintf(buf, sizeof(buf), "Cannot switch back to the previous CIB '%s': %s", cib_name, pcmk_strerror(rc));
 			ret = mgmt_msg_append(ret, buf);
 
 			if (saved_env) {
@@ -634,9 +643,9 @@ on_switch_cib(char* argv[], int argc)
 				strncpy(cib_name, "live", sizeof(cib_name)-1);
 
 				if ((rc = init_crm(TRUE)) != 0) {
-					mgmt_log(LOG_ERR, "Cannot recover to the CIB '%s': %s", cib_name, cib_error2string(rc));
+					mgmt_log(LOG_ERR, "Cannot recover to the CIB '%s': %s", cib_name, pcmk_strerror(rc));
 					memset(buf, 0, sizeof(buf));
-					snprintf(buf, sizeof(buf), "Cannot recover to the CIB '%s': %s", cib_name, cib_error2string(rc));
+					snprintf(buf, sizeof(buf), "Cannot recover to the CIB '%s': %s", cib_name, pcmk_strerror(rc));
 					ret = mgmt_msg_append(ret, buf);
 				}
 			}
@@ -1400,7 +1409,7 @@ on_cleanup_rsc(char* argv[], int argc)
 	rc = query_node_uuid(cib_conn, argv[1], &dest_node);
 	if (rc != 0) {
 		mgmt_log(LOG_WARNING, "Could not map uname=%s to a UUID: %s\n",
-				argv[1], cib_error2string(rc));
+				argv[1], pcmk_strerror(rc));
 	} else {
 		buffer = crm_concat("fail-count", argv[2], '-');
 		delete_attr(cib_conn, cib_sync_call, XML_CIB_TAG_STATUS, dest_node, NULL, NULL,
