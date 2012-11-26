@@ -36,6 +36,9 @@
 #include "LHAResourceTable.h"
 #include "LHAResourceStatusUpdate.h"
 
+#if !HAVE_CRM_DATA_T
+typedef xmlNode crm_data_t;
+#endif
 
 /*
  * Agent MIB value conversion macros from the internal value
