@@ -40,7 +40,12 @@
 #include "hb_api.h"
 #include "heartbeat.h"
 #else
-#include <crm/common/cluster.h>
+#  if HAVE_PACEMAKER_CRM_COMMON_CLUSTER_H
+#    include <crm/common/cluster.h>
+#  endif
+#  if HAVE_PACEMAKER_CRM_CLUSTER_H
+#    include <crm/cluster.h>
+#  endif
 #endif
 
 #include "clplumbing/cl_log.h"
