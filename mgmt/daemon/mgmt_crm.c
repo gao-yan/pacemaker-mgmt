@@ -62,6 +62,10 @@
 
 #include "mgmt_internal.h"
 
+#if !HAVE_CRM_DATA_T
+typedef xmlNode crm_data_t;
+#endif
+
 extern resource_t *group_find_child(resource_t *rsc, const char *id);
 extern crm_data_t * do_calculations(
 	pe_working_set_t *data_set, crm_data_t *xml_input, ha_time_t *now);
