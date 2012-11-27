@@ -468,7 +468,7 @@ init_crm(int cache_cib)
 	g_hash_table_insert(cib_conns, client_id, cib_conn);
 
 	if (cib_envs == NULL) {
-		cib_envs = g_hash_table_new_full(g_direct_hash, g_direct_equal, NULL, g_hash_destroy_str);
+		cib_envs = g_hash_table_new_full(g_direct_hash, g_direct_equal, NULL, free);
 	}
 	g_hash_table_insert(cib_envs, cib_conn, getenv("CIB_shadow")?strdup(getenv("CIB_shadow")):NULL);
 
