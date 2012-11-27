@@ -70,6 +70,10 @@
 typedef xmlNode crm_data_t;
 #endif
 
+#if !HAVE_CRM_IPC_NEW
+typedef IPC_Channel crm_ipc_t;
+#endif
+
 extern resource_t *group_find_child(resource_t *rsc, const char *id);
 /*extern crm_data_t * do_calculations(
 	pe_working_set_t *data_set, crm_data_t *xml_input, ha_time_t *now);*/
@@ -142,8 +146,8 @@ static char* on_gen_pe_info(char* argv[], int argc);
 static int delete_object(const char* type, const char* entry, const char* id, crm_data_t** output);
 static GList* find_xml_node_list(crm_data_t *root, const char *search_path);
 */
-static int refresh_lrm(IPC_Channel *crmd_channel, const char *host_uname);
-static int delete_lrm_rsc(IPC_Channel *crmd_channel, const char *host_uname, const char *rsc_id);
+static int refresh_lrm(crm_ipc_t *crmd_channel, const char *host_uname);
+static int delete_lrm_rsc(crm_ipc_t *crmd_channel, const char *host_uname, const char *rsc_id);
 static pe_working_set_t* get_data_set(void);
 static void free_data_set(pe_working_set_t* data_set);
 static void on_cib_connection_destroy(gpointer user_data);
@@ -1336,7 +1340,7 @@ on_set_node_standby(char* argv[], int argc)
 */
 /* resource functions */
 static int
-delete_lrm_rsc(IPC_Channel *crmd_channel, const char *host_uname, const char *rsc_id)
+delete_lrm_rsc(crm_ipc_t *crmd_channel, const char *host_uname, const char *rsc_id)
 {
 	crm_data_t *cmd = NULL;
 	crm_data_t *msg_data = NULL;
@@ -1364,7 +1368,11 @@ delete_lrm_rsc(IPC_Channel *crmd_channel, const char *host_uname, const char *rs
 	free_xml(msg_data);
 	free(key);
 
+#if !HAVE_CRM_IPC_NEW
 	if(send_ipc_message(crmd_channel, cmd)) {
+#else
+    if(crm_ipc_send(crmd_channel, cmd, 0, 0, NULL)){
+#endif
 		free_xml(cmd);
 		return 0;
 	}
@@ -1373,7 +1381,7 @@ delete_lrm_rsc(IPC_Channel *crmd_channel, const char *host_uname, const char *rs
 }
 
 static int
-refresh_lrm(IPC_Channel *crmd_channel, const char *host_uname)
+refresh_lrm(crm_ipc_t *crmd_channel, const char *host_uname)
 {
 	crm_data_t *cmd = NULL;
 	char our_pid[11];
@@ -1384,7 +1392,11 @@ refresh_lrm(IPC_Channel *crmd_channel, const char *host_uname)
 	cmd = create_request(CRM_OP_LRM_REFRESH, NULL, host_uname,
 			     CRM_SYSTEM_CRMD, client_name, our_pid);
 	
+#if !HAVE_CRM_IPC_NEW
 	if(send_ipc_message(crmd_channel, cmd)) {
+#else
+    if(crm_ipc_send(crmd_channel, cmd, 0, 0, NULL)){
+#endif
 		free_xml(cmd);
 		return 0;
 	}
@@ -1395,7 +1407,7 @@ refresh_lrm(IPC_Channel *crmd_channel, const char *host_uname)
 char*
 on_cleanup_rsc(char* argv[], int argc)
 {
-	IPC_Channel *crmd_channel = NULL;
+	crm_ipc_t *crmd_channel = NULL;
 	char our_pid[11];
 	char *now_s = NULL;
 	time_t now = time(NULL);
@@ -1407,10 +1419,33 @@ on_cleanup_rsc(char* argv[], int argc)
 	snprintf(our_pid, 10, "%d", getpid());
 	our_pid[10] = '\0';
 	
+#if !HAVE_CRM_IPC_NEW
 	init_client_ipc_comms(CRM_SYSTEM_CRMD, NULL,
 				    NULL, &crmd_channel);
 
 	send_hello_message(crmd_channel, our_pid, client_name, "0", "1");
+#else
+    crmd_channel = crm_ipc_new(CRM_SYSTEM_CRMD, 0);
+    if (crmd_channel && crm_ipc_connect(crmd_channel)) {
+        xmlNode *hello = NULL;
+        hello = create_hello_message(our_pid, client_name, "0", "1");
+        rc = crm_ipc_send(crmd_channel, hello, 0, 0, NULL);
+        free_xml(hello);
+
+    } else {
+        rc = -ENOTCONN;
+    }
+
+    if (rc < 0) {
+        if (crmd_channel) {
+            crm_ipc_close(crmd_channel);
+            crm_ipc_destroy(crmd_channel);
+        }
+        mgmt_log(LOG_ERR, "Error signing on to the CRMd service: %s", pcmk_strerror(rc));
+        return strdup(MSG_FAIL"\nError signing on to the CRMd service");
+    }
+#endif
+
 	delete_lrm_rsc(crmd_channel, argv[1], argv[2]);
 	refresh_lrm(crmd_channel, NULL); 
 	
@@ -1433,7 +1468,14 @@ on_cleanup_rsc(char* argv[], int argc)
 		    XML_CIB_TAG_CRMCONFIG, NULL, NULL, NULL, NULL, "last-lrm-refresh", now_s, FALSE);
 	free(now_s);
 
+#if !HAVE_CRM_IPC_NEW
 	crmd_channel->ops->destroy(crmd_channel);
+#else
+    if (crmd_channel) {
+        crm_ipc_close(crmd_channel);
+        crm_ipc_destroy(crmd_channel);
+    }
+#endif
 	
 	return strdup(MSG_OK);
 }

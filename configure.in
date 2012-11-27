@@ -1304,6 +1304,12 @@ if test $ac_cv_header_pacemaker_crm_services_h = yes; then
    AC_CHECK_DECLS(services_lrm_status_str,,,[[#include <pacemaker/crm/services.h>]])
 fi
 
+dnl pacemaker >= 1.1.8
+AC_CHECK_LIB(crmcommon, crm_ipc_new)
+if test $ac_cv_lib_crmcommon_crm_ipc_new = yes; then
+   AC_DEFINE_UNQUOTED(HAVE_CRM_IPC_NEW, 1, pacemaker has crm_ipc_new)
+fi
+
 dnl pacemaker < 1.1.8
 AC_CHECK_LIB(crmcommon, new_ha_date)
 if test $ac_cv_lib_crmcommon_new_ha_date = yes; then
