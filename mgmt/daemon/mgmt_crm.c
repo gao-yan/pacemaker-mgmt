@@ -71,8 +71,8 @@ typedef xmlNode crm_data_t;
 #endif
 
 extern resource_t *group_find_child(resource_t *rsc, const char *id);
-extern crm_data_t * do_calculations(
-	pe_working_set_t *data_set, crm_data_t *xml_input, ha_time_t *now);
+/*extern crm_data_t * do_calculations(
+	pe_working_set_t *data_set, crm_data_t *xml_input, ha_time_t *now);*/
 
 extern int *client_id;
 
@@ -271,7 +271,11 @@ get_data_set(void)
 	}
 	set_working_set_defaults(data_set);
 	data_set->input = get_cib_copy(cib_conn);
+#if HAVE_NEW_HA_DATE
 	data_set->now = new_ha_date(TRUE);
+#else
+	data_set->now = NULL;
+#endif
 
 	cluster_status(data_set);
 	
