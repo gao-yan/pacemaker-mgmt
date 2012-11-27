@@ -1455,8 +1455,14 @@ on_cleanup_rsc(char* argv[], int argc)
 				argv[1], pcmk_strerror(rc));
 	} else {
 		buffer = crm_concat("fail-count", argv[2], '-');
+
+#if !HAVE_UPDATE_ATTR_DELEGATE
 		delete_attr(cib_conn, cib_sync_call, XML_CIB_TAG_STATUS, dest_node, NULL, NULL,
 				NULL, buffer, NULL, FALSE);
+#else
+		delete_attr_delegate(cib_conn, cib_sync_call, XML_CIB_TAG_STATUS, dest_node, NULL, NULL,
+				NULL, buffer, NULL, FALSE, NULL);
+#endif
 		free(dest_node);
 		free(buffer);
 		mgmt_log(LOG_INFO, "Delete fail-count for %s from %s", argv[2], argv[1]);
@@ -1464,8 +1470,13 @@ on_cleanup_rsc(char* argv[], int argc)
 	/* force the TE to start a transition */
 	sleep(2); /* wait for the refresh */
 	now_s = crm_itoa(now);
+#if !HAVE_UPDATE_ATTR_DELEGATE
 	update_attr(cib_conn, cib_sync_call,
 		    XML_CIB_TAG_CRMCONFIG, NULL, NULL, NULL, NULL, "last-lrm-refresh", now_s, FALSE);
+#else
+	update_attr_delegate(cib_conn, cib_sync_call,
+		    XML_CIB_TAG_CRMCONFIG, NULL, NULL, NULL, NULL, "last-lrm-refresh", now_s, FALSE, NULL);
+#endif
 	free(now_s);
 
 #if !HAVE_CRM_IPC_NEW

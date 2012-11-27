@@ -1310,6 +1310,11 @@ if test $ac_cv_lib_crmcommon_crm_ipc_new = yes; then
    AC_DEFINE_UNQUOTED(HAVE_CRM_IPC_NEW, 1, pacemaker has crm_ipc_new)
 fi
 
+AC_CHECK_LIB(cib, update_attr_delegate)
+if test $ac_cv_lib_cib_update_attr_delegate = yes; then
+   AC_DEFINE_UNQUOTED(HAVE_UPDATE_ATTR_DELEGATE, 1, pacemaker has update_attr_delegate)
+fi
+
 dnl pacemaker < 1.1.8
 AC_CHECK_LIB(crmcommon, new_ha_date)
 if test $ac_cv_lib_crmcommon_new_ha_date = yes; then
