@@ -26,6 +26,7 @@
 #include <sys/wait.h>
 #include <time.h>
 #include <libgen.h>
+#include <sys/stat.h>
 
 #if HAVE_HB_CONFIG_H
 #include <hb_config.h>
