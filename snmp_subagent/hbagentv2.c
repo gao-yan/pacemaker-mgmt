@@ -44,6 +44,14 @@ typedef xmlNode crm_data_t;
 #  define pcmk_strerror(rc) cib_error2string(rc)
 #endif
 
+#ifndef F_CIB_UPDATE_RESULT
+#  define F_CIB_UPDATE_RESULT "cib_update_result"
+#endif
+
+#ifndef EXECRA_OK
+#  define EXECRA_OK 0
+#endif
+
 /*
  * Agent MIB value conversion macros from the internal value
  */
