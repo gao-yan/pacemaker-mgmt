@@ -1321,6 +1321,9 @@ if test $ac_cv_lib_crmcommon_new_ha_date = yes; then
    AC_DEFINE_UNQUOTED(HAVE_NEW_HA_DATE, 1, pacemaker has new_ha_date)
 fi
 
+dnl pacemaker < 1.1.8
+AC_CHECK_DECLS(crm_concat,,,[[#include <pacemaker/crm/crm.h>]])
+
 AC_PATH_PROGS(GIT, git false)
 AC_MSG_CHECKING(build revision)
 

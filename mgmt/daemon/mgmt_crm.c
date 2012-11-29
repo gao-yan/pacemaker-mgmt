@@ -167,6 +167,23 @@ int cib_cache_enable = FALSE;
 #  define pcmk_strerror(rc) cib_error2string(rc)
 #endif
 
+#if !HAVE_DECL_CRM_CONCAT
+static char *
+crm_concat(const char *prefix, const char *suffix, char join)
+{
+    int len = 0;
+    char *new_str = NULL;
+
+    CRM_ASSERT(prefix != NULL);
+    CRM_ASSERT(suffix != NULL);
+    len = strlen(prefix) + strlen(suffix) + 2;
+
+    new_str = calloc(1, (len));
+    sprintf(new_str, "%s%c%s", prefix, join, suffix);
+    new_str[len - 1] = 0;
+    return new_str;
+}
+#endif
 
 #define CIB_CHECK() \
 	if (cib_conn == NULL) { \
