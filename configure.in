@@ -1264,6 +1264,10 @@ HA_NOARCHDATAHBDIR="${datadir}/heartbeat"
 AC_DEFINE_UNQUOTED(HA_NOARCHDATAHBDIR,"$HA_NOARCHDATAHBDIR", Heartbeat noarch data directory)
 AC_SUBST(HA_NOARCHDATAHBDIR)
 
+PKG_CHECK_MODULES([pacemaker_lrmd], [pacemaker-lrmd],
+                  [AM_CONDITIONAL([HAVE_PACEMAKER_LRMD], [true])],
+                  [AM_CONDITIONAL([HAVE_PACEMAKER_LRMD], [false])])
+
 AC_CHECK_HEADERS(crm_config.h)
 
 CRM_HEADER=none

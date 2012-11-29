@@ -47,12 +47,24 @@ mgmtd_LDFLAGS	= -lpam
 mgmtd_LDADD 	=  $(top_builddir)/lib/mgmt/libhbmgmtclient.la \
 		   $(top_builddir)/lib/mgmt/libhbmgmttls.la \
 		   libhbmgmt.la \
-		   -llrm \
 		   $(top_builddir)/lib/mgmt/libhbmgmtcommon.la \
 		   $(COMMONLIBS)
 
+if HAVE_PACEMAKER_LRMD
+mgmtd_LDADD 	+= -llrmd
+else
+mgmtd_LDADD 	+= -llrm
+endif
+
 lib_LTLIBRARIES = libhbmgmt.la
-libhbmgmt_la_SOURCES = mgmt_lib.c mgmt_crm.c mgmt_lrm.c
+libhbmgmt_la_SOURCES = mgmt_lib.c mgmt_crm.c
+if HAVE_PACEMAKER_LRMD
+libhbmgmt_la_SOURCES += mgmt_pacemaker_lrm.c
+else
+libhbmgmt_la_SOURCES += mgmt_lrm.c
+endif
+
+
 if BUILD_HEARTBEAT_SUPPORT
 libhbmgmt_la_SOURCES += mgmt_hb.c
 endif
