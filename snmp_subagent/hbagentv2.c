@@ -579,14 +579,22 @@ get_cib_fd(void)
 /* TODO: this prototype is not exported in any headers */
 /* Beekhof: Uh yeah, for a _reason_ */
 
+#if !HAVE_CRM_IPC_NEW
 gboolean cib_native_dispatch(IPC_Channel *channel, gpointer user_data);
 IPC_Channel *cib_native_channel(cib_t* cib);
+#else
+bool cib_native_dispatch(cib_t * cib);
+#endif
 
 int
 handle_cib_msg(void)
 {
     /* call callback function. */
+#if !HAVE_CRM_IPC_NEW
     if (!cib_native_dispatch(cib_native_channel(cib_conn), cib_conn)) {
+#else
+    if (!cib_native_dispatch(cib_conn)) {
+#endif
         cl_log(LOG_ERR, "cib_native_dispatch() failed.");
         return HA_FAIL;
     }
