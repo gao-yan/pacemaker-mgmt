@@ -329,6 +329,10 @@ hbagentv2_update_diff(const char *event, crm_data_t *msg)
     char tmp_rc_str[MAX_RCCODE_STR_LEN];
     char *tmp = tmp_op_str;
 
+#if HAVE_DECL___XML_NEXT
+    crm_data_t *node_state = NULL;
+#endif
+
     /* Initialize err flag. */
     err_occurs = 0;
 
@@ -372,8 +376,17 @@ hbagentv2_update_diff(const char *event, crm_data_t *msg)
         return;
     }
 
+#if !HAVE_DECL___XML_NEXT
     xml_child_iter_filter(
         change_set, node_state, XML_CIB_TAG_STATE,
+#else
+    for(node_state = __xml_first_child(change_set); node_state != NULL; node_state = __xml_next(node_state)) {
+        crm_data_t *lrm_rsc_op = NULL;
+
+    if(STRNCMP_CONST((const char *)node_state->name, XML_CIB_TAG_STATE) != 0) {
+        continue;
+    }
+#endif
 
         /* get the node id at which the resources changed */
         node_id = crm_element_value(node_state, XML_ATTR_ID);
@@ -407,16 +420,28 @@ hbagentv2_update_diff(const char *event, crm_data_t *msg)
          * now, get the head pointer of <lrm_rsc_op>,
          * and parse it's resource id, operation,  and rc_code.
          */
+#if !HAVE_DECL___XML_NEXT
         xml_child_iter_filter(
             lrm_rsc, lrm_rsc_op, XML_LRM_TAG_RSC_OP,
+#else
+        for(lrm_rsc_op = __xml_first_child(lrm_rsc); lrm_rsc_op != NULL; lrm_rsc_op = __xml_next(lrm_rsc_op)) {
+        if(STRNCMP_CONST((const char *)lrm_rsc_op->name, XML_LRM_TAG_RSC_OP) != 0) {
+            continue;
+        }
+#endif
 
             rsc_id = crm_element_value(lrm_rsc, XML_ATTR_ID);
             operation = crm_element_value(lrm_rsc_op, XML_LRM_ATTR_TASK);
             rc_code = crm_element_value(lrm_rsc_op, XML_LRM_ATTR_RC);
             rsc_op_id = crm_element_value(lrm_rsc_op, XML_ATTR_ID);
             t_magic = crm_element_value(lrm_rsc_op, XML_ATTR_TRANSITION_MAGIC);
+#if !HAVE_DECL___XML_NEXT
             ); /* end of xml_child_iter_filter(lrm_rsc) */
         ); /* end of xml_child_iter_filter(change_set) */
+#else
+            }
+        }
+#endif
 
 
     /*

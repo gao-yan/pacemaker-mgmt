@@ -1311,6 +1311,9 @@ if test $ac_cv_header_pacemaker_crm_services_h = yes; then
 fi
 
 dnl pacemaker >= 1.1.8
+AC_CHECK_DECLS(__xml_next,,,[[#include <pacemaker/crm/common/xml.h>]])
+
+dnl pacemaker >= 1.1.8
 AC_CHECK_LIB(crmcommon, crm_ipc_new)
 if test $ac_cv_lib_crmcommon_crm_ipc_new = yes; then
    AC_DEFINE_UNQUOTED(HAVE_CRM_IPC_NEW, 1, pacemaker has crm_ipc_new)
