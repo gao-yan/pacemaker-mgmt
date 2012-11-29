@@ -185,6 +185,54 @@ crm_concat(const char *prefix, const char *suffix, char join)
 }
 #endif
 
+#if !HAVE_DECL_CRM_INT_HELPER
+static long long
+crm_int_helper(const char *text, char **end_text)
+{
+    long long result = -1;
+    char *local_end_text = NULL;
+    int saved_errno = 0;
+
+    errno = 0;
+
+    if (text != NULL) {
+#ifdef ANSI_ONLY
+        if (end_text != NULL) {
+            result = strtol(text, end_text, 10);
+        } else {
+            result = strtol(text, &local_end_text, 10);
+        }
+#else
+        if (end_text != NULL) {
+            result = strtoll(text, end_text, 10);
+        } else {
+            result = strtoll(text, &local_end_text, 10);
+        }
+#endif
+
+        saved_errno = errno;
+/* 		CRM_CHECK(errno != EINVAL); */
+        if (errno == EINVAL) {
+            crm_err("Conversion of %s failed", text);
+            result = -1;
+
+        } else if (errno == ERANGE) {
+            crm_err("Conversion of %s was clipped: %lld", text, result);
+
+        } else if (errno != 0) {
+            crm_perror(LOG_ERR, "Conversion of %s failed:", text);
+        }
+
+        if (local_end_text != NULL && local_end_text[0] != '\0') {
+            crm_err("Characters left over after parsing '%s': '%s'", text, local_end_text);
+        }
+
+        errno = saved_errno;
+    }
+    return result;
+}
+#endif
+
 #define CIB_CHECK() \
 	if (cib_conn == NULL) { \
 		mgmt_log(LOG_ERR, "No cib connection: client_id=%d", *client_id); \
