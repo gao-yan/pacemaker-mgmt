@@ -63,6 +63,24 @@ static int err_occurs = 0; /* the flag which means an error occurs in callback f
 extern const char *myid;
 extern const char *myuuid;
 
+#if !HAVE_DECL_CRM_CONCAT
+static char *
+crm_concat(const char *prefix, const char *suffix, char join)
+{
+    int len = 0;
+    char *new_str = NULL;
+
+    CRM_ASSERT(prefix != NULL);
+    CRM_ASSERT(suffix != NULL);
+    len = strlen(prefix) + strlen(suffix) + 2;
+
+    new_str = calloc(1, (len));
+    sprintf(new_str, "%s%c%s", prefix, join, suffix);
+    new_str[len - 1] = 0;
+    return new_str;
+}
+#endif
+
 /* for debug */
 void debugPrint(crm_data_t *msg, int depth, FILE *fp);
 
