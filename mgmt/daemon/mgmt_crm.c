@@ -233,6 +233,94 @@ crm_int_helper(const char *text, char **end_text)
 }
 #endif
 
+#if !HAVE_DECL_GENERATE_SERIES_FILENAME
+static char *
+generate_series_filename(const char *directory, const char *series, int sequence, gboolean bzip)
+{
+    int len = 40;
+    char *filename = NULL;
+    const char *ext = "raw";
+
+    CRM_CHECK(directory != NULL, return NULL);
+    CRM_CHECK(series != NULL, return NULL);
+
+    len += strlen(directory);
+    len += strlen(series);
+    filename = calloc(1, len);
+    CRM_CHECK(filename != NULL, return NULL);
+
+    if (bzip) {
+        ext = "bz2";
+    }
+    sprintf(filename, "%s/%s-%d.%s", directory, series, sequence, ext);
+
+    return filename;
+}
+#endif
+
+#if !HAVE_DECL_GET_LAST_SEQUENCE
+static int
+get_last_sequence(const char *directory, const char *series)
+{
+    FILE *file_strm = NULL;
+    int start = 0, length = 0, read_len = 0;
+    char *series_file = NULL;
+    char *buffer = NULL;
+    int seq = 0;
+    int len = 36;
+
+    CRM_CHECK(directory != NULL, return 0);
+    CRM_CHECK(series != NULL, return 0);
+
+    len += strlen(directory);
+    len += strlen(series);
+    series_file = calloc(1, len);
+    CRM_CHECK(series_file != NULL, return 0);
+    sprintf(series_file, "%s/%s.last", directory, series);
+
+    file_strm = fopen(series_file, "r");
+    if (file_strm == NULL) {
+        crm_debug("Series file %s does not exist", series_file);
+        free(series_file);
+        return 0;
+    }
+
+    /* see how big the file is */
+    start = ftell(file_strm);
+    fseek(file_strm, 0L, SEEK_END);
+    length = ftell(file_strm);
+    fseek(file_strm, 0L, start);
+
+    CRM_ASSERT(length >= 0);
+    CRM_ASSERT(start == ftell(file_strm));
+
+    if (length <= 0) {
+        crm_info("%s was not valid", series_file);
+        free(buffer);
+        buffer = NULL;
+
+    } else {
+        crm_trace("Reading %d bytes from file", length);
+        buffer = calloc(1, (length + 1));
+        read_len = fread(buffer, 1, length, file_strm);
+        if (read_len != length) {
+            crm_err("Calculated and read bytes differ: %d vs. %d", length, read_len);
+            free(buffer);
+            buffer = NULL;
+        }
+    }
+
+    seq = crm_parse_int(buffer, "0");
+    fclose(file_strm);
+
+    crm_trace("Found %d in %s", seq, series_file);
+
+    free(series_file);
+    free(buffer);
+    return seq;
+}
+#endif
+
 #define CIB_CHECK() \
 	if (cib_conn == NULL) { \
 		mgmt_log(LOG_ERR, "No cib connection: client_id=%d", *client_id); \
