@@ -1478,6 +1478,9 @@ main(int argc, char ** argv)
 
 #if SUPPORT_AIS
 	if (is_openais_cluster()) {
+#  if HAVE_CRM_CLUSTER_T
+        crm_cluster_t crm_cluster;
+#  endif
 #if SUPPORT_HEARTBEAT
 		struct utsname name;
 		if(uname(&name) < 0) {
@@ -1490,7 +1493,14 @@ main(int argc, char ** argv)
 			myuuid = strdup(myid);
 		}
 #else
+#  if !HAVE_CRM_CLUSTER_T
 		crm_cluster_connect(&myid, &myuuid, NULL, NULL, NULL);
+#  else
+        if (crm_cluster_connect(&crm_cluster)) {
+            myid = crm_cluster.uname;
+            myuuid = crm_cluster.uuid;
+        }
+#  endif
 #endif
 	}
 #endif

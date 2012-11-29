@@ -1286,6 +1286,12 @@ AC_CHECK_HEADERS(pacemaker/crm/common/cluster.h)
 dnl pacemaker >= 1.1.8
 AC_CHECK_HEADERS(pacemaker/crm/cluster.h)
 
+dnl pacemaker >= 1.1.8
+AC_CHECK_TYPE([crm_cluster_t],,,[[#include <pacemaker/crm/cluster.h>]])
+if test $ac_cv_type_crm_cluster_t = yes; then
+   AC_DEFINE_UNQUOTED(HAVE_CRM_CLUSTER_T, 1, pacemaker has crm_cluster_t type)
+fi
+
 dnl pacemaker < 1.1.8
 AC_CHECK_TYPE([crm_data_t],,,[[#include <pacemaker/crm/common/xml.h>]])
 if test $ac_cv_type_crm_data_t = yes; then
