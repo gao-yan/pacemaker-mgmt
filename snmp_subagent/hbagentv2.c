@@ -105,6 +105,7 @@ init_resource_table_v2(void)
 static int
 update_resources_recursively(GListPtr reslist, GListPtr nodelist, int index)
 {
+    GListPtr gIter1 = NULL;
 
     if (reslist == NULL) {
         return index;
@@ -113,11 +114,14 @@ update_resources_recursively(GListPtr reslist, GListPtr nodelist, int index)
      * Set resource info to resource table v2 from data_set,
      * and add it to Glib's array.
      */
-    slist_iter(rsc, resource_t, reslist, lpc1,
-    {
+    for(gIter1 = reslist; gIter1 != NULL; gIter1 = gIter1->next) {
+        resource_t *rsc = gIter1->data;
+        GListPtr gIter2 = NULL;
+
         cl_log(LOG_DEBUG, "resource %s processing.", rsc->id);
-        slist_iter(node, node_t, nodelist, lpc2,
-        {
+
+        for(gIter2 = nodelist; gIter2 != NULL; gIter2 = gIter2->next) {
+            node_t *node = gIter2->data;
             struct hb_rsinfov2 *rsinfo;
             enum rsc_role_e rsstate;
 
@@ -190,13 +194,13 @@ update_resources_recursively(GListPtr reslist, GListPtr nodelist, int index)
                 free(rsinfo);
             }
 
-        }); /* end slist_iter(node) */
+        } /* end slist_iter(node) */
 
         /* add resources recursively for group/clone/master */
         index = update_resources_recursively(rsc->children,
             nodelist, index);
 
-    }); /* end slist_iter(rsc) */
+    } /* end slist_iter(rsc) */
 
     return index;
 }
