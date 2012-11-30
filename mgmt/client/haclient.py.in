@@ -5956,11 +5956,11 @@ class MainWindow :
 			self.cur_view = CRMConfigView()
 			if not self.cur_view.update() :
 				return
-		elif type in ["crm_config", "nodes", "resources", "constraints", "status", "rsc_defaults", "op_defaults", "acls"] \
+		elif type in ["crm_config", "nodes", "resources", "constraints", "status", "rsc_defaults", "op_defaults", "acls", "fencing-topology"] \
 				and manager.xml_nodes["cib"].getElementsByTagName(type) != [] :
 			self.cur_view = ObjectView(manager.xml_nodes["cib"].getElementsByTagName(type)[0],
 					is_topview = True, show_mode = last_show_mode)
-		elif type in ["rsc_defaults", "op_defaults", "acls"] \
+		elif type in ["rsc_defaults", "op_defaults", "acls", "fencing-topology"] \
 				and manager.xml_nodes["cib"].getElementsByTagName(type) == [] :
 			self.cur_view = ObjectView(type, is_topview = True, missing_opt_obj_parent_type = "configuration",
 					show_mode = last_show_mode)
@@ -7721,7 +7721,7 @@ class Manager :
 	def exist_ids(self, xml_node = None) :
 		all_ids = manager.get_obj_ids(manager.xml_nodes["cib"])
 
-		top_types = ["crm_config","rsc_defaults", "op_defaults", "nodes", "resources", "constraints", "acls", "status"]
+		top_types = ["crm_config","rsc_defaults", "op_defaults", "nodes", "resources", "constraints", "acls", "fencing-topology", "status"]
 
 		if xml_node == None :
 			return all_ids
@@ -7756,6 +7756,8 @@ class Manager :
 				return "nodes-" + parent_id + "-" + xml_node.tagName
 			else :
 				return "nodes-" + parent_id
+		elif name == "fencing-level" :
+			return name
 
 		if parent_id == "" :
 			parent_parent_node = xml_node.parentNode.parentNode
