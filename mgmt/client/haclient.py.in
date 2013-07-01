@@ -206,7 +206,7 @@ def msgbox(msg) :
 	top_window = save_top_window
 	dialog.destroy()
 
-def confirmbox(msg, button=(gtk.STOCK_NO, gtk.RESPONSE_NO, gtk.STOCK_YES, gtk.RESPONSE_YES), title ="") :
+def confirmbox(msg, button=(gtk.STOCK_NO, gtk.RESPONSE_NO, gtk.STOCK_YES, gtk.RESPONSE_YES), title ="", default_response = gtk.RESPONSE_YES) :
 	global top_window
 	dialog = gtk.Dialog(_("Confirm"),  top_window, gtk.DIALOG_MODAL,button)
 	dialog.set_border_width(5)
@@ -226,7 +226,7 @@ def confirmbox(msg, button=(gtk.STOCK_NO, gtk.RESPONSE_NO, gtk.STOCK_YES, gtk.RE
 	hb.pack_start(confirm_msg)
 	frame.add(hb)
 	dialog.vbox.resize_children()
-	dialog.set_default_response(gtk.RESPONSE_YES)
+	dialog.set_default_response(default_response)
 	dialog.show_all()
 	save_top_window = top_window
 	top_window = dialog
@@ -918,6 +918,8 @@ class ManageView :
 		manager.set_crm_attribute("op_defaults", "record-pending", value)
 		if manager.failed_reason != "" :
 			msgbox(manager.failed_reason)
+		elif value == "true" :
+			manager.record_pending_newly_enabled = True 
 
 	def on_after_show(self, treeview = None) :
 		for child in self.sub_vbox.get_children() :
@@ -6089,12 +6091,15 @@ class MainWindow :
 			self.confirm_record_pending()
 			manager.logout()
 			self.update_ui()
+			manager.record_pending_newly_enabled = False
 
 	def confirm_record_pending(self) :
-		if manager.xml_nodes.has_key("cib") and manager.find_attribute("op_defaults", "record-pending") == "true" :
+		if manager.xml_nodes.has_key("cib") and manager.find_attribute("op_defaults", "record-pending") == "true" \
+				and manager.record_pending_newly_enabled :
 			retval = confirmbox((_("\"Indicate pending operations\" has been activated.") + "\n"
 					+ _("It could affect the performance.") + "\n"
-					+ _("Turn it off ?")))
+					+ _("Turn it off ?")),
+					default_response = gtk.RESPONSE_NO)
 			if retval ==  gtk.RESPONSE_YES :
 				manager.set_crm_attribute("op_defaults", "record-pending", "false")
 
@@ -6956,6 +6961,7 @@ class Manager :
 	active_cib = None
 	validate_name = None
 	profile = {}
+	record_pending_newly_enabled = False
 		
 	# cache functions
 
