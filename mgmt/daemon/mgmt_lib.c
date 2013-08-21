@@ -52,9 +52,11 @@
 
 #include <crm/crm.h>
 
-#ifdef SUPPORT_AIS
-#undef SUPPORT_AIS
+/*
+#ifdef SUPPORT_COROSYNC
+#undef SUPPORT_COROSYNC
 #endif
+*/
 
 #ifdef SUPPORT_HEARTBEAT
 #undef SUPPORT_HEARTBEAT

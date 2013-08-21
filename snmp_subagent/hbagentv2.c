@@ -4,9 +4,11 @@
 #include "crm/msg_xml.h"
 #include "crm/transition.h"
 
-#ifdef SUPPORT_AIS
-#undef SUPPORT_AIS
+/*
+#ifdef SUPPORT_COROSYNC
+#undef SUPPORT_COROSYNC
 #endif
+*/
 
 #ifdef SUPPORT_HEARTBEAT
 #undef SUPPORT_HEARTBEAT

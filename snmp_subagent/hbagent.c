@@ -23,9 +23,11 @@
 
 #include <crm/crm.h>
 
-#ifdef SUPPORT_AIS
-#undef SUPPORT_AIS
+/*
+#ifdef SUPPORT_COROSYNC
+#undef SUPPORT_COROSYNC
 #endif
+*/
 
 #ifdef SUPPORT_HEARTBEAT
 #undef SUPPORT_HEARTBEAT
@@ -1476,7 +1478,7 @@ main(int argc, char ** argv)
 	}
 #endif
 
-#if SUPPORT_AIS
+#if SUPPORT_COROSYNC
 	if (is_openais_cluster()) {
 #  if HAVE_CRM_CLUSTER_T
         crm_cluster_t crm_cluster;

@@ -226,29 +226,29 @@ AC_ARG_ENABLE([tsa-plugin],
 [  --enable-tsa-plugin Enable TSA plugin.  [default=no]],
 		[], [enable_tsa_plugin=no])
 
-AC_ARG_WITH(ais-support,
-    [  --with-ais-support     
-       Support the OpenAIS-based stack ],
-    [ SUPPORT_AIS=$withval ],
-    [ SUPPORT_AIS=try ],
+AC_ARG_WITH(ais,
+    [  --with-ais
+       Support the Corosync-based stack ],
+    [ SUPPORT_CS=$withval ],
+    [ SUPPORT_CS=try ],
 )
 
-AC_ARG_WITH(heartbeat-support,
-    [  --with-heartbeat-support     
+AC_ARG_WITH(heartbeat,
+    [  --with-heartbeat
        Support the Heartbeat-based stack ],
     [ SUPPORT_HEARTBEAT=$withval ],
     [ SUPPORT_HEARTBEAT=try ],
 )
 
-AISPREFIX=""
+CSPREFIX=""
 AC_ARG_WITH(ais-prefix,
-    [  --with-ais-prefix=DIR  Prefix used when OpenAIS was installed [$prefix]],
-    [ AISPREFIX=$withval ], 
-    [ AISPREFIX=$prefix ])
+    [  --with-ais-prefix=DIR  Prefix used when Corosync was installed [$prefix]],
+    [ CSPREFIX=$withval ], 
+    [ CSPREFIX=$prefix ])
 
 LCRSODIR=""
 AC_ARG_WITH(lcrso-dir, 
-    [  --with-lcrso-dir=DIR   OpenAIS lcrso files. ],
+    [  --with-lcrso-dir=DIR   Corosync lcrso files. ],
     [ LCRSODIR="$withval" ])
 
 AC_ARG_WITH([JAVA_HOME],
@@ -329,11 +329,11 @@ case $exec_prefix in
   prefix) exec_prefix=$prefix;;
 esac
 
-AC_MSG_NOTICE(Sanitizing ais_prefix: ${AISPREFIX})
-case $AISPREFIX in
+AC_MSG_NOTICE(Sanitizing ais_prefix: ${CSPREFIX})
+case $CSPREFIX in
   dnl For consistency with Heartbeat, map NONE->$prefix
-  NONE)   AISPREFIX=$prefix;;
-  prefix) AISPREFIX=$prefix;;
+  NONE)   CSPREFIX=$prefix;;
+  prefix) CSPREFIX=$prefix;;
 esac
 
 AC_MSG_NOTICE(Sanitizing INITDIR: ${INITDIR})
@@ -1387,208 +1387,59 @@ dnl Compatability checks
 AC_CHECK_FUNCS(msgfromIPC_timeout)
 AC_CHECK_MEMBERS([struct lrm_ops.fail_rsc],,,[[#include <lrm/lrm_api.h>]])
 
+STACKS=""
+CLUSTERLIBS=""
+
 dnl ========================================================================
 dnl    Cluster stack - Heartbeat
 dnl ========================================================================
 
 case $SUPPORT_HEARTBEAT in
-     1|yes|true) 
-        AC_CHECK_LIB(hbclient, ll_cluster_new, 
-   		[SUPPORT_HEARTBEAT=1], [AC_MSG_FAILURE(Unable to support Heartbeat: client libraries not found)]);;
-     try)
-        AC_CHECK_LIB(hbclient, ll_cluster_new, 
-   		[SUPPORT_HEARTBEAT=1], [SUPPORT_HEARTBEAT=0]);;
-     *) SUPPORT_HEARTBEAT=0;;
+1|yes|true|try)
+   AC_MSG_CHECKING(for heartbeat support)
+   AC_CHECK_LIB(hbclient, ll_cluster_new, [SUPPORT_HEARTBEAT=1],
+		[if test $SUPPORT_HEARTBEAT != try; then
+			AC_MSG_FAILURE(Unable to support Heartbeat: client libraries not found)
+		fi])
+
+   if test $SUPPORT_HEARTBEAT = 1 ; then
+	STACKS="$STACKS heartbeat"
+	dnl objdump -x ${libdir}/libccmclient.so | grep SONAME | awk '{print $2}'
+	AC_DEFINE_UNQUOTED(CCM_LIBRARY, "libccmclient.so.1", Library to load for ccm support)
+	AC_DEFINE_UNQUOTED(HEARTBEAT_LIBRARY, "libhbclient.so.1", Library to load for heartbeat support)
+   else
+	SUPPORT_HEARTBEAT=0
+   fi
+   ;;
+*) SUPPORT_HEARTBEAT=0;;
 esac
 
 AM_CONDITIONAL(BUILD_HEARTBEAT_SUPPORT, test $SUPPORT_HEARTBEAT = 1)
 AC_DEFINE_UNQUOTED(SUPPORT_HEARTBEAT, $SUPPORT_HEARTBEAT, Support the Heartbeat messaging and membership layer)
-
-
-dnl ========================================================================
-dnl    Cluster stack - OpenAIS
-dnl ========================================================================
-
-AISLIB=""
-
-dnl Normalize the values
-case $SUPPORT_AIS in
-     1|yes|true) missingisfatal=1;;
-     try)        missingisfatal=0;;
-     *) SUPPORT_AIS=no;;
-esac
-
-AC_MSG_CHECKING(for native AIS)
-AISMSGLIB=""
-AIS_VERSION="none"
-COROSYNC_PKG="$PKGCONFIG libcoroipcc"
-
-if test $SUPPORT_AIS = no; then
-   AC_MSG_RESULT(no... not requested.)
-
-else
-   AC_MSG_RESULT($SUPPORT_AIS, with '$AISPREFIX')
-
-   AC_CHECK_HEADERS(openais/saAis.h)
-   AC_CHECK_HEADERS(corosync/coroipcc.h)
-
-   $COROSYNC_PKG --exists
-   if test $? = 0; then
-       AIS_VERSION="corosync"
-
-   elif test "$ac_cv_header_openais_saAis_h" = "yes"; then
-       AIS_VERSION="whitetank"
-   else
-       aisreason="Whitetank headers not found"
-   fi  
-fi
-
-if test $AIS_VERSION != "none"; then
-   AC_MSG_CHECKING(for OpenAIS branch)
-   AC_MSG_RESULT($AIS_VERSION)
-fi
-
-if test $AIS_VERSION = "corosync"; then
-   if test "$ac_cv_header_corosync_coroipcc_h" != "yes"; then
-       AIS_VERSION="none"
-       aisreason="Corosync headers not found"
-   fi
-
-   saveLIBS="$LIBS"
-   LIBS="$LIBS `$COROSYNC_PKG --libs-only-L`"
-   AC_CHECK_LIB(coroipcc, coroipcc_msg_send_reply_receive, [])
-   LIBS="$saveLIBS"
-
-   if test $ac_cv_lib_coroipcc_coroipcc_msg_send_reply_receive != yes; then
-        AC_MSG_RESULT(Cannot locate AIS messaging library)
-	aisreason="requred Corosync libraries not found"
-        AIS_VERSION="none"
-   fi
-
-fi
-
-dnl continue?
-if test $AIS_VERSION = "whitetank"; then
-   dnl Find it in lib, lib64, or wherever it wants to live...
-   AC_MSG_CHECKING(location of OpenAIS libraries)
-   dnl CoroSync location
-   alib=`ls ${AISPREFIX}/*/libcpg.so | head -n 1`
-   if test -z "$alib"; then
-      dnl Whitetank location
-      alib=`ls ${AISPREFIX}/*/*/libcpg.so | head -n 1`
-   fi
-   AISLIB=`dirname $alib`
-   AC_MSG_RESULT($AISLIB)
-   if test "x$AISLIB" = "x"; then
-     AC_MSG_WARN(Use --with-ais-prefix to specify the prefix OpenAIS was installed with)
-     aisreason="library directory not found"
-     AIS_VERSION="none"
-
-   elif test ! -d "$AISLIB"; then
-     AC_MSG_WARN(Use --with-ais-prefix to specify the prefix OpenAIS was installed with)
-     aisreason="specified library directory does not exist"
-     AIS_VERSION="none"
-   fi
-fi
-
-dnl continue?
-if test $AIS_VERSION = "whitetank"; then
-   AC_MSG_CHECKING(location of OpenAIS plugins)
-   if test -z "$LCRSODIR"; then
-      LCRSODIR="$libexecdir/lcrso"
-      alib=`ls ${AISPREFIX}/*/lcrso/objdb.lcrso | head -n 1`
-      LCRSODIR=`dirname $alib`
-   fi
-   AC_MSG_RESULT($LCRSODIR)
-
-   if test "x$LCRSODIR" = "x"; then
-     AC_MSG_RESULT(Invalid.  Please specify the correct location with --with-lcrso-dir)
-     aisreason="plugin directory not found"
-     AIS_VERSION="none"
-
-   elif test ! -d "$LCRSODIR"; then
-     AC_MSG_RESULT(Invalid.  Please specify the correct location with --with-lcrso-dir)
-     aisreason="specified plugin directory does not exist"
-     AIS_VERSION="none"
-   fi
-fi
-
-dnl continue?
-if test $AIS_VERSION = "whitetank"; then
-     dnl Don't add the messaging library to LIBS since most daemons don't need/use it
-     saveLIBS="$LIBS"
-     LIBS="$LIBS -L${AISLIB} -R${AISLIB}"
-
-     AC_CHECK_LIB(SaMsg, saSendReceiveReply, [])
-     AC_CHECK_LIB(SaMsg, openais_msg_send_reply_receive, [])
-
-     if test $ac_cv_lib_SaMsg_openais_msg_send_reply_receive = yes; then
-       :  OpenAIS
-     elif test $ac_cv_lib_SaMsg_saSendReceiveReply = yes; then
-       :  OpenAIS
-	AC_DEFINE_UNQUOTED(TRADITIONAL_AIS_IPC, 1, "Use the 'old' AIS IPC interface")
-     else
-        AC_MSG_RESULT(Cannot locate AIS messaging library)
-	aisreason="requred libraries not found"
-        AIS_VERSION="none"
-     fi
-     LIBS="$saveLIBS"
-fi
-
-SUPPORT_AIS=1
-case $AIS_VERSION in
-    corosync)
-	AC_DEFINE_UNQUOTED(AIS_COROSYNC, 1, "AIS target is the corosync series")
-   	LCRSODIR=`$PKGCONFIG corosync --variable=lcrsodir`
-   	CFLAGS="$CFLAGS `$COROSYNC_PKG --cflags`"
-	AISMSGLIB=`$COROSYNC_PKG --libs`
-	;;
-    whitetank) 
-	AC_DEFINE_UNQUOTED(AIS_WHITETANK, 1, "AIS target is the whitetank series")
-	CFLAGS="$CFLAGS -I$AISPREFIX/include/openais"
-	AISMSGLIB="-L${AISLIB} -R${AISLIB} -lSaMsg"
-	;;
-    none)
-     	SUPPORT_AIS=0
-	if test "x$aisreason" != x; then
-     	  if test $missingisfatal = 0; then
-	    AC_MSG_WARN(Unable to support OpenAIS: $aisreason) 
-          else
-	    AC_MSG_FAILURE(Unable to support OpenAIS: $aisreason) 
-          fi
-        fi
-	;;
-    *) AC_MSG_FAILURE(Unknown OpenAIS branch: $AIS_VERSION);;
-esac
-
-AC_DEFINE_UNQUOTED(SUPPORT_AIS, $SUPPORT_AIS, Support the OpenAIS messaging and membership layer)
-AM_CONDITIONAL(BUILD_AIS_SUPPORT, test $SUPPORT_AIS = 1)
+AC_SUBST(SUPPORT_HEARTBEAT)
 
 dnl
 dnl    Cluster stack - Sanity
 dnl
 
-STACKS=""
-CLUSTERLIBS=""
 if test $SUPPORT_HEARTBEAT = 1; then
-   STACKS="$STACKS heartbeat"
    CLUSTERLIBS="$CLUSTERLIBS -lhbclient -lccmclient -lclm"
 fi
 
-if test $SUPPORT_AIS = 1; then
+if test $SUPPORT_COROSYNC = 1; then
    STACKS="$STACKS $AIS_VERSION"
    #CLUSTERLIBS="$CLUSTERLIBS ${AISMSGLIB}"
 else
-   AISPREFIX=""
+   CSPREFIX=""
    LCRSODIR="$libdir"
 fi
 
-PKG_FEATURES="$PKG_FEATURES$STACKS"
+PKG_FEATURES="$PKG_FEATURES $STACKS"
 
-AC_MSG_CHECKING(for supported stacks)
-if test x"$STACKS" = x; then
-   AC_MSG_FAILURE(You must choose at least one cluster stack to support)
-fi
+#AC_MSG_CHECKING(for supported stacks)
+#if test x"$STACKS" = x; then
+#   AC_MSG_FAILURE(You must choose at least one cluster stack to support)
+#fi
 AC_MSG_RESULT($STACKS)
 
 AC_SUBST(CLUSTERLIBS)
@@ -2368,8 +2219,6 @@ fi
 AC_MSG_RESULT([  SNMP libraries           = ${SNMPLIB}])
 
 AC_MSG_RESULT([  With Heartbeat support   = ${SUPPORT_HEARTBEAT}])
-AC_MSG_RESULT([  With AIS support         = ${AIS_VERSION}])
-AC_MSG_RESULT([  With AIS prefix          = ${AISPREFIX}])
 
 AC_MSG_RESULT([  CC_WARNINGS              = ${CC_WARNINGS}])
 AC_MSG_RESULT([  Mangled CFLAGS           = ${CFLAGS}])
