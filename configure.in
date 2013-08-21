@@ -1312,6 +1312,7 @@ dnl pacemaker >= 1.1.8
 AC_CHECK_HEADERS(pacemaker/crm/services.h)
 if test $ac_cv_header_pacemaker_crm_services_h = yes; then
    AC_CHECK_DECLS(services_lrm_status_str,,,[[#include <pacemaker/crm/services.h>]])
+   AC_CHECK_DECLS(services_ocf_exitcode_str,,,[[#include <pacemaker/crm/services.h>]])
 fi
 
 dnl pacemaker >= 1.1.8

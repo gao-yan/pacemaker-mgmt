@@ -182,6 +182,10 @@ on_lrm_op_rc2str(char* argv[], int argc)
 	char* ret = strdup(MSG_OK);
 
 	rc = atoi(argv[1]);
+#if !HAVE_DECL_SERVICES_OCF_EXITCODE_STR
 	ret = mgmt_msg_append(ret, lrmd_event_rc2str(rc));
+#else
+	ret = mgmt_msg_append(ret, services_ocf_exitcode_str(rc));
+#endif
 	return ret;
 }
