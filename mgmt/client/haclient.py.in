@@ -1548,14 +1548,12 @@ class ManageView :
 		migrate_ids = {}
 		rsc_ids = []
 		for id in rsc_locations :
-			for prefix in ["cli-prefer-", "cli-standby-"] :
+			for prefix in ["cli-prefer-", "cli-standby-", "cli-ban-"] :
 				if id.startswith(prefix) :
-					split_id = id.split(prefix)
-					if len(split_id) > 1 :
-						rsc_id = split_id[1]
-						if not migrate_ids.has_key(rsc_id) :
-							migrate_ids[rsc_id] = []
-						migrate_ids[rsc_id].append(id)
+					rsc_id = str(rsc_locations[id].getAttribute("rsc"))
+					if not migrate_ids.has_key(rsc_id) :
+						migrate_ids[rsc_id] = []
+					migrate_ids[rsc_id].append(id)
 
 		all_str = _("all migrated resources")
 		rsc_list = migrate_ids.keys()[:]
