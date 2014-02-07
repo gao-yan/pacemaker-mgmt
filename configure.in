@@ -1278,6 +1278,10 @@ else
    AC_MSG_FAILURE(Pacemaker development headers were not found)
 fi
 
+if $PKGCONFIG --variable features pacemaker | $EGREP libqb-ipc >/dev/null 2>&1; then
+    AC_DEFINE_UNQUOTED(USE_LIBQB_IPC, 1, Use libqb IPC)
+fi
+
 CRM_DAEMON_DIR=`$PKGCONFIG pcmk --variable=daemondir`
 if test x"$CRM_DAEMON_DIR" = x""; then
    CRM_DAEMON_DIR=`extract_header_define $CRM_HEADER CRM_DAEMON_DIR`

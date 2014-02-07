@@ -14,7 +14,7 @@ struct hb_rsinfov2 {
     char * parent;
 };
 
-int init_hbagentv2(void);
+int init_hbagentv2(int *cib_fd);
 void free_hbagentv2(void);
 
 int get_cib_fd(void);

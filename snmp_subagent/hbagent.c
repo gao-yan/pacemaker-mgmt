@@ -1530,8 +1530,8 @@ main(int argc, char ** argv)
 #endif
 
 	/* now implementing: hbagentv2 */
-	if ((ret = init_hbagentv2()) != HA_OK ||
-	    (cib_fd = get_cib_fd()) <= 0) {
+	if ((ret = init_hbagentv2(&cib_fd)) != HA_OK ||
+	    (cib_fd <= 0 && (cib_fd = get_cib_fd()) <= 0)) {
 		return -4;
 	}
 

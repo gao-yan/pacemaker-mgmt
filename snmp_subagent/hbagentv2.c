@@ -547,7 +547,7 @@ hbagentv2_update_diff(const char *event, crm_data_t *msg)
  * that is called when cib infomation message changes.
  */
 static int
-init_cib(void)
+init_cib(int *cib_fd)
 {
     int rc;
 
@@ -557,7 +557,11 @@ init_cib(void)
         cl_log(LOG_ERR, "CIB connection initialization failed.");
         return HA_FAIL;
     }
+#if USE_LIBQB_IPC
+    rc = cib_conn->cmds->signon_raw(cib_conn, LHAAGENTID, cib_query, cib_fd);
+#else
     rc = cib_conn->cmds->signon(cib_conn, LHAAGENTID, cib_query);
+#endif
     if (rc != 0) {
         cl_log(LOG_ERR, "CIB connection signon failed.");
         return HA_FAIL;
@@ -604,7 +608,9 @@ get_cib_fd(void)
         cl_log(LOG_ERR, "CIB is not initialized.");
         return -1;
     }
-    if ((fd = cib_conn->cmds->inputfd(cib_conn)) < 0) {
+
+    if (cib_conn->cmds->inputfd == NULL
+        || (fd = cib_conn->cmds->inputfd(cib_conn)) < 0) {
         cl_log(LOG_ERR, "Can not get CIB inputfd.");
         return -1;
     }
@@ -651,7 +657,7 @@ handle_cib_msg(void)
  *   (see: LHAResourceTable and LHAResourceStatusUpdate)
  */
 int
-init_hbagentv2(void)
+init_hbagentv2(int *cib_fd)
 {
     int ret;
 
@@ -661,7 +667,7 @@ init_hbagentv2(void)
         return HA_FAIL;
     }
 
-    ret = init_cib();
+    ret = init_cib(cib_fd);
     if (ret != HA_OK) {
         cl_log(LOG_ERR, "init_cib() failed.");
         return ret;
