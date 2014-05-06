@@ -323,6 +323,54 @@ get_last_sequence(const char *directory, const char *series)
 }
 #endif
 
+#if !HAVE_DECL_CREATE_CIB_FRAGMENT
+
+#  define create_cib_fragment(update,cib_section) create_cib_fragment_adv(update, cib_section, __FUNCTION__)
+
+xmlNode *
+create_cib_fragment_adv(xmlNode * update, const char *update_section, const char *source)
+{
+    xmlNode *cib = NULL;
+    gboolean whole_cib = FALSE;
+    xmlNode *object_root = NULL;
+    char *local_section = NULL;
+
+/* 	crm_debug("Creating a blank fragment: %s", update_section); */
+
+    if (update == NULL && update_section == NULL) {
+        crm_trace("Creating a blank fragment");
+        update = createEmptyCib(1);
+        crm_xml_add(cib, XML_ATTR_ORIGIN, source);
+        return update;
+
+    } else if (update == NULL) {
+        crm_err("No update to create a fragment for");
+        return NULL;
+
+    }
+
+    CRM_CHECK(update_section != NULL, return NULL);
+    if (safe_str_eq(crm_element_name(update), XML_TAG_CIB)) {
+        whole_cib = TRUE;
+    }
+
+    if (whole_cib == FALSE) {
+        cib = createEmptyCib(1);
+        crm_xml_add(cib, XML_ATTR_ORIGIN, source);
+        object_root = get_object_root(update_section, cib);
+        add_node_copy(object_root, update);
+
+    } else {
+        cib = copy_xml(update);
+        crm_xml_add(cib, XML_ATTR_ORIGIN, source);
+    }
+
+    free(local_section);
+    crm_trace("Verifying created fragment");
+    return cib;
+}
+#endif
+
 #define CIB_CHECK() \
 	if (cib_conn == NULL) { \
 		mgmt_log(LOG_ERR, "No cib connection: client_id=%d", *client_id); \
