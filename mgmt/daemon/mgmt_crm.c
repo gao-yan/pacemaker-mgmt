@@ -1882,7 +1882,12 @@ on_get_sub_rsc(char* argv[], int argc)
 		resource_t* rsc = (resource_t*)cur->data;
 		gboolean is_active = rsc->fns->active(rsc, TRUE);
 		if (is_not_set(rsc->flags, pe_rsc_orphan) || is_active) {
-			ret = mgmt_msg_append(ret, rsc->id);
+			if (is_not_set(rsc->flags, pe_rsc_unique) && rsc->clone_name) {
+				ret = mgmt_msg_append(ret, rsc->clone_name);
+
+			} else {
+				ret = mgmt_msg_append(ret, rsc->id);
+			}
 		}
 		cur = g_list_next(cur);
 	}
