@@ -1678,7 +1678,7 @@ on_cleanup_rsc(char* argv[], int argc)
 		    XML_CIB_TAG_CRMCONFIG, NULL, NULL, NULL, NULL, "last-lrm-refresh", now_s, FALSE);
 #else
 	update_attr_delegate(cib_conn, cib_sync_call,
-		    XML_CIB_TAG_CRMCONFIG, NULL, NULL, NULL, NULL, "last-lrm-refresh", now_s, FALSE, NULL);
+		    XML_CIB_TAG_CRMCONFIG, NULL, NULL, NULL, NULL, "last-lrm-refresh", now_s, FALSE, NULL, NULL);
 #endif
 	free(now_s);
 
