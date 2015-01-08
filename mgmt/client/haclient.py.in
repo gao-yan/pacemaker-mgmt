@@ -7168,7 +7168,10 @@ class Manager :
 		
 	def logout(self) :
 		mgmt_disconnect()
-		gobject.source_remove(self.io_tag)
+		if self.io_tag != None :
+			gobject.source_remove(self.io_tag)
+			self.io_tag = None
+
 		self.connected = False
 		window.update()
 		window.statusbar.pop(1)
@@ -7819,6 +7822,11 @@ class Manager :
 			self.get_active_cib()
 			self.parent = {}
 			window.update()
+			retval = False
+		elif self.failed_reason == "Permission denied" :
+			self.logout()
+			window.statusbar.pop(2)
+			window.statusbar.push(2, _("Permission denied") +  _(": ") +self.username + "@" + self.server)
 			retval = False
 		else :
 			retval = True
