@@ -1652,7 +1652,7 @@ on_cleanup_rsc(char* argv[], int argc)
 	delete_lrm_rsc(crmd_channel, argv[1], argv[2]);
 	refresh_lrm(crmd_channel, NULL); 
 	
-	rc = query_node_uuid(cib_conn, argv[1], &dest_node);
+	rc = query_node_uuid(cib_conn, argv[1], &dest_node, NULL);
 	if (rc != 0) {
 		mgmt_log(LOG_WARNING, "Could not map uname=%s to a UUID: %s\n",
 				argv[1], pcmk_strerror(rc));
