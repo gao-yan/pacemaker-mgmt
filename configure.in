@@ -1354,6 +1354,9 @@ AC_CHECK_DECLS(get_last_sequence,,,[[#include <pacemaker/crm/crm.h>]])
 dnl pacemaker < 1.1.12
 AC_CHECK_DECLS(create_cib_fragment,,,[[#include <pacemaker/crm/cib.h>]])
 
+dnl pacemaker >= 1.1.10
+AC_CHECK_DECLS(crm_xml_init,,,[[#include <pacemaker/crm/common/xml.h>]])
+
 AC_PATH_PROGS(GIT, git false)
 AC_MSG_CHECKING(build revision)
 

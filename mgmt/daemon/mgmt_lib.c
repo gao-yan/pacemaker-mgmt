@@ -100,6 +100,12 @@ init_mgmt_lib(const char* client, int enable_components)
 	client_name = client?client:"unknown";
 	components = enable_components;
 	mgmt_set_mem_funcs(malloc, realloc, free);
+
+	if (components & ENABLE_CRM) {
+#if HAVE_DECL_CRM_XML_INIT
+		crm_xml_init();
+#endif
+        }
 	
 	/* init modules */
 #if SUPPORT_HEARTBEAT
@@ -132,6 +138,13 @@ final_mgmt_lib()
 		}
 	}
 #endif
+
+	if (components & ENABLE_CRM) {
+#if HAVE_DECL_CRM_XML_INIT
+		crm_xml_cleanup();
+#endif
+        }
+
 	g_hash_table_destroy(msg_map);
 	g_hash_table_destroy(event_map);
 	return 0;
