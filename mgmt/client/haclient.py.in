@@ -935,14 +935,15 @@ class ManageView :
 		self.update_ui(cur_type, cur_status)
 
 		id = model.get_value(iter, 1)
+		clone_id = model.get_value(iter, 4)
 		if cur_type == "primitive" :
-			self.show_rsc_summary(id)
-			self.show_operations(id)
+			self.show_rsc_summary(clone_id)
+			self.show_operations(clone_id)
 		elif cur_type == "cluster" : 
 			self.show_sub_attrs(manager.xml_nodes["cib"])
 		elif cur_type == "node" :
 			for node_state in manager.xml_nodes["cib"].getElementsByTagName("node_state") :
-				if node_state.getAttribute("id") == id :
+				if node_state.getAttribute("id") == id or node_state.getAttribute("uname") == id :
 					self.show_sub_attrs(node_state)
 					break
 
@@ -1013,7 +1014,8 @@ class ManageView :
 	def show_rsc_summary(self, rsc_id) :
 		rsc_summary = {}
 
-		(status, mig_threshold) = manager.get_rsc_status(rsc_id)
+		(status, mig_threshold, rsc_clone_id) = manager.get_rsc_status(rsc_id)
+
 		if mig_threshold != "0" :
 			rsc_summary["migration-threshold"] = [mig_threshold]
 
@@ -1086,7 +1088,7 @@ class ManageView :
 	def show_operations(self, rsc_id) :
 		op_fields = ["Call ID", "Operation", "Interval", "Return Code", "Status", 
 				"Last Run", "Exec Time", "Queue Time", "Last Return Code Change"]
-			
+
 		store = gtk.TreeStore(*(tuple(str for i in range(len(op_fields)))))
 		tree = gtk.TreeView(store)
 		for i in range(len(op_fields)) :
@@ -1747,13 +1749,14 @@ class ManageTree :
 	def __init__(self) :
 		global top_window
 		treeiter = {}
-		self.store = gtk.TreeStore(str, str, str, str)
+		self.store = gtk.TreeStore(str, str, str, str, str)
 
 		tree = gtk.TreeView(self.store)
-		add_column(tree, _("Type"), 0, self.render_type_icon, visible=False)
+		add_column(tree, _("Type"), 0, self.render_type_icon, visible = False)
 		add_column(tree, _("Name"), 1, self.render_type_icon)
 		add_column(tree, _("Status"), 2, self.render_status_icon)
 		add_column(tree, _("Details"), 3)
+		add_column(tree, _("Clone Name"), 4, visible = False)
 		(window_width, window_height) = top_window.get_size()
 		tree.set_size_request(500, window_height / 2)
 		#tree.connect("cursor-changed", self.on_cursor_changed, tree.get_selection())
@@ -1923,13 +1926,13 @@ class ManageTree :
 		else :
 			cluster_type += "Pacemaker"
 
-		#root = self.store.append(None, ["cluster", cluster_type, status, ""])
+		#root = self.store.append(None, ["cluster", cluster_type, status, "", ""])
 		
 		if group_by_node :
-			nodes_root = self.store.append(None, ["cluster", _("Cluster"), status, cluster_type])
+			nodes_root = self.store.append(None, ["cluster", _("Cluster"), status, cluster_type, ""])
 			for node in nodes :
 				self.add_node(nodes_root, node, node in active_nodes, node in crm_nodes)
-			inactive_root = self.store.append(None, ["inactive resources", _("Inactive resources"), "", ""])
+			inactive_root = self.store.append(None, ["inactive resources", _("Inactive resources"), "", "", ""])
 			rscs = manager.get_all_rsc()
 			for rsc in rscs :
 				rsc_type = manager.get_rsc_type(rsc)
@@ -1939,14 +1942,14 @@ class ManageTree :
 				if nodes != None and len(nodes) > 0 :
 					continue 
 				else :
-					(status, mig_threshold) = manager.get_rsc_status(rsc)
-					info = self.get_rsc_info(rsc)
-					self.store.append(inactive_root,[rsc_type, rsc, _(status), info])
+					(status, mig_threshold, rsc_clone_id) = manager.get_rsc_status(rsc)
+					info = self.get_rsc_info(rsc_clone_id)
+					self.store.append(inactive_root, [rsc_type, rsc, _(status), info, rsc_clone_id])
 		else :
-			nodes_root = self.store.append(None, ["cluster", _("Cluster"), status, cluster_type])
+			nodes_root = self.store.append(None, ["cluster", _("Cluster"), status, cluster_type, ""])
 			for node in nodes :
 				self.add_node(nodes_root, node, node in active_nodes, node in crm_nodes, False)
-			rscs_root = self.store.append(None, ["resources", _("Resources"), "", ""])
+			rscs_root = self.store.append(None, ["resources", _("Resources"), "", "", ""])
 			rscs = manager.get_top_rsc()
 			for rsc in rscs :
 				self.add_rsc(rscs_root, rsc)
@@ -1956,17 +1959,17 @@ class ManageTree :
 		status = ""
 		label = ""
 		if type == "primitive" :
-			(status, mig_threshold) = manager.get_rsc_status(rsc)
+			(status, mig_threshold, rsc_clone_id) = manager.get_rsc_status(rsc)
 			nodes = manager.get_rsc_running_on(rsc)
-			info = self.get_rsc_info(rsc)
-			if nodes != None and len(nodes)>0:
-				self.store.append(parent,[type, rsc, _(status) + _(" on ")+str(nodes), info])
+			info = self.get_rsc_info(rsc_clone_id)
+			if nodes != None and len(nodes) > 0 :
+				self.store.append(parent, [type, rsc, _(status) + _(" on ") + str(nodes), info, rsc_clone_id])
 			else :
-				self.store.append(parent,[type, rsc, _(status), info])
+				self.store.append(parent, [type, rsc, _(status), info, rsc_clone_id])
 				
 		elif type in ["group","clone","master"] :
 			status = type
-			iter = self.store.append(parent,[type, rsc, _(status), ""])
+			iter = self.store.append(parent, [type, rsc, _(status), "", rsc])
 			for subrsc in manager.get_sub_rsc(rsc) :
 				self.add_rsc(iter, subrsc)
 
@@ -2019,7 +2022,7 @@ class ManageTree :
 			elif node_status.get("standby") == "True" :
 				status += " - " + _("standby")
 
-		node_iter = self.store.append(nodes_root,["node", node, status, ""])
+		node_iter = self.store.append(nodes_root, ["node", node, status, "", node])
 
 		if add_rscs :
 	 		running_rsc = manager.get_running_rsc(node)
