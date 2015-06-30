@@ -36,9 +36,9 @@
 
 #define DH_BITS 1024
 
-static gnutls_dh_params dh_params;
-gnutls_anon_server_credentials anoncred_server;
-gnutls_anon_client_credentials anoncred_client;
+static gnutls_dh_params_t dh_params;
+gnutls_anon_server_credentials_t anoncred_server;
+gnutls_anon_client_credentials_t anoncred_client;
 
 const int kx_prio[] =
 {
@@ -58,7 +58,7 @@ void*
 tls_attach_client(int sock)
 {
 	int ret;
-	gnutls_session* session = (gnutls_session*)gnutls_malloc(sizeof(gnutls_session));
+	gnutls_session_t *session = (gnutls_session_t *)gnutls_malloc(sizeof(gnutls_session_t));
 	gnutls_init(session, GNUTLS_CLIENT);
 #ifdef HAVE_GNUTLS_PRIORITY_SET_DIRECT
 /*	http://www.manpagez.com/info/gnutls/gnutls-2.10.4/gnutls_81.php#Echo-Server-with-anonymous-authentication */
@@ -68,7 +68,7 @@ tls_attach_client(int sock)
 	gnutls_kx_set_priority (*session, kx_prio);
 #endif
 	gnutls_credentials_set(*session, GNUTLS_CRD_ANON, anoncred_client);
-	gnutls_transport_set_ptr(*session, (gnutls_transport_ptr) GINT_TO_POINTER(sock));
+	gnutls_transport_set_ptr(*session, (gnutls_transport_ptr_t) GINT_TO_POINTER(sock));
 	ret = gnutls_handshake(*session);
 	if (ret < 0) {
 		fprintf(stderr, "*** Handshake failed\n");
@@ -83,7 +83,7 @@ tls_attach_client(int sock)
 ssize_t
 tls_send(void* s, const void *buf, size_t len)
 {
-	gnutls_session* session = (gnutls_session*)s;
+	gnutls_session_t *session = (gnutls_session_t *)s;
 	while (1) {
 		int ret = gnutls_record_send(*session, buf, len);
 		if (ret != GNUTLS_E_INTERRUPTED && ret != GNUTLS_E_AGAIN) {
@@ -94,7 +94,7 @@ tls_send(void* s, const void *buf, size_t len)
 ssize_t
 tls_recv(void* s, void* buf, size_t len)
 {
-	gnutls_session* session = (gnutls_session*)s;
+	gnutls_session_t *session = (gnutls_session_t *)s;
 	while (1) {
 		int ret = gnutls_record_recv(*session, buf, len);
 		if (ret != GNUTLS_E_INTERRUPTED && ret != GNUTLS_E_AGAIN) {
@@ -106,7 +106,7 @@ int
 tls_detach(void* s)
 {
 
-	gnutls_session* session = (gnutls_session*)s;
+	gnutls_session_t *session = (gnutls_session_t *)s;
 	gnutls_bye(*session, GNUTLS_SHUT_RDWR);
 	gnutls_deinit(*session);
 	gnutls_free(session);
@@ -136,7 +136,7 @@ void*
 tls_attach_server(int sock)
 {
 	int ret;
-	gnutls_session* session = (gnutls_session*)gnutls_malloc(sizeof(gnutls_session));
+	gnutls_session_t *session = (gnutls_session_t *)gnutls_malloc(sizeof(gnutls_session_t));
 	gnutls_init(session, GNUTLS_SERVER);
 #ifdef HAVE_GNUTLS_PRIORITY_SET_DIRECT
 /*	http://www.manpagez.com/info/gnutls/gnutls-2.10.4/gnutls_81.php#Echo-Server-with-anonymous-authentication */
@@ -147,7 +147,7 @@ tls_attach_server(int sock)
 #endif
 	gnutls_credentials_set(*session, GNUTLS_CRD_ANON, anoncred_server);
 	gnutls_dh_set_prime_bits(*session, DH_BITS);
-	gnutls_transport_set_ptr(*session, (gnutls_transport_ptr) GINT_TO_POINTER(sock));
+	gnutls_transport_set_ptr(*session, (gnutls_transport_ptr_t) GINT_TO_POINTER(sock));
 	ret = gnutls_handshake(*session);
 	if (ret < 0) {
 		fprintf(stderr, "*** Handshake has failed (%s)\n\n",
