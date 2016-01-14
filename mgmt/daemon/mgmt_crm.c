@@ -719,9 +719,14 @@ final_crm(void)
 int
 set_crm(void)
 {
-	free_cib_cached();
+	cib_t* cib_conn_old = cib_conn;
 
 	cib_conn = g_hash_table_lookup(cib_conns, client_id);
+
+	if (cib_conn == NULL || cib_conn != cib_conn_old) {
+		free_cib_cached();
+	}
+
 	if (cib_conn != NULL) {
 		const char *env = g_hash_table_lookup(cib_envs, cib_conn);
 		if (env == NULL) {
@@ -729,7 +734,10 @@ set_crm(void)
 		} else {
 			setenv("CIB_shadow", env, 1);
 		}
-		mgmt_debug(LOG_DEBUG, "set_crm: client_id=%d cib_conn=%p cib_name=%s", *client_id, cib_conn, env);
+
+		if (cib_conn != cib_conn_old) {
+			mgmt_debug(LOG_DEBUG, "set_crm: client_id=%d cib_conn=%p cib_name=%s", *client_id, cib_conn, env);
+		}
 
 		return 0;
 	}
