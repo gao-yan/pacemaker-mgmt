@@ -90,6 +90,7 @@ int set_crm(void);
 
 static GHashTable* cib_conns = NULL;
 static GHashTable* cib_envs = NULL;
+static GHashTable* data_sets = NULL;
 
 static void on_cib_diff(const char *event, crm_data_t *msg);
 
@@ -397,7 +398,10 @@ create_cib_fragment_adv(xmlNode * update, const char *update_section, const char
 
 #define free_cib_cached()					\
 	if (cib_cache_enable) {					\
-		if (cib_cached != NULL) {			\
+		if (cib_conn) {					\
+			g_hash_table_remove(data_sets, cib_conn);	\
+			cib_cached = NULL;			\
+		} else if (cib_cached != NULL) {		\
 			cleanup_calculations(cib_cached);	\
 			free(cib_cached);			\
 			cib_cached = NULL;			\
@@ -488,6 +492,7 @@ get_data_set(void)
 	
 	if (cib_cache_enable) {
 		cib_cached = data_set;
+		g_hash_table_insert(data_sets, cib_conn, data_set);
 	}
 	return data_set;
 }
@@ -502,6 +507,15 @@ free_data_set(pe_working_set_t* data_set)
 		free(data_set);
 	}
 }	
+
+static void
+free_cached_data_set(gpointer data)
+{
+	pe_working_set_t* data_set = data;
+
+	cleanup_calculations(data_set);
+	free(data_set);
+}
 
 char* 
 crm_failed_msg(crm_data_t* output, int rc) 
@@ -683,6 +697,10 @@ init_crm(int cache_cib)
 	}
 	g_hash_table_insert(cib_envs, cib_conn, getenv("CIB_shadow")?strdup(getenv("CIB_shadow")):NULL);
 
+	if (data_sets == NULL) {
+		data_sets = g_hash_table_new_full(g_direct_hash, g_direct_equal, NULL, free_cached_data_set);
+	}
+
 	return 0;
 }	
 void
@@ -693,6 +711,13 @@ final_crm(void)
 	GET_CIB_NAME(cib_name)
 
 	mgmt_log(LOG_INFO,"final_crm: client_id=%d cib_name=%s", *client_id, cib_name);
+
+	free_cib_cached();
+	if (g_hash_table_size(data_sets) == 0) {
+		g_hash_table_destroy(data_sets);
+		data_sets = NULL;
+	}
+
 	if(cib_conn != NULL) {
 		in_shutdown = TRUE;
 		cib_conn->cmds->signoff(cib_conn);
@@ -712,8 +737,6 @@ final_crm(void)
 			cib_envs = NULL;
 		}
 	}
-
-	free_cib_cached();
 }
 
 int
@@ -722,10 +745,6 @@ set_crm(void)
 	cib_t* cib_conn_old = cib_conn;
 
 	cib_conn = g_hash_table_lookup(cib_conns, client_id);
-
-	if (cib_conn == NULL || cib_conn != cib_conn_old) {
-		free_cib_cached();
-	}
 
 	if (cib_conn != NULL) {
 		const char *env = g_hash_table_lookup(cib_envs, cib_conn);
@@ -737,6 +756,10 @@ set_crm(void)
 
 		if (cib_conn != cib_conn_old) {
 			mgmt_debug(LOG_DEBUG, "set_crm: client_id=%d cib_conn=%p cib_name=%s", *client_id, cib_conn, env);
+		}
+
+		if (cib_cache_enable) {
+			cib_cached = g_hash_table_lookup(data_sets, cib_conn);
 		}
 
 		return 0;
@@ -755,6 +778,7 @@ on_cib_diff(const char *event, crm_data_t *msg)
 	}
 
 	free_cib_cached();
+	g_hash_table_remove_all(data_sets);
 	
 	fire_event(EVT_CIB_CHANGED);
 }
